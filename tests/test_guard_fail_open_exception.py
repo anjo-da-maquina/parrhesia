@@ -3,7 +3,7 @@ tests/test_guard_fail_open_exception.py
 =========================================
 [新設 2026-10 §BS] angels/guard_fail_open_exception.py の単体テスト。
 
-本天使は、maquina_gatekeeper.pyの_register_audit_hook_once()で実際に
+本天使は、runtime_audit_gatekeeper.pyの_register_audit_hook_once()で実際に
 発見した本物の脆弱性――本リポジトリ唯一の深層保護(sys.addaudithook)の
 設置失敗が`except Exception: pass`で握り潰され、呼び出し元は保護が
 有効だと誤信したまま処理を継続していた――というフェイルオープンの
@@ -166,7 +166,7 @@ def test_does_not_false_positive_on_the_word_except_inside_a_string():
 
 
 def test_real_repository_files_pass_after_the_sbs_fix():
-    """[実機の裏付け] §BSで実際に修正したmaquina_gatekeeper.py
+    """[実機の裏付け] §BSで実際に修正したruntime_audit_gatekeeper.py
     ._register_audit_hook_once()・angels/audit_dependency_cve.pyを
     含む、現時点のリポジトリ全体に対して本天使を実行し、PASSすることを
     確認する(回帰防止)。"""

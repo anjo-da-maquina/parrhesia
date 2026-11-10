@@ -8,7 +8,7 @@ src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検�
 確認する点:
   1. モジュールのimport自体が、'openai' パッケージの有無に関わらず
      常に成功すること（遅延importが正しく機能していること）。
-  2. 存在しないフォールバックimport (anjo_interceptor.maquina_gatekeeper)
+  2. 存在しないフォールバックimport (anjo_interceptor.runtime_audit_gatekeeper)
      が実行コード上に存在しないこと。
   3. _execute_safe_action が実際に runtime_guard.Sanctum のコンテキスト内で
      ファイルI/Oを行う、動作する実装であること（ダミーのスタブでは
@@ -26,7 +26,7 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from maquina_gatekeeper import LossOfAtaraxia
+from runtime_audit_gatekeeper import LossOfAtaraxia
 import openai_agent_loop
 
 
@@ -36,7 +36,7 @@ def test_module_imports_without_openai_package():
 
 
 def test_no_dead_fallback_import_in_source():
-    """存在しない 'anjo_interceptor.maquina_gatekeeper' への実行コードとしての
+    """存在しない 'anjo_interceptor.runtime_audit_gatekeeper' への実行コードとしての
     importが復活していないことを、ソースを直接検査して確認する。"""
     src_path = os.path.join(
         os.path.dirname(__file__), "..", "src", "openai_agent_loop.py"
@@ -44,7 +44,7 @@ def test_no_dead_fallback_import_in_source():
     with open(src_path, encoding="utf-8-sig") as f:
         for line in f:
             stripped = line.strip()
-            assert not stripped.startswith("from anjo_interceptor.maquina_gatekeeper"), (
+            assert not stripped.startswith("from anjo_interceptor.runtime_audit_gatekeeper"), (
                 "存在しないフォールバックimportが復活しています: " + stripped
             )
 

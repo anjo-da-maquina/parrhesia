@@ -3,7 +3,7 @@ tests/test_guard_network_exfiltration.py
 ============================================
 [新設 2026-10 §CA] angels/guard_network_exfiltration.py の単体テスト。
 
-実際に発見した具体例: `maquina_gatekeeper.py`の`ultimate_audit_hook`
+実際に発見した具体例: `runtime_audit_gatekeeper.py`の`ultimate_audit_hook`
 ("深層保護")は、ネットワーク通信の遮断を"socket.connect"のみで行って
 いたが、UDPの`socket.sendto()`は事前の`connect()`を一切必要とせずに
 データを送信できるため、封鎖中でもこの経路からの情報持ち出しが例外無く
@@ -76,7 +76,7 @@ def test_check_getaddrinfo_is_allowed_when_unsealed_directly():
 
 
 def test_battery_detects_getaddrinfo_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CT] maquina_gatekeeper.pyの
+    """[核心・自己レッドチームの固定・§CT] runtime_audit_gatekeeper.pyの
     forbidden集合から"socket.getaddrinfo"を(将来の変更で)取り除いた場合、
     本天使が正しく「遮断されなかった」として検知することを、実際に
     forbidden集合からこのエントリを一時的に取り除いて再現して確認済み
@@ -86,15 +86,15 @@ def test_battery_detects_getaddrinfo_regression(monkeypatch):
         return False, "封鎖中にsocket.getaddrinfo()によるDNS名前解決が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
-        ("maquina_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", jeg._check_getaddrinfo_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", jeg._check_getaddrinfo_is_allowed_when_unsealed),
     ]
     monkeypatch.setattr(jeg, "CHECKS", patched_checks)
 
     failures = jeg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)"
 
 
 def test_check_legacy_dns_lookups_are_blocked_while_sealed_directly():
@@ -111,7 +111,7 @@ def test_check_legacy_dns_lookups_are_allowed_when_unsealed_directly():
 
 
 def test_battery_detects_legacy_dns_lookup_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CU] maquina_gatekeeper.pyの
+    """[核心・自己レッドチームの固定・§CU] runtime_audit_gatekeeper.pyの
     forbidden集合から"socket.gethostbyname"等が(将来の変更で)取り除か
     れた場合、本天使が正しく「遮断されなかった」として検知することを、
     実際にforbidden集合からこれらのエントリを一時的に取り除いて再現
@@ -121,15 +121,15 @@ def test_battery_detects_legacy_dns_lookup_regression(monkeypatch):
         return False, "封鎖中にsocket.gethostbynameが遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
-        ("maquina_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", jeg._check_legacy_dns_lookups_are_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", jeg._check_legacy_dns_lookups_are_allowed_when_unsealed),
     ]
     monkeypatch.setattr(jeg, "CHECKS", patched_checks)
 
     failures = jeg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)"
 
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
@@ -140,18 +140,18 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False, "封鎖中にsocket.sendto()によるデータ送信が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", jeg._check_udp_sendto_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", jeg._check_udp_sendto_is_allowed_when_unsealed),
     ]
     monkeypatch.setattr(jeg, "CHECKS", patched_checks)
 
     failures = jeg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断"
 
 
 def test_battery_detects_sendmsg_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CM] maquina_gatekeeper.pyの
+    """[核心・自己レッドチームの固定・§CM] runtime_audit_gatekeeper.pyの
     forbidden集合から"socket.sendmsg"だけが(将来の変更で)再び脱落した
     場合、本天使が正しく「遮断されなかった」として検知することを、
     実際にgit stashでこの退行を再現して確認済み(修正前は本テストと
@@ -160,16 +160,16 @@ def test_battery_detects_sendmsg_regression(monkeypatch):
         return False, "封鎖中にsocket.sendmsg()によるデータ送信が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendto)", jeg._check_udp_sendto_is_allowed_when_unsealed),
-        ("maquina_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", jeg._check_udp_sendmsg_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断", jeg._check_udp_sendto_is_blocked_while_sealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendto)", jeg._check_udp_sendto_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", jeg._check_udp_sendmsg_is_allowed_when_unsealed),
     ]
     monkeypatch.setattr(jeg, "CHECKS", patched_checks)
 
     failures = jeg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):

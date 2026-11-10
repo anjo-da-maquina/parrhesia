@@ -1,7 +1,7 @@
 """
 tests/test_thread_safety_maquina_seal.py
 ==========================================
-maquina_gatekeeper.py の`is_sanctuary_sealed()`/`set_sanctuary_sealed()`の
+runtime_audit_gatekeeper.py の`is_sanctuary_sealed()`/`set_sanctuary_sealed()`の
 回帰テスト。GRIMOIRE.md §AD 参照。
 
 背景: 封鎖ステータスが`threading.local()`(スレッドごとに独立)で管理されて
@@ -16,7 +16,7 @@ maquina_gatekeeper.py の`is_sanctuary_sealed()`/`set_sanctuary_sealed()`の
 するグローバル変数に修正し、本テストで固定する。
 
 [2026-10] 実運用の `rsa` パッケージはこのサンドボックス環境のegress
-ポリシー上インストールできないため、maquina_gatekeeper.pyの
+ポリシー上インストールできないため、runtime_audit_gatekeeper.pyの
 `import rsa`を満たす疑似実装で代替する
 (tests/test_provisioning_approval_flow.py と同一パターン)。
 本テストはRSA署名検証ロジックそのものではなく、封鎖フラグの
@@ -81,7 +81,7 @@ if "rsa" not in sys.modules:
     _fake_rsa.PublicKey = _FakePublicKeyModule
     sys.modules["rsa"] = _fake_rsa
 
-import maquina_gatekeeper as mg  # noqa: E402
+import runtime_audit_gatekeeper as mg  # noqa: E402
 
 
 def test_sealed_state_is_shared_across_threads():
@@ -300,7 +300,7 @@ def test_fork_then_exec_combo_is_unreachable_while_sealed():
     script = (
         "import sys, os\n"
         "sys.path.insert(0, " + repr(_repo_root) + ")\n"
-        "import maquina_gatekeeper as mg\n"
+        "import runtime_audit_gatekeeper as mg\n"
         "mg._register_audit_hook_once()\n"
         "mg.set_sanctuary_sealed(True)\n"
         "try:\n"

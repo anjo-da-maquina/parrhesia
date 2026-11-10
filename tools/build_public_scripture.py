@@ -1,7 +1,7 @@
 ﻿"""
 tools/build_public_scripture.py
 ==================================
-[新設 2026-10] 「ライセンス証明書機構(maquina_gatekeeper)の公開配布からの分離」
+[新設 2026-10] 「ライセンス証明書機構(runtime_audit_gatekeeper)の公開配布からの分離」
 
 これまで `pyproject.toml` の `packages = ["runtime_guard"]` により、`runtime_guard` パッケージ
 単体を配布物として切り出すこと自体は既に可能な構成になっていた
@@ -11,7 +11,7 @@ tools/build_public_scripture.py
 しかし、これが「本当にそうなっているか」を毎回信用だけに頼るのは、
 本プロジェクトが掲げる「ゼロトラスト」の精神に反する。本モジュールは
 実際にsdist(ソース配布物)をビルドし、その内容そのものを検査して、
-ライセンス証明書機構(maquina_gatekeeper.py / ataraxia_certificate.json /
+ライセンス証明書機構(runtime_audit_gatekeeper.py / ataraxia_certificate.json /
 adapters/provisioning_agent.py)やadversarial_training(旧名Tartarus、闘技場・creator's air)が
 一切含まれていないことを機械的に確認してから「公開配布可能」と
 報告する。これを「経典(scripture)のビルド」と呼ぶ
@@ -33,7 +33,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 # ファイル名ベースの禁止リストと、内容ベースの禁止リストの両方で検査する
 # (ファイル名を変えて同じ内容を混入させる手口への対策)。
 FORBIDDEN_FILENAME_FRAGMENTS = [
-    "maquina_gatekeeper", "ataraxia_certificate", "provisioning_agent",
+    "runtime_audit_gatekeeper", "ataraxia_certificate", "provisioning_agent",
     # [改名 2026-11] armageddon(.py/_core.py) は local_only_selfplay_gate /
     # selfplay_engine_core に改名された(docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §2)。
     # 旧名も残しているのは、改名前のアーカイブやバックアップに対しても
@@ -43,7 +43,7 @@ FORBIDDEN_FILENAME_FRAGMENTS = [
 ]
 FORBIDDEN_CONTENT_FRAGMENTS = [
     # [注意] "LossOfAtaraxia" はここに含めない。runtime_guard/__init__.py 自身が
-    # 同名の例外クラスを独立に定義しており(maquina_gatekeeper.py側の
+    # 同名の例外クラスを独立に定義しており(runtime_audit_gatekeeper.py側の
     # 同名クラスとは無関係)、これを禁止語に入れるとruntime_guard本体が常に
     # 偽陽性でブロックされてしまう(実機検証済み)。
     "MAQUINA_PUBLIC_KEY_PEM", "enforce_maquina_seal",

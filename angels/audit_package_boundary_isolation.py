@@ -6,10 +6,10 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "audit_package_boundary_isolation - 思考統制監査: 「ライセンス証明書機構(maquina_gatekeeper)の公開配布からの 分離」が将来静かに退行していないかを静的に検証する。"
+NAME = "audit_package_boundary_isolation - 思考統制監査: 「ライセンス証明書機構(runtime_audit_gatekeeper)の公開配布からの 分離」が将来静かに退行していないかを静的に検証する。"
 
 
-# 思考統制監査: 「ライセンス証明書機構(maquina_gatekeeper)の公開配布からの
+# 思考統制監査: 「ライセンス証明書機構(runtime_audit_gatekeeper)の公開配布からの
 # 分離」が将来静かに退行していないかを静的に検証する。
 #
 # 世界に配る経典(= pip配布されるruntime_guard単体パッケージ)には、ゲートキーパー
@@ -19,7 +19,7 @@ NAME = "audit_package_boundary_isolation - 思考統制監査: 「ライセン�
 #      であること(他のディレクトリが紛れ込んでいないか)。
 #   B. MANIFEST.in が、運用者向けの内部テスト(tests/)やゲートキーパー
 #      関連ファイルを明示的に除外していること。
-#   C. runtime_guard パッケージ自身のソース(*.py)が、maquina_gatekeeper や
+#   C. runtime_guard パッケージ自身のソース(*.py)が、runtime_audit_gatekeeper や
 #      adapters を一切importしていないこと(静的import解析)。
 def main():
     pyproject = ROOT / "pyproject.toml"
@@ -45,10 +45,10 @@ def main():
     manifest_text = manifest.read_text(encoding="utf-8-sig")
     if "prune tests" not in manifest_text:
         report_fail(NAME, "MANIFEST.inが運用者向け内部テスト(tests/)を除外していません。")
-    if "maquina_gatekeeper" not in manifest_text or "ataraxia_certificate" not in manifest_text:
+    if "runtime_audit_gatekeeper" not in manifest_text or "ataraxia_certificate" not in manifest_text:
         report_fail(NAME, "MANIFEST.inがライセンス証明書機構関連ファイルを明示的に除外していません。")
 
-    # C: runtime_guard/*.py が maquina_gatekeeper / adapters を一切importしていないこと
+    # C: runtime_guard/*.py が runtime_audit_gatekeeper / adapters を一切importしていないこと
     runtime_guard_dir = ROOT / "runtime_guard"
     import ast
     for py_file in runtime_guard_dir.glob("*.py"):
@@ -60,10 +60,10 @@ def main():
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name in ("maquina_gatekeeper", "adapters", "tartarus", "adversarial_training"):
+                    if alias.name in ("runtime_audit_gatekeeper", "adapters", "tartarus", "adversarial_training"):
                         report_fail(NAME, f"runtime_guard/{py_file.name} がライセンス機構/adversarial_training({alias.name})をimportしています。配布境界が破られています。")
             elif isinstance(node, ast.ImportFrom):
-                if node.module in ("maquina_gatekeeper", "adapters", "tartarus", "adversarial_training"):
+                if node.module in ("runtime_audit_gatekeeper", "adapters", "tartarus", "adversarial_training"):
                     report_fail(NAME, f"runtime_guard/{py_file.name} がライセンス機構/adversarial_training({node.module})をimportしています。配布境界が破られています。")
 
     report_pass(NAME, "ライセンス証明書機構・adversarial_training(旧名tartarus)は、公開配布される経典(runtime_guardパッケージ)から正しく分離されています。")

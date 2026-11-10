@@ -29,7 +29,7 @@ NAME = "check_log_flush_before_exit - 静的解析監査: 関数本体最後の�
 # でimportされている場合(`import os as _os`等)。
 
 TARGET_DIRS = ["angels", "src", "adapters"]
-TARGET_FILES = ["maquina_gatekeeper.py"]
+TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 
 def _iter_target_files():

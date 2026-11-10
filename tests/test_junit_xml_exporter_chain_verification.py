@@ -16,7 +16,7 @@ CI自体を失敗させること、を固定する。
 
 実運用の`rsa`パッケージ(PyPI配布)は、本テストを実行するサンドボックス
 環境にはインストールできない(§BK時点のtests/test_provisioning_approval_flow.py
-と同じ事情)。maquina_gatekeeper.pyはモジュール読み込み時に`import rsa`
+と同じ事情)。runtime_audit_gatekeeper.pyはモジュール読み込み時に`import rsa`
 するため、本テストでも同じ最小限の疑似実装で代替する。
 """
 import json
@@ -74,9 +74,9 @@ if "rsa" not in sys.modules:
 
 
 def _build_valid_chain(tmp_path, monkeypatch, n=3):
-    """maquina_gatekeeper.ZKAuditTrail を使って、本物のHMAC連鎖を
+    """runtime_audit_gatekeeper.ZKAuditTrail を使って、本物のHMAC連鎖を
     tmp_path内に実際に構築する(signing_key・trailファイルとも)。"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     trail_file = tmp_path / "zk_audit_trail.json"
     key_file = tmp_path / ".zk_audit_signing_key"

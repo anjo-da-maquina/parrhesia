@@ -11,7 +11,7 @@ E章の角度1「行動記録との照合」。
 ハッシュチェーン・水位標による切り詰め検知付きの、改ざん耐性のある
 追記専用ログ)をそのまま再利用する。
 
-[確認済み] SignedAuditChainは、maquina_gatekeeperの証明書チェーンにも、
+[確認済み] SignedAuditChainは、runtime_audit_gatekeeperの証明書チェーンにも、
 AIDD実行経路(src/ollama_agent_loop.py・src/openai_agent_loop.py)の
 enforce_maquina_seal装飾にも依存していない(grepで実機確認済み)。
 したがって、証明書の期限切れ等、既存のAIDD実行経路側の制約を一切

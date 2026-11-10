@@ -3,7 +3,7 @@ tests/test_guard_ctypes_dlsym_bypass.py
 ====================================
 [新設 2026-10 §CE] angels/guard_ctypes_dlsym_bypass.py の単体テスト。
 
-実際に発見した具体例: `maquina_gatekeeper.py`の`forbidden`集合は
+実際に発見した具体例: `runtime_audit_gatekeeper.py`の`forbidden`集合は
 封鎖中に新たに`ctypes`をimportすることだけを遮断していたが、
 `ctypes`が封鎖の『前』に一度でもimportされていれば、攻撃者は封鎖後
 に改めてimportし直す必要が一切ない。既にimport済みの`ctypes`から
@@ -66,14 +66,14 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False, "ctypes.pythonapi経由の攻撃が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", cdg._check_pythonapi_still_works_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", cdg._check_pythonapi_still_works_when_unsealed),
     ]
     monkeypatch.setattr(cdg, "CHECKS", patched_checks)
 
     failures = cdg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):

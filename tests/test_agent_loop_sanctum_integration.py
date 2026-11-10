@@ -32,7 +32,7 @@ sys.path.insert(0, {str(REPO_ROOT / "src")!r})
 # これは「証明書ゲートの弱体化」ではなく、Sanctum統合そのものを
 # 単体で検証するためのテスト専用の切り離しである。
 import types
-fake_gatekeeper = types.ModuleType("maquina_gatekeeper")
+fake_gatekeeper = types.ModuleType("runtime_audit_gatekeeper")
 def _noop_seal(*a, **kw):
     def decorator(func):
         return func
@@ -41,7 +41,7 @@ fake_gatekeeper.enforce_maquina_seal = _noop_seal
 class _FakeLossOfAtaraxia(Exception):
     pass
 fake_gatekeeper.LossOfAtaraxia = _FakeLossOfAtaraxia
-sys.modules["maquina_gatekeeper"] = fake_gatekeeper
+sys.modules["runtime_audit_gatekeeper"] = fake_gatekeeper
 
 # ollama パッケージもスタブ化（このテストではLLM呼び出しは発生しない）
 fake_ollama = types.ModuleType("ollama")

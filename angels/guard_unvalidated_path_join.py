@@ -34,7 +34,7 @@ NAME = "guard_unvalidated_path_join - 静的解析監査: 関数内で未検証�
 # 別名への代入を経由した場合の追跡は行わない(単純な単一変数の追跡のみ)。
 
 TARGET_DIRS = ["angels", "src", "adapters", "anjo_interceptor"]
-TARGET_FILES = ["maquina_gatekeeper.py"]
+TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 SANITIZER_NAME_MARKERS = ("secure_resolve", "_assert_contained_within_workspace")
 IO_ATTR_NAMES = {"read_text", "write_text", "read_bytes", "write_bytes", "open"}

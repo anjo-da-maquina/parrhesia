@@ -95,7 +95,7 @@ notepad runtime_guard/raziel_ledger.json
 
 ## 🤖 実運用エージェントループ（ローカルLLMにタスクを実行させる）
 `runtime_guard.Sanctum`・`AegisSystem`（Gabriel + IntentInterceptor + Sandalphon）・
-`maquina_gatekeeper`の全防御層を統合した参照実装。いずれも`jail_workspace/`
+`runtime_audit_gatekeeper`の全防御層を統合した参照実装。いずれも`jail_workspace/`
 内のみで動作する隔離デモタスクを同梱している。
 
 **前提条件（両方とも必要）**:
@@ -149,7 +149,7 @@ Armageddon・Zadkielと同じ「提案キューイング＋人間承認」パタ
 python adapters/provisioning_agent.py
 ```
 これにより`runtime_guard/provisioning_pending.json`に提案がキューイングされる。
-`maquina_gatekeeper.py`・`ataraxia_certificate.json`はまだ変更されない。
+`runtime_audit_gatekeeper.py`・`ataraxia_certificate.json`はまだ変更されない。
 
 ### 承認待ち提案の確認・昇格
 ```
@@ -157,7 +157,7 @@ python tools/promote_provisioning_seal.py --list
 python tools/promote_provisioning_seal.py --approve "<client_id>"
 python tools/promote_provisioning_seal.py --reject  "<client_id>"
 ```
-`--approve`実行後、更新された`ataraxia_certificate.json`と`maquina_gatekeeper.py`
+`--approve`実行後、更新された`ataraxia_certificate.json`と`runtime_audit_gatekeeper.py`
 （公開鍵が反映される）の両方をコミットすること。
 
 ## 📦 経典（公開配布物）のビルドと検査

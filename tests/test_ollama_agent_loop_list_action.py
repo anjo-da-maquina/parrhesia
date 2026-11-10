@@ -11,7 +11,7 @@ final_agent_loop.pyは削除した(GRIMOIRE.md §M参照)。本テストは、�
 "list"がSanctumのワークスペース境界内で正しく動作することを固定する。
 
 test_agent_loop_sanctum_integration.pyと同じ手法(サブプロセス起動 +
-maquina_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
+runtime_audit_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
 """
 import subprocess
 import sys
@@ -27,7 +27,7 @@ sys.path.insert(0, {str(REPO_ROOT)!r})
 sys.path.insert(0, {str(REPO_ROOT / "src")!r})
 
 import types
-fake_gatekeeper = types.ModuleType("maquina_gatekeeper")
+fake_gatekeeper = types.ModuleType("runtime_audit_gatekeeper")
 def _noop_seal(*a, **kw):
     def decorator(func):
         return func
@@ -36,7 +36,7 @@ fake_gatekeeper.enforce_maquina_seal = _noop_seal
 class _FakeLossOfAtaraxia(Exception):
     pass
 fake_gatekeeper.LossOfAtaraxia = _FakeLossOfAtaraxia
-sys.modules["maquina_gatekeeper"] = fake_gatekeeper
+sys.modules["runtime_audit_gatekeeper"] = fake_gatekeeper
 
 fake_ollama = types.ModuleType("ollama")
 fake_ollama.chat = lambda **kw: {{"message": {{"content": ""}}}}

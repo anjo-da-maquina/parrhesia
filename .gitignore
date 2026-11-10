@@ -23,7 +23,7 @@ runtime_guard/audit_chain.jsonl
 # 署名するための秘密鍵。初回自動生成・0600権限で作成されるローカル専用の
 # 秘密情報であり、Gitにコミットしてはならない(GRIMOIRE.md §AE参照)。
 runtime_guard/.audit_signing_key
-# [2026-10] maquina_gatekeeper.py の ZKAuditTrail がHMAC-SHA256で鍵付き
+# [2026-10] runtime_audit_gatekeeper.py(旧名maquina_gatekeeper.py)の ZKAuditTrail がHMAC-SHA256で鍵付き
 # ハッシュ連鎖に署名するための秘密鍵。初回自動生成・0600権限で作成される
 # ローカル専用の秘密情報であり、Gitにコミットしてはならない(GRIMOIRE §AH参照)。
 .zk_audit_signing_key

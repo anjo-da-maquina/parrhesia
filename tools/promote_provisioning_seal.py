@@ -4,7 +4,7 @@ Provisioning 承認プロモーションツール
 [新設 2026-10] `adapters/provisioning_agent.py` がキューイングした
 環境承認の提案(`runtime_guard/provisioning_pending.json`)を、人間が内容
 （client_id・hardware_fingerprint・有効期限）を確認した上で、
-`maquina_gatekeeper.py`の信頼の起点(`MAQUINA_PUBLIC_KEY_PEM`)へ
+`runtime_audit_gatekeeper.py`の信頼の起点(`MAQUINA_PUBLIC_KEY_PEM`)へ
 反映し、`ataraxia_certificate.json`を発行するためのツール。
 
 これにより、提案者（本スクリプトを実行できる任意のローカル環境）が
@@ -24,7 +24,7 @@ import re
 from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
-GATEKEEPER_PATH = PLEROMA_DIR / "maquina_gatekeeper.py"
+GATEKEEPER_PATH = PLEROMA_DIR / "runtime_audit_gatekeeper.py"
 CERT_PATH = PLEROMA_DIR / "ataraxia_certificate.json"
 PENDING_PATH = PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json"
 
@@ -34,7 +34,7 @@ def _pubkey_fingerprint(pubkey_pem: str) -> str:
 
 
 def _currently_trusted_fingerprint() -> str:
-    """[脆弱性修正 2026-10 §BY] 現在`maquina_gatekeeper.py`に書かれている
+    """[脆弱性修正 2026-10 §BY] 現在`runtime_audit_gatekeeper.py`に書かれている
     `MAQUINA_PUBLIC_KEY_PEM`(=今まさに信頼されている公開鍵)の指紋を
     読み取る。提案されている公開鍵の指紋と比較することで、人間の
     審査者が「この承認は、信頼の起点を別の鍵へ丸ごと入れ替える
@@ -70,7 +70,7 @@ def _save_pending(entries):
 def list_pending():
     """
     [脆弱性修正 2026-10 §BY] 以前の実装は、承認によって実際に適用される
-    内容(`maquina_gatekeeper.py`の信頼の起点となる公開鍵そのもの、
+    内容(`runtime_audit_gatekeeper.py`の信頼の起点となる公開鍵そのもの、
     `entry["public_key_pem"]`)を一切表示していなかった。審査者は
     client_id・hardware_fingerprint・有効期限だけを見て承認していたが、
     これらはいずれも「この提案が本当に正当なデバイスからのものか」を
@@ -137,7 +137,7 @@ def approve(client_id):
     キューに積み、1回目の`approve(client_id)`でNEW_FPを承認した後、
     (例えば残った古い提案を片付けるつもりで)2回目の`approve(client_id)`
     を実行すると、残っていたOLD_FPの提案が`_find_pending()`に拾われて
-    承認され、`maquina_gatekeeper.py`の信頼の起点(公開鍵)と
+    承認され、`runtime_audit_gatekeeper.py`の信頼の起点(公開鍵)と
     `ataraxia_certificate.json`が、既に失効しているはずの古い提案の内容へ
     静かにロールバックされることを確認した(ゼロトラストの信頼の起点に
     対する一種のダウングレード攻撃に相当する)。
@@ -155,7 +155,7 @@ def approve(client_id):
     for stale in matches[:-1]:
         stale["status"] = "SUPERSEDED"
 
-    # 1. maquina_gatekeeper.py の信頼の起点(公開鍵)を更新
+    # 1. runtime_audit_gatekeeper.py の信頼の起点(公開鍵)を更新
     gatekeeper_code = GATEKEEPER_PATH.read_text(encoding="utf-8")
     new_code, n = re.subn(
         r'MAQUINA_PUBLIC_KEY_PEM = """.*?-----END RSA PUBLIC KEY-----"""',
@@ -164,7 +164,7 @@ def approve(client_id):
         flags=re.DOTALL,
     )
     if n == 0:
-        print("[エラー] maquina_gatekeeper.py内にMAQUINA_PUBLIC_KEY_PEMが見つかりませんでした。中断します。")
+        print("[エラー] runtime_audit_gatekeeper.py内にMAQUINA_PUBLIC_KEY_PEMが見つかりませんでした。中断します。")
         return
     GATEKEEPER_PATH.write_text(new_code, encoding="utf-8")
 
@@ -189,7 +189,7 @@ def reject(client_id):
     for p in matches:
         p["status"] = "REJECTED"
     _save_pending(pending)
-    print(f"[拒否] '{client_id}' を拒否しました（maquina_gatekeeper.py・証明書は変更されません）。")
+    print(f"[拒否] '{client_id}' を拒否しました（runtime_audit_gatekeeper.py・証明書は変更されません）。")
 
 
 if __name__ == "__main__":

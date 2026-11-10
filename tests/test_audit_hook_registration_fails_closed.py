@@ -1,7 +1,7 @@
 """
 tests/test_audit_hook_registration_fails_closed.py
 =====================================================
-[脆弱性修正 2026-10 §BS] maquina_gatekeeper.py の`_register_audit_hook_once()`
+[脆弱性修正 2026-10 §BS] runtime_audit_gatekeeper.py の`_register_audit_hook_once()`
 の回帰テスト。
 
 `_register_audit_hook_once()`は、本リポジトリの唯一の深層保護
@@ -21,7 +21,7 @@ importなどをプロセス全体で遮断する`sys.addaudithook`ベースの�
 修正後は(フェイルクローズの原則に従い)その例外がそのまま
 `_register_audit_hook_once()`の呼び出し元まで伝播することを固定する。
 """
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 
 def test_addaudithook_failure_propagates_instead_of_being_swallowed(monkeypatch):

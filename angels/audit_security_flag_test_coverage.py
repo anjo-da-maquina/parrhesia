@@ -12,7 +12,7 @@ NAME = "audit_security_flag_test_coverage - 正常系監査: 環境変数ゲー�
 #
 # 本天使は、この具体的な3件を直接検査するのではなく(それは既存の個別
 # テストの役割)、同じ構造を持つ"まだ見つかっていない"新しい箇所が
-# angels/*.py・src/*.py・adapters/*.py・maquina_gatekeeper.pyに今後
+# angels/*.py・src/*.py・adapters/*.py・runtime_audit_gatekeeper.pyに今後
 # 追加された際に、マージ前に機械的に検知するための一般化された検査である
 # (GRIMOIRE.md §BP「残存する限界」・§11.9運用ルール参照)。
 #
@@ -27,7 +27,7 @@ NAME = "audit_security_flag_test_coverage - 正常系監査: 環境変数ゲー�
 # この限界の一般形)。
 
 TARGET_DIRS = ["angels", "src", "adapters"]
-TARGET_FILES = ["maquina_gatekeeper.py"]
+TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 # ログ出力のみ等、制御フローに影響しないことが分かっている変数名は除外する。
 KNOWN_NON_GATING_VARS = {"GITHUB_RUN_ID", "GITHUB_WORKFLOW"}

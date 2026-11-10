@@ -4,7 +4,7 @@
 場合、max_steps(既定5)を使い切る前に早期終了することを確認する。
 
 test_agent_loop_sanctum_integration.pyと同じ手法(サブプロセス起動 +
-maquina_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
+runtime_audit_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
 Dockerデーモンは不要(FutilityGuardの判定はAegis/Sandalphonの呼び出し前に
 行われるため、空転が検知された場合はDockerに一度も到達しない)。
 """
@@ -22,7 +22,7 @@ sys.path.insert(0, {str(REPO_ROOT)!r})
 sys.path.insert(0, {str(REPO_ROOT / "src")!r})
 
 import types
-fake_gatekeeper = types.ModuleType("maquina_gatekeeper")
+fake_gatekeeper = types.ModuleType("runtime_audit_gatekeeper")
 def _noop_seal(*a, **kw):
     def decorator(func):
         return func
@@ -31,7 +31,7 @@ fake_gatekeeper.enforce_maquina_seal = _noop_seal
 class _FakeLossOfAtaraxia(Exception):
     pass
 fake_gatekeeper.LossOfAtaraxia = _FakeLossOfAtaraxia
-sys.modules["maquina_gatekeeper"] = fake_gatekeeper
+sys.modules["runtime_audit_gatekeeper"] = fake_gatekeeper
 
 # 毎回「同じ(action, target)」のJSONを返す、固定応答のOllamaスタブ
 fake_ollama = types.ModuleType("ollama")

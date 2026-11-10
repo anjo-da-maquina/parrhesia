@@ -47,7 +47,7 @@ LOCAL_MODULE_DIRS = ["angels", "src", "runtime_guard", "adapters", "anjo_interce
 
 def _local_module_names() -> set:
     names = set()
-    # リポジトリルート直下の .py ファイル(例: maquina_gatekeeper.py)。
+    # リポジトリルート直下の .py ファイル(例: runtime_audit_gatekeeper.py)。
     for p in ROOT.glob("*.py"):
         names.add(p.stem)
     # リポジトリルート直下のパッケージディレクトリ(例: anjo_interceptor/)、

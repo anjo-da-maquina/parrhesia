@@ -27,7 +27,7 @@ import audit_agent_template_integration as rt
 
 VALID_TEMPLATE_TEXT = (
     '"""\n'
-    "過去の欠陥: anjo_interceptor.maquina_gatekeeper への存在しない\n"
+    "過去の欠陥: anjo_interceptor.runtime_audit_gatekeeper への存在しない\n"
     "フォールバックimportが死んだコードパスだった(説明のみ、実コードではない)。\n"
     '"""\n'
     "from runtime_guard import Sanctum\n"
@@ -101,7 +101,7 @@ def test_fails_when_dead_fallback_import_is_revived_as_from_import(monkeypatch, 
     形式で実行コードとして復活している場合、正しくFAILする。"""
     bad_text = VALID_TEMPLATE_TEXT.replace(
         "from runtime_guard import Sanctum",
-        "from anjo_interceptor.maquina_gatekeeper import something\nfrom runtime_guard import Sanctum",
+        "from anjo_interceptor.runtime_audit_gatekeeper import something\nfrom runtime_guard import Sanctum",
     )
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
@@ -112,7 +112,7 @@ def test_fails_when_dead_fallback_import_is_revived_as_import(monkeypatch, tmp_p
     FAILする。"""
     bad_text = VALID_TEMPLATE_TEXT.replace(
         "from runtime_guard import Sanctum",
-        "import anjo_interceptor.maquina_gatekeeper\nfrom runtime_guard import Sanctum",
+        "import anjo_interceptor.runtime_audit_gatekeeper\nfrom runtime_guard import Sanctum",
     )
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)

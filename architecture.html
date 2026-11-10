@@ -130,11 +130,11 @@
                 <div class="tech-stack">sys.addaudithook() runtime</div>
             </div>
 
-            <!-- Raphael / maquina_gatekeeper -->
+            <!-- Raphael / runtime_audit_gatekeeper -->
             <div class="card raphael">
                 <div class="icon">👁️</div>
                 <h3>Raphael (License &amp; Environment Seal)</h3>
-                <p>A separate layer (<code>maquina_gatekeeper.py</code>) that gates execution on a hardware-fingerprinted, RSA-signed certificate (<code>ataraxia_certificate.json</code>) and refuses to operate in an unverified cloud CI environment. Certificates are no longer self-issued: a proposal is queued and must be explicitly approved by a human via <code>tools/promote_provisioning_seal.py</code>.</p>
+                <p>A separate layer (<code>runtime_audit_gatekeeper.py</code>) that gates execution on a hardware-fingerprinted, RSA-signed certificate (<code>ataraxia_certificate.json</code>) and refuses to operate in an unverified cloud CI environment. Certificates are no longer self-issued: a proposal is queued and must be explicitly approved by a human via <code>tools/promote_provisioning_seal.py</code>.</p>
                 <div class="tech-stack">RSA signature + hardware fingerprint</div>
             </div>
         </div>
