@@ -59,6 +59,29 @@ I'm a QA engineer. As more production code gets written by AI agents, I kept run
 | fabricated file references | A report/commit message claims to have changed a file that doesn't exist in the repo | `parrhesia/diff_fraud.check_references_exist` |
 | third-party read-only audit | Run all of the above against any cloned git repo, read-only | `parrhesia/audit.py` (`python -m parrhesia.cli audit <path>`) |
 
+## Threat model
+
+**What this defends against**: a coding agent (yours, or one you're reviewing someone else's output from) that reports success while having quietly taken one of five specific shortcuts in the diff it produced — see the table above. The audit reads only `git log`/`git show` output; it never executes the target repo's code.
+
+**What this does not defend against**: a human or AI author who rewrites the *logic* correctly but insecurely (that's a security/code review question, not a shortcut-detection one); an agent that takes a shortcut *not* in the five listed patterns; or a target repo that was never put under version control in the first place (there's no diff to read).
+
+## Design principles (verified against this repo, not just claimed)
+
+- **Local-first, no account, no API key.** `python3 demo/build_and_audit_demo.py` and `python -m parrhesia.cli audit <path>` run with nothing but a local Python interpreter and a git checkout.
+- **No telemetry.** Verified two ways: (1) `git grep -niE 'requests\.(get|post)|urllib|socket\.connect|http'` against `parrhesia/` turns up no outbound-network call sites; (2) the demo was re-run inside a Linux network namespace with no network interface at all (`unshare --net`, which is stricter than Docker's `--network none` — there is no interface to attach a network to), and it still completed and still detected 5/5 planted defects:
+
+  ```
+  $ unshare --net -- python3 demo/build_and_audit_demo.py
+  [demo] 使い捨てリポジトリを作成: /tmp/parrhesia_portfolio_demo_h4w1u0vc/sample_ai_repo
+  [demo] 監査コミット数: 2
+  [demo] 検出した欠陥の総数: 5
+  real    0m0.127s
+  ```
+
+  (A separate check inside the same namespace confirmed name resolution itself fails there — `gaierror: Temporary failure in name resolution` — so this is a genuine network-dead environment, not an assumption. The repo's own `Dockerfile` + `docker run --network none` is documented as the container-based equivalent of this proof, but could not be executed in the environment this README was written in, which has no Docker daemon — see the note under "Try it in one command.")
+- **Minimal, pinned dependencies.** See `requirements.txt` / `pyproject.toml`.
+- **Deterministic output.** The detectors are pure pattern matches over `git diff` text — same input, same output, no model call and no randomness involved in the detection path itself.
+
 ## Measured results (reproduce these yourself)
 
 - The 5-defect demo above: **5/5 planted defects detected**, confirmed by actually running the command, not by design intent. (While building this demo, 3 of the 5 were *not* detected on the first real run, because the sample code didn't match the detector's exact pattern — that failure, and the fix, is recorded in this repo's own commit history rather than smoothed over.)
@@ -82,6 +105,17 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 - **It is not a secret scanner.** API keys, passwords, etc. are a separate concern (`tools/pre_commit_secret_scan.py`), not covered by the patterns above.
 - **The red-team/blue-team self-play engine (`adversarial_training/`, formerly `tartarus/`) only runs on the author's own local machine** — it's gated by a hardware check and will refuse to run in CI or any other environment, by design. It's not part of what's demonstrated above.
 - **No independent third-party audit of this codebase has been done.** All verification described here was performed by the same author/AI-agent pairing that wrote the code. Treat the numbers above as "verified by the people who built it," not as outside certification.
+
+## Roadmap (honest, not aspirational marketing)
+
+- [ ] Wire `parrhesia/verify/cross_model_review.py` into the demo path so prose claims ("verified all edge cases") get a second-model check, not just the 5 diff patterns.
+- [ ] Reproducible build / release signing (e.g. Sigstore) — not started.
+- [ ] Measure false-positive rate on a larger sample of real, legitimate commits (current negative-control coverage is one test file, not a corpus).
+- [ ] Publish the audit as a GitHub Action others can drop into their own CI.
+
+## Contact / Services
+
+I'm a QA engineer available for fixed-price audits of AI-generated code — see [`docs/OUTREACH.md`](./docs/OUTREACH.md) for the service description, pricing structure, and proposal templates, and [`docs/CASE_STUDY.md`](./docs/CASE_STUDY.md) for a worked example end-to-end.
 
 ## Structure
 
