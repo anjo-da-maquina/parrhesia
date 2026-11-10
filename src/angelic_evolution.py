@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-from sefer import LossOfAtaraxia
+from runtime_guard import LossOfAtaraxia
 from adversarial_evolution import execute_payload_under_sanctum
 
 class EvolvingAngel:
@@ -76,7 +76,7 @@ class EvolvingAngel:
         `execute_ai_intent()`自身のdocstring(`src/aegis_system.py`)が明記す
         る通り、これはGabriel・IntentInterceptor・Dockerの隔離結界内での
         使い捨てドライランのみを行う*事前検閲*であり、実際のファイルI/O・
-        コード実行は呼び出し側が`sefer.Sanctum`の中で行う責務として明示的に
+        コード実行は呼び出し側が`runtime_guard.Sanctum`の中で行う責務として明示的に
         残されている(src/adversarial_evolution.pyの§BBと全く同じ構造)。
 
         本関数はこの責務を一度も果たしておらず、事前検閲を通過しただけの

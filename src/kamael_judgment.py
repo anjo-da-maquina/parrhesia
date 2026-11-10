@@ -9,7 +9,7 @@ src/kamael_judgment.py
      ことは何の追加保護にもならず、「保護されている」という誤った印象を
      与えるだけの表示だった(angelic_shield.py モジュールdocstring参照)。
 
-  2. `sefer.inquisition()`(Gabriel)で発見・修正したのと同じバグが
+  2. `runtime_guard.inquisition()`(Gabriel)で発見・修正したのと同じバグが
      `KamaelInquisitor.visit_Call` にも存在した: `node.func.attr` は
      `os.system(...)` のような呼び出しのバレ属性名(`"system"`)しか
      取得できず、`shield_rules.json` の `blocked_functions` に
@@ -34,7 +34,7 @@ def _qualified_call_name(func_node) -> str:
     例: `os.system(...)` の `node.func` → "os.system"
         `a.b.c(...)` の `node.func` → "a.b.c"
     復元できない場合（単純な名前以外から始まる式など）は空文字を返す。
-    [sefer.inquisition() の同種修正(GRIMOIRE.md §E)と同一のロジック]
+    [runtime_guard.inquisition() の同種修正(GRIMOIRE.md §E)と同一のロジック]
     """
     parts = []
     node = func_node

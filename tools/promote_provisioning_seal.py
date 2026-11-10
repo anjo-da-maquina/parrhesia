@@ -2,7 +2,7 @@
 Provisioning 承認プロモーションツール
 ========================================
 [新設 2026-10] `adapters/provisioning_agent.py` がキューイングした
-環境承認の提案(`sefer/provisioning_pending.json`)を、人間が内容
+環境承認の提案(`runtime_guard/provisioning_pending.json`)を、人間が内容
 （client_id・hardware_fingerprint・有効期限）を確認した上で、
 `maquina_gatekeeper.py`の信頼の起点(`MAQUINA_PUBLIC_KEY_PEM`)へ
 反映し、`ataraxia_certificate.json`を発行するためのツール。
@@ -26,7 +26,7 @@ from pathlib import Path
 PLEROMA_DIR = Path(__file__).parent.parent
 GATEKEEPER_PATH = PLEROMA_DIR / "maquina_gatekeeper.py"
 CERT_PATH = PLEROMA_DIR / "ataraxia_certificate.json"
-PENDING_PATH = PLEROMA_DIR / "sefer" / "provisioning_pending.json"
+PENDING_PATH = PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json"
 
 
 def _pubkey_fingerprint(pubkey_pem: str) -> str:
@@ -76,7 +76,7 @@ def list_pending():
     これらはいずれも「この提案が本当に正当なデバイスからのものか」を
     一切保証しない(hardware_fingerprintはローカルで誰でも計算できる
     非秘密の値であり、client_idは単なる自己申告の文字列である)。
-    つまり、`sefer/provisioning_pending.json`への書き込み権限を持つ
+    つまり、`runtime_guard/provisioning_pending.json`への書き込み権限を持つ
     攻撃者が、見た目上は全く正常な提案(本物のclient_id・本物の
     hardware_fingerprint)に、攻撃者自身が生成した鍵対の公開鍵・署名を
     組み合わせて偽の提案を紛れ込ませても、審査者はそれを見分ける手段を

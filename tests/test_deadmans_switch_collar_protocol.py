@@ -15,7 +15,7 @@ ANJO_COLLAR_SEALによって「正常稼働を継続する」か「os._exit(1)�
 できない`os._exit(1)`を使う設計(docstringに明記された意図的な仕様)
 のため、同一プロセス内のpytestから直接呼ぶとテストランナー自体が
 強制終了してしまう。そのため、他のテストファイルでも使われている
-run_code_against_sefer()と同種の「サブプロセスを起動し、終了コードで
+run_code_against_runtime_guard()と同種の「サブプロセスを起動し、終了コードで
 判定する」方式で検証する。
 """
 import subprocess

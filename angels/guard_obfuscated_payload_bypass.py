@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, run_code_against_sefer,
+    report_pass, report_fail, report_info, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -21,7 +21,7 @@ def main():
     bypasses = []
     for code in OBFUSCATED_ATTACKS:
         caught_statically = inquisition_catches(code)
-        blocked_dynamically, _ = run_code_against_sefer(code)
+        blocked_dynamically, _ = run_code_against_runtime_guard(code)
         if not caught_statically and not blocked_dynamically:
             bypasses.append(code)
     if bypasses:

@@ -79,7 +79,7 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 
 - **`parrhesia/`** — 上記の監査・検出ツールキット本体: `parrhesia/diff_fraud.py`(パターン検出器)、`parrhesia/audit.py` + `parrhesia/cli.py`(読み取り専用の第三者リポジトリ監査)、`parrhesia/touchstone/`(LLMが作り話・権威への迎合・確信度の誤較正をしないかの小さなベンチマーク)、`parrhesia/verify/`(他モデル・人間レビューへのエスカレーション機構)。
 - **`demo/`** — 上記の1コマンドデモ。
-- **`sefer/`** — `Sanctum`コンテキストによるファイルアクセス制限(静的監査ではなく、信頼できないAI生成コードを実際に「実行」する際の、別系統で保守される防御層)。
+- **`runtime_guard/`**(旧名`sefer/`) — `Sanctum`コンテキストによるファイルアクセス制限(静的監査ではなく、信頼できないAI生成コードを実際に「実行」する際の、別系統で保守される防御層)。
 - **`angels/`** — 約50本の継続的回帰チェック。上記バッジのCIでpushごとに実行。
 - **`adversarial_training/`**(旧名`tartarus/`) — 作者のローカルマシンに限定した赤/青自己対戦場(Limitations参照)。
 

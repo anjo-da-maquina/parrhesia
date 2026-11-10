@@ -43,7 +43,7 @@ fake_ollama.chat = lambda **kw: {{"message": {{"content": ""}}}}
 sys.modules["ollama"] = fake_ollama
 
 from ollama_agent_loop import AnjoOllamaExecutor
-from sefer import LossOfAtaraxia as SeferLossOfAtaraxia
+from runtime_guard import LossOfAtaraxia as SeferLossOfAtaraxia
 
 executor = AnjoOllamaExecutor(workspace_root={workspace_root!r})
 action_req = json.loads({action_req_json!r})

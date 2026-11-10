@@ -4,11 +4,11 @@ tests/test_audit_log_format_integrity.py
 [新設 2026-11] angels/audit_log_format_integrity.py の単体テスト。
 
 本天使(「サンダルフォンの響き」)は、監査証跡ファイル
-(`sefer/audit_chain.jsonl`)自体の存在・可読性・各行がJSONLとして
+(`runtime_guard/audit_chain.jsonl`)自体の存在・可読性・各行がJSONLとして
 妥当な形式であることを検証する。天使群のテストカバレッジの棚卸しの
 過程で、専用テストが一件も存在しないことが判明した。
 
-`main()`は`ROOT / "sefer" / "audit_chain.jsonl"`という固定パスを直接
+`main()`は`ROOT / "runtime_guard" / "audit_chain.jsonl"`という固定パスを直接
 参照するため、`audit_log_format_integrity.ROOT`をテストごとに一時ディレクトリへ
 monkeypatchして検証する。
 """
@@ -49,9 +49,9 @@ def test_reports_not_applicable_when_chain_file_is_missing(monkeypatch, tmp_path
 def test_fails_when_jsonl_has_malformed_lines(monkeypatch, tmp_path):
     """[核心] 監査証跡に1行でもJSONLとしてパース不能な行があれば、本
     天使が正しくFAIL(sys.exit(1))することを確認する。"""
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    log_path = sefer_dir / "audit_chain.jsonl"
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    log_path = runtime_guard_dir / "audit_chain.jsonl"
     log_path.write_text(
         '{"event": "ok", "n": 1}\n'
         "this is not valid json\n"
@@ -73,9 +73,9 @@ def test_passes_when_all_lines_are_valid_jsonl(monkeypatch, tmp_path):
     import io
     from contextlib import redirect_stdout
 
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    log_path = sefer_dir / "audit_chain.jsonl"
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    log_path = runtime_guard_dir / "audit_chain.jsonl"
     log_path.write_text(
         '{"event": "ok", "n": 1}\n'
         "\n"

@@ -1,5 +1,5 @@
 ﻿"""
-[テスト追加 2026-10] sefer/audit_chain.py (SignedAuditChain) の回帰テスト。
+[テスト追加 2026-10] runtime_guard/audit_chain.py (SignedAuditChain) の回帰テスト。
 GRIMOIRE.md §AE 参照。
 
 背景: 以前のSignedAuditChainは"Signed"(署名付き)と名乗りながら、実際には
@@ -11,7 +11,7 @@ verify_integrity()に改ざんを検知させずに済ませられてしまう(=
 鍵ファイルを持たない攻撃者による「整合性を保った改ざん」を固定する。
 """
 import json
-from sefer.audit_chain import SignedAuditChain
+from runtime_guard.audit_chain import SignedAuditChain
 
 def test_audit_chain_integrity(tmp_path):
     log_path = tmp_path / "chain.jsonl"

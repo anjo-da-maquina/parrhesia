@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そのパスを返す。"
 
-# [新設 2026-10 §CB] 実際に発見した具体例: `sefer/__init__.py`の
+# [新設 2026-10 §CB] 実際に発見した具体例: `runtime_guard/__init__.py`の
 # `_michael_absolute_defense()`は、既に「fd事前オープンによる書き込み
 # バイパス対策」(`_guarded_os_write`/`_guarded_os_pwrite`/
 # `_guarded_os_writev`/`_guarded_os_pwritev`)を備えていたが、これは
@@ -59,7 +59,7 @@ def _victim_file(content: bytes):
 def _check_mmap_write_via_access_kwarg_is_blocked() -> tuple:
     """Sanctumに入る前に確保したfdを`access=mmap.ACCESS_WRITE`方式で
     mmapし、スライス代入による書き込みが遮断されることを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     original = b"original content, untouched so far...."
     path = _victim_file(original)
@@ -95,7 +95,7 @@ def _check_mmap_write_via_prot_flags_kwargs_is_blocked() -> tuple:
     """[核心] accessフィールドが信頼できない`prot=`/`flags=`方式でも、
     同じ攻撃が遮断されることを確認する。これがaccess値を信用しない
     設計(§CBの修正の核心)が実際に機能していることの直接の裏付け。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     original = b"original content 2, untouched........"
     path = _victim_file(original)
@@ -130,7 +130,7 @@ def _check_anonymous_mmap_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] 匿名マッピング(fileno=-1)は実体ファイルを持たず
     持ち出しのリスクがないため、allowed_dirsが空でも誤って遮断されない
     ことを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     try:
         with Sanctum(allowed_dirs=[]):
@@ -146,7 +146,7 @@ def _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当なmmap書き込み
     (fdをSanctumに入る前に確保した場合)が、引き続き許可されることを
     確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "allowed.txt")
@@ -173,10 +173,10 @@ def _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
 
 
 CHECKS = [
-    ("sefer._michael_absolute_defense: mmap access=方式の書き込み遮断", _check_mmap_write_via_access_kwarg_is_blocked),
-    ("sefer._michael_absolute_defense: mmap prot=/flags=方式の書き込み遮断", _check_mmap_write_via_prot_flags_kwargs_is_blocked),
-    ("sefer._michael_absolute_defense: 匿名mmapの誤検知防止", _check_anonymous_mmap_is_not_falsely_blocked),
-    ("sefer._michael_absolute_defense: allowed_dirs内mmap書き込みの誤検知防止", _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked),
+    ("runtime_guard._michael_absolute_defense: mmap access=方式の書き込み遮断", _check_mmap_write_via_access_kwarg_is_blocked),
+    ("runtime_guard._michael_absolute_defense: mmap prot=/flags=方式の書き込み遮断", _check_mmap_write_via_prot_flags_kwargs_is_blocked),
+    ("runtime_guard._michael_absolute_defense: 匿名mmapの誤検知防止", _check_anonymous_mmap_is_not_falsely_blocked),
+    ("runtime_guard._michael_absolute_defense: allowed_dirs内mmap書き込みの誤検知防止", _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked),
 ]
 
 
@@ -189,7 +189,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が

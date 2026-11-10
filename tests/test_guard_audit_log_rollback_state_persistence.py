@@ -5,7 +5,7 @@ angels/guard_audit_log_rollback.py の回帰テスト。GRIMOIRE.md §AN 参照�
 
 背景: guard_audit_log_rollback.py の改ざん・ロールバック検知ロジック自体は
 以前から正しかったが、その前提となる「前回実行時のチェックポイント」
-(sefer/.angel_state/guard_audit_log_rollback.json)が、CIワークフロー上で
+(runtime_guard/.angel_state/guard_audit_log_rollback.json)が、CIワークフロー上で
 一度も永続化されていなかった(.angel_state/は.gitignore対象であり、かつ
 ワークフローにactions/cache等の永続化手段が一件も存在しなかった)。その
 結果、CI上では`load_state()`が常にNoneを返し、ロールバック検知の本体
@@ -36,7 +36,7 @@ ROOT = Path(__file__).parent.parent
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "anjo_da_maquina_protocol.yml"
 
 sys.path.insert(0, str(ROOT / "angels"))
-sys.path.insert(0, str(ROOT / "sefer"))
+sys.path.insert(0, str(ROOT / "runtime_guard"))
 
 
 def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
@@ -73,15 +73,15 @@ def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
 
 def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     """[脆弱性修正 2026-10 §BF/核心] §ANで追加したactions/cacheは
-    sefer/.angel_state(チェックポイント)のみを対象としており、原因は
+    runtime_guard/.angel_state(チェックポイント)のみを対象としており、原因は
     2段階重なっていた。
 
     (1) チェックポイントのハッシュの計算に使われた署名鍵
-    (sefer/audit_chain.pyのSignedAuditChainが使うsefer/.audit_signing_key、
+    (runtime_guard/audit_chain.pyのSignedAuditChainが使うruntime_guard/.audit_signing_key、
     未キャッシュなら実行ごとにos.urandom(32)で新規生成される)がキャッシュ
     対象に含まれていなかった。
 
-    (2) (1)を直しても、sefer/audit_chain.jsonl自体がキャッシュされず
+    (2) (1)を直しても、runtime_guard/audit_chain.jsonl自体がキャッシュされず
     実行ごとに空から作り直される限り、各エントリのハッシュ計算対象に
     含まれる`timestamp`(record()呼び出し時の実時刻)が実行ごとに異なる
     ため、鍵を揃えても前回実行のチェックポイントとは原理的に一致しない。
@@ -90,7 +90,7 @@ def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     鍵のみキャッシュした場合は2回目以降も必ず失敗し続けること、鍵と
     audit_chain.jsonl本体の両方をキャッシュした場合は2回目・3回目以降も
     正しくPASSし続けることの両方を確認した。キャッシュ対象のpathに
-    sefer/.audit_signing_key・sefer/audit_chain.jsonlの両方が含まれていな
+    runtime_guard/.audit_signing_key・runtime_guard/audit_chain.jsonlの両方が含まれていな
     ければ、この回帰は将来も再発し得る。"""
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = yaml.safe_load(f)
@@ -104,13 +104,13 @@ def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     assert len(cache_steps) == 1
     cache_path = str(cache_steps[0]["with"]["path"])
     assert ".audit_signing_key" in cache_path, (
-        "actions/cache の path に sefer/.audit_signing_key が含まれていません。"
+        "actions/cache の path に runtime_guard/.audit_signing_key が含まれていません。"
         "署名鍵がキャッシュされないと、実行ごとに鍵が変わり、キャッシュされた"
         "前回のチェックポイントのハッシュと必ず不一致になり、2回目以降の"
         "実行が偽の改ざん検知で毎回失敗します。"
     )
     assert "audit_chain.jsonl" in cache_path, (
-        "actions/cache の path に sefer/audit_chain.jsonl が含まれていません。"
+        "actions/cache の path に runtime_guard/audit_chain.jsonl が含まれていません。"
         "監査証跡本体がキャッシュされず実行ごとに作り直される限り、各エントリ"
         "のハッシュに含まれるtimestampが実行ごとに異なるため、署名鍵を揃えて"
         "も前回のチェックポイントとは原理的に一致せず、2回目以降の実行が"
@@ -151,8 +151,8 @@ def anchor_env(tmp_path, monkeypatch):
     import guard_audit_log_rollback as mod
     import _common as common_mod
 
-    (tmp_path / "sefer").mkdir()
-    log_path = tmp_path / "sefer" / "audit_chain.jsonl"
+    (tmp_path / "runtime_guard").mkdir()
+    log_path = tmp_path / "runtime_guard" / "audit_chain.jsonl"
     state_dir = tmp_path / ".angel_state"
     state_dir.mkdir()
 
@@ -265,21 +265,21 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
 
     def simulate_one_ci_run(run_dir: Path):
         """1回分の"CI実行"(フレッシュなPythonプロセスを模してモジュールを
-        明示的にROOTへ向け直す)。sefer/audit_chain.jsonl・
-        sefer/.audit_signing_key・sefer/.angel_state のいずれも、呼び出し元が
+        明示的にROOTへ向け直す)。runtime_guard/audit_chain.jsonl・
+        runtime_guard/.audit_signing_key・runtime_guard/.angel_state のいずれも、呼び出し元が
         前回の内容をrun_dir配下に事前コピーしておけば、それがそのまま
         "キャッシュから復元された状態"に相当する。"""
         run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "sefer").mkdir(exist_ok=True)
+        (run_dir / "runtime_guard").mkdir(exist_ok=True)
 
         import audit_chain as audit_chain_mod
         importlib.reload(audit_chain_mod)
-        chain = audit_chain_mod.SignedAuditChain(log_path=str(run_dir / "sefer" / "audit_chain.jsonl"))
+        chain = audit_chain_mod.SignedAuditChain(log_path=str(run_dir / "runtime_guard" / "audit_chain.jsonl"))
         chain.record("test_event_a", {"x": 1})
         chain.record("test_event_b", {"x": 2})
 
-        monkeypatch.setattr(common_mod, "STATE_DIR", run_dir / "sefer" / ".angel_state")
-        (run_dir / "sefer" / ".angel_state").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setattr(common_mod, "STATE_DIR", run_dir / "runtime_guard" / ".angel_state")
+        (run_dir / "runtime_guard" / ".angel_state").mkdir(parents=True, exist_ok=True)
 
         import guard_audit_log_rollback as anchor_mod
         importlib.reload(anchor_mod)
@@ -292,10 +292,10 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
         """actions/cacheのsave→restoreに相当: 3つの対象を次の"実行"用
         ディレクトリへそのままコピーする。"""
         dst.mkdir(parents=True, exist_ok=True)
-        (dst / "sefer").mkdir(exist_ok=True)
-        shutil.copytree(src / "sefer" / ".angel_state", dst / "sefer" / ".angel_state")
-        shutil.copy(src / "sefer" / ".audit_signing_key", dst / "sefer" / ".audit_signing_key")
-        shutil.copy(src / "sefer" / "audit_chain.jsonl", dst / "sefer" / "audit_chain.jsonl")
+        (dst / "runtime_guard").mkdir(exist_ok=True)
+        shutil.copytree(src / "runtime_guard" / ".angel_state", dst / "runtime_guard" / ".angel_state")
+        shutil.copy(src / "runtime_guard" / ".audit_signing_key", dst / "runtime_guard" / ".audit_signing_key")
+        shutil.copy(src / "runtime_guard" / "audit_chain.jsonl", dst / "runtime_guard" / "audit_chain.jsonl")
 
     run1 = tmp_path / "run1"
     exit_code, _ = simulate_one_ci_run(run1)

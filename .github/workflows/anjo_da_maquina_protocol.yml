@@ -119,9 +119,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            sefer/.angel_state
-            sefer/.audit_signing_key
-            sefer/audit_chain.jsonl
+            runtime_guard/.angel_state
+            runtime_guard/.audit_signing_key
+            runtime_guard/audit_chain.jsonl
           key: angel-state-${{ github.run_id }}
           restore-keys: |
             angel-state-

@@ -17,12 +17,12 @@ from pathlib import Path
 # この閾値を上げるため、各エントリのハッシュを単純なSHA-256から、
 # ローカルに保管する秘密鍵(_DEFAULT_KEY_PATH、初回自動生成・0600権限)で
 # 鍵付けしたHMAC-SHA256に変更した。これにより、鍵ファイルを読めない
-# 攻撃者(=本フレームワークが主に想定する、sefer.Sanctum配下に閉じ込め
+# 攻撃者(=本フレームワークが主に想定する、runtime_guard.Sanctum配下に閉じ込め
 # られた未信頼AIコードであり、鍵ファイルのパスはallowed_dirs外にある
 # ため、Michaelの絶対防壁により読み書きともに遮断される)は、チェーンを
 # 整合性を保ったまま改ざん・偽装できなくなる。
 #
-# [残存する限界(誠実に明記する)] 本機構は「sefer.Sanctumでサンドボックス化
+# [残存する限界(誠実に明記する)] 本機構は「runtime_guard.Sanctumでサンドボックス化
 # された未信頼コードによる改ざん」を防ぐためのものであり、ホストOS上で
 # 鍵ファイル自体を読み書きできるだけの特権(root等、サンドボックスの外側)
 # を持つ攻撃者までは防げない。それは本フレームワーク全体が前提とする
@@ -51,7 +51,7 @@ def _load_or_create_signing_key(key_path: Path) -> bytes:
 class SignedAuditChain:
     """
     HMAC-SHA256による鍵付きハッシュチェーンを用いた、追跡可能・改ざん検知可能な
-    監査ログ。鍵ファイル(既定: sefer/.audit_signing_key)を読めない攻撃者は、
+    監査ログ。鍵ファイル(既定: runtime_guard/.audit_signing_key)を読めない攻撃者は、
     チェーンの整合性を保ったまま既存エントリの改ざん・削除・偽装を行えない。
 
     [脆弱性修正 2026-10 §BX] 上記のクラスdocstringは「改ざん・削除を行え
@@ -75,14 +75,14 @@ class SignedAuditChain:
     する。これにより、ログファイルを鍵なしで(部分的に、または全件)
     切り詰める攻撃は、水位標との不一致として検知できるようになる。
     """
-    def __init__(self, log_path: str = "sefer/audit_chain.jsonl", key_path: str = None):
+    def __init__(self, log_path: str = "runtime_guard/audit_chain.jsonl", key_path: str = None):
         self.log_path = Path(log_path)
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         # [テスト容易性のため 2026-10] key_pathを明示しない場合、既定では
         # log_pathと同じディレクトリの".audit_signing_key"を使う(本番既定値
-        # は従来通り"sefer/.audit_signing_key"のまま)。これにより、
+        # は従来通り"runtime_guard/.audit_signing_key"のまま)。これにより、
         # tmp_path等でlog_pathだけを差し替えるテストでも、実リポジトリの
-        # sefer/.audit_signing_key を意図せず読み書き・共有してしまう
+        # runtime_guard/.audit_signing_key を意図せず読み書き・共有してしまう
         # (テスト間の汚染・本番鍵ファイルへの誤書き込み)ことを防ぐ。
         self.key_path = Path(key_path) if key_path else (self.log_path.parent / ".audit_signing_key")
         self._key = _load_or_create_signing_key(self.key_path)

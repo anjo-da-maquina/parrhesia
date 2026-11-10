@@ -1,4 +1,4 @@
-﻿from sefer import inquisition
+﻿from runtime_guard import inquisition
 
 def test_linter_returns_findings_list():
     code = "import ctypes\nval = eval('1+1')"

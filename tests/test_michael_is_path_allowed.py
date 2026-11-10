@@ -1,5 +1,5 @@
 """
-[テスト追加 2026-10] sefer/__init__.py の _is_path_allowed() の回帰テスト。
+[テスト追加 2026-10] runtime_guard/__init__.py の _is_path_allowed() の回帰テスト。
 
 背景: _is_path_allowed() のフォールバック文字列比較が .lower() により
 大文字小文字を無視して行われていたため、allowed_dirs と大文字小文字が
@@ -18,7 +18,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from sefer import _is_path_allowed  # noqa: E402
+from runtime_guard import _is_path_allowed  # noqa: E402
 
 
 def test_path_inside_allowed_dir_is_allowed(tmp_path: Path):

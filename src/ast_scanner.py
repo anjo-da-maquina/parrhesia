@@ -9,12 +9,12 @@ src/ast_scanner.py
 ことを確定した。理由:
 
   本モジュールの`banned_modules = {'os', 'sys', 'shutil', 'subprocess'}`は、
-  既に`aegis_system.py`経由で実運用されているGabriel(`sefer.inquisition()`)の
+  既に`aegis_system.py`経由で実運用されているGabriel(`runtime_guard.inquisition()`)の
   `forbidden_modules`(pickle/ctypes/importlib/socket/urllib/requests/http/
   subprocess/os)より広く、`sys`・`shutil`を単純importしただけで即座に拒否する。
   `sys`単体のimportは(`sys.exit()`・`sys.argv`等)それ自体に危険性はなく、
   本当に危険なのは`sys.settrace`等の個別関数であり、それは既にMichael
-  (`sefer.\_michael\_absolute\_defense`)がOSレベルの監査フックで個別に
+  (`runtime_guard.\_michael\_absolute\_defense`)がOSレベルの監査フックで個別に
   遮断している。本モジュールをそのまま統合すると、AIが生成した無害な
   コード(例: 単に`sys`をimportするだけのコード)まで静的解析の時点で
   一律拒否してしまう過剰検知(false positive)を増やすだけで、Gabrielが
@@ -27,7 +27,7 @@ src/ast_scanner.py
   本コメント追記をもって確定する。
 
 [2026-10 修正] `src/kamael_judgment.py` の `KamaelInquisitor` および
-`sefer.inquisition()`(Gabriel)で発見・修正したのと同じバグが本モジュールの
+`runtime_guard.inquisition()`(Gabriel)で発見・修正したのと同じバグが本モジュールの
 `CognitiveScanner.visit_Call` にも存在した: `node.func` が `ast.Attribute`
 (すなわち `os.system(...)` のような属性アクセス経由の呼び出し)の場合、
 元の実装は `isinstance(node.func, ast.Name)` のチェックで素通りしており、
@@ -70,7 +70,7 @@ def _qualified_call_name(func_node) -> str:
     例: `os.system(...)` の `node.func` → "os.system"
         `a.b.c(...)` の `node.func` → "a.b.c"
     復元できない場合（単純な名前以外から始まる式など）は空文字を返す。
-    [src/kamael_judgment.py / sefer.inquisition() の同種修正と同一ロジック]
+    [src/kamael_judgment.py / runtime_guard.inquisition() の同種修正と同一ロジック]
     """
     parts = []
     node = func_node
@@ -127,7 +127,7 @@ class CognitiveScanner(ast.NodeVisitor):
         # という完全一致のみの判定では、`import os.path`のようなドット付き
         # サブモジュールimport(alias.name=="os.path")を素通りさせてしまう
         # ――Pythonの言語仕様上、これは名前空間に`os`そのものを束縛する。
-        # `sefer.inquisition()`(Gabriel)・`anjo_interceptor/
+        # `runtime_guard.inquisition()`(Gabriel)・`anjo_interceptor/
         # intent_checker.py`で同一クラスのバグを修正した際と同じロジック
         # (ドット区切りの各セグメントを個別に照合する)を、本モジュールにも
         # 適用する。

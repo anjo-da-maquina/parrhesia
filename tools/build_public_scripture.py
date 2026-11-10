@@ -3,10 +3,10 @@ tools/build_public_scripture.py
 ==================================
 [新設 2026-10] 「ライセンス証明書機構(maquina_gatekeeper)の公開配布からの分離」
 
-これまで `pyproject.toml` の `packages = ["sefer"]` により、`sefer` パッケージ
+これまで `pyproject.toml` の `packages = ["runtime_guard"]` により、`runtime_guard` パッケージ
 単体を配布物として切り出すこと自体は既に可能な構成になっていた
 (実機検証済み: setuptools の build_py.find_all_modules() は
-`sefer/__init__.py` と `sefer/audit_chain.py` の2ファイルしか返さない)。
+`runtime_guard/__init__.py` と `runtime_guard/audit_chain.py` の2ファイルしか返さない)。
 
 しかし、これが「本当にそうなっているか」を毎回信用だけに頼るのは、
 本プロジェクトが掲げる「ゼロトラスト」の精神に反する。本モジュールは
@@ -42,9 +42,9 @@ FORBIDDEN_FILENAME_FRAGMENTS = [
     "zk_audit_trail", "remote_ledger_sync",
 ]
 FORBIDDEN_CONTENT_FRAGMENTS = [
-    # [注意] "LossOfAtaraxia" はここに含めない。sefer/__init__.py 自身が
+    # [注意] "LossOfAtaraxia" はここに含めない。runtime_guard/__init__.py 自身が
     # 同名の例外クラスを独立に定義しており(maquina_gatekeeper.py側の
-    # 同名クラスとは無関係)、これを禁止語に入れるとsefer本体が常に
+    # 同名クラスとは無関係)、これを禁止語に入れるとruntime_guard本体が常に
     # 偽陽性でブロックされてしまう(実機検証済み)。
     "MAQUINA_PUBLIC_KEY_PEM", "enforce_maquina_seal",
     "COMMANDER_HASH", "_verify_creators_air", "hardware_fingerprint",

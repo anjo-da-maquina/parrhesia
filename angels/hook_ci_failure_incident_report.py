@@ -15,7 +15,7 @@ def main():
         "github_workflow": os.getenv("GITHUB_WORKFLOW", "unknown"),
         "trigger": "failure_or_cancelled",
     }
-    report_path = ROOT / "sefer" / "incident_report.json"
+    report_path = ROOT / "runtime_guard" / "incident_report.json"
     existing = []
     if report_path.exists():
         import json
@@ -23,7 +23,7 @@ def main():
     existing.append(incident)
     import json
     report_path.write_text(json.dumps(existing, indent=2, ensure_ascii=False), encoding="utf-8")
-    report_info(NAME, f"インシデントを sefer/incident_report.json に記録しました（累計{len(existing)}件）。")
+    report_info(NAME, f"インシデントを runtime_guard/incident_report.json に記録しました（累計{len(existing)}件）。")
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ NAME = "hook_incident_kill_switch_flag - 失敗時専用フック: 連座制キ�
 
 
 def main():
-    report_path = ROOT / "sefer" / "incident_report.json"
+    report_path = ROOT / "runtime_guard" / "incident_report.json"
     if report_path.exists():
         import json
         incidents = json.loads(report_path.read_text(encoding="utf-8"))

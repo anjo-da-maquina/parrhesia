@@ -16,7 +16,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # ブロックリスト回避だった。実機検証により、`import os.path\n
 # os.remove('/etc/passwd')`が本クラスの深層検閲を完全に素通りすることを
 # 確認した上で修正した。`src/ast_scanner.py`のCognitiveScannerにも同一
-# クラスのバグが存在したため、同様に修正した(`sefer.inquisition()`は
+# クラスのバグが存在したため、同様に修正した(`runtime_guard.inquisition()`は
 # 既に同種の修正を済ませていた)。
 #
 # [一般化の方針] 「このバグをもう二度と見逃さない」ために、今回のような
@@ -24,7 +24,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # 書くことは構造的に難しい(blocklist方式の実装は今後も新しい書き方で
 # 増えていく)。そこで本天使は、個々の実装の書き方を解析するのではなく、
 # 実際にリポジトリに存在する3つのブロックリスト型AST静的解析器
-# (sefer.inquisition・IntentInterceptor.evaluate_action・
+# (runtime_guard.inquisition・IntentInterceptor.evaluate_action・
 # src/ast_scanner.verify_intent)を直接呼び出し、既知の「等価構文による
 # ブロックリスト回避」ペイロード一式を実際に食わせて、全ての検査器が
 # 正しく遮断することを継続的に検証する――「陣性経路テスト必須化」
@@ -62,8 +62,8 @@ MUST_BLOCK_PAYLOADS = [
 ]
 
 
-def _check_sefer_inquisition(code: str) -> bool:
-    from sefer import inquisition
+def _check_runtime_guard_inquisition(code: str) -> bool:
+    from runtime_guard import inquisition
     return len(inquisition(code)) > 0
 
 
@@ -88,7 +88,7 @@ def _check_ast_scanner(code: str) -> bool:
 
 
 CHECKERS = [
-    ("sefer.inquisition (Gabriel)", _check_sefer_inquisition),
+    ("runtime_guard.inquisition (Gabriel)", _check_runtime_guard_inquisition),
     ("anjo_interceptor.intent_checker.IntentInterceptor (深層検閲)", _check_intent_checker),
     ("src/ast_scanner.verify_intent (CognitiveScanner)", _check_ast_scanner),
 ]
@@ -103,7 +103,7 @@ def run_battery():
             try:
                 blocked = checker_fn(code)
             except BaseException as e:
-                # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+                # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
                 # BaseExceptionを直接継承する例外は`except Exception`
                 # では捕捉されない(angels/guard_socket_send_bypass.py
                 # の新設時に実機で発見、同種の修正を本ファイルにも適用)。

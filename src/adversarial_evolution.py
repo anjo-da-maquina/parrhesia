@@ -16,7 +16,7 @@ except ModuleNotFoundError:
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-from sefer import awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import awaken, Sanctum, LossOfAtaraxia
 
 # 自軍の完全統制下であることを示す環境変数をセット（首輪の鍵）
 os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
@@ -26,7 +26,7 @@ def execute_payload_under_sanctum(content: str):
     """[脆弱性修正 2026-10 §BB] `AegisSystem.execute_ai_intent()`は、Gabriel・
     IntentInterceptor・Dockerの隔離結界内での使い捨てドライランのみを行う
     「事前検閲」であり、実際のファイルI/O・コード実行は呼び出し側が
-    `sefer.Sanctum`の中で行う責務として明示的に残されている
+    `runtime_guard.Sanctum`の中で行う責務として明示的に残されている
     (src/aegis_system.pyのdocstring参照)。
 
     以前の`run_evolution()`はこの責務を一度も果たしておらず、
@@ -44,7 +44,7 @@ def execute_payload_under_sanctum(content: str):
     `with Sanctum(allowed_dirs=[], allowed_hosts=[]):`の中で実行する。
     攻撃者生成コードにファイル書き込み・外部接続いずれの正当な権限も無い
     ため、allowed_dirs/allowed_hostsは両方空とし、最も厳格な検証を行う。
-    Michaelが遮断した場合は`sefer.LossOfAtaraxia`がそのまま呼び出し元に
+    Michaelが遮断した場合は`runtime_guard.LossOfAtaraxia`がそのまま呼び出し元に
     伝播する(呼び出し側で捕捉し、「防壁迎撃」としてフィードバックに使う)。
     """
     awaken()

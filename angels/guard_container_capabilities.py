@@ -5,7 +5,7 @@ from _common import report_pass, report_fail, report_inconclusive, ROOT
 NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼び出しがケーパビリティ剥奪等の制限を含むことを静的に検証する。"
 
 # [新設 2026-10 §CF] これまで§CD・§CEで繰り返し正直に記録してきた通り、
-# Python層のaudit hook(sefer/maquina_gatekeeper)には構造的な限界があ
+# Python層のaudit hook(runtime_guard/maquina_gatekeeper)には構造的な限界があ
 # る――Sanctumに入る『前』に確保済みのfdや関数ポインタを使った操作は、
 # 以後いかなる新たな監査イベントも発生させずに素通りする。これは「城内
 # に関所を増やす」方式そのものの限界であり、恒久対策には「城を囲む外壁」

@@ -5,7 +5,7 @@ from pathlib import Path
 def run_guarded(code_snippet):
     script = f"""
 import sys
-from sefer import Sanctum
+from runtime_guard import Sanctum
 try:
     with Sanctum(allowed_dirs=[]):
         exec({repr(code_snippet)})

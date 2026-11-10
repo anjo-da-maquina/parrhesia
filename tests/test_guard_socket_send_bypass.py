@@ -4,7 +4,7 @@ tests/test_guard_socket_send_bypass.py
 [新設 2026-10 §CO] angels/guard_socket_send_bypass.py の単体テスト。
 
 実際に発見した具体例: `socket.socket.send()`/`sendall()`は、CPythonの
-audit eventを一切発生させない。`sefer/__init__.py`の既存の防御
+audit eventを一切発生させない。`runtime_guard/__init__.py`の既存の防御
 (`_michael_absolute_defense`が"socket.connect"/"socket.sendto"/
 "socket.sendmsg"をイベント名で監視)は、これらのイベント自体が発火
 しないsend/sendallには一切及ばず、Sanctum起動前に接続済みのソケット
@@ -107,7 +107,7 @@ def test_check_tls_write_without_sanctum_is_unaffected_directly():
 
 
 def test_battery_detects_reintroduced_tls_write_bypass_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CR] `sefer/__init__.py`の
+    """[核心・自己レッドチームの固定・§CR] `runtime_guard/__init__.py`の
     `ssl.SSLSocket.write`が(将来の変更で)再び`_guarded_ssl_socket_write`
     に差し替えられなくなった場合、本天使が正しく「遮断されなかった」
     として検知することを、実際にgit stashでこの退行を再現して確認済み
@@ -117,14 +117,14 @@ def test_battery_detects_reintroduced_tls_write_bypass_regression(monkeypatch):
         return False, "事前接続済みTLSソケットへのwrite()が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("sefer._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _vulnerable_check),
-        ("sefer._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", hsg._check_tls_write_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _vulnerable_check),
+        ("runtime_guard._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", hsg._check_tls_write_without_sanctum_is_unaffected),
     ]
     monkeypatch.setattr(hsg, "CHECKS", patched_checks)
 
     failures = hsg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "sefer._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)"
+    assert failures[0][0] == "runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)"
 
 
 def test_battery_detects_reintroduced_send_bypass_regression(monkeypatch):
@@ -137,14 +137,14 @@ def test_battery_detects_reintroduced_send_bypass_regression(monkeypatch):
         return False, "事前接続済みソケットへのsend()が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("sefer._guarded_socket_send: 事前接続バイパス遮断(§CO)", _vulnerable_check),
-        ("sefer._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", hsg._check_send_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_socket_send: 事前接続バイパス遮断(§CO)", _vulnerable_check),
+        ("runtime_guard._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", hsg._check_send_without_sanctum_is_unaffected),
     ]
     monkeypatch.setattr(hsg, "CHECKS", patched_checks)
 
     failures = hsg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "sefer._guarded_socket_send: 事前接続バイパス遮断(§CO)"
+    assert failures[0][0] == "runtime_guard._guarded_socket_send: 事前接続バイパス遮断(§CO)"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):
@@ -160,13 +160,13 @@ def test_checker_exception_is_reported_as_a_failure(monkeypatch):
 
 
 def test_checker_base_exception_is_also_reported_as_a_failure(monkeypatch):
-    """[新設・§CO追記の回帰防止] `sefer.LossOfAtaraxia`のように
+    """[新設・§CO追記の回帰防止] `runtime_guard.LossOfAtaraxia`のように
     BaseExceptionを直接継承する例外を検査関数が想定外に発生させた場合も、
     run_battery自体が未処理の例外で丸ごと落ちるのではなく、安全側に
     倒して「失敗」として報告することを確認する(本天使の新設時に
     `except Exception`では捕捉できないことを実機で発見し、
     `except BaseException`へ修正した)。"""
-    from sefer import LossOfAtaraxia
+    from runtime_guard import LossOfAtaraxia
 
     def _boom_base_exception():
         raise LossOfAtaraxia("[Sefer] Tripwire: simulated")

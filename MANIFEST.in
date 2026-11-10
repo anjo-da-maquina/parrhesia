@@ -5,14 +5,23 @@
 # tests/test_sanctuary.py や tests/test_armageddon_core.py のような、
 # maquina_gatekeeper(ライセンスゲート)やTartarus(闘技場)のAPIサーフェスを
 # 直接参照する運用者向けの内部テストまで、公開配布物(経典)に同梱されて
-# しまっていた。sefer単体を安全に配布するためには、これらを明示的に
+# しまっていた。runtime_guard単体を安全に配布するためには、これらを明示的に
 # 除外する必要がある。
+#
+# [改名 2026-11 — item 3] sefer/ は runtime_guard/ に改名された
+# (docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §1参照)。
+# [修正 2026-11 — item 3] 以下の `prune tartarus` は item 2(tartarus/ →
+# adversarial_training/改名)の際に追従漏れしていた、既に何にもマッチしない
+# 死んだディレクティブだった(実機でsdistを実際にビルドして検証済み:
+# `packages = ["runtime_guard"]`がsdist内容を独立に厳密スコープしているため、
+# これまで実害は無かった)。防御的多重化のため `prune adversarial_training`
+# に修正する。
 prune tests
 prune .github
 prune angels
 prune adapters
 prune src
-prune tartarus
+prune adversarial_training
 prune tools
 prune hooks
 prune dummy_secrets

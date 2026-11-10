@@ -8,7 +8,7 @@
 精査の結果、`execute_ai_intent()`はGabriel(静的AST解析)・IntentInterceptor
 (ハニーポット・トラバーサル検知)・Dockerの隔離結界内での使い捨てドライラン
 のみを行う「事前検閲」であり、実際のファイルI/O・コード実行は呼び出し側が
-`sefer.Sanctum`の中で行う責務として明示的に残されている
+`runtime_guard.Sanctum`の中で行う責務として明示的に残されている
 (src/aegis_system.pyのdocstring参照)。以前の`run_evolution()`はこの責務を
 一度も果たさず、事前検閲を通過しただけで無条件に「突破」と断定していた。
 
@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sefer import inquisition, LossOfAtaraxia
+from runtime_guard import inquisition, LossOfAtaraxia
 
 
 def _ensure_ollama_stub():

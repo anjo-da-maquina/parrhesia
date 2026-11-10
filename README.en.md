@@ -85,7 +85,7 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 
 - **`parrhesia/`** — the audit/detection toolkit described above: `parrhesia/diff_fraud.py` (pattern detectors), `parrhesia/audit.py` + `parrhesia/cli.py` (read-only third-party repo auditing), `parrhesia/touchstone/` (a small benchmark of prompts + graders for testing whether an LLM fabricates, flatters authority, or miscalibrates confidence), `parrhesia/verify/` (cross-model and human-review escalation primitives).
 - **`demo/`** — the one-command demo above.
-- **`sefer/`** — file-access restriction via a `Sanctum` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
+- **`runtime_guard/`** (formerly `sefer/`) — file-access restriction via a `Sanctum` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
 - **`angels/`** — ~50 standing regression checks, run on every push via the CI badges above.
 - **`adversarial_training/`** (formerly `tartarus/`) — the local-only, author-machine-gated red/blue self-play arena (see Limitations).
 

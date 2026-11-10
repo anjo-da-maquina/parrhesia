@@ -11,7 +11,7 @@ test_integrated_defense モジュール自体がリポジトリのどこにも�
 
 本モジュールが `AegisSystem` の正式な実装を提供する。4層の防御を統合する:
 
-  1. Gabriel (sefer.inquisition)   — 静的AST解析による危険コードの事前検知
+  1. Gabriel (runtime_guard.inquisition)   — 静的AST解析による危険コードの事前検知
   2. IntentInterceptor             — ハニーポット・ディレクトリトラバーサル検知
   3. WorkspaceJail                 — パスの物理的隔離(secure_resolve)
   4. DockerSandbox (Docker隔離結界、旧名Sandalphon) — OSレベルの動的実行検証（強制・既定でON）
@@ -28,7 +28,7 @@ test_integrated_defense モジュール自体がリポジトリのどこにも�
 `require_docker_sandbox=False` を明示的に渡した場合のみ無効化できる
 （テスト・デバッグ専用。本番運用では使用しないこと）。
 さらに実際にコードを実行する/ファイルを書き込む呼び出し側は、必ず
-`sefer.Sanctum` (OSレベルの audit hook) の中で実行すること。
+`runtime_guard.Sanctum` (OSレベルの audit hook) の中で実行すること。
 AegisSystemはSanctumの代替ではなく、Sanctumの前段に立つ追加の防御層である。
 """
 import sys
@@ -39,7 +39,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from sefer import inquisition
+from runtime_guard import inquisition
 from workspace_manager import WorkspaceJail
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from docker_sandbox_executor import run_in_docker_sandbox
@@ -62,7 +62,7 @@ class AegisSystem:
         `target`（操作対象パス）を実行前に検閲する。危険と判断した場合は
         PermissionError を送出する。戻り値 True は「ここまでの全層の検閲・動的
         検証を通過した」ことを意味する。実際のファイルI/Oは依然として
-        呼び出し側が `sefer.Sanctum` の中で行う必要がある。
+        呼び出し側が `runtime_guard.Sanctum` の中で行う必要がある。
         """
         # 1. Gabriel: 静的AST解析
         findings = inquisition(code)

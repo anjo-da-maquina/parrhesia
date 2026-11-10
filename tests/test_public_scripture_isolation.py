@@ -43,7 +43,7 @@ print("SDIST_PATH:" + str(p))
     raise AssertionError(f"sdistのパスを取得できませんでした。stdout={res.stdout}")
 
 
-def test_sdist_is_clean_and_contains_only_the_sefer_package(tmp_path: Path):
+def test_sdist_is_clean_and_contains_only_the_runtime_guard_package(tmp_path: Path):
     """1回のビルドで、以下の3点をまとめて検証する
     (前述の注意により、ビルド自体は1テストにつき1回のみ行う):
       1. ライセンス機構/adversarial_training(旧名Tartarus)関連の内容が混入していないこと
@@ -52,7 +52,7 @@ def test_sdist_is_clean_and_contains_only_the_sefer_package(tmp_path: Path):
          自動的に含めてしまい、MANIFEST.inでの明示的な除外が無いと、
          maquina_gatekeeper/local_only_selfplay_gateを直接参照する内部テストまで
          公開配布物に紛れ込んでしまっていた)
-      3. 過剰な除外で空っぽの配布物になっていない(sefer本体は残っている)こと
+      3. 過剰な除外で空っぽの配布物になっていない(runtime_guard本体は残っている)こと
     """
     sdist_path = _build_sdist_in_subprocess(tmp_path)
 
@@ -67,5 +67,5 @@ def test_sdist_is_clean_and_contains_only_the_sefer_package(tmp_path: Path):
     assert not any("/tests/" in n for n in names), (
         f"tests/ディレクトリが公開配布物に含まれてしまっています: {[n for n in names if '/tests/' in n]}"
     )
-    assert any(n.endswith("sefer/__init__.py") for n in names)
-    assert any(n.endswith("sefer/audit_chain.py") for n in names)
+    assert any(n.endswith("runtime_guard/__init__.py") for n in names)
+    assert any(n.endswith("runtime_guard/audit_chain.py") for n in names)

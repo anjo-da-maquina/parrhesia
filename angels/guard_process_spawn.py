@@ -15,7 +15,7 @@ NAME = "guard_process_spawn - 封鎖中にos.fork()が正しく遮断される�
 # 成立することを確認した)。
 #
 # [別個の防御層との非対称性] 本リポジトリには、本ファイルとは別個に
-# 独立して存在するもう一つのランタイム防御層`sefer/__init__.py`の
+# 独立して存在するもう一つのランタイム防御層`runtime_guard/__init__.py`の
 # `_HARD_DENY_EVENTS`があり、そちらは最初から"os.fork"/"os.forkpty"を
 # 含んでいた。つまり同じ種類の脅威(fork()によるプロセス生成)に対して、
 # 一方の防御層は既に対応済みで、もう一方(本ファイルの
@@ -170,7 +170,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が

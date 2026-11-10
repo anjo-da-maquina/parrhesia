@@ -13,7 +13,7 @@ NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/angel
 #   C. GEMINI_API_KEY を os.environ.pop() で即時消去していること
 #      (os.environ.get() のままの読み取り専用アクセスに戻っていないか)。
 #   D. KamaelInquisitorが完全修飾名(例: "os.system")でも照合すること
-#      (sefer.inquisition()と同一の修正、GRIMOIRE.md §E/§I参照)。
+#      (runtime_guard.inquisition()と同一の修正、GRIMOIRE.md §E/§I参照)。
 
 
 def main():
@@ -48,7 +48,7 @@ def main():
     # D: KamaelInquisitorの完全修飾名照合
     if "_qualified_call_name" not in judgment_text:
         report_fail(NAME, "KamaelInquisitorが完全修飾関数名(例: 'os.system')を照合していません。"
-                           "sefer.inquisition()と同じドット付き禁止名の検知漏れが再発しています。")
+                           "runtime_guard.inquisition()と同じドット付き禁止名の検知漏れが再発しています。")
 
     # E: 誤解を招く独自audit hookの重複実装が復活していないか
     if "def metatrons_seal" in shield_text or "def metatrons_seal" in judgment_text:

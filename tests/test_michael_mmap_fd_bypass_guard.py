@@ -1,7 +1,7 @@
 """
 tests/test_michael_mmap_fd_bypass_guard.py
 =============================================
-[新設 2026-10 §CB] sefer/__init__.py の _michael_absolute_defense() が
+[新設 2026-10 §CB] runtime_guard/__init__.py の _michael_absolute_defense() が
 "mmap.__new__" 監査イベントを一度も検査していなかった欠陥の回帰テスト。
 
 発見した具体的な攻撃: Sanctumコンテキストに「入る前」に、allowed_dirs
@@ -42,11 +42,11 @@ def test_mmap_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
 
         script = f"""
 import os, mmap, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 fd = os.open({victim!r}, os.O_RDWR)
 try:
-    with Sanctum(allowed_dirs=["/tmp/sefer_jail_only_does_not_exist"]):
+    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         mm = mmap.mmap(fd, 11, access=mmap.ACCESS_WRITE)
         mm[0:11] = b"via mmap!!!"
         mm.close()
@@ -77,11 +77,11 @@ def test_mmap_write_via_prot_flags_style_outside_allowed_dirs_is_also_blocked():
 
         script = f"""
 import os, mmap, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 fd = os.open({victim!r}, os.O_RDWR)
 try:
-    with Sanctum(allowed_dirs=["/tmp/sefer_jail_only_does_not_exist"]):
+    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         mm = mmap.mmap(fd, 11, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ | mmap.PROT_WRITE)
         mm[0:11] = b"via mmap!!!"
         mm.close()
@@ -105,7 +105,7 @@ def test_anonymous_mmap_is_always_allowed():
     (過剰検知の回帰防止)。"""
     script = """
 import mmap
-from sefer import Sanctum
+from runtime_guard import Sanctum
 
 with Sanctum(allowed_dirs=[]):
     mm = mmap.mmap(-1, 100)
@@ -129,7 +129,7 @@ def test_mmap_write_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, mmap
-from sefer import Sanctum
+from runtime_guard import Sanctum
 
 # Case A: fd opened BEFORE entering Sanctum, but path IS within allowed_dirs.
 fd = os.open({inside!r}, os.O_RDWR)

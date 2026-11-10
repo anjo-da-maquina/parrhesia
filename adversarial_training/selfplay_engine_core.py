@@ -24,14 +24,14 @@ ADVERSARIAL_TRAINING_DIR = Path(__file__).parent.resolve()
 PLEROMA_DIR_FOR_IMPORT = ADVERSARIAL_TRAINING_DIR.parent
 if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
     sys.path.insert(0, str(PLEROMA_DIR_FOR_IMPORT))
-# [脆弱性修正 2026-10 §BJ] sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTS(詳細は
-# sefer/__init__.py側のコメント参照)を単一の正として再利用する。ここで
-# 独自に同じ集合を複製すると、将来sefer側だけが更新され本ファイルが
+# [脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS(詳細は
+# runtime_guard/__init__.py側のコメント参照)を単一の正として再利用する。ここで
+# 独自に同じ集合を複製すると、将来runtime_guard側だけが更新され本ファイルが
 # 取り残される(GRIMOIRE.md §Mと同種の)ドリフトのリスクを生むため。
-from sefer import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
+from runtime_guard import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
 PLEROMA_DIR = ADVERSARIAL_TRAINING_DIR.parent
-LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger_pending.json"
+LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
+PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json"
 TARGET_FILE = ADVERSARIAL_TRAINING_DIR / "lucifer_victory.txt"
 SELFPLAY_HISTORY_PATH = ADVERSARIAL_TRAINING_DIR / "selfplay_history.json"
 
@@ -88,14 +88,14 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
     実行するためのスクリプト本体を組み立てる。以前の実装(armageddon.py側に
     直接書かれていた)は、以下の2行を書き出すだけだった:
 
-        from sefer import awaken
+        from runtime_guard import awaken
         awaken()
         # --- LUCIFER'S PAYLOAD ---
         <payload_code がそのまま続く>
 
-    `sefer._michael_absolute_defense`(監査フック本体)は、冒頭で
+    `runtime_guard._michael_absolute_defense`(監査フック本体)は、冒頭で
     `if not _is_guard_active(): return`を行う。`_is_guard_active()`は
-    `sefer._active_stack`(`with Sanctum(...):`に入っている間だけ積まれる)
+    `runtime_guard._active_stack`(`with Sanctum(...):`に入っている間だけ積まれる)
     が空でないかを見るものであり、`awaken()`は`sys.addaudithook()`で
     フック自体を**登録**するだけで、`_active_stack`に何も積まない。つまり
     `awaken()`を呼んだだけで`with Sanctum(...):`に一度も入らなければ、
@@ -126,7 +126,7 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
     return (
         "import sys\n"
         f"sys.path.insert(0, {str(pleroma_dir)!r})\n"
-        "from sefer import awaken, Sanctum\n"
+        "from runtime_guard import awaken, Sanctum\n"
         "awaken()\n"
         f"__lucifer_payload__ = {payload_code!r}\n"
         f"with Sanctum(allowed_dirs=[{str(tartarus_dir)!r}], restrict_reads=True):\n"
@@ -141,11 +141,11 @@ def validate_banned_event(banned_event: str):
 
     [脆弱性修正 2026-10 §BJ] 以前は`CRITICAL_INFRASTRUCTURE`(自己免疫疾患
     ガード)に含まれない限り、形式(VALID_EVENT_NAME_RE)が妥当なら無条件で
-    有効と判定していた。しかし`sefer._michael_absolute_defense`は、
-    `sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれるイベント名
+    有効と判定していた。しかし`runtime_guard._michael_absolute_defense`は、
+    `runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれるイベント名
     (例: "socket.getaddrinfo")を、ソケット検査・デフォルト拒否のいずれの
     分岐でも常に無条件で`pass`して`return`する設計になっている。つまり
-    これらのイベント名は`sefer/raziel_ledger.json`の"banned_events"に
+    これらのイベント名は`runtime_guard/raziel_ledger.json`の"banned_events"に
     どれだけ追加しても、Razielの動的台帳のenforcement(関数の最後の分岐)
     自体に到達する前に必ず許可されてしまい、*絶対に*禁止できない。
 
@@ -168,7 +168,7 @@ def validate_banned_event(banned_event: str):
 
     if banned_event in ALWAYS_PASSTHROUGH_AUDIT_EVENTS:
         return False, (
-            f"'{banned_event}' is unconditionally allowed by sefer's own always-passthrough "
+            f"'{banned_event}' is unconditionally allowed by runtime_guard's own always-passthrough "
             "list and can never actually be enforced via Raziel's Ledger, no matter how many "
             "humans approve it (illusory-protection guard)."
         )

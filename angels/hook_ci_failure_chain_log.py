@@ -6,17 +6,17 @@ NAME = "hook_ci_failure_chain_log - 失敗時専用フック: インシデント
 
 # 失敗時専用フック: インシデントの不変台帳への記録。実際の外部分散ストレージ
 # (IPFS/Arweave)への送信は本環境では行わず、ローカルの検証可能な
-# ハッシュ台帳(sefer/audit_chain.jsonl)への追記で代替する。
+# ハッシュ台帳(runtime_guard/audit_chain.jsonl)への追記で代替する。
 
 
 def main():
     sys.path.insert(0, str(ROOT))
-    from sefer import _log_violation_to_chain
+    from runtime_guard import _log_violation_to_chain
     _log_violation_to_chain("CI_FAILURE_LEDGER", {
         "message": "CI失敗イベントを不変台帳に記録しました。",
         "github_run_id": os.getenv("GITHUB_RUN_ID", "local"),
     })
-    report_info(NAME, "CI失敗イベントを sefer/audit_chain.jsonl（不変台帳）に記録しました。")
+    report_info(NAME, "CI失敗イベントを runtime_guard/audit_chain.jsonl（不変台帳）に記録しました。")
 
 
 if __name__ == "__main__":

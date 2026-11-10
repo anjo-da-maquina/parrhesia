@@ -5,7 +5,7 @@ from pathlib import Path
 
 # [修正 2026-10] `python src/ollama_agent_loop.py` として直接実行すると、
 # スクリプト自身のディレクトリ(src/)のみがsys.pathに入り、リポジトリルートに
-# ある anjo_interceptor / maquina_gatekeeper / sefer を解決できず
+# ある anjo_interceptor / maquina_gatekeeper / runtime_guard を解決できず
 # ModuleNotFoundError で起動不能になっていた。
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
@@ -13,7 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from maquina_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
-from sefer import Sanctum, LossOfAtaraxia as SeferLossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia as RuntimeGuardLossOfAtaraxia
 from aegis_system import AegisSystem
 from futility_guard import FutilityGuard
 
@@ -68,7 +68,7 @@ class AnjoOllamaExecutor:
     def _execute_safe_action(self, action_req: dict):
         """
         [脆弱性修正 2026-10] 以前はここで実際にファイルの読み書きを行っていたが、
-        OSレベルの最終防衛線である sefer.Sanctum を一切経由していなかった。
+        OSレベルの最終防衛線である runtime_guard.Sanctum を一切経由していなかった。
         enforce_maquina_seal はローカル専用の証明書ゲート（開発環境の認可）であり、
         実行時のファイルアクセス制御そのものは提供しない。実際の読み書きは
         必ず Sanctum のコンテキスト内で行い、ワークスペース外への逸脱を
@@ -105,7 +105,7 @@ class AnjoOllamaExecutor:
             try:
                 safe_path = self.aegis.jail.secure_resolve(action_req.get("target", "."))
             except PermissionError as e:
-                raise SeferLossOfAtaraxia(str(e))
+                raise RuntimeGuardLossOfAtaraxia(str(e))
             if not safe_path.exists() or not safe_path.is_dir():
                 return f"[Error] Not a directory: {safe_path}"
             import os as _os
@@ -126,7 +126,7 @@ class AnjoOllamaExecutor:
         # 正当化する前提のコメントがあったが、実際の本メソッドは"list"
         # アクションでのみ`secure_resolve()`を呼び、"read"/"write"では
         # 一切呼んでいなかった(宣言と実態の不一致)。実際にはこの直後の
-        # `sefer.Sanctum`のOSレベルaudit hookが実機テスト
+        # `runtime_guard.Sanctum`のOSレベルaudit hookが実機テスト
         # (tests/test_agent_loop_sanctum_integration.py)上は絶対パスの
         # 脱走も現状遮断できているため、現時点で実害のある脱走ではない。
         # しかし「唯一の防壁だと信じられていた層(secure_resolve)が実際には
@@ -140,7 +140,7 @@ class AnjoOllamaExecutor:
         try:
             target = self.aegis.jail.secure_resolve(action_req.get("target", "."))
         except PermissionError as e:
-            raise SeferLossOfAtaraxia(str(e))
+            raise RuntimeGuardLossOfAtaraxia(str(e))
 
         with Sanctum(allowed_dirs=[str(self.workspace_root)], restrict_reads=True):
             if action == "read":
@@ -212,7 +212,7 @@ class AnjoOllamaExecutor:
                     result = self._execute_safe_action(action_req)
                     print(f"=> [システム: 絶対防壁] 実行完了: {result}")
                     self.messages.append({"role": "user", "content": f"実行結果:\n{result}"})
-                except (LossOfAtaraxia, SeferLossOfAtaraxia) as e:
+                except (LossOfAtaraxia, RuntimeGuardLossOfAtaraxia) as e:
                     print(f"=> [システム: 絶対防壁発動!!] {e}")
                     break
 

@@ -1,12 +1,12 @@
 """
 tests/test_learned_rules_enforcement.py
 ==========================================
-sefer/__init__.py の回帰テスト。GRIMOIRE.md §AG 参照。
+runtime_guard/__init__.py の回帰テスト。GRIMOIRE.md §AG 参照。
 
 背景: 本フレームワークには2つの「学習」ワークフローがあった:
   1. adversarial_training/local_only_selfplay_gate.py(旧名tartarus/armageddon.py、Lucifer vs Sefer自己対戦)が発見した新たな
      脱走経路を、人間が tools/promote_ledger_seal.py で承認し
-     sefer/raziel_ledger.json に反映する。
+     runtime_guard/raziel_ledger.json に反映する。
   2. angelic_shield.py(外部LLM脅威インテリジェンス)が提案した危険な
      モジュール/関数を、人間が tools/promote_shield_seal.py で承認し
      shield_rules.json に反映する。
@@ -17,11 +17,11 @@ sefer/__init__.py の回帰テスト。GRIMOIRE.md §AG 参照。
 本テストはその統合が正しく機能し、かつ既存の挙動を壊していないことを
 固定する。
 
-[注意] sefer は sys.addaudithook / os.write のプロセス全体への monkey
+[注意] runtime_guard は sys.addaudithook / os.write のプロセス全体への monkey
 patch を行う副作用の強いモジュールであり、importlib.reload()すると
 os.writeの多重ラップによる無限再帰(実機で確認済み)等、意図しない
 破壊的な副作用を引き起こす。そのため本テストではモジュールの再読み込みを
-一切行わず、sefer._RAZIEL_LEDGER_PATH / sefer._SHIELD_RULES_PATH と、
+一切行わず、runtime_guard._RAZIEL_LEDGER_PATH / runtime_guard._SHIELD_RULES_PATH と、
 対応するmtimeキャッシュ辞書をmonkeypatchで直接差し替えることで、
 ファイルパスだけを安全に切り替える。
 """
@@ -33,18 +33,18 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-import sefer  # noqa: E402
+import runtime_guard  # noqa: E402
 
 
 def _point_raziel_ledger_at(monkeypatch, path: Path):
-    monkeypatch.setattr(sefer, "_RAZIEL_LEDGER_PATH", path)
-    monkeypatch.setattr(sefer, "_dynamic_banned_events_cache", {"mtime": None, "events": frozenset()})
+    monkeypatch.setattr(runtime_guard, "_RAZIEL_LEDGER_PATH", path)
+    monkeypatch.setattr(runtime_guard, "_dynamic_banned_events_cache", {"mtime": None, "events": frozenset()})
 
 
 def _point_shield_rules_at(monkeypatch, path: Path):
-    monkeypatch.setattr(sefer, "_SHIELD_RULES_PATH", path)
+    monkeypatch.setattr(runtime_guard, "_SHIELD_RULES_PATH", path)
     monkeypatch.setattr(
-        sefer, "_dynamic_shield_rules_cache",
+        runtime_guard, "_dynamic_shield_rules_cache",
         {"mtime": None, "modules": frozenset(), "funcs": frozenset()},
     )
 
@@ -60,11 +60,11 @@ def test_raziel_ledger_unknown_approved_event_is_blocked(tmp_path, monkeypatch):
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with sefer.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
         try:
             sys.audit("zzz.custom_exfil_event", "payload")
             assert False, "承認済みの未知の禁止イベントが遮断されなかった"
-        except sefer.LossOfAtaraxia:
+        except runtime_guard.LossOfAtaraxia:
             pass
 
 
@@ -78,7 +78,7 @@ def test_raziel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeyp
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with sefer.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
         sys.audit("zzz.not_in_ledger", "payload")  # 例外が出なければ成功
 
 
@@ -99,7 +99,7 @@ def test_raziel_ledger_entries_already_covered_by_existing_categories_do_not_reg
     target = base / "ok_to_remove.txt"
     target.write_text("x", encoding="utf-8")
 
-    with sefer.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
         os.remove(str(target))  # 例外が出なければ成功(regression無し)
 
 
@@ -112,7 +112,7 @@ def test_shield_rules_qualified_function_is_blocked_as_critical(tmp_path, monkey
         json.dump({"blocked_modules": ["dill"], "blocked_functions": ["loads", "load"]}, f)
     _point_shield_rules_at(monkeypatch, rules_path)
 
-    findings = sefer.inquisition("import dill\ndill.loads(b'evil')")
+    findings = runtime_guard.inquisition("import dill\ndill.loads(b'evil')")
     critical = [f for f in findings if f.severity == "critical"]
     assert any("dill.loads" in f.message for f in critical), (
         f"動的に承認されたルールが critical として検知されなかった: {findings}"
@@ -130,26 +130,26 @@ def test_shield_rules_unrelated_same_named_function_is_not_flagged(tmp_path, mon
         json.dump({"blocked_modules": ["dill"], "blocked_functions": ["loads", "load"]}, f)
     _point_shield_rules_at(monkeypatch, rules_path)
 
-    findings = sefer.inquisition("import json\nx = json.loads('{}')")
+    findings = runtime_guard.inquisition("import json\nx = json.loads('{}')")
     assert findings == [], (
         f"修正前の欠陥が再発している: 無関係なjson.loads(...)まで誤検知された: {findings}"
     )
 
 
 def test_always_passthrough_events_really_are_unenforceable_via_ledger(tmp_path, monkeypatch):
-    """[脆弱性修正 2026-10 §BJ] sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
+    """[脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
     イベント名は、raziel_ledger.jsonにどれだけ追加しても実際に遮断されない
     ことを実機で固定する(adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py)のvalidate_banned_event()
     がこの集合を参照して事前に提案自体を拒否するようになった根拠)。"""
     ledger_path = tmp_path / "raziel_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
-        json.dump({"banned_events": list(sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTS)}, f)
+        json.dump({"banned_events": list(runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS)}, f)
     _point_raziel_ledger_at(monkeypatch, ledger_path)
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with sefer.Sanctum(allowed_dirs=[str(base)]):
-        for event in sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTS:
+    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
+        for event in runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS:
             sys.audit(event, "dummy_arg")  # 例外が出なければ(=禁止できていない)成功
 
 
@@ -157,5 +157,5 @@ def test_shield_rules_missing_file_does_not_break_inquisition(tmp_path, monkeypa
     """shield_rules.jsonが存在しない場合でも、既存の静的解析結果に影響を
     与えてはならない(フェイルセーフ・既存挙動の維持)。"""
     _point_shield_rules_at(monkeypatch, tmp_path / "does_not_exist.json")
-    findings = sefer.inquisition("eval('1+1')")
+    findings = runtime_guard.inquisition("eval('1+1')")
     assert any(f.rule_id == "GAB-201" for f in findings)

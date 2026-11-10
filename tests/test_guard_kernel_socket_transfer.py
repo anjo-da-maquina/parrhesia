@@ -3,7 +3,7 @@ tests/test_guard_kernel_socket_transfer.py
 ====================================
 [新設 2026-10 §CD] angels/guard_kernel_socket_transfer.py の単体テスト。
 
-実際に発見した具体例: `sefer/__init__.py`のfd事前オープンバイパス対策は
+実際に発見した具体例: `runtime_guard/__init__.py`のfd事前オープンバイパス対策は
 os.write/os.pwrite/os.writev/os.pwritevの4系統のみをラップしていたが、
 `os.sendfile()`と`os.copy_file_range()`はいずれもCPythonのaudit event
 を一切発生させないカーネル直接転送APIであり、完全に素通りしていた。
@@ -73,7 +73,7 @@ def test_check_sendfile_to_socket_without_sanctum_is_unaffected_directly():
 
 
 def test_battery_detects_reintroduced_sendfile_socket_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CN] `sefer/__init__.py`の
+    """[核心・自己レッドチームの固定・§CN] `runtime_guard/__init__.py`の
     `_check_fd_not_socket_for_sendfile`が(将来の変更で)再び呼ばれなく
     なった場合、本天使が正しく「遮断されなかった」として検知すること
     を、実際にgit stashでこの退行を再現して確認済み(修正前は本テスト
@@ -82,16 +82,16 @@ def test_battery_detects_reintroduced_sendfile_socket_regression(monkeypatch):
         return False, "os.sendfileによるソケットへの送出が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("sefer._guarded_os_sendfile: fd事前オープン書き込み遮断", skt._check_sendfile_write_is_blocked),
-        ("sefer._guarded_os_sendfile: allowed_dirs内の誤検知防止", skt._check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
-        ("sefer._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _vulnerable_check),
-        ("sefer._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", skt._check_sendfile_to_socket_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_os_sendfile: fd事前オープン書き込み遮断", skt._check_sendfile_write_is_blocked),
+        ("runtime_guard._guarded_os_sendfile: allowed_dirs内の誤検知防止", skt._check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
+        ("runtime_guard._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _vulnerable_check),
+        ("runtime_guard._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", skt._check_sendfile_to_socket_without_sanctum_is_unaffected),
     ]
     monkeypatch.setattr(skt, "CHECKS", patched_checks)
 
     failures = skt.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "sefer._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)"
+    assert failures[0][0] == "runtime_guard._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)"
 
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
@@ -102,14 +102,14 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False, "allowed_dirs外へのsendfile書き込みが遮断されなかった(模擬)"
 
     patched_checks = [
-        ("sefer._guarded_os_sendfile: fd事前オープン書き込み遮断", _vulnerable_check),
-        ("sefer._guarded_os_sendfile: allowed_dirs内の誤検知防止", skt._check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
+        ("runtime_guard._guarded_os_sendfile: fd事前オープン書き込み遮断", _vulnerable_check),
+        ("runtime_guard._guarded_os_sendfile: allowed_dirs内の誤検知防止", skt._check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
     ]
     monkeypatch.setattr(skt, "CHECKS", patched_checks)
 
     failures = skt.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "sefer._guarded_os_sendfile: fd事前オープン書き込み遮断"
+    assert failures[0][0] == "runtime_guard._guarded_os_sendfile: fd事前オープン書き込み遮断"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):
@@ -147,7 +147,7 @@ def test_check_os_write_without_sanctum_is_unaffected_directly():
 
 
 def test_battery_detects_reintroduced_os_write_socket_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・§CQ] `sefer/__init__.py`の
+    """[核心・自己レッドチームの固定・§CQ] `runtime_guard/__init__.py`の
     `_guarded_os_write`が(将来の変更で)再び`_check_fd_not_socket`を
     呼ばなくなった場合、本天使が正しく「遮断されなかった」として検知
     することを、実際にgit stashでこの退行を再現して確認済み(修正前は
@@ -157,12 +157,12 @@ def test_battery_detects_reintroduced_os_write_socket_regression(monkeypatch):
         return False, "os.writeによるソケットfdへの書き込みが遮断されなかった(模擬)"
 
     patched_checks = [
-        ("sefer._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _vulnerable_check),
-        ("sefer._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", skt._check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
-        ("sefer._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", skt._check_os_write_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _vulnerable_check),
+        ("runtime_guard._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", skt._check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
+        ("runtime_guard._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", skt._check_os_write_without_sanctum_is_unaffected),
     ]
     monkeypatch.setattr(skt, "CHECKS", patched_checks)
 
     failures = skt.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "sefer._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)"
+    assert failures[0][0] == "runtime_guard._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)"

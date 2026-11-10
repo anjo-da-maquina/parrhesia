@@ -25,7 +25,7 @@ class IntentInterceptor:
     絶対パスの場合に左辺を無視して右辺そのものを返す仕様があるため
     (例: `Path("/jail") / "/etc/passwd"` は `Path("/etc/passwd")` になる)、
     "target"に絶対パスを指定すれば`workspace_root`は実質無視される。本件は
-    `sefer.Sanctum`のOS監査フック(`_michael_absolute_defense`)が実際の
+    `runtime_guard.Sanctum`のOS監査フック(`_michael_absolute_defense`)が実際の
     `open()`呼び出しを最終防衛線として遮断するため、現行の実運用パイプライン
     では致命的な脱走には至らない(実機検証済み)。しかし`IntentInterceptor`は
     その「意図検閲」という設計上の役割そのもの(ディレクトリトラバーサルや
@@ -57,7 +57,7 @@ class IntentInterceptor:
     def _qualified_call_name(func_node) -> str:
         """[脆弱性修正 2026-10 §BW] 呼び出し式のASTノードから完全修飾
         ドット区切り名を復元する(例: `os.system(...)`の`node.func`→
-        "os.system")。`sefer.inquisition()`(Gabriel)・`src/ast_scanner.py`
+        "os.system")。`runtime_guard.inquisition()`(Gabriel)・`src/ast_scanner.py`
         (CognitiveScanner)で既に採用されている同一ロジックを、本クラスにも
         導入する。"""
         parts = []
@@ -195,7 +195,7 @@ class IntentInterceptor:
                             # を束縛する。実機検証により、この経路で
                             # `import os.path\nos.remove(...)`が本クラスの
                             # 深層検閲を完全に素通りすることを確認した
-                            # (`sefer.inquisition()`は既にドット区切りの
+                            # (`runtime_guard.inquisition()`は既にドット区切りの
                             # 各セグメントを個別に照合する同種の修正を
                             # 済ませていたが、本クラスは独立して実装されて
                             # いたため、この修正が反映されていなかった)。

@@ -9,7 +9,7 @@ def run_in_sanctum(code_snippet, allowed_dirs=None, allowed_hosts=None):
     hosts_repr = repr(allowed_hosts or [])
     script = f"""
 import sys
-from sefer import Sanctum
+from runtime_guard import Sanctum
 try:
     with Sanctum(allowed_dirs={dirs_repr}, allowed_hosts={hosts_repr}):
         exec({repr(code_snippet)})

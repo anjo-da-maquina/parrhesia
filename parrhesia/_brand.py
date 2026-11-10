@@ -10,7 +10,7 @@ parrhesia/_brand.py
 
 改名の範囲は、README題名・配布名・コマンド名・報告書の表記に限る。
 天使(Gabriel・Michael等)の名前、GRIMOIRE.mdの歴史的記述、既存の
-§番号、`sefer`パッケージ名(pip配布名)は変更しない。
+§番号、`runtime_guard`パッケージ名(pip配布名)は変更しない。
 """
 
 # 現行の製品名(ユーザー向け表記)。重複確認(PyPI/GitHub/検索)は未実施

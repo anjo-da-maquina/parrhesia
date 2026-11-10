@@ -8,7 +8,7 @@ adapters/provisioning_agent.py の再構築(2026-10)を検証する回帰テス�
   1. provision_sanctuary() が、maquina_gatekeeper.py の
      MAQUINA_PUBLIC_KEY_PEM を直接書き換えず、また ataraxia_certificate.json
      を即座に発行しないこと(自己署名による無条件自己承認の防止)。
-  2. 提案が sefer/provisioning_pending.json に
+  2. 提案が runtime_guard/provisioning_pending.json に
      status="PENDING_HUMAN_REVIEW" として積まれること。
   3. tools/promote_provisioning_seal.py --approve で初めて
      MAQUINA_PUBLIC_KEY_PEM の更新と証明書発行が行われること。
@@ -186,7 +186,7 @@ def test_list_pending_displays_proposed_key_fingerprint_and_flags_rotation(tmp_p
     `public_key_pem`そのものを一切表示していなかった。これらの表示項目
     は、提案が本当に正当なデバイスから来たことを何一つ保証しない
     (hardware_fingerprintは誰でもローカルで計算できる非秘密値であり、
-    client_idは単なる自己申告文字列である)ため、`sefer/
+    client_idは単なる自己申告文字列である)ため、`runtime_guard/
     provisioning_pending.json`への書き込み権限を持つ攻撃者が、見た目上
     は正常な提案に攻撃者自身の公開鍵を紛れ込ませても、人間の審査者には
     それを見抜く手段が一切無かった。

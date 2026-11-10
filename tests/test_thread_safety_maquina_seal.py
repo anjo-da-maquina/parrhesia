@@ -205,7 +205,7 @@ def test_os_fork_is_blocked_while_sealed():
     いたが、同じ目的を達成できる`os.fork()`が発火する専用のaudit event
     "os.fork"は含まれていなかった。実機で確認済み: 修正前は
     `set_sanctuary_sealed(True)`の状態でも`os.fork()`が例外無しに成立
-    していた(別個に独立して存在する`sefer/__init__.py`の
+    していた(別個に独立して存在する`runtime_guard/__init__.py`の
     `_HARD_DENY_EVENTS`は既に"os.fork"を遮断していたが、本ファイルの
     `ultimate_audit_hook`には反映されていなかった)。
     """

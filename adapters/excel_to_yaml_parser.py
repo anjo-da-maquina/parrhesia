@@ -28,14 +28,14 @@ openpyxlを一切使用していなかった(インストールされている�
 では、他の天使スクリプトと同じ「対象が存在しない場合は正直にスキップ報告
 する」パターン(例: angels/check_certificate_expiry.pyの証明書未発行時の扱い)に従い、
 検査対象なしとして正常終了する。`requirements.xlsx`が将来投入された場合は
-実際にパースし、`sefer/external_requirements.yaml`へ出力する。
+実際にパースし、`runtime_guard/external_requirements.yaml`へ出力する。
 """
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_XLSX = ROOT / "requirements.xlsx"
-OUTPUT_YAML = ROOT / "sefer" / "external_requirements.yaml"
+OUTPUT_YAML = ROOT / "runtime_guard" / "external_requirements.yaml"
 
 
 def parse_excel_to_rows(xlsx_path: Path) -> list:

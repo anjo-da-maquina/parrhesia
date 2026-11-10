@@ -4,7 +4,7 @@ tests/test_check_disk_and_log_capacity.py
 [新設 2026-11] angels/check_disk_and_log_capacity.py の単体テスト。
 
 本天使(「ラグエルの天秤」)は、(1)ディスク空き容量が危険域
-(50MB未満)でないこと、(2)監査証跡(`sefer/audit_chain.jsonl`)の
+(50MB未満)でないこと、(2)監査証跡(`runtime_guard/audit_chain.jsonl`)の
 サイズが許容範囲(`MAX_AUDIT_LOG_MB`=100MB)を超えていないこと、を
 検証する(物理空間監査)。天使群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。
@@ -59,9 +59,9 @@ def test_fails_when_audit_log_exceeds_size_limit(monkeypatch, tmp_path):
     FAILする。"""
     monkeypatch.setattr(rs, "ROOT", tmp_path)
     _patch_disk_usage(monkeypatch, free_mb=500)
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    log_path = sefer_dir / "audit_chain.jsonl"
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    log_path = runtime_guard_dir / "audit_chain.jsonl"
     with open(log_path, "wb") as f:
         f.seek(int((rs.MAX_AUDIT_LOG_MB + 1) * MB) - 1)
         f.write(b"\0")
@@ -94,9 +94,9 @@ def test_passes_when_audit_log_is_within_size_limit(monkeypatch, tmp_path):
 
     monkeypatch.setattr(rs, "ROOT", tmp_path)
     _patch_disk_usage(monkeypatch, free_mb=500)
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    (sefer_dir / "audit_chain.jsonl").write_text('{"event": "x"}\n', encoding="utf-8")
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    (runtime_guard_dir / "audit_chain.jsonl").write_text('{"event": "x"}\n', encoding="utf-8")
     buf = io.StringIO()
     with redirect_stdout(buf):
         rs.main()

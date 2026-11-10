@@ -51,7 +51,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 # スコープを超えるため、意図的に将来の課題として切り出す。
 
 TARGET_DIRS_FOR_IMPORT_SCAN = [
-    "angels", "src", "adapters", "anjo_interceptor", "sefer", "tools",
+    "angels", "src", "adapters", "anjo_interceptor", "runtime_guard", "tools",
 ]
 TARGET_FILES_FOR_IMPORT_SCAN = ["maquina_gatekeeper.py"]
 
@@ -67,7 +67,7 @@ _IMPORT_TO_PACKAGE_ALIASES = {
 
 _STDLIB_NAMES = set(getattr(sys, "stdlib_module_names", ()))
 # このリポジトリ自身が持つトップレベルのディレクトリ名も、ローカルの
-# importとして除外する(例: `import adapters`・`import sefer`)。
+# importとして除外する(例: `import adapters`・`import runtime_guard`)。
 _LOCAL_TOP_LEVEL_DIRS = {
     p.name for p in ROOT.iterdir() if p.is_dir() and not p.name.startswith(".")
 }

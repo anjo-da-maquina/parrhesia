@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, report_not_applicable, run_code_against_sefer,
+    report_pass, report_fail, report_info, report_not_applicable, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -11,7 +11,7 @@ NAME = "audit_log_format_integrity - 監査証跡監査: 監査チェーンフ�
 
 # 監査証跡監査: 監査チェーンファイル自体の存在・可読性・JSONL形式の妥当性を検証する。
 def main():
-    log_path = ROOT / "sefer" / "audit_chain.jsonl"
+    log_path = ROOT / "runtime_guard" / "audit_chain.jsonl"
     if not log_path.exists():
         report_not_applicable(NAME, "監査チェーン未生成のため検査対象なし(違反が一度も記録されていないのか、チェーン自体が初期化されていないのかは本検査では判別できない)。")
         return

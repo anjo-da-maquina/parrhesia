@@ -25,8 +25,8 @@ import json
 from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
-LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger_pending.json"
+LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
+PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json"
 
 
 def _load_json(path, default):

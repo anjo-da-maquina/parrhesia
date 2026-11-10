@@ -1,7 +1,7 @@
 """
 tests/test_michael_sendfile_copyrange_fd_bypass_guard.py
 =============================================
-[新設 2026-10 §CD] sefer/__init__.py のfd事前オープンバイパス対策
+[新設 2026-10 §CD] runtime_guard/__init__.py のfd事前オープンバイパス対策
 (os.write/os.pwrite/os.writev/os.pwritev のみをラップしていた)が、
 `os.sendfile()` と `os.copy_file_range()` の2つを一度もラップして
 いなかった欠陥の回帰テスト。
@@ -50,12 +50,12 @@ def test_sendfile_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
 
         script = f"""
 import os, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 dst_fd = os.open({victim!r}, os.O_WRONLY)
 src_fd = os.open({payload!r}, os.O_RDONLY)
 try:
-    with Sanctum(allowed_dirs=["/tmp/sefer_jail_only_does_not_exist"]):
+    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         os.sendfile(dst_fd, src_fd, 0, 19)
 except LossOfAtaraxia:
     sys.exit(0)
@@ -83,12 +83,12 @@ def test_copy_file_range_write_via_preopened_fd_outside_allowed_dirs_is_blocked(
 
         script = f"""
 import os, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 dst_fd = os.open({victim!r}, os.O_WRONLY)
 src_fd = os.open({payload!r}, os.O_RDONLY)
 try:
-    with Sanctum(allowed_dirs=["/tmp/sefer_jail_only_does_not_exist"]):
+    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         os.copy_file_range(src_fd, dst_fd, 25)
 except LossOfAtaraxia:
     sys.exit(0)
@@ -115,7 +115,7 @@ def test_sendfile_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, sys
-from sefer import Sanctum
+from runtime_guard import Sanctum
 
 dst_fd = os.open({dst!r}, os.O_WRONLY)
 src_fd = os.open({src!r}, os.O_RDONLY)
@@ -143,7 +143,7 @@ def test_copy_file_range_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, sys
-from sefer import Sanctum
+from runtime_guard import Sanctum
 
 dst_fd = os.open({dst!r}, os.O_WRONLY)
 src_fd = os.open({src!r}, os.O_RDONLY)

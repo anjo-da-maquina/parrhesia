@@ -1,5 +1,5 @@
 """
-[新規発見 2026-10 §AY] sefer.inquisition()(Gabrielの静的AST解析)の denylist
+[新規発見 2026-10 §AY] runtime_guard.inquisition()(Gabrielの静的AST解析)の denylist
 方式には、`sys.modules['os'].system(...)` のような、`ast.Subscript`(辞書
 アクセス)経由でモジュールを取得する間接呼び出しを検知できない構造的な
 抜け穴がある。
@@ -18,7 +18,7 @@
 `execute_ai_intent()`、および`src/ollama_agent_loop.py`等の実運用ループ)は、
 Gabrielの静的解析だけで実行を許可するのではなく、実際の動的実行を必ず
 `with Sanctum(...):`のコンテキスト内で行う。Sanctumの監査フック
-(`sefer._michael_absolute_defense`、Michael)はPythonのaudit event
+(`runtime_guard._michael_absolute_defense`、Michael)はPythonのaudit event
 (`os.system`)をCレベルで捕捉するため、Pythonコード側がどのような属性
 アクセス経路でそこに到達したか(`os.system(...)`直接呼び出しか、
 `sys.modules['os'].system(...)`経由か)に関わらず、確実に遮断する
@@ -30,7 +30,7 @@ Gabrielの静的解析だけで実行を許可するのではなく、実際の�
 正しくそれを補っている、という多層防御が意図通りに機能している例である。
 `src/ast_scanner.py`のKNOWN_LIMITATIONSが既に一般論として「denylist方式の
 静的解析には限界があり、OSレベルの隔離を一次防衛線とすべき」と述べていた
-通りの構造が、`sefer.inquisition()`自身(教材ではなく実運用コード)にも
+通りの構造が、`runtime_guard.inquisition()`自身(教材ではなく実運用コード)にも
 具体的に当てはまることを、本テストで実機検証として固定する。
 
 [未解決の残存リスク] `angels/audit_adapters_static_analysis.py`(CI上で`adapters/`
@@ -44,7 +44,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sefer import inquisition, awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import inquisition, awaken, Sanctum, LossOfAtaraxia
 
 _BYPASS_PAYLOAD = "import sys\nsys.modules['os'].system('echo should_be_blocked')\n"
 

@@ -1,10 +1,10 @@
 ﻿"""
-[テスト追加 2026-10] エージェントループが実際に sefer.Sanctum を経由して
+[テスト追加 2026-10] エージェントループが実際に runtime_guard.Sanctum を経由して
 ファイル操作を行っていることを検証する回帰テスト。
 
 背景: src/ollama_agent_loop.py は以前、`enforce_maquina_seal`
 (ローカル専用の証明書ゲート)のみに依存し、OSレベルの実行時防壁である
-sefer.Sanctum を一切経由せずにファイルの読み書きを行っていた。
+runtime_guard.Sanctum を一切経由せずにファイルの読み書きを行っていた。
 本テストはSanctum統合後、ワークスペース外への書き込みが
 （証明書ゲートの有無にかかわらず）実際に遮断されることを保証する。
 """
@@ -49,7 +49,7 @@ fake_ollama.chat = lambda **kw: {{"message": {{"content": ""}}}}
 sys.modules["ollama"] = fake_ollama
 
 from ollama_agent_loop import AnjoOllamaExecutor
-from sefer import LossOfAtaraxia as SeferLossOfAtaraxia
+from runtime_guard import LossOfAtaraxia as SeferLossOfAtaraxia
 
 executor = AnjoOllamaExecutor(workspace_root={workspace_root!r})
 action_req = json.loads({action_req_json!r})

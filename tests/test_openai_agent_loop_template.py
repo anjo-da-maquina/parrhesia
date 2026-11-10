@@ -10,7 +10,7 @@ src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検�
      常に成功すること（遅延importが正しく機能していること）。
   2. 存在しないフォールバックimport (anjo_interceptor.maquina_gatekeeper)
      が実行コード上に存在しないこと。
-  3. _execute_safe_action が実際に sefer.Sanctum のコンテキスト内で
+  3. _execute_safe_action が実際に runtime_guard.Sanctum のコンテキスト内で
      ファイルI/Oを行う、動作する実装であること（ダミーのスタブでは
      ないこと）。
   4. run_task() が 'openai' パッケージ未インストール時、クラッシュせず
