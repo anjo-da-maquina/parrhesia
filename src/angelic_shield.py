@@ -17,7 +17,7 @@ src/angelic_shield.py
 
   2. `ZadkielDominion.assimilate_knowledge()` が、Gemini(LLM)の生出力を
      人間の承認なしに直接 `shield_rules.json`(実際に有効な禁止ルール)へ
-     反映していた。これは `tartarus/armageddon.py` で既に修正した
+     反映していた。これは `adversarial_training/local_only_selfplay_gate.py` で既に修正した
      「LLM出力を直接運用ルールに反映しない」という原則(§C, GRIMOIRE.md)
      に違反する、同種の脆弱性だった。プロンプトインジェクションや幻覚に
      よって、無関係な正規モジュール/関数が誤って禁止リストに追加される

@@ -8,7 +8,7 @@ NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/angel
 # 以下3点の修正を保ったままであることを静的に検証する。
 #   A. ZadkielDominionがLLM生出力をshield_rules.jsonへ直接反映せず、
 #      人間承認待ちキュー(shield_rules_pending.json)に積むのみであること
-#      (tartarus/armageddon.py の raziel_ledger_pending.json と同一原則)。
+#      (adversarial_training/local_only_selfplay_gate.py の raziel_ledger_pending.json と同一原則)。
 #   B. tools/promote_shield_seal.py による人間承認の昇格経路が存在すること。
 #   C. GEMINI_API_KEY を os.environ.pop() で即時消去していること
 #      (os.environ.get() のままの読み取り専用アクセスに戻っていないか)。

@@ -167,7 +167,7 @@ _HARD_DENY_EVENTS = {
 # ドリフトのリスクがあった(GRIMOIRE.md §Mと同種)ため、ここに統合した上で
 # 各検査ブロックから参照する。
 #
-# `tartarus/armageddon_core.py`の`validate_banned_event()`は、この集合を
+# `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の`validate_banned_event()`は、この集合を
 # 用いて「台帳に追加しても構造的に絶対に効果が無い」イベント名の承認提案を
 # 事前に拒否する(詳細はGRIMOIRE.md §BJ参照)。
 ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
@@ -195,10 +195,10 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
 })
 
 # Pythonの audit event 名として妥当な形式のみ許可（例: "os.system", "subprocess.Popen"）。
-# tartarus/armageddon_core.py / angels/_common.py と同一の正規表現。
+# adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py) / angels/_common.py と同一の正規表現。
 VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$")
 
-# [脆弱性修正 2026-10] `tartarus/armageddon.py`(Lucifer vs Sefer自己対戦)が
+# [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`、Lucifer vs Sefer自己対戦)が
 # 発見し、`tools/promote_ledger_seal.py`で人間が明示的に承認した新たな禁止
 # イベント(`sefer/raziel_ledger.json`の`banned_events`)は、これまで
 # `_michael_absolute_defense`から一切読み込まれておらず、承認してもシステム
@@ -271,7 +271,7 @@ def _michael_absolute_defense(event: str, args: tuple):
         # 発見: "socket.getaddrinfo"は、本関数が新設された当初から
         # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれ、ソケット通信検査
         # (下記2)・デフォルト拒否(下記4)のいずれでも無条件に`pass`して
-        # 通過していた。これは`tartarus/armageddon_core.py`の
+        # 通過していた。これは`adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の
         # `validate_banned_event`(§BJ)が「raziel_ledger.jsonにどれだけ
         # 追加しても絶対に禁止できない、見せかけの保護」の具体例として
         # 既に認識し、人間が誤って安心しないように台帳での承認自体を

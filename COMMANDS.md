@@ -19,12 +19,12 @@ git config core.hooksPath hooks
 
 ## ⚔️ 闘争と進化（アリーナ運用）
 闘技場を起動し、ルシファー（攻撃AI・堕天使）とメタトロン（防衛・QA）を3戦戦わせる。
-闘争結果は自動的に `tartarus/akashic_records.json` に記録され、次回起動時に自動浄化される。
+闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`tartarus/akashic_records.json`)に記録され、次回起動時に自動浄化される。
 メタトロンが提案する新しい禁止ルールは、直接は反映されず `sefer/raziel_ledger_pending.json`
 に人間承認待ちとしてキューイングされる。
 
 ```
-python tartarus/armageddon.py
+python adversarial_training/local_only_selfplay_gate.py
 ```
 
 ### 承認待ちルールの確認・昇格
@@ -71,7 +71,7 @@ python angels/guard_precommit_secret_leak.py
 ```
 
 ## 📊 防衛ダッシュボードの生成
-Armageddon Engineの戦績(`tartarus/akashic_records.json`)、Michaelが実際に
+Armageddon Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`tartarus/akashic_records.json`)、Michaelが実際に
 遮断したイベントの監査ログ(`sefer/audit_chain.jsonl`)、現在の禁止イベント
 一覧、各種人間承認待ちキューの件数を、1枚の自己完結したHTMLにまとめて
 可視化する。外部ライブラリ・CDNへの依存なし(オフラインで閲覧可能)。
@@ -85,7 +85,7 @@ python tools/generate_dashboard.py
 ## 📜 記憶とルールの確認
 前回の闘技場の全記録（メタトロンのQAスコアやヒントを含む）をコンソールに出力して確認する。
 ```
-cat tartarus/akashic_records.json
+cat adversarial_training/selfplay_history.json
 ```
 
 現在ミカエルが絶対禁止としているイベントのリスト（動的ルール帳）を開く。
@@ -162,7 +162,7 @@ python tools/promote_provisioning_seal.py --reject  "<client_id>"
 
 ## 📦 経典（公開配布物）のビルドと検査
 pip配布用の`sefer`単体パッケージ（経典）を実際にビルドし、ライセンス証明書機構
-（ゲートキーパー）やTartarus（闘技場）が一切混入していないことを検査する。
+（ゲートキーパー）やadversarial_training（闘技場、旧名Tartarus）が一切混入していないことを検査する。
 公開配布（PyPI等へのアップロード）の前に必ず実行すること。
 ```
 python tools/build_public_scripture.py

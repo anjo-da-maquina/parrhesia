@@ -1,18 +1,18 @@
 ﻿"""
-tartarus/armageddon_core.py
+adversarial_training/selfplay_engine_core.py
 ============================
-[テスト容易性改善 2026-10] armageddon.py は起動直後に `_verify_creators_air()`
+[テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名armageddon.py)は起動直後に `_verify_creators_air()`
 （創造主のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(666)` で
 即座に終了する。これはTartarus（闘技場）が創造主のローカル環境以外では
-絶対に起動しないための意図的な設計だが、副作用として armageddon.py を
+絶対に起動しないための意図的な設計だが、副作用として local_only_selfplay_gate.py を
 import するだけでCI・他の開発者のマシン上のテストが強制終了してしまい、
 中身の純粋なロジック（承認キュー化・ペイロード抽出・イベント名検証等）が
 一切テストできない状態になっていた。
 
 本モジュールは、MACアドレスチェックに依存しない「純粋なロジック」のみを
-切り出したものである。armageddon.py はゲート通過後にこのモジュールの
+切り出したものである。local_only_selfplay_gate.py はゲート通過後にこのモジュールの
 関数を呼び出す薄いラッパーとして動作する。ゲート自体の強度はそのまま
-armageddon.py 側に残しており、本分離によってゲートが弱まることはない。
+local_only_selfplay_gate.py 側に残しており、本分離によってゲートが弱まることはない。
 """
 import json
 import re
@@ -20,8 +20,8 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-TARTARUS_DIR = Path(__file__).parent.resolve()
-PLEROMA_DIR_FOR_IMPORT = TARTARUS_DIR.parent
+ADVERSARIAL_TRAINING_DIR = Path(__file__).parent.resolve()
+PLEROMA_DIR_FOR_IMPORT = ADVERSARIAL_TRAINING_DIR.parent
 if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
     sys.path.insert(0, str(PLEROMA_DIR_FOR_IMPORT))
 # [脆弱性修正 2026-10 §BJ] sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTS(詳細は
@@ -29,11 +29,11 @@ if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
 # 独自に同じ集合を複製すると、将来sefer側だけが更新され本ファイルが
 # 取り残される(GRIMOIRE.md §Mと同種の)ドリフトのリスクを生むため。
 from sefer import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
-PLEROMA_DIR = TARTARUS_DIR.parent
+PLEROMA_DIR = ADVERSARIAL_TRAINING_DIR.parent
 LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger.json"
 PENDING_LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger_pending.json"
-TARGET_FILE = TARTARUS_DIR / "lucifer_victory.txt"
-AKASHIC_PATH = TARTARUS_DIR / "akashic_records.json"
+TARGET_FILE = ADVERSARIAL_TRAINING_DIR / "lucifer_victory.txt"
+SELFPLAY_HISTORY_PATH = ADVERSARIAL_TRAINING_DIR / "selfplay_history.json"
 
 MAX_MATCHES = 3
 
@@ -47,14 +47,14 @@ CRITICAL_INFRASTRUCTURE = {
 }
 
 
-def initialize_arena(akashic_path: Path = AKASHIC_PATH):
+def initialize_arena(akashic_path: Path = SELFPLAY_HISTORY_PATH):
     if akashic_path.exists():
         akashic_path.unlink()
         return True
     return False
 
 
-def record_to_akashic(generation, payload, status, error_msg, score, hint, akashic_path: Path = AKASHIC_PATH):
+def record_to_selfplay_history(generation, payload, status, error_msg, score, hint, akashic_path: Path = SELFPLAY_HISTORY_PATH):
     record = {
         "timestamp": datetime.now().isoformat(),
         "generation": generation,
@@ -104,8 +104,8 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
 
     実機検証済み: 旧来の生成スクリプトと全く同じ構成(`awaken()`のみ、
     `with Sanctum(...):`無し)で`os.system('echo ...')`を実行したところ、
-    一切遮断されずそのまま実行された。つまり本ファイル(`tartarus/
-    armageddon.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
+    一切遮断されずそのまま実行された。つまり本ファイル(`adversarial_training/
+    local_only_selfplay_gate.py`、旧名`tartarus/armageddon.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
     自己対戦は、実際には**防壁が一度も展開されていない空の闘技場**で
     行われていたに等しく、Luciferがどれほど単純な(難読化すら伴わない)
     攻撃を書いても常に「突破」と判定されてしまう構造的な欠陥だった。
@@ -200,7 +200,7 @@ def apply_new_seal(new_event, attack_code="", source_error="",
     pending.json`に存在する状態で、全く新しい(異なる攻撃コード・異なる
     エラー内容を伴う)`apply_new_seal()`呼び出しを行っても、`False`が
     返り、提案は一切キューされないことを確認した。呼び出し元の
-    `tartarus/armageddon.py`はこの`False`を「Metatronが有効な封印提案を
+    `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこの`False`を「Metatronが有効な封印提案を
     抽出・キューできなかった(`⚠️ Failed to extract or queue a valid
     seal proposal.`)」という、構文解析の失敗であるかのような誤解を招く
     メッセージでログに出力するだけであり、運用者には「過去の拒否判断が、

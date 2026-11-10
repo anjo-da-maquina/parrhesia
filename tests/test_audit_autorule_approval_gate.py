@@ -10,7 +10,7 @@ tests/test_audit_autorule_approval_gate.py
 (思考統制監査)。天使群のテストカバレッジの棚卸しの過程で、専用テスト
 が一件も存在しないことが判明した。
 
-`main()`は`ROOT / "tartarus" / "armageddon.py"`等の固定パスを直接読む
+`main()`は`ROOT / "adversarial_training" / "local_only_selfplay_gate.py"`等の固定パスを直接読む
 ため、`audit_autorule_approval_gate.ROOT`を一時ディレクトリへmonkeypatchし、
 各検査項目を満たす/満たさないフィクスチャを置いて検証する。
 """
@@ -29,10 +29,10 @@ VALID_ARMAGEDDON_CORE_TEXT = (
 
 
 def _write_fixtures(root, core_text=VALID_ARMAGEDDON_CORE_TEXT, main_text=""):
-    tartarus_dir = root / "tartarus"
+    tartarus_dir = root / "adversarial_training"
     tartarus_dir.mkdir(parents=True, exist_ok=True)
-    (tartarus_dir / "armageddon.py").write_text(main_text, encoding="utf-8")
-    (tartarus_dir / "armageddon_core.py").write_text(core_text, encoding="utf-8")
+    (tartarus_dir / "local_only_selfplay_gate.py").write_text(main_text, encoding="utf-8")
+    (tartarus_dir / "selfplay_engine_core.py").write_text(core_text, encoding="utf-8")
 
 
 def _expect_fail(monkeypatch, root):
@@ -103,9 +103,9 @@ def test_passes_when_checks_satisfied_via_armageddon_py_alone(monkeypatch, tmp_p
     import io
     from contextlib import redirect_stdout
 
-    tartarus_dir = tmp_path / "tartarus"
+    tartarus_dir = tmp_path / "adversarial_training"
     tartarus_dir.mkdir(parents=True)
-    (tartarus_dir / "armageddon.py").write_text(VALID_ARMAGEDDON_CORE_TEXT, encoding="utf-8")
+    (tartarus_dir / "local_only_selfplay_gate.py").write_text(VALID_ARMAGEDDON_CORE_TEXT, encoding="utf-8")
     monkeypatch.setattr(mrm, "ROOT", tmp_path)
     buf = io.StringIO()
     with redirect_stdout(buf):

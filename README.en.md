@@ -78,7 +78,7 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 - **This is pattern-based, not semantic.** It catches the five concrete diff patterns listed above. It does **not** understand whether code is *correct*, only whether specific known shortcuts were taken.
 - **It does not grade prose.** A comment that says "verified all edge cases" without actually verifying anything is *not* caught by `diff_fraud` — that kind of self-report needs a human or a second model to read it (see `parrhesia/verify/cross_model_review.py`, which exists but isn't wired into this demo).
 - **It is not a secret scanner.** API keys, passwords, etc. are a separate concern (`tools/pre_commit_secret_scan.py`), not covered by the patterns above.
-- **The red-team/blue-team self-play engine (`tartarus/`) only runs on the author's own local machine** — it's gated by a hardware check and will refuse to run in CI or any other environment, by design. It's not part of what's demonstrated above.
+- **The red-team/blue-team self-play engine (`adversarial_training/`, formerly `tartarus/`) only runs on the author's own local machine** — it's gated by a hardware check and will refuse to run in CI or any other environment, by design. It's not part of what's demonstrated above.
 - **No independent third-party audit of this codebase has been done.** All verification described here was performed by the same author/AI-agent pairing that wrote the code. Treat the numbers above as "verified by the people who built it," not as outside certification.
 
 ## Structure
@@ -87,7 +87,7 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 - **`demo/`** — the one-command demo above.
 - **`sefer/`** — file-access restriction via a `Sanctum` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
 - **`angels/`** — ~50 standing regression checks, run on every push via the CI badges above.
-- **`tartarus/`** — the local-only, author-machine-gated red/blue self-play arena (see Limitations).
+- **`adversarial_training/`** (formerly `tartarus/`) — the local-only, author-machine-gated red/blue self-play arena (see Limitations).
 
 ## License
 

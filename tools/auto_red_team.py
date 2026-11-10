@@ -66,8 +66,8 @@ for mod_str in obfuscate_string("os"):
                     # 冒頭の `awaken()` はOSレベルの監査フック自体を登録する
                     # だけで、`sefer._active_stack`(`with Sanctum(...):`に
                     # 入っている間だけ積まれる)が空のままでは、登録された
-                    # フックは何も検査せず即座にreturnする(§AU/tartarus/
-                    # armageddon.pyで発見したのと全く同種の欠陥)。さらに、
+                    # フックは何も検査せず即座にreturnする(§AU/adversarial_training/
+                    # local_only_selfplay_gate.pyで発見したのと全く同種の欠陥)。さらに、
                     # Sanctumが実際に遮断する際に送出する例外は
                     # `sefer.LossOfAtaraxia`(`BaseException`を直接継承し、
                     # `Exception`経由ではない)であり、`RuntimeError`では

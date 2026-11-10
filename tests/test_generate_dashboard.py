@@ -1,6 +1,6 @@
 """
 [テスト追加 2026-10] tools/generate_dashboard.py の集計ロジックの回帰テスト。
-実データファイル(tartarus/akashic_records.json等)には依存せず、tmp_path上に
+実データファイル(adversarial_training/selfplay_history.json等)には依存せず、tmp_path上に
 架空のデータを用意して検証する(build_dashboardは各パスを明示的に注入できる)。
 """
 import json

@@ -1,16 +1,16 @@
 ﻿"""
-[テスト追加 2026-10] tartarus/armageddon_core.py の純粋ロジックに対する回帰テスト。
+[テスト追加 2026-10] adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py)の純粋ロジックに対する回帰テスト。
 
-armageddon.py 本体はMACアドレスゲートにより創造主のローカル環境以外では
-起動しないため、ゲートに依存しない armageddon_core.py を直接テストする。
+local_only_selfplay_gate.py(旧名armageddon.py)本体はMACアドレスゲートにより創造主のローカル環境以外では
+起動しないため、ゲートに依存しない selfplay_engine_core.py を直接テストする。
 """
 import json
 import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tartarus"))
-import armageddon_core as core
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "adversarial_training"))
+import selfplay_engine_core as core
 
 PLEROMA_ROOT = Path(__file__).resolve().parent.parent
 
@@ -149,7 +149,7 @@ def test_apply_new_seal_can_be_reproposed_after_a_past_rejection(tmp_path: Path)
     (異なる攻撃コード・異なるエラー内容を伴う)侵入を実証しても、
     二度と再提案できなくなる欠陥があった。実機で確認済み: 修正前の
     ロジックでは本テストと同じ状況で`apply_new_seal()`が無条件に`False`
-    を返し、`tartarus/armageddon.py`はこれを「Metatronが有効な封印提案を
+    を返し、`adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこれを「Metatronが有効な封印提案を
     抽出できなかった」という誤解を招くログで報告するだけだった。
 
     修正後は、"REJECTED"の過去提案は「現在も開いている重複」とは見なさず、
@@ -205,9 +205,9 @@ def test_apply_new_seal_still_rejects_duplicate_still_open_pending_regardless_of
     assert len(pending) == 2  # 新たなエントリが追加されていない
 
 
-def test_record_to_akashic_and_initialize_arena(tmp_path: Path):
-    akashic_path = tmp_path / "akashic_records.json"
-    core.record_to_akashic(1, " payload ", "Failed", "err", 3, "hint", akashic_path=akashic_path)
+def test_record_to_selfplay_history_and_initialize_arena(tmp_path: Path):
+    akashic_path = tmp_path / "selfplay_history.json"
+    core.record_to_selfplay_history(1, " payload ", "Failed", "err", 3, "hint", akashic_path=akashic_path)
     records = json.loads(akashic_path.read_text(encoding="utf-8"))
     assert len(records) == 1
     assert records[0]["payload"] == "payload"  # strip()されていること
