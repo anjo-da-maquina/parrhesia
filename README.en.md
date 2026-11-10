@@ -6,7 +6,9 @@
 
 Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (GRIMOIRE.md, Japanese)](./GRIMOIRE.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./BOUNDARY.md)
 
-**I audit code written by AI agents, and I build tools that catch the specific ways AI agents cut corners while reporting success.** This repo is both the toolkit and the record of using it on itself.
+**Catch what your coding agent skipped, hid, or faked.**
+
+I audit code written by AI agents, and I build tools that catch the specific ways AI agents cut corners while reporting success. This repo is both the toolkit and the record of using it on itself.
 
 ## Try it in one command
 
