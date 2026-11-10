@@ -33,14 +33,14 @@
 ```
 # Parrhesia 第三者リポジトリ監査レポート
 
-対象: /tmp/pleroma_portfolio_demo_c51fntw2/sample_ai_repo
+対象: /tmp/pleroma_portfolio_demo_evum6ud5/sample_ai_repo
 検査したコミット数: 2
 
 ## 1. コミット履行の整合性(diff_fraud 5パターン検出)
 
 検出件数: 5件(要確認の合図であり、不正の確定ではない)
 
-- コミット 140c01531a(「fix: エッジケースを全て検証し、堅牢性を向上させました(実際には5つの欠陥を仕込んだ、AIの手抜きの典型例)」):
+- コミット 80bfe6bde6(「fix: エッジケースを全て検証し、堅牢性を向上させました(実際には5つの欠陥を仕込んだ、AIの手抜きの典型例)」):
   - [test_deletion] test_payment.py: テスト関数 test_payment_rejects_negative_amount が削除され、同名の定義が追加側に存在しない。
   - [skip_addition] test_payment.py: 新規にテストのスキップ指定が追加されている。
   - [assertion_weakening] test_payment.py: assert文が2件削除され、1件しか追加されていない(net減少)。
