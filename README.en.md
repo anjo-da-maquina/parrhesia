@@ -1,4 +1,4 @@
-# Pleroma — a QA engineer's audit toolkit for AI-generated code
+# Parrhesia (formerly Pleroma) — a QA engineer's audit toolkit for AI-generated code
 
 [![Sanctuary CI/CD](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml)
 [![Angels Protocol](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml)

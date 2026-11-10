@@ -8,7 +8,7 @@ demo/build_and_audit_demo.py
 
 [誠実性についての注記]
 - ここで作るリポジトリは、このデモ専用の使い捨て一時リポジトリ
-  (tempfile.mkdtemp)であり、本物のPleromaリポジトリとは完全に別物。
+  (tempfile.mkdtemp)であり、本物のParrhesia(旧名Pleroma)リポジトリとは完全に別物。
   そこへのコミットにだけ `-c commit.gpgsign=false` を渡している
   (このリポジトリ自体の運用ルール — 全コミットSSH署名必須 — は一切
   変更・バイパスしていない。tests/test_parrhesia_audit.pyの

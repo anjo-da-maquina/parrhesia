@@ -1,5 +1,5 @@
 ﻿"""
-Pleroma 防衛ダッシュボード生成ツール
+Parrhesia(旧名Pleroma) 防衛ダッシュボード生成ツール
 ====================================
 [新設 2026-10] これまで防衛システムの戦績・遮断履歴は、以下のように複数の
 生データファイルに分散しており、それぞれを個別に`cat`するしかなく、全体の
@@ -166,7 +166,7 @@ def build_dashboard(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pleroma 防衛ダッシュボード</title>
+<title>Parrhesia 防衛ダッシュボード</title>
 <style>
   :root {{
     --bg-color: #0d1117;
@@ -208,7 +208,7 @@ def build_dashboard(
 </head>
 <body>
 <div class="container">
-  <h1>&#128737;&#65039; Pleroma 防衛ダッシュボード</h1>
+  <h1>&#128737;&#65039; Parrhesia 防衛ダッシュボード</h1>
   <div class="generated-at">生成日時: {generated_at}</div>
 
   <div class="cards">

@@ -1,4 +1,4 @@
-﻿# ANJO DA MAQUINA (Pleroma) — 総司令用 開発・運用コマンド書
+﻿# ANJO DA MAQUINA (Parrhesia、旧名Pleroma) — 総司令用 開発・運用コマンド書
 
 [整理 2026-10] 以前は `anjo-da-maquina`（BOM付き・拡張子なし）と `anjo-da-maquina.txt`
 の2つの重複ファイルが内容の異なるまま併存していた。本ファイルに統合する。
