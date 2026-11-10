@@ -37,7 +37,7 @@ def execute_payload_under_sanctum(content: str):
     例外なし)。このため、事前検閲を通過しただけのペイロードを、実際には
     Michael(SanctumのOS監査フック)が確実に遮断するにもかかわらず、この
     自己対戦シミュレーションだけが「あり得ない事態」という偽の全面突破を
-    報告してしまう欠陥があった(tartarus/armageddon.pyの§AU、
+    報告してしまう欠陥があった(adversarial_training/local_only_selfplay_gate.pyの§AU、
     tools/auto_red_team.pyの§AXと同じバグの系統)。
 
     本関数は、事前検閲を通過したペイロードを実際に`awaken()` +

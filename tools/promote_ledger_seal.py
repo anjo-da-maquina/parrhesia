@@ -38,7 +38,7 @@ def _load_json(path, default):
 
 def list_pending():
     """
-    [脆弱性修正 2026-10 §BZ] `tartarus/armageddon_core.apply_new_seal()`の
+    [脆弱性修正 2026-10 §BZ] `adversarial_training/selfplay_engine_core.apply_new_seal()`(旧名`tartarus/armageddon_core.apply_new_seal()`)の
     重複チェックを「現在も承認待ちの提案のみ」に限定した結果、過去に
     "REJECTED"(拒否)となった事件名でも、新たな実証を伴えば再提案される
     ようになった。しかし、審査者がその事実(=これは過去に一度拒否した

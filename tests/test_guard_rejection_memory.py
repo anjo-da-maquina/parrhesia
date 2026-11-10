@@ -3,7 +3,7 @@ tests/test_guard_rejection_memory.py
 =================================================
 [新設 2026-10 §BZ] angels/guard_rejection_memory.py の単体テスト。
 
-実際に発見した具体例: `tartarus/armageddon_core.py`の`apply_new_seal()`は、
+実際に発見した具体例: `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の`apply_new_seal()`は、
 過去に人間が明示的に"REJECTED"(拒否)した提案までも「既に提案済み」と
 扱ってしまい、Armageddon Engineが同じ事件名で全く新しい侵入を実証しても
 二度と再提案できなくなっていた。重複チェックを「現在も承認待ちの提案」

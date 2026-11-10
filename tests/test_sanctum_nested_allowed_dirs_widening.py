@@ -2,7 +2,7 @@
 [脆弱性修正 2026-10 §AV] sefer.Sanctum のネストした allowed_dirs 絞り込みに
 対する回帰テスト。
 
-発見の経緯: §AU (tartarus/armageddon_core.build_forge_script) の修正で、
+発見の経緯: §AU (adversarial_training/selfplay_engine_core.build_forge_script、旧名tartarus/armageddon_core) の修正で、
 AI生成ペイロードを `with Sanctum(allowed_dirs=[tartarus_dir], ...):` の
 内側で exec() するように変更した。この変更が本当に安全かを確認するため
 `Sanctum.__init__` のネスト処理を再点検したところ、子スコープが親より

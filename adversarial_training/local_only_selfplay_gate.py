@@ -35,14 +35,14 @@ _verify_creators_air()
 # THE ARMAGEDDON ENGINE: Autonomous Evolution & Akashic
 # -----------------------------------------------------------
 # [テスト容易性改善 2026-10] 純粋なロジック(承認キュー化・ペイロード
-# 抽出・イベント名検証・記録)は tartarus/armageddon_core.py に分離した。
+# 抽出・イベント名検証・記録)は adversarial_training/selfplay_engine_core.py に分離した。
 # このファイルはゲート通過後、Ollama呼び出しとオーケストレーションのみを担う。
 # =========================================================
 sys.path.insert(0, str(Path(__file__).parent.resolve()))
-from armageddon_core import (
-    TARTARUS_DIR, PLEROMA_DIR, LEDGER_PATH, PENDING_LEDGER_PATH,
-    TARGET_FILE, AKASHIC_PATH, MAX_MATCHES,
-    initialize_arena, record_to_akashic, extract_python_code,
+from selfplay_engine_core import (
+    ADVERSARIAL_TRAINING_DIR, PLEROMA_DIR, LEDGER_PATH, PENDING_LEDGER_PATH,
+    TARGET_FILE, SELFPLAY_HISTORY_PATH, MAX_MATCHES,
+    initialize_arena, record_to_selfplay_history, extract_python_code,
     validate_banned_event, apply_new_seal, build_forge_script,
 )
 import json
@@ -131,17 +131,17 @@ def execute_armageddon():
         # [脆弱性修正 2026-10 §AU] 以前はここで `awaken()` のみを呼び、
         # `with Sanctum(...):` に一度も入らずペイロードを実行していたため、
         # 監査フックが実質的に無効(何も検査しない)な状態で「闘技」が
-        # 行われていた。詳細は armageddon_core.build_forge_script() の
+        # 行われていた。詳細は selfplay_engine_core.build_forge_script() の
         # docstring参照。
-        forge_file = TARTARUS_DIR / "temp_mutation.py"
+        forge_file = ADVERSARIAL_TRAINING_DIR / "temp_mutation.py"
         with open(forge_file, "w", encoding="utf-8") as f:
-            f.write(build_forge_script(payload_code, PLEROMA_DIR, TARTARUS_DIR))
+            f.write(build_forge_script(payload_code, PLEROMA_DIR, ADVERSARIAL_TRAINING_DIR))
 
         if TARGET_FILE.exists():
             TARGET_FILE.unlink()
 
         print("[Arena] Executing payload against Sefer...")
-        result = subprocess.run([sys.executable, str(forge_file)], cwd=TARTARUS_DIR, capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(forge_file)], cwd=ADVERSARIAL_TRAINING_DIR, capture_output=True, text=True)
 
         status = "Failed"
         score = 0
@@ -171,8 +171,8 @@ def execute_armageddon():
             qa_hint = qa_feedback.get("hint", "Try another method.")
             print(f"[QA Score: {score}/10] Metatron advises Lucifer: '{qa_hint}'")
 
-        record_to_akashic(generation, payload_code, status, last_error, score, qa_hint)
-        print("[Akashic] 📜 Record saved to akashic_records.json")
+        record_to_selfplay_history(generation, payload_code, status, last_error, score, qa_hint)
+        print("[Akashic] 📜 Record saved to selfplay_history.json")
 
         if forge_file.exists():
             forge_file.unlink()
@@ -182,7 +182,7 @@ def execute_armageddon():
 
     print("\n==================================================")
     print(f" 🏁 TOURNAMENT CONCLUDED ({MAX_MATCHES} MATCHES) 🏁")
-    print(f" Review '{AKASHIC_PATH.name}' before it is purged next run.")
+    print(f" Review '{SELFPLAY_HISTORY_PATH.name}' before it is purged next run.")
     print("==================================================")
 
 

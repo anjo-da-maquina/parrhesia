@@ -3,7 +3,7 @@
 
 実際に sdist をビルドし、その内容を検査することで、将来 pyproject.toml や
 MANIFEST.in が変更されても、maquina_gatekeeper.py / ataraxia_certificate.json /
-adapters/provisioning_agent.py / tartarus(armageddon・Creator's Air) /
+adapters/provisioning_agent.py / adversarial_training(旧名tartarus、Creator's Air) /
 運用者向けの内部テスト(tests/)が、公開配布物(経典)に紛れ込んでいないことを
 保証する。
 
@@ -46,11 +46,11 @@ print("SDIST_PATH:" + str(p))
 def test_sdist_is_clean_and_contains_only_the_sefer_package(tmp_path: Path):
     """1回のビルドで、以下の3点をまとめて検証する
     (前述の注意により、ビルド自体は1テストにつき1回のみ行う):
-      1. ライセンス機構/Tartarus関連の内容が混入していないこと
+      1. ライセンス機構/adversarial_training(旧名Tartarus)関連の内容が混入していないこと
       2. 運用者向けの内部テスト(tests/)が同梱されていないこと
          ([実機で発見した回帰] setuptoolsのsdistは慣習的にtests/全体を
          自動的に含めてしまい、MANIFEST.inでの明示的な除外が無いと、
-         maquina_gatekeeper/armageddonを直接参照する内部テストまで
+         maquina_gatekeeper/local_only_selfplay_gateを直接参照する内部テストまで
          公開配布物に紛れ込んでしまっていた)
       3. 過剰な除外で空っぽの配布物になっていない(sefer本体は残っている)こと
     """
@@ -59,7 +59,7 @@ def test_sdist_is_clean_and_contains_only_the_sefer_package(tmp_path: Path):
     sys.path.insert(0, str(TOOLS))
     import build_public_scripture as bps
     problems = bps.verify_scripture_is_clean(sdist_path)
-    assert problems == [], f"公開配布物にライセンス機構/Tartarus関連の内容が混入しています: {problems}"
+    assert problems == [], f"公開配布物にライセンス機構/adversarial_training関連の内容が混入しています: {problems}"
 
     with tarfile.open(sdist_path, "r:gz") as tf:
         names = tf.getnames()

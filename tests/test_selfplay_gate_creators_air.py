@@ -10,19 +10,19 @@ import subprocess
 import sys
 from pathlib import Path
 
-TARTARUS_DIR = Path(__file__).resolve().parent.parent / "tartarus"
+ADVERSARIAL_TRAINING_DIR = Path(__file__).resolve().parent.parent / "adversarial_training"
 
 
-def test_armageddon_exits_666_on_unmatched_hardware():
+def test_local_only_selfplay_gate_exits_666_on_unmatched_hardware():
     """
     CI環境（およびこのリポジトリを手にした大半の第三者環境）では
     uuid.getnode() が創造主のMACアドレスと一致しないため、
-    armageddon.py は import された瞬間に exit(666) するべきである。
+    local_only_selfplay_gate.py(旧名armageddon.py)は import された瞬間に exit(666) するべきである。
     """
     script = f"""
 import sys
-sys.path.insert(0, {str(TARTARUS_DIR)!r})
-import armageddon
+sys.path.insert(0, {str(ADVERSARIAL_TRAINING_DIR)!r})
+import local_only_selfplay_gate
 """
     res = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
     # [注] POSIXのプロセス終了コードは8bit(0-255)に丸められるため、
@@ -36,9 +36,9 @@ import armageddon
 
 def test_commander_hash_is_well_formed_sha256():
     """COMMANDER_HASH定数自体が破損・弱体化(短縮等)されていないかを検証する。"""
-    sys.path.insert(0, str(TARTARUS_DIR))
-    # armageddon.py 自体はimportするとexitしてしまうため、ソースを静的に読む。
-    source = (TARTARUS_DIR / "armageddon.py").read_text(encoding="utf-8")
+    sys.path.insert(0, str(ADVERSARIAL_TRAINING_DIR))
+    # local_only_selfplay_gate.py 自体はimportするとexitしてしまうため、ソースを静的に読む。
+    source = (ADVERSARIAL_TRAINING_DIR / "local_only_selfplay_gate.py").read_text(encoding="utf-8")
     import re
     match = re.search(r'COMMANDER_HASH\s*=\s*"([0-9a-f]+)"', source)
     assert match is not None, "COMMANDER_HASH定数が見つかりません。"

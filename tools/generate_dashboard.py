@@ -5,7 +5,7 @@ Pleroma 防衛ダッシュボード生成ツール
 生データファイルに分散しており、それぞれを個別に`cat`するしかなく、全体の
 傾向を一目で把握する手段が無かった:
 
-  - tartarus/akashic_records.json   — Armageddon Engine(Lucifer vs Metatron)の戦績
+  - adversarial_training/selfplay_history.json(旧名tartarus/akashic_records.json) — Armageddon Engine(Lucifer vs Metatron)の戦績
   - sefer/audit_chain.jsonl          — Michaelが実際に遮断したイベントの監査ログ
   - sefer/raziel_ledger.json         — 現在有効な禁止イベント一覧
   - sefer/raziel_ledger_pending.json / shield_rules_pending.json /
@@ -29,7 +29,7 @@ from datetime import datetime
 from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
-AKASHIC_RECORDS_PATH = PLEROMA_DIR / "tartarus" / "akashic_records.json"
+AKASHIC_RECORDS_PATH = PLEROMA_DIR / "adversarial_training" / "selfplay_history.json"
 AUDIT_CHAIN_PATH = PLEROMA_DIR / "sefer" / "audit_chain.jsonl"
 RAZIEL_LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger.json"
 PENDING_PATHS = {

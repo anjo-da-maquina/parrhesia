@@ -5,7 +5,7 @@ tests/test_promote_ledger_seal.py
 過去に拒否(REJECTED)された事件名の再提案であることを、審査者に対して
 正しく警告表示することを確認する回帰テスト。
 
-背景: tartarus/armageddon_core.apply_new_seal() の重複防止チェックを
+背景: adversarial_training/selfplay_engine_core.apply_new_seal()(旧名tartarus/armageddon_core)の重複防止チェックを
 「現在も承認待ちの提案のみ」に限定した結果(§BZ)、過去にREJECTEDとなった
 事件名でも、新たな実証を伴えば再提案されるようになった。審査者がその
 経緯(=これは過去に一度拒否したはずの事件名である)を知らないまま

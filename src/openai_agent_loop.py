@@ -24,7 +24,7 @@ src/openai_agent_loop.py
 
 `openai` パッケージは本ファイルの対象ユーザ(OpenAI APIキーを持つ開発者)
 以外には不要な依存であるため、実際に使用する `run_task()` 内でのみ
-遅延importする。これは tartarus/armageddon.py で修正した脆弱性と同じ
+遅延importする。これは adversarial_training/local_only_selfplay_gate.py で修正した脆弱性と同じ
 教訓（防壁の起動自体が、無関係なサードパーティ依存の有無に左右されては
 ならない）に基づく。本ファイルを import するだけであれば、
 `openai` パッケージが未インストールの環境でも例外は発生しない。

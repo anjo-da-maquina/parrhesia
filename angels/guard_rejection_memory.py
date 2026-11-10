@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_rejection_memory - 過去にREJECTEDとなった事件名でも、新たな実証を伴う再提案が 正しく受理されるかを確認する。"
 
-# [新設 2026-10 §BZ] 実際に発見した具体例: `tartarus/armageddon_core.py`の
+# [新設 2026-10 §BZ] 実際に発見した具体例: `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の
 # `apply_new_seal()`は、同じ事件名の提案が`raziel_ledger_pending.json`に
 # 1件でも存在すれば、そのstatusを一切問わずに重複とみなし`False`を返して
 # いた。これは「まだ承認待ちで開いている重複提案を防ぐ」という意図の
@@ -12,7 +12,7 @@ NAME = "guard_rejection_memory - 過去にREJECTEDとなった事件名でも、
 # 提案までも「既に提案済み」と扱ってしまい、Armageddon Engineが同じ
 # 事件名で全く新しい(異なる攻撃コード・異なる文脈を伴う)侵入を実証
 # しても、二度と再提案できなくなるという欠陥だった。呼び出し元の
-# `tartarus/armageddon.py`はこの`False`を、構文解析の失敗であるかの
+# `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこの`False`を、構文解析の失敗であるかの
 # ような誤解を招くメッセージでログに出力するだけであり、運用者には
 # 「過去の一度の拒否判断が、今まさに確定した新しい侵入の防御提案
 # そのものを静かに握りつぶしている」ことに気づく手段が一切無かった。
@@ -33,15 +33,15 @@ NAME = "guard_rejection_memory - 過去にREJECTEDとなった事件名でも、
 # ledger_seal.py`で別途固定している)。
 
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tartarus"))
+sys.path.insert(0, str(ROOT / "adversarial_training"))
 
 
 def _check_reproposal_after_rejection_is_accepted() -> tuple:
     """過去にREJECTEDとなった事件名でも、新たな実証を伴う再提案が
     正しく受理されるかを確認する。戻り値: (success: bool, detail: str)"""
-    import armageddon_core as core
+    import selfplay_engine_core as core
 
-    tmp_dir = tempfile.mkdtemp(prefix="sandalphon_")
+    tmp_dir = tempfile.mkdtemp(prefix="guard_rejection_memory_")
     try:
         ledger_path = os.path.join(tmp_dir, "raziel_ledger.json")
         pending_path = os.path.join(tmp_dir, "raziel_ledger_pending.json")
@@ -67,9 +67,9 @@ def _check_reproposal_after_rejection_is_accepted() -> tuple:
 def _check_still_open_duplicate_is_still_rejected() -> tuple:
     """[誤検知防止] 修正によって、元々の意図(現在も開いている重複提案を
     防ぐ)が損なわれていないかを確認する。戻り値: (success: bool, detail: str)"""
-    import armageddon_core as core
+    import selfplay_engine_core as core
 
-    tmp_dir = tempfile.mkdtemp(prefix="sandalphon_")
+    tmp_dir = tempfile.mkdtemp(prefix="guard_rejection_memory_")
     try:
         ledger_path = os.path.join(tmp_dir, "raziel_ledger.json")
         pending_path = os.path.join(tmp_dir, "raziel_ledger_pending.json")

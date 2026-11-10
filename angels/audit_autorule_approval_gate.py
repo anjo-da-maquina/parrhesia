@@ -14,10 +14,10 @@ NAME = "audit_autorule_approval_gate - 思考統制監査: Armageddonエンジ�
 # [2026-10] 純粋ロジックは armageddon_core.py に分離されたため、
 # 両ファイルを合わせて検証する。
 def main():
-    armageddon = ROOT / "tartarus" / "armageddon.py"
-    armageddon_core = ROOT / "tartarus" / "armageddon_core.py"
+    armageddon = ROOT / "adversarial_training" / "local_only_selfplay_gate.py"
+    armageddon_core = ROOT / "adversarial_training" / "selfplay_engine_core.py"
     if not armageddon.exists() and not armageddon_core.exists():
-        report_not_applicable(NAME, "armageddon.py が存在しないため検査対象なし。")
+        report_not_applicable(NAME, "local_only_selfplay_gate.py が存在しないため検査対象なし。")
         return
     combined_text = ""
     if armageddon.exists():

@@ -107,7 +107,11 @@ def _is_local_module_name(name: str) -> bool:
     # 他のローカルディレクトリ(angels・src・adapters等)と全く同じ
     # カテゴリ(リポジトリ内部の自作コード)であり、第三者パッケージでは
     # ないため、検索対象ディレクトリに追加した。
-    for d in [ROOT, ROOT / "tartarus", *[ROOT / td for td in TARGET_DIRS_FOR_IMPORT_SCAN]]:
+    # [改名 2026-11] tartarus/ は adversarial_training/ に改名された
+    # (docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §2参照)。両方を残して
+    # いるのは後方互換のための保険であり、実体は既にadversarial_training/
+    # のみである。
+    for d in [ROOT, ROOT / "tartarus", ROOT / "adversarial_training", *[ROOT / td for td in TARGET_DIRS_FOR_IMPORT_SCAN]]:
         if (d / f"{name}.py").exists():
             return True
     return False

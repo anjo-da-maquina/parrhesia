@@ -4,7 +4,7 @@ tests/test_learned_rules_enforcement.py
 sefer/__init__.py の回帰テスト。GRIMOIRE.md §AG 参照。
 
 背景: 本フレームワークには2つの「学習」ワークフローがあった:
-  1. tartarus/armageddon.py(Lucifer vs Sefer自己対戦)が発見した新たな
+  1. adversarial_training/local_only_selfplay_gate.py(旧名tartarus/armageddon.py、Lucifer vs Sefer自己対戦)が発見した新たな
      脱走経路を、人間が tools/promote_ledger_seal.py で承認し
      sefer/raziel_ledger.json に反映する。
   2. angelic_shield.py(外部LLM脅威インテリジェンス)が提案した危険な
@@ -139,7 +139,7 @@ def test_shield_rules_unrelated_same_named_function_is_not_flagged(tmp_path, mon
 def test_always_passthrough_events_really_are_unenforceable_via_ledger(tmp_path, monkeypatch):
     """[脆弱性修正 2026-10 §BJ] sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
     イベント名は、raziel_ledger.jsonにどれだけ追加しても実際に遮断されない
-    ことを実機で固定する(tartarus/armageddon_core.pyのvalidate_banned_event()
+    ことを実機で固定する(adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py)のvalidate_banned_event()
     がこの集合を参照して事前に提案自体を拒否するようになった根拠)。"""
     ledger_path = tmp_path / "raziel_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
