@@ -1,7 +1,7 @@
 ﻿# Parrhesia(旧名Pleroma) — 生成AIが作る成果物を、QAエンジニアの視点で監査するツールキット
 
-[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml)
-[![Angels Protocol](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml)
+[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml)
+[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(GRIMOIRE.md)](./GRIMOIRE.md) ・ [担当範囲の境界線(BOUNDARY.md)](./BOUNDARY.md)
@@ -11,7 +11,7 @@
 ## 1コマンドで試す(Quickstart)
 
 ```bash
-git clone https://github.com/anjo-da-maquina/pleroma.git && cd pleroma
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 python3 demo/build_and_audit_demo.py
 ```
 
@@ -60,7 +60,7 @@ python3 demo/build_and_audit_demo.py
 ## インストール(Install)
 
 ```bash
-git clone https://github.com/anjo-da-maquina/pleroma.git && cd pleroma
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 pip install --no-build-isolation .
 python -m parrhesia.cli audit /path/to/some/other/git/repo
 ```

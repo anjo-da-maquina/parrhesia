@@ -26,20 +26,20 @@ verified in this repository.
 > (deleted test, new skip marker, weakened assertion, swallowed exception, hardcoded
 > exit code). My audit tool caught 5/5 — from the diff alone, no test run needed, in
 > 0.08s. First run only caught 2/5 though, and that failure is still in the git
-> history. Repo: github.com/anjo-da-maquina/pleroma
+> history. Repo: github.com/anjo-da-maquina/parrhesia
 
 **Post 2 — the problem**
 > The failure mode I keep seeing in AI-generated code isn't "the code is wrong" —
 > it's "the test that would have caught it quietly disappeared, and the commit
 > message says everything passed." Built a small detector for exactly that pattern.
 > It's pattern-based, not magic — here's what it actually does and doesn't catch:
-> github.com/anjo-da-maquina/pleroma
+> github.com/anjo-da-maquina/parrhesia
 
 **Post 3 — the offer**
 > If your team ships AI-generated code and wants someone to audit the diffs for the
 > specific ways agents cut corners (not a generic linter pass) — that's what I do as
 > a QA engineer. One command, read-only, runs against any git repo you give it.
-> Happy to run it against a real PR of yours as a sample. github.com/anjo-da-maquina/pleroma
+> Happy to run it against a real PR of yours as a sample. github.com/anjo-da-maquina/parrhesia
 
 ## Fixed-price service listing (Upwork / Contra style)
 
@@ -73,7 +73,7 @@ verified in this repository.
 > pressure: deleted tests, new skip markers, weakened assertions, swallowed
 > exceptions, hardcoded exit codes. I built the tool myself and can show you it
 > catching all five in a live demo before you commit to anything
-> (github.com/anjo-da-maquina/pleroma — the demo runs in under a second, no setup).
+> (github.com/anjo-da-maquina/parrhesia — the demo runs in under a second, no setup).
 > For your project, I'd run a read-only audit of your recent commits or a specific
 > PR and hand back a report with exact evidence, not a vague score. Happy to run it
 > against one of your real PRs for free first, so you can judge the output before
@@ -92,7 +92,7 @@ verified in this repository.
 **Variant C — short/skimmable**
 > I audit AI-generated code for 5 specific shortcut patterns (deleted tests, skip
 > markers, weakened assertions, swallowed exceptions, hardcoded exit codes) using a
-> tool I built myself — demo here: github.com/anjo-da-maquina/pleroma. Read-only,
+> tool I built myself — demo here: github.com/anjo-da-maquina/parrhesia. Read-only,
 > 48h, fixed price, written report with exact evidence per finding. Can run it
 > against one of your real PRs first so you see real output before deciding.
 

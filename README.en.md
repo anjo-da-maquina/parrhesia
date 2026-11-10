@@ -1,7 +1,7 @@
 # Parrhesia (formerly Pleroma) — a QA engineer's audit toolkit for AI-generated code
 
-[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml)
-[![Angels Protocol](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml)
+[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml)
+[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (GRIMOIRE.md, Japanese)](./GRIMOIRE.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./BOUNDARY.md)
@@ -11,7 +11,7 @@ Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev l
 ## Try it in one command
 
 ```bash
-git clone https://github.com/anjo-da-maquina/pleroma.git && cd pleroma
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 python3 demo/build_and_audit_demo.py
 ```
 
@@ -66,7 +66,7 @@ I'm a QA engineer. As more production code gets written by AI agents, I kept run
 ## Quickstart
 
 ```bash
-git clone https://github.com/anjo-da-maquina/pleroma.git && cd pleroma
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 pip install --no-build-isolation .
 python -m parrhesia.cli audit /path/to/some/other/git/repo
 ```

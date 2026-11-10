@@ -64,7 +64,7 @@ explain exactly why each of the three was missed the first time.
 ## Reproduce this yourself
 
 ```bash
-git clone https://github.com/anjo-da-maquina/pleroma.git && cd pleroma
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 python3 demo/build_and_audit_demo.py
 ```
 
