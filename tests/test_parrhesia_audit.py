@@ -8,17 +8,17 @@ tests/test_parrhesia_audit.py
 `git init`してコミットを作り、その本物のリポジトリに対して
 audit_repository()を実行する(モックやスタブで済ませない)。
 
-[署名についての正直な注記] 本リポジトリ(Pleroma)自体の実コミットは
+[署名についての正直な注記] 本リポジトリ(Parrhesia、旧名Pleroma)自体の実コミットは
 `commit.gpgsign=true`(SSH署名)を必須とする既存の運用に従う——本テスト
 は一切それを変更・バイパスしない。一方、本ファイルが`tmp_path`配下に
 作るのはテスト専用の使い捨てリポジトリであり、実際にpush・保存される
-Pleroma本体の履行履歴ではない。グローバルなgit設定が`commit.gpgsign=true`
+Parrhesia本体の履行履歴ではない。グローバルなgit設定が`commit.gpgsign=true`
 になっている環境では、この使い捨てリポジトリへのコミットも同じ署名
-ヘルパーを要求してしまい、本番のPleroma用に用意された署名ヘルパー
+ヘルパーを要求してしまい、本番のParrhesia用に用意された署名ヘルパー
 (`/tmp/code-sign`)の可用性に、無関係なテストの成否が依存してしまう。
 そのため、`_git_commit`はこの使い捨てリポジトリに対してのみ
 `-c commit.gpgsign=false`を明示的に渡す(リポジトリ単位のコマンドライン
-オーバーライドであり、グローバル設定やPleroma本体のリポジトリ設定には
+オーバーライドであり、グローバル設定やParrhesia本体のリポジトリ設定には
 一切触れない)。
 """
 import subprocess
@@ -45,7 +45,7 @@ def _git(repo: Path, *args):
 
 def _git_commit(repo: Path, message: str):
     """使い捨てのテスト用リポジトリ専用のcommitラッパー。モジュール
-    docstringの[署名についての正直な注記]参照 — Pleroma本体のリポジトリ
+    docstringの[署名についての正直な注記]参照 — Parrhesia本体のリポジトリ
     設定・グローバル設定には一切触れず、このコマンド実行だけに
     `-c commit.gpgsign=false`を渡す。"""
     subprocess.run(

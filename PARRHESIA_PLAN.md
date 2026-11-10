@@ -195,7 +195,7 @@ gitリポジトリを`git init`して本物のコミット・diffを作り、モ
 実際に実行するコミットを作り、`analyze_diff`が実際の差分からそれを
 検出することまで含む)。[署名についての正直な注記] このテストが
 `tmp_path`配下に作る使い捨てリポジトリへのコミットのみ、コマンドライン
-で`-c commit.gpgsign=false`を明示的に渡している(Pleroma本体の
+で`-c commit.gpgsign=false`を明示的に渡している(Parrhesia本体の
 リポジトリ設定・グローバル設定には一切触れない、テスト専用の使い捨て
 データ生成に限定したスコープ — 詳細は`tests/test_parrhesia_audit.py`の
 モジュールdocstring参照)。Parrhesia全テストは206件→216件に増加し、

@@ -1,4 +1,4 @@
-﻿# Pleroma — 生成AIが作る成果物を、QAエンジニアの視点で監査するツールキット
+﻿# Parrhesia(旧名Pleroma) — 生成AIが作る成果物を、QAエンジニアの視点で監査するツールキット
 
 [![Sanctuary CI/CD](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/sanctuary_ci.yml)
 [![Angels Protocol](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/pleroma/actions/workflows/anjo_da_maquina_protocol.yml)
