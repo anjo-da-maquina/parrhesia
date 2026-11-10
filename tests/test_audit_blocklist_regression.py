@@ -3,16 +3,16 @@ tests/test_audit_blocklist_regression.py
 =====================================
 [新設 2026-11] angels/audit_blocklist_regression.py の単体テスト。
 
-本天使(「ジョフィエルの灯」)は、`sefer.inquisition()`の禁止モジュール/
+本天使(「ジョフィエルの灯」)は、`runtime_guard.inquisition()`の禁止モジュール/
 関数リストが、既知のベースライン(`BASELINE_FORBIDDEN_MODULES`・
 `BASELINE_FORBIDDEN_FUNCS`)より静かに弱体化(縮小)していないかを、
-`sefer.inquisition`の実際のソースコードをテキストとして静的走査する
+`runtime_guard.inquisition`の実際のソースコードをテキストとして静的走査する
 ことで検証する(意味論的ドリフト検知)。天使群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
-`main()`は`inspect.getsource(sefer.inquisition)`を直接呼ぶため、標準
+`main()`は`inspect.getsource(runtime_guard.inquisition)`を直接呼ぶため、標準
 ライブラリの`inspect.getsource`自体を一時的にmonkeypatchし、実際の
-`sefer.inquisition`の実装を介さずに、本天使固有の「ベースラインとの
+`runtime_guard.inquisition`の実装を介さずに、本天使固有の「ベースラインとの
 差分判定」ロジックのみを単独で検証する。
 """
 import sys
@@ -37,7 +37,7 @@ FULL_BASELINE_TOKENS = list(js.BASELINE_FORBIDDEN_MODULES) + list(js.BASELINE_FO
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のsefer.inquisition()には、ベースラインの
+    """[実機の裏付け] 現時点のruntime_guard.inquisition()には、ベースラインの
     禁止モジュール/関数が全て含まれているため、本天使はPASSを報告
     する。"""
     import io

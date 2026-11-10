@@ -7,7 +7,7 @@ E章の角度1「行動記録との照合」。
 「行動記録との照合: 主張の前に、その確認の実行が記録にあるか。引数・
 順序は合っているか」
 
-本モジュールは、既存のsefer.audit_chain.SignedAuditChain(HMAC鍵付き
+本モジュールは、既存のruntime_guard.audit_chain.SignedAuditChain(HMAC鍵付き
 ハッシュチェーン・水位標による切り詰め検知付きの、改ざん耐性のある
 追記専用ログ)をそのまま再利用する。
 
@@ -32,7 +32,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from sefer.audit_chain import SignedAuditChain
+from runtime_guard.audit_chain import SignedAuditChain
 
 
 @dataclass(frozen=True)

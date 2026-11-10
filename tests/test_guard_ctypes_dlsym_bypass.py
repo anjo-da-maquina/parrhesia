@@ -10,7 +10,7 @@ tests/test_guard_ctypes_dlsym_bypass.py
 `ctypes.pythonapi`や新規`ctypes.CDLL(None)`でシンボルを解決する操作
 (それぞれ"ctypes.dlsym"・"ctypes.dlopen"というaudit eventを発生
 させる)のいずれも、この`forbidden`集合とは一度も一致せず、封鎖中
-でも完全に素通りしていた。独立した別の防御層(`sefer/__init__.py`)
+でも完全に素通りしていた。独立した別の防御層(`runtime_guard/__init__.py`)
 は名前空間ごとのデフォルト拒否を既に備えており対象外であることも
 併せて検証する。
 """
@@ -53,8 +53,8 @@ def test_check_pythonapi_still_works_when_unsealed_directly():
     assert success is True, detail
 
 
-def test_check_sefer_already_protected_without_modification_directly():
-    success, detail = cdg._check_sefer_already_protected_without_modification()
+def test_check_runtime_guard_already_protected_without_modification_directly():
+    success, detail = cdg._check_runtime_guard_already_protected_without_modification()
     assert success is True, detail
 
 

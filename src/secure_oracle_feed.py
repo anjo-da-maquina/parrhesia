@@ -32,7 +32,7 @@ class EconomicDefenseLimiter:
     「プロセスグローバル/インスタンス変数が実行ごとにリセットされ、
     名乗っている保護が実質的に機能しない」パターンである。
 
-    本修正では、カウントを `sefer/.angel_state/oracle_feed_quota.json`
+    本修正では、カウントを `runtime_guard/.angel_state/oracle_feed_quota.json`
     (UTC日付キー)に永続化し、プロセスをまたいで実際に「1日あたり」の
     上限を強制するようにした。
 
@@ -44,7 +44,7 @@ class EconomicDefenseLimiter:
     システム時刻やこの状態ファイル自体を書き換えられる権限を持つ攻撃者
     には、この防壁は無力である。
     """
-    STATE_PATH = Path(__file__).resolve().parent.parent / "sefer" / ".angel_state" / "oracle_feed_quota.json"
+    STATE_PATH = Path(__file__).resolve().parent.parent / "runtime_guard" / ".angel_state" / "oracle_feed_quota.json"
 
     def __init__(self, max_daily_requests=3, cooldown_seconds=5):
         self.max_requests = max_daily_requests

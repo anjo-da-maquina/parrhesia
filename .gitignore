@@ -13,16 +13,16 @@ incident_report.json
 audit_violation_log_summary.json
 zk_audit_trail.json
 zk_audit_report.xml
-# [2026-10] Michael(sefer._log_violation_to_chain)が実際に遮断したイベントを
+# [2026-10] Michael(runtime_guard._log_violation_to_chain)が実際に遮断したイベントを
 # 都度追記する、実行時生成の監査ログ。zk_audit_trail.json等の他の監査ログと
 # 同種の「テスト実行で汚染される」ファイルであるにもかかわらずこれまで
 # .gitignoreの対象外になっており、Git管理対象として誤って追跡されていた
 # (GRIMOIRE.md §X参照)。
-sefer/audit_chain.jsonl
-# [2026-10] SignedAuditChain(sefer/audit_chain.py)がHMAC-SHA256で監査チェーンに
+runtime_guard/audit_chain.jsonl
+# [2026-10] SignedAuditChain(runtime_guard/audit_chain.py)がHMAC-SHA256で監査チェーンに
 # 署名するための秘密鍵。初回自動生成・0600権限で作成されるローカル専用の
 # 秘密情報であり、Gitにコミットしてはならない(GRIMOIRE.md §AE参照)。
-sefer/.audit_signing_key
+runtime_guard/.audit_signing_key
 # [2026-10] maquina_gatekeeper.py の ZKAuditTrail がHMAC-SHA256で鍵付き
 # ハッシュ連鎖に署名するための秘密鍵。初回自動生成・0600権限で作成される
 # ローカル専用の秘密情報であり、Gitにコミットしてはならない(GRIMOIRE §AH参照)。
@@ -33,12 +33,12 @@ sefer/.audit_signing_key
 # めるだけで改ざんを検知できなかった脆弱性の修正)。上記の鍵ファイル・
 # 監査ログ本体と同じく、実行時に自動生成されるローカル専用の秘密情報
 # であり、Gitにコミットしてはならない。
-sefer/.audit_signing_key.watermark
+runtime_guard/.audit_signing_key.watermark
 .zk_audit_signing_key.watermark
 # [2026-10] adapters/excel_to_yaml_parser.py が requirements.xlsx(存在する
 # 場合)から生成するYAML成果物。ビルド成果物であり、Git管理対象外とする
 # (GRIMOIRE.md §AJ参照)。
-sefer/external_requirements.yaml
+runtime_guard/external_requirements.yaml
 # [2026-10] 本リポジトリにはまだ外部要件Excelシートが導入されていないが、
 # adapters/excel_to_yaml_parser.py のテスト・ローカル検証時に誤って
 # コミットされることを防ぐため、念のため無視対象に加える。

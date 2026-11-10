@@ -12,7 +12,7 @@ Pleromaは、**AIエージェントが生成・実行するコードに対する
 
 | 層 | 何を防ぐか | 検証方法 |
 | --- | --- | --- |
-| **Gabriel**(`sefer.inquisition`) | AIが生成したコード片の、既知の危険パターン(difficult patterns)を静的AST解析で事前検知 | 単体テスト |
+| **Gabriel**(`runtime_guard.inquisition`) | AIが生成したコード片の、既知の危険パターン(difficult patterns)を静的AST解析で事前検知 | 単体テスト |
 | **IntentInterceptor** | ディレクトリトラバーサル・ハニーポット的な意図検知 | 単体テスト |
 | **Sefer / Sanctum** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(GRIMOIRE.md §CD・§CE等) |
 | **Maquina Gatekeeper** | Pythonレベルでのプロセス起動・ネットワーク通信の遮断(`subprocess`・`os.fork`・`socket`系APIの監視) | 単体テスト |
@@ -30,9 +30,9 @@ Pleromaは、**AIエージェントが生成・実行するコードに対する
    ただし、**`require_docker_sandbox=False`を明示的に渡すことは技術的に可能**です。これはテスト・デバッグ専用として明記されていますが、利用者が本番コードでこれを(理解せずに、あるいは「動かないから」という理由で)渡してしまえば、Sandalphon層の保証は丸ごと失われます。公開時には、この引数の意味を目立つ場所で警告する必要があります。
 
 2. **ホストのLinuxカーネルがseccomp/libseccompをサポートしていること、かつアーキテクチャがx86_64であること。**
-   `src/sandalphon/seccomp-profile.json`の`architectures`は`SCMP_ARCH_X86_64`のみを宣言しています。実機検証(GitHub Actions・このセッションのサンドボックス)もすべてx86_64上でのみ行われています。**ARM系ホスト(Apple Silicon・AWS Graviton等)での動作・安全性は、この時点では未検証です。** Dockerが`--platform`指定なしでarm64版のベースイメージを自動的に取得した場合、このseccompプロファイルが正しく機能するか(あるいは安全側に失敗するか)は、実際にその環境で検証するまで断定できません。
+   `src/docker_sandbox/seccomp-profile.json`(旧名`src/sandalphon/seccomp-profile.json`)の`architectures`は`SCMP_ARCH_X86_64`のみを宣言しています。実機検証(GitHub Actions・このセッションのサンドボックス)もすべてx86_64上でのみ行われています。**ARM系ホスト(Apple Silicon・AWS Graviton等)での動作・安全性は、この時点では未検証です。** Dockerが`--platform`指定なしでarm64版のベースイメージを自動的に取得した場合、このseccompプロファイルが正しく機能するか(あるいは安全側に失敗するか)は、実際にその環境で検証するまで断定できません。
 
-3. **呼び出し側が、実際にAIが生成したコードの実行経路を`AegisSystem.execute_ai_intent()` → `sefer.Sanctum`の中に通していること。**
+3. **呼び出し側が、実際にAIが生成したコードの実行経路を`AegisSystem.execute_ai_intent()` → `runtime_guard.Sanctum`の中に通していること。**
    Pleromaは「AIがコードを実行する」という行為そのものを強制的に横取りする仕組みではありません。利用者が自分のエージェントループの中で、この経路を呼ばずに直接`exec()`や`subprocess`を呼んでしまえば、Pleromaの防御は一切適用されません。これは製品の欠陥ではなく、**ライブラリとして組み込む側の責任**です。
 
 4. **継続的な自動検証(Angels)は、GitHub Actions上での運用を前提にしています。**
@@ -48,9 +48,9 @@ Pleromaは、**AIエージェントが生成・実行するコードに対する
 
    [正直な注記 2026-11、§CRの延長で発見・検証した構造的限界] Sefer・Maquina Gatekeeperの対策は、モンキーパッチ(`os.write`等のモジュール属性を差し替える方式)に依存していますが、**この方式は「呼び出し側が、呼び出しの瞬間に属性を毎回あらためて参照する」場合にのみ機能します。** 呼び出し側が、`awaken()`が実行される**前**に、パッチ対象の関数への直接参照を(関数のデフォルト引数の初期値などの形で)一度だけ捕まえて保持していた場合、その参照は`awaken()`が後からモジュール属性を差し替えても古い(無防備な)実装を指し続けます。
 
-   具体例として、標準ライブラリの`multiprocessing.connection.Connection._send`は、`def _send(self, buf, write=_write): ...`という形で、**自分が定義された瞬間の`os.write`への直接参照をデフォルト引数として永久に保持する**設計になっていることを実機で確認しました(`Connection._send.__defaults__[0] is os.write`を、`multiprocessing.connection`を一度もimportしていないクリーンなプロセスで検証)。つまり、何らかの理由で`multiprocessing.connection`が`sefer`より先にimportされた場合、以後`os.write`を何度差し替えても、`Connection`経由の通信(TCP/Unixソケットを使う`multiprocessing.connection.Client`/`Listener`を含む)には本プロジェクトの`os.write`ガード(§CQ)が一切及びません。
+   具体例として、標準ライブラリの`multiprocessing.connection.Connection._send`は、`def _send(self, buf, write=_write): ...`という形で、**自分が定義された瞬間の`os.write`への直接参照をデフォルト引数として永久に保持する**設計になっていることを実機で確認しました(`Connection._send.__defaults__[0] is os.write`を、`multiprocessing.connection`を一度もimportしていないクリーンなプロセスで検証)。つまり、何らかの理由で`multiprocessing.connection`が`runtime_guard`より先にimportされた場合、以後`os.write`を何度差し替えても、`Connection`経由の通信(TCP/Unixソケットを使う`multiprocessing.connection.Client`/`Listener`を含む)には本プロジェクトの`os.write`ガード(§CQ)が一切及びません。
 
-   **この具体的な迂回を、現時点で実際に悪用可能だとは判断していません**――本リポジトリの`requirements.txt`に列挙された依存関係のうち、実機で確認できたもの(`requests`・`PyYAML`・`openpyxl`・`playwright`)はいずれもimport時点で`multiprocessing.connection`を先行importしないことを確認済みで、かつ`sefer`は本プロジェクトの起動経路の最も早い段階でimportされるため、今日時点でこの経路が実際に突かれる具体的な筋道は見つけていません。ただし、`openai`・`google-generativeai`(gRPCベースのSDKで、multiprocessingを内部で使う可能性がある)については、このサンドボックス環境のネットワーク制限によりpipでインストールできず、実機確認ができませんでした――検証できていないことを、検証済みであるかのように書かないため、ここも正直に「未確認」と記載します。
+   **この具体的な迂回を、現時点で実際に悪用可能だとは判断していません**――本リポジトリの`requirements.txt`に列挙された依存関係のうち、実機で確認できたもの(`requests`・`PyYAML`・`openpyxl`・`playwright`)はいずれもimport時点で`multiprocessing.connection`を先行importしないことを確認済みで、かつ`runtime_guard`は本プロジェクトの起動経路の最も早い段階でimportされるため、今日時点でこの経路が実際に突かれる具体的な筋道は見つけていません。ただし、`openai`・`google-generativeai`(gRPCベースのSDKで、multiprocessingを内部で使う可能性がある)については、このサンドボックス環境のネットワーク制限によりpipでインストールできず、実機確認ができませんでした――検証できていないことを、検証済みであるかのように書かないため、ここも正直に「未確認」と記載します。
 
    **一般化**: この問題は、特定のAPIの欠落(§CN・§CO・§CQ等)や特定クラスのメソッド上書き(§CP・§CR)とは異なる、**モンキーパッチという手法そのものに内在する第4のカテゴリ**です――「パッチ対象の関数への参照を、パッチが適用される前に捕まえて保持しているコードには、パッチは原理的に届かない」。これは、将来追加される依存関係や、将来のPythonバージョンの標準ライブラリ自体が、同じパターン(関数をモジュールレベルのデフォルト引数・クロージャ変数として早期に束縛する実装)を持つ可能性を、構造的に排除できないことを意味します。
 

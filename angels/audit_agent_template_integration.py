@@ -13,7 +13,7 @@ NAME = "audit_agent_template_integration - 思考統制監査: src/openai_agent_
 #      (anjo_interceptor.maquina_gatekeeper) がリポジトリに存在せず、
 #      本番では絶対に通らない死んだコードパスだった。
 #   2. _execute_safe_action が実ファイルI/Oを一切行わないダミー実装で、
-#      sefer.Sanctum も AegisSystem も統合されていなかった。
+#      runtime_guard.Sanctum も AegisSystem も統合されていなかった。
 #      これをコピーして拡張する開発者は、防壁を一つも使わないコードを
 #      書く結果になってしまう構造的欠陥だった。
 # 本検査はこの2点が再発していないことを保証する。
@@ -43,8 +43,8 @@ def main():
 
     # B: Sanctum / AegisSystem が実際に統合されているか（文字列の有無だけでなく、
     #    _execute_safe_action の中で実際に使われているかまで確認する）
-    if "from sefer import Sanctum" not in text:
-        report_fail(NAME, "sefer.Sanctum がimportされていません。OSレベルの最終防衛線が外れています。")
+    if "from runtime_guard import Sanctum" not in text:
+        report_fail(NAME, "runtime_guard.Sanctum がimportされていません。OSレベルの最終防衛線が外れています。")
     if "from aegis_system import AegisSystem" not in text:
         report_fail(NAME, "aegis_system.AegisSystem がimportされていません。Gabriel/Sandalphonの事前検閲が外れています。")
     if "with Sanctum(" not in text:

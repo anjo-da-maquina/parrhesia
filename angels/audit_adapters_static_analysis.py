@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, report_not_applicable, run_code_against_sefer,
+    report_pass, report_fail, report_info, report_not_applicable, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -20,7 +20,7 @@ def main():
     for p in adapters_dir.glob("*.py"):
         code = p.read_text(encoding="utf-8-sig", errors="ignore")  # BOM付きファイルに対応
         sys.path.insert(0, str(ROOT))
-        from sefer import inquisition
+        from runtime_guard import inquisition
         findings = inquisition(code)
         critical = [f for f in findings if f.severity == "critical"]
         if critical:

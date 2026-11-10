@@ -7,7 +7,7 @@ tests/test_audit_agent_template_integration.py
 (`src/openai_agent_loop.py`)が、「拡張用の雛形」と称しながら防壁を
 一つも統合しない張りぼてに戻されていないかを静的に検証する(思考統制
 監査)。具体的には、(A)存在しない死んだフォールバックimportが実行
-コードとして復活していないか、(B)sefer.Sanctum/aegis_system.AegisSystem
+コードとして復活していないか、(B)runtime_guard.Sanctum/aegis_system.AegisSystem
 が実際に統合され使用されているか、(C)enforce_maquina_seal(証明書
 ゲート)が維持されているか、を検証する。天使群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
@@ -30,7 +30,7 @@ VALID_TEMPLATE_TEXT = (
     "過去の欠陥: anjo_interceptor.maquina_gatekeeper への存在しない\n"
     "フォールバックimportが死んだコードパスだった(説明のみ、実コードではない)。\n"
     '"""\n'
-    "from sefer import Sanctum\n"
+    "from runtime_guard import Sanctum\n"
     "from aegis_system import AegisSystem\n"
     "\n"
     "class OpenAIAgentLoop:\n"
@@ -100,8 +100,8 @@ def test_fails_when_dead_fallback_import_is_revived_as_from_import(monkeypatch, 
     """[核心・A] 存在しない死んだフォールバックimportが'from ... import'
     形式で実行コードとして復活している場合、正しくFAILする。"""
     bad_text = VALID_TEMPLATE_TEXT.replace(
-        "from sefer import Sanctum",
-        "from anjo_interceptor.maquina_gatekeeper import something\nfrom sefer import Sanctum",
+        "from runtime_guard import Sanctum",
+        "from anjo_interceptor.maquina_gatekeeper import something\nfrom runtime_guard import Sanctum",
     )
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
@@ -111,17 +111,17 @@ def test_fails_when_dead_fallback_import_is_revived_as_import(monkeypatch, tmp_p
     """[核心・A] 'import ...'形式で復活している場合も、同様に正しく
     FAILする。"""
     bad_text = VALID_TEMPLATE_TEXT.replace(
-        "from sefer import Sanctum",
-        "import anjo_interceptor.maquina_gatekeeper\nfrom sefer import Sanctum",
+        "from runtime_guard import Sanctum",
+        "import anjo_interceptor.maquina_gatekeeper\nfrom runtime_guard import Sanctum",
     )
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 
 
 def test_fails_when_sanctum_is_not_imported(monkeypatch, tmp_path):
-    """[核心・B] sefer.Sanctumがimportされていない場合、正しくFAIL
+    """[核心・B] runtime_guard.Sanctumがimportされていない場合、正しくFAIL
     する。"""
-    bad_text = VALID_TEMPLATE_TEXT.replace("from sefer import Sanctum", "")
+    bad_text = VALID_TEMPLATE_TEXT.replace("from runtime_guard import Sanctum", "")
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 

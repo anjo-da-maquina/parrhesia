@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, run_code_against_sefer,
+    report_pass, report_fail, report_info, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -20,7 +20,7 @@ def main():
     if free_mb < 50:
         report_fail(NAME, f"ディスク空き容量が危険域です: {free_mb:.1f}MB")
 
-    log_path = ROOT / "sefer" / "audit_chain.jsonl"
+    log_path = ROOT / "runtime_guard" / "audit_chain.jsonl"
     if log_path.exists():
         size_mb = log_path.stat().st_size / (1024 * 1024)
         if size_mb > MAX_AUDIT_LOG_MB:

@@ -105,7 +105,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が

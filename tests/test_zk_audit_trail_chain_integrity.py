@@ -6,7 +6,7 @@ maquina_gatekeeper.py の ZKAuditTrail の回帰テスト。GRIMOIRE.md §AH 参
 背景: ZKAuditTrail.verify_and_record() には二つの欠陥が重なっていた。
   1. "current_hash" が秘密鍵を使わない単純なSHA-256に過ぎず、ファイルへの
      書き込み権限を持つ攻撃者がチェーンを改ざん・再計算しても検知できな
-     かった(sefer/audit_chain.pyのSignedAuditChainと同種のバグ。§AE参照)。
+     かった(runtime_guard/audit_chain.pyのSignedAuditChainと同種のバグ。§AE参照)。
   2. 改ざん検知が、プロセス起動時に"0000...0"へ初期化されるモジュール
      グローバル変数`_LAST_KNOWN_HASH`とファイル末尾を比較するだけだった
      ため、本フレームワークの実運用(src/ollama_agent_loop.py等、プロセス
@@ -150,7 +150,7 @@ def test_tampering_is_detected_even_in_a_brand_new_process_run(tmp_path, monkeyp
 
 def test_truncating_the_entire_trail_to_empty_is_now_detected(tmp_path, monkeypatch):
     """
-    [脆弱性修正の回帰テスト・核心 §BX] `sefer/audit_chain.py`の
+    [脆弱性修正の回帰テスト・核心 §BX] `runtime_guard/audit_chain.py`の
     SignedAuditChainで発見した同一クラスのバグが、独立実装である
     ZKAuditTrailにも存在していた: `zk_audit_trail.json`を鍵の知識すら
     不要な単純な方法(ファイル全体を`[]`に書き換える)で切り詰めるだけで、

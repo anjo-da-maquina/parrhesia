@@ -6,7 +6,7 @@ parrhesia/cli.py
 [実行方法] `python -m parrhesia.cli audit <target>`
 (`pyproject.toml`に`[project.scripts]`を追加して`parrhesia`コマンド自体を
 PyPI配布物として公開することは、本リポジトリのパッケージ名自体が
-`sefer`であり、別パッケージの配布設定を同じ`pyproject.toml`に混在させる
+`runtime_guard`であり、別パッケージの配布設定を同じ`pyproject.toml`に混在させる
 ことの影響範囲が未調査なため、ここでは行わない — まずは
 `python -m parrhesia.cli`で動く最小限の形で提供する)。
 """

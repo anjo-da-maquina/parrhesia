@@ -1,5 +1,5 @@
 """
-[脆弱性修正 2026-10 §AV] sefer.Sanctum のネストした allowed_dirs 絞り込みに
+[脆弱性修正 2026-10 §AV] runtime_guard.Sanctum のネストした allowed_dirs 絞り込みに
 対する回帰テスト。
 
 発見の経緯: §AU (adversarial_training/selfplay_engine_core.build_forge_script、旧名tartarus/armageddon_core) の修正で、
@@ -33,7 +33,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from sefer import Sanctum, LossOfAtaraxia, _get_current_policy
+from runtime_guard import Sanctum, LossOfAtaraxia, _get_current_policy
 
 
 def test_nested_sanctum_cannot_widen_to_filesystem_root(tmp_path, monkeypatch):

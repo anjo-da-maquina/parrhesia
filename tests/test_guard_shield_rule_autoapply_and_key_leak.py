@@ -137,7 +137,7 @@ def test_fails_when_api_key_is_not_popped(monkeypatch, tmp_path):
 
 def test_fails_when_qualified_call_name_check_is_missing(monkeypatch, tmp_path):
     """[核心・D] KamaelInquisitorが完全修飾関数名(_qualified_call_name)
-    を照合していない場合、正しくFAILする(sefer.inquisition()と同じ
+    を照合していない場合、正しくFAILする(runtime_guard.inquisition()と同じ
     ドット付き禁止名の検知漏れの再発防止)。"""
     bad_judgment = VALID_JUDGMENT_TEXT.replace("_qualified_call_name", "_call_name")
     _write_fixtures(tmp_path, judgment_text=bad_judgment)

@@ -4,9 +4,9 @@ tests/test_audit_package_boundary_isolation.py
 [新設 2026-11] angels/audit_package_boundary_isolation.py の単体テスト。
 
 本天使(「メタトロンの経典印章」)は、「ライセンス証明書機構
-(maquina_gatekeeper)・Tartarusの公開配布(pip配布されるseferパッケージ)
+(maquina_gatekeeper)・Tartarusの公開配布(pip配布されるruntime_guardパッケージ)
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
-`MANIFEST.in`・`sefer/*.py`の静的import解析という3点で検証する。
+`MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
 
 `.github/workflows/anjo_da_maquina_protocol.yml`の§BC由来のコメントが
 明記する通り、実際のsdistビルドによる内容検査(`tools/
@@ -17,7 +17,7 @@ build_public_scripture.py`・`tests/test_public_scripture_isolation.py`)
 境界)を守る中核であるため、優先して対応する。
 
 `main()`は`ROOT / "pyproject.toml"`・`ROOT / "MANIFEST.in"`・
-`ROOT / "sefer"`という固定パスを直接読むため、
+`ROOT / "runtime_guard"`という固定パスを直接読むため、
 `audit_package_boundary_isolation.ROOT`を一時ディレクトリへmonkeypatchし、各
 検査項目を満たす/満たさないフィクスチャを置いて検証する。
 """
@@ -29,9 +29,9 @@ import audit_package_boundary_isolation as mss
 
 VALID_PYPROJECT = (
     "[project]\n"
-    'name = "sefer"\n'
+    'name = "runtime_guard"\n'
     "[tool.setuptools]\n"
-    'packages = ["sefer"]\n'
+    'packages = ["runtime_guard"]\n'
 )
 
 VALID_MANIFEST = (
@@ -50,15 +50,15 @@ VALID_SEFER_FILE = (
 
 
 def _write_fixtures(root, pyproject=VALID_PYPROJECT, manifest=VALID_MANIFEST,
-                     sefer_file_content=VALID_SEFER_FILE, include_pyproject=True,
+                     runtime_guard_file_content=VALID_SEFER_FILE, include_pyproject=True,
                      include_manifest=True):
     if include_pyproject:
         (root / "pyproject.toml").write_text(pyproject, encoding="utf-8")
     if include_manifest:
         (root / "MANIFEST.in").write_text(manifest, encoding="utf-8")
-    sefer_dir = root / "sefer"
-    sefer_dir.mkdir(parents=True, exist_ok=True)
-    (sefer_dir / "__init__.py").write_text(sefer_file_content, encoding="utf-8")
+    runtime_guard_dir = root / "runtime_guard"
+    runtime_guard_dir.mkdir(parents=True, exist_ok=True)
+    (runtime_guard_dir / "__init__.py").write_text(runtime_guard_file_content, encoding="utf-8")
 
 
 def _expect_fail(monkeypatch, root):
@@ -97,15 +97,15 @@ def test_fails_when_manifest_in_is_missing(monkeypatch, tmp_path):
 def test_fails_when_packages_declaration_is_missing(monkeypatch, tmp_path):
     """`pyproject.toml`に`packages = [...]`の指定自体が無い場合、正しく
     FAILする。"""
-    _write_fixtures(tmp_path, pyproject='[project]\nname = "sefer"\n')
+    _write_fixtures(tmp_path, pyproject='[project]\nname = "runtime_guard"\n')
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_packages_includes_more_than_sefer(monkeypatch, tmp_path):
-    """[核心・配布境界破りの検知] `packages`に`sefer`以外の何か(例:
+def test_fails_when_packages_includes_more_than_runtime_guard(monkeypatch, tmp_path):
+    """[核心・配布境界破りの検知] `packages`に`runtime_guard`以外の何か(例:
     `maquina_gatekeeper`・`tartarus`)が混入している場合、正しくFAILする。"""
     bad_pyproject = VALID_PYPROJECT.replace(
-        'packages = ["sefer"]', 'packages = ["sefer", "maquina_gatekeeper"]'
+        'packages = ["runtime_guard"]', 'packages = ["runtime_guard", "maquina_gatekeeper"]'
     )
     _write_fixtures(tmp_path, pyproject=bad_pyproject)
     _expect_fail(monkeypatch, tmp_path)
@@ -127,25 +127,25 @@ def test_fails_when_manifest_does_not_exclude_gatekeeper_files(monkeypatch, tmp_
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_sefer_file_imports_maquina_gatekeeper_via_import(monkeypatch, tmp_path):
-    """[核心・配布境界破りの検知] `sefer/*.py`が`import
+def test_fails_when_runtime_guard_file_imports_maquina_gatekeeper_via_import(monkeypatch, tmp_path):
+    """[核心・配布境界破りの検知] `runtime_guard/*.py`が`import
     maquina_gatekeeper`の形でライセンス機構をimportしている場合、正しく
     FAILする。"""
-    _write_fixtures(tmp_path, sefer_file_content="import maquina_gatekeeper\n")
+    _write_fixtures(tmp_path, runtime_guard_file_content="import maquina_gatekeeper\n")
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_sefer_file_imports_tartarus_via_from_import(monkeypatch, tmp_path):
-    """`sefer/*.py`が`from tartarus import ...`の形でTartarusをimport
+def test_fails_when_runtime_guard_file_imports_tartarus_via_from_import(monkeypatch, tmp_path):
+    """`runtime_guard/*.py`が`from tartarus import ...`の形でTartarusをimport
     している場合も、同様に正しくFAILする。"""
-    _write_fixtures(tmp_path, sefer_file_content="from tartarus import armageddon_core\n")
+    _write_fixtures(tmp_path, runtime_guard_file_content="from tartarus import armageddon_core\n")
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_sefer_file_has_syntax_error(monkeypatch, tmp_path):
-    """`sefer/*.py`がAST解析に失敗する(構文エラーの)場合、正しくFAIL
+def test_fails_when_runtime_guard_file_has_syntax_error(monkeypatch, tmp_path):
+    """`runtime_guard/*.py`がAST解析に失敗する(構文エラーの)場合、正しくFAIL
     する(安全側に倒し、解析不能なファイルを無条件にPASS扱いしない)。"""
-    _write_fixtures(tmp_path, sefer_file_content="def broken(:\n    pass\n")
+    _write_fixtures(tmp_path, runtime_guard_file_content="def broken(:\n    pass\n")
     _expect_fail(monkeypatch, tmp_path)
 
 

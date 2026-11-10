@@ -18,13 +18,13 @@ audit eventを発生させる)のいずれも、この`forbidden`集合とは一
 `unlink`・`fork`・`execve`等、forbidden集合が遮断しようとしている
 操作のほぼ全てに無検査で到達できてしまう。
 
-独立した別の防御層である`sefer/__init__.py`の`_michael_absolute_defense`
+独立した別の防御層である`runtime_guard/__init__.py`の`_michael_absolute_defense`
 は、個々のイベント名の列挙ではなく`event.startswith("ctypes.")`という
 名前空間ごとのデフォルト拒否を既に備えており、この欠陥の対象では
 ないことを実機で確認した(実際に試し、既存の未変更のコードで
 "ctypes.dlsym"がデフォルト拒否によって正しく遮断されることを確認
 済み)。本ファイル(`maquina_gatekeeper.py`)側が個々のイベント名を
-列挙する狭いallowlist方式であるのに対し、sefer側は名前空間ごとの
+列挙する狭いallowlist方式であるのに対し、runtime_guard側は名前空間ごとの
 広いdefault-deny方式を採用しているという、設計そのものの違いに
 起因する非対称性である。
 
@@ -114,9 +114,9 @@ sys.exit(0)
     assert res.returncode == 0, f"stdout={res.stdout}\nstderr={res.stderr}"
 
 
-def test_sefer_already_blocks_the_same_scenario_via_its_existing_default_deny():
-    """[裏付け・sefer側は対象外であることの固定] 独立した別の防御層
-    (sefer/__init__.py)は、本修正を一切加えていない既存のコードの
+def test_runtime_guard_already_blocks_the_same_scenario_via_its_existing_default_deny():
+    """[裏付け・runtime_guard側は対象外であることの固定] 独立した別の防御層
+    (runtime_guard/__init__.py)は、本修正を一切加えていない既存のコードの
     ままで、同じ"ctypes.pythonapi"経由の攻撃を既存の名前空間
     デフォルト拒否によって正しく遮断することを確認する(§CEの対象は
     maquina_gatekeeper.py側のみであることの裏付け)。"""
@@ -127,10 +127,10 @@ def test_sefer_already_blocks_the_same_scenario_via_its_existing_default_deny():
 
         script = f"""
 import ctypes, os, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 try:
-    with Sanctum(allowed_dirs=["/tmp/sefer_jail_only_does_not_exist"]):
+    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         c_unlink = ctypes.pythonapi.unlink
         c_unlink.argtypes = [ctypes.c_char_p]
         c_unlink({victim!r}.encode())

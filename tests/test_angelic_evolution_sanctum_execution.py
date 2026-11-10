@@ -6,7 +6,7 @@
 `AegisSystem.execute_ai_intent()`が例外を投げずに戻った時点で、無条件に
 `True`を返していた。しかし`execute_ai_intent()`はGabriel・IntentInterceptor・
 Dockerの隔離結界内での使い捨てドライランのみを行う「事前検閲」であり、実際の
-ファイルI/O・コード実行は呼び出し側が`sefer.Sanctum`の中で行う責務として
+ファイルI/O・コード実行は呼び出し側が`runtime_guard.Sanctum`の中で行う責務として
 明示的に残されている(src/adversarial_evolution.pyの§BBと全く同じ構造の
 バグ)。
 
@@ -28,7 +28,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sefer import inquisition, LossOfAtaraxia
+from runtime_guard import inquisition, LossOfAtaraxia
 
 _BYPASS_PAYLOAD = (
     'open("/tmp/__pleroma_test_bg_should_never_be_created__.txt", "w").write("pwned")\n'

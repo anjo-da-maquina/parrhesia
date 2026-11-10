@@ -21,14 +21,14 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # `unlink`・`fork`・`execve`等、forbidden集合が遮断しようとしている
 # 操作のほぼ全てに、無検査で到達できてしまう。
 #
-# 独立した別の防御層である`sefer/__init__.py`の
+# 独立した別の防御層である`runtime_guard/__init__.py`の
 # `_michael_absolute_defense`は、個々のイベント名の列挙ではなく
 # `event.startswith("ctypes.")`という名前空間ごとのデフォルト拒否を
 # 既に備えており、この欠陥の対象ではないことを実機で確認した
 # (既存の未変更のコードのままで"ctypes.dlsym"が正しく遮断される
 # ことを確認済み)。本天使は、maquina_gatekeeper.py側の修正
 # ("ctypes.dlopen"・"ctypes.dlsym"をforbidden集合に追加)を継続的に
-# 再検証し、同時にsefer側が(本修正を加えていない既存のコードの
+# 再検証し、同時にruntime_guard側が(本修正を加えていない既存のコードの
 # ままで)同じ攻撃に対して既に保護されていることも裏付けとして
 # 検証する。
 #
@@ -130,18 +130,18 @@ sys.exit(0)
     return True, "OK"
 
 
-def _check_sefer_already_protected_without_modification() -> tuple:
-    """[裏付け] 独立した別の防御層(sefer/__init__.py)は、本修正を
+def _check_runtime_guard_already_protected_without_modification() -> tuple:
+    """[裏付け] 独立した別の防御層(runtime_guard/__init__.py)は、本修正を
     一切加えていない既存のコードのままで、同じ攻撃を既存の名前空間
     デフォルト拒否によって正しく遮断することを確認する。"""
-    fd, victim = tempfile.mkstemp(prefix="chamuel_sefer_victim_")
+    fd, victim = tempfile.mkstemp(prefix="chamuel_runtime_guard_victim_")
     os.close(fd)
     with open(victim, "wb") as f:
         f.write(b"original content, untouched so far............")
     try:
         script = f"""
 import ctypes, os, sys
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 try:
     with Sanctum(allowed_dirs=["/tmp/chamuel_nonexistent_jail"]):
@@ -154,7 +154,7 @@ except LossOfAtaraxia:
 """
         res = _run(script)
         if res.returncode != 0:
-            return False, f"sefer側が同じ攻撃を遮断しなかった(既存の防御が崩れている可能性): stdout={res.stdout} stderr={res.stderr}"
+            return False, f"runtime_guard側が同じ攻撃を遮断しなかった(既存の防御が崩れている可能性): stdout={res.stdout} stderr={res.stderr}"
         if not os.path.exists(victim):
             return False, "遮断されたはずだが、ファイルが実際には削除されている"
         return True, "OK"
@@ -167,21 +167,21 @@ CHECKS = [
     ("maquina_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _check_pythonapi_symbol_resolution_is_blocked),
     ("maquina_gatekeeper.ultimate_audit_hook: 新規ctypes.CDLL(None) dlopenの遮断", _check_fresh_cdll_dlopen_is_blocked),
     ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_pythonapi_still_works_when_unsealed),
-    ("sefer._michael_absolute_defense: 既存の名前空間デフォルト拒否による保護の裏付け", _check_sefer_already_protected_without_modification),
+    ("runtime_guard._michael_absolute_defense: 既存の名前空間デフォルト拒否による保護の裏付け", _check_runtime_guard_already_protected_without_modification),
 ]
 
 
 def run_battery():
     """ctypes.dlopen/dlsymによる既知の監査回避バイパス経路を、
     maquina_gatekeeper.pyに対して実際に与えて、正しく処理されるかを
-    確認する。sefer側は本修正の対象外であることの裏付けも含む。
+    確認する。runtime_guard側は本修正の対象外であることの裏付けも含む。
     戻り値: [(name, detail), ...] (失敗したものだけ)"""
     failures = []
     for name, check_fn in CHECKS:
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
@@ -215,7 +215,7 @@ def main():
         NAME,
         "ctypes.dlopen/dlsym経由の深層保護バイパス(ctypes.pythonapi経由の"
         "シンボル解決・新規CDLL(None)取得の両方)が正しく遮断され、"
-        "非封鎖時の正当な利用は誤って遮断されず、独立したsefer側も"
+        "非封鎖時の正当な利用は誤って遮断されず、独立したruntime_guard側も"
         "既存の設計で同じ攻撃から保護されていることを確認しました。",
     )
 

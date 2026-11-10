@@ -3,13 +3,13 @@ tests/test_check_source_syntax_validity.py
 =====================================
 [新設 2026-11] angels/check_source_syntax_validity.py の単体テスト。
 
-本天使(「ラファエルの治癒」)は、`sefer/*.py`の全モジュールが構文的に
+本天使(「ラファエルの治癒」)は、`runtime_guard/*.py`の全モジュールが構文的に
 妥当(`ast.parse`でcompileできる)であることを検証する(自動修復監査:
 壊れている場合はCIを早期に失敗させ、手動修復を促す)。天使群のテスト
 カバレッジの棚卸しの過程で、専用テストが一件も存在しないことが判明
 した。
 
-`main()`は`ROOT / "sefer"`という固定パスを直接rglobするため、
+`main()`は`ROOT / "runtime_guard"`という固定パスを直接rglobするため、
 `check_source_syntax_validity.ROOT`を一時ディレクトリへmonkeypatchして検証
 する。
 """
@@ -21,7 +21,7 @@ import check_source_syntax_validity as rr
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のsefer/配下の全モジュールは構文的に正常
+    """[実機の裏付け] 現時点のruntime_guard/配下の全モジュールは構文的に正常
     であるため、本天使はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
@@ -32,14 +32,14 @@ def test_real_repository_passes():
     assert "✅ PASS" in buf.getvalue()
 
 
-def test_fails_when_a_sefer_module_has_a_syntax_error(monkeypatch, tmp_path):
-    """[核心] sefer/配下のいずれか1つのモジュールに構文エラーがある
+def test_fails_when_a_runtime_guard_module_has_a_syntax_error(monkeypatch, tmp_path):
+    """[核心] runtime_guard/配下のいずれか1つのモジュールに構文エラーがある
     場合、正しくFAILし、該当ファイルパスを詳細に含めることを確認
     する。"""
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    (sefer_dir / "good.py").write_text("def ok():\n    return 1\n", encoding="utf-8")
-    (sefer_dir / "broken.py").write_text("def broken(:\n    pass\n", encoding="utf-8")
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    (runtime_guard_dir / "good.py").write_text("def ok():\n    return 1\n", encoding="utf-8")
+    (runtime_guard_dir / "broken.py").write_text("def broken(:\n    pass\n", encoding="utf-8")
     monkeypatch.setattr(rr, "ROOT", tmp_path)
     try:
         rr.main()
@@ -54,10 +54,10 @@ def test_fails_and_reports_all_broken_files_when_multiple_are_broken(monkeypatch
     import io
     from contextlib import redirect_stdout
 
-    sefer_dir = tmp_path / "sefer"
-    sub_dir = sefer_dir / "sub"
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    sub_dir = runtime_guard_dir / "sub"
     sub_dir.mkdir(parents=True)
-    (sefer_dir / "broken1.py").write_text("def broken(:\n    pass\n", encoding="utf-8")
+    (runtime_guard_dir / "broken1.py").write_text("def broken(:\n    pass\n", encoding="utf-8")
     (sub_dir / "broken2.py").write_text("x = (\n", encoding="utf-8")
     monkeypatch.setattr(rr, "ROOT", tmp_path)
     buf = io.StringIO()
@@ -72,16 +72,16 @@ def test_fails_and_reports_all_broken_files_when_multiple_are_broken(monkeypatch
     assert "broken2.py" in out
 
 
-def test_passes_when_all_sefer_modules_including_nested_are_valid(monkeypatch, tmp_path):
+def test_passes_when_all_runtime_guard_modules_including_nested_are_valid(monkeypatch, tmp_path):
     """サブディレクトリを含む全モジュールが構文的に正常であれば、想定
     どおりPASSする(回帰防止のための明示的な固定)。"""
     import io
     from contextlib import redirect_stdout
 
-    sefer_dir = tmp_path / "sefer"
-    sub_dir = sefer_dir / "sub"
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    sub_dir = runtime_guard_dir / "sub"
     sub_dir.mkdir(parents=True)
-    (sefer_dir / "a.py").write_text("x = 1\n", encoding="utf-8")
+    (runtime_guard_dir / "a.py").write_text("x = 1\n", encoding="utf-8")
     (sub_dir / "b.py").write_text("y = 2\n", encoding="utf-8")
     monkeypatch.setattr(rr, "ROOT", tmp_path)
     buf = io.StringIO()
@@ -96,9 +96,9 @@ def test_handles_bom_prefixed_files_correctly(monkeypatch, tmp_path):
     import io
     from contextlib import redirect_stdout
 
-    sefer_dir = tmp_path / "sefer"
-    sefer_dir.mkdir()
-    (sefer_dir / "bom.py").write_bytes("x = 1\n".encode("utf-8-sig"))
+    runtime_guard_dir = tmp_path / "runtime_guard"
+    runtime_guard_dir.mkdir()
+    (runtime_guard_dir / "bom.py").write_bytes("x = 1\n".encode("utf-8-sig"))
     monkeypatch.setattr(rr, "ROOT", tmp_path)
     buf = io.StringIO()
     with redirect_stdout(buf):

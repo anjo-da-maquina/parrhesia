@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # [修正 2026-10] 以前はmaquina_gatekeeper.py・tests/のみを個別にCOPYしており、
-# テストが実際に必要とするsefer/・angels/・adapters/・anjo_interceptor/・
+# テストが実際に必要とするruntime_guard/・angels/・adapters/・anjo_interceptor/・
 # src/・tartarus/・tools/等が一切コピーされていなかった(ビルドして実行すると
 # ほぼ全テストがModuleNotFoundErrorで失敗する、実質ビルド後未使用の不備が
 # あった。詳細はGRIMOIRE.md §R参照)。個別ファイルの列挙は新規ディレクトリの

@@ -48,7 +48,7 @@ def test_real_excel_file_is_actually_parsed_and_converted_to_yaml(tmp_path, monk
     import yaml
 
     source = tmp_path / "requirements.xlsx"
-    output = tmp_path / "sefer" / "external_requirements.yaml"
+    output = tmp_path / "runtime_guard" / "external_requirements.yaml"
     _reload_with_paths(monkeypatch, source, output)
 
     wb = openpyxl.Workbook()
@@ -75,7 +75,7 @@ def test_fully_empty_rows_are_skipped(tmp_path, monkeypatch):
     import openpyxl
 
     source = tmp_path / "requirements.xlsx"
-    output = tmp_path / "sefer" / "external_requirements.yaml"
+    output = tmp_path / "runtime_guard" / "external_requirements.yaml"
     _reload_with_paths(monkeypatch, source, output)
 
     wb = openpyxl.Workbook()

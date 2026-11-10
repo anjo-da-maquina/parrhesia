@@ -3,7 +3,7 @@ Shield Rules 承認プロモーションツール
 ========================================
 [新設 2026-10] `src/angelic_shield.py` の `ZadkielDominion` が
 Gemini(LLM)から取得した脅威情報を元に提案した防壁ルール
-(`sefer/shield_rules_pending.json`)を、人間が内容を確認した上で
+(`runtime_guard/shield_rules_pending.json`)を、人間が内容を確認した上で
 `shield_rules.json`(実際に `src/kamael_judgment.py` が使用する
 有効な禁止ルール)へ昇格させるためのツール。
 
@@ -22,7 +22,7 @@ from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
 RULES_PATH = PLEROMA_DIR / "shield_rules.json"
-PENDING_RULES_PATH = PLEROMA_DIR / "sefer" / "shield_rules_pending.json"
+PENDING_RULES_PATH = PLEROMA_DIR / "runtime_guard" / "shield_rules_pending.json"
 
 
 def _load_json(path, default):

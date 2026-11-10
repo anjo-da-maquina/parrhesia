@@ -19,7 +19,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # データを送出しても無条件に成功した――os.sendfileより遥かに一般的に
 # 使われる「ソケットへの通常のデータ送信」そのものが、無検査だった。
 #
-# 本天使は、`sefer/__init__.py`に新設した`_guarded_socket_send`/
+# 本天使は、`runtime_guard/__init__.py`に新設した`_guarded_socket_send`/
 # `_guarded_socket_sendall`(§CO)が、この完全な実攻撃チェーン(Sanctum
 # 起動前の接続確立→起動後のsend/sendall攻撃)を正しく遮断し、かつ
 # Sanctum起動**後**に許可ホスト(allowed_hosts)へ新規接続して送信する
@@ -47,7 +47,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # `SSLSocket.send()`で機密データを送出したところ、§COの修正後でも
 # 例外無しに成功し、受信側に実際にデータが届くことを確認した――§COより
 # さらに実際的な経路である(AIが生成したコードが外部APIへ通信する場合、
-# `requests`等の通常の経路は常にTLSを経由するため)。`sefer/__init__.py`
+# `requests`等の通常の経路は常にTLSを経由するため)。`runtime_guard/__init__.py`
 # に`_guarded_ssl_socket_send`/`_guarded_ssl_socket_sendall`を新設し、
 # §COの`_check_socket_send_allowed`をそのまま再利用して修正した
 # (GRIMOIRE.md §CP参照)。本天使に、TLS版の事前接続バイパス遮断・
@@ -63,7 +63,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # メソッドも一切経由しない、全く別の第三の経路だった。実機で、本物の
 # TLSループバック接続を確立し、Sanctum起動後に`SSLSocket.write()`で
 # 機密データを送出したところ、§CPの修正後でも例外無しに成功し、受信側
-# に実際にデータが届くことを確認した。`sefer/__init__.py`に
+# に実際にデータが届くことを確認した。`runtime_guard/__init__.py`に
 # `_guarded_ssl_socket_write`を新設し、§CO/§CPの
 # `_check_socket_send_allowed`をそのまま再利用して修正した
 # (GRIMOIRE.md §CR参照)。
@@ -99,7 +99,7 @@ def _make_self_signed_cert(tmpdir: str):
 def _check_send_to_presealed_socket_is_blocked() -> tuple:
     """[核心] Sanctum起動**前**に接続済みの実ソケットへ、Sanctum起動
     **後**に`.send()`で送出する攻撃が遮断されることを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -139,7 +139,7 @@ def _check_send_to_presealed_socket_is_blocked() -> tuple:
 def _check_sendall_to_presealed_socket_is_blocked() -> tuple:
     """[核心] 同様の攻撃を`.sendall()`で行っても遮断されることを確認
     する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -180,7 +180,7 @@ def _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tupl
     へ新規接続し、送信する正当なフローが誤って遮断されないことを確認
     する。本検査は、同時に§CO追記で修正した"socket.__new__"の
     passthrough漏れ(fail-closed誤検知)の回帰も検証する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -238,7 +238,7 @@ def _check_new_connect_to_disallowed_host_is_still_blocked() -> tuple:
     """[誤検知防止の裏側] "socket.__new__"をpassthroughに追加した後も、
     許可外ホストへの新規connect自体は従来通り遮断されることを確認する
     (§CO追記の修正がホスト検査そのものを無力化していないか確認)。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     try:
         with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"api.openai.com"}):
@@ -306,7 +306,7 @@ def _check_tls_send_to_presealed_socket_is_blocked() -> tuple:
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     # idnaコーデックの遅延importがSanctum内での初回呼び出し時に
     # marshal.loadsという無関係な別のhard-deny対象を誤って発火させる
@@ -346,7 +346,7 @@ def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> 
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -401,7 +401,7 @@ def _check_tls_write_to_presealed_socket_is_blocked() -> tuple:
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -439,7 +439,7 @@ def _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked() ->
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -512,16 +512,16 @@ def _check_tls_write_without_sanctum_is_unaffected() -> tuple:
 
 
 CHECKS = [
-    ("sefer._guarded_socket_send: 事前接続バイパス遮断(§CO)", _check_send_to_presealed_socket_is_blocked),
-    ("sefer._guarded_socket_sendall: 事前接続バイパス遮断(§CO)", _check_sendall_to_presealed_socket_is_blocked),
-    ("sefer._guarded_socket_send: 許可ホストへの正当な新規接続の誤検知防止(§CO)", _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
-    ("sefer._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", _check_send_without_sanctum_is_unaffected),
-    ("sefer._michael_absolute_defense: 許可外ホストへの新規connect遮断(§CO追記の回帰防止)", _check_new_connect_to_disallowed_host_is_still_blocked),
-    ("sefer._guarded_ssl_socket_send: TLS事前接続バイパス遮断(§CP)", _check_tls_send_to_presealed_socket_is_blocked),
-    ("sefer._guarded_ssl_socket_send: 許可ホストへの正当な新規TLS接続の誤検知防止(§CP)", _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
-    ("sefer._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _check_tls_write_to_presealed_socket_is_blocked),
-    ("sefer._guarded_ssl_socket_write: 許可ホストへの正当な新規TLS write()の誤検知防止(§CR)", _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked),
-    ("sefer._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", _check_tls_write_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_socket_send: 事前接続バイパス遮断(§CO)", _check_send_to_presealed_socket_is_blocked),
+    ("runtime_guard._guarded_socket_sendall: 事前接続バイパス遮断(§CO)", _check_sendall_to_presealed_socket_is_blocked),
+    ("runtime_guard._guarded_socket_send: 許可ホストへの正当な新規接続の誤検知防止(§CO)", _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
+    ("runtime_guard._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", _check_send_without_sanctum_is_unaffected),
+    ("runtime_guard._michael_absolute_defense: 許可外ホストへの新規connect遮断(§CO追記の回帰防止)", _check_new_connect_to_disallowed_host_is_still_blocked),
+    ("runtime_guard._guarded_ssl_socket_send: TLS事前接続バイパス遮断(§CP)", _check_tls_send_to_presealed_socket_is_blocked),
+    ("runtime_guard._guarded_ssl_socket_send: 許可ホストへの正当な新規TLS接続の誤検知防止(§CP)", _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
+    ("runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _check_tls_write_to_presealed_socket_is_blocked),
+    ("runtime_guard._guarded_ssl_socket_write: 許可ホストへの正当な新規TLS write()の誤検知防止(§CR)", _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked),
+    ("runtime_guard._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", _check_tls_write_without_sanctum_is_unaffected),
 ]
 
 
@@ -534,7 +534,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
@@ -558,7 +558,7 @@ def main():
         detail = "; ".join(f"{n}({d})" for n, d in failures)
         report_fail(
             NAME,
-            f"sefer.Sanctumのsocket.send/sendall・ssl.SSLSocket.send/write"
+            f"runtime_guard.Sanctumのsocket.send/sendall・ssl.SSLSocket.send/write"
             f"による事前接続バイパス防止に、少なくとも1つの既知の問題が"
             f"再発しています(§CO/§CP/§CRの回帰): {detail}",
             evidence={"failures": failures},

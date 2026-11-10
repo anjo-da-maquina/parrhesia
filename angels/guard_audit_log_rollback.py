@@ -3,7 +3,7 @@ angels/guard_audit_log_rollback.py
 =============================
 [脆弱性修正 2026-10 §AN] 本スクリプトの検知ロジック(下記main関数)自体は
 元から正しいが、その前提となる「前回実行時のチェックポイント」
-(sefer/.angel_state/guard_audit_log_rollback.json、angels/_common.pyのload_state/
+(runtime_guard/.angel_state/guard_audit_log_rollback.json、angels/_common.pyのload_state/
 save_state経由)が、CIワークフロー(.github/workflows/anjo_da_maquina_protocol.yml)
 上で一度も永続化されていなかった。`.angel_state/`は`.gitignore`対象であり、
 かつ本ワークフローにはactions/cache等の永続化手段が一件も存在しなかったため、
@@ -18,7 +18,7 @@ GitHub Actionsの使い捨てランナーでは毎回チェックアウト直後
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, run_code_against_sefer,
+    report_pass, report_fail, report_info, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -30,7 +30,7 @@ NAME = "guard_audit_log_rollback - 増分監査: 監査チェーンの前回チ�
 # チェックポイント(index, hash)が、現在のログの同じindex位置に
 # そのまま存在するかを検証する。履歴の巻き戻し・改ざんを検知する。
 def main():
-    log_path = ROOT / "sefer" / "audit_chain.jsonl"
+    log_path = ROOT / "runtime_guard" / "audit_chain.jsonl"
     entries = []
     if log_path.exists():
         import json as _json

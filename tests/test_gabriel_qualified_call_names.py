@@ -1,5 +1,5 @@
 ﻿"""
-[テスト追加 2026-10] Gabriel(sefer.inquisition)のforbidden_funcs照合バグの
+[テスト追加 2026-10] Gabriel(runtime_guard.inquisition)のforbidden_funcs照合バグの
 回帰テスト。
 
 forbidden_funcs には "os.system" / "subprocess.Popen" のようなドット付き
@@ -9,7 +9,7 @@ forbidden_funcs には "os.system" / "subprocess.Popen" のようなドット付
 `os.system('rm -rf /')` のような直接呼び出しは、importの"high"判定のみに
 留まり、"critical"としては一度も検知されていなかった（実機検証済み）。
 """
-from sefer import inquisition
+from runtime_guard import inquisition
 
 
 def test_os_system_direct_call_is_critical():

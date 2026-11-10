@@ -5,14 +5,14 @@ src/angelic_shield.py
 
   1. 独自実装の `metatrons_seal`(sys.addaudithook)が、OSレベルの実行保護を
      提供しているかのような体裁("人と機械の境界は守護されています")で
-     表示されていたが、実態は `sefer.Sanctum` よりはるかに弱い簡易実装
+     表示されていたが、実態は `runtime_guard.Sanctum` よりはるかに弱い簡易実装
      だった(保護対象の判定が `"anjo-da-maquina_2" in target_file` という
      部分文字列一致のみで、Sanctumのような allowed_dirs によるパス正規化・
      物理的隔離を一切行わない)。本ファイル自体はコードを実行せず
      (RazielCherubimは外部API呼び出し、ZadkielDominionはJSONファイル
      読み書きのみ)、audit hookを仕掛ける意味自体がそもそも薄かった。
      本当にOSレベルの保護が必要な箇所(AIが生成したコードの実行)は、
-     `src/aegis_system.py` の `AegisSystem` と `sefer.Sanctum` が担う。
+     `src/aegis_system.py` の `AegisSystem` と `runtime_guard.Sanctum` が担う。
      本ファイルはそれらの代替ではないため、誤解を招く表示を撤去した。
 
   2. `ZadkielDominion.assimilate_knowledge()` が、Gemini(LLM)の生出力を
@@ -22,7 +22,7 @@ src/angelic_shield.py
      に違反する、同種の脆弱性だった。プロンプトインジェクションや幻覚に
      よって、無関係な正規モジュール/関数が誤って禁止リストに追加される
      リスクがある。本修正では Armageddon の `raziel_ledger_pending.json`
-     と同じパターンを採用し、提案はまず `sefer/shield_rules_pending.json`
+     と同じパターンを採用し、提案はまず `runtime_guard/shield_rules_pending.json`
      に積むのみとし、`tools/promote_shield_seal.py` による人間の明示的
      承認を経て初めて `shield_rules.json` に反映されるようにした。
 
@@ -42,7 +42,7 @@ from pathlib import Path
 from datetime import datetime
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-PENDING_RULES_PATH = _REPO_ROOT / "sefer" / "shield_rules_pending.json"
+PENDING_RULES_PATH = _REPO_ROOT / "runtime_guard" / "shield_rules_pending.json"
 
 
 class RazielCherubim:
@@ -90,7 +90,7 @@ class RazielCherubim:
 class ZadkielDominion:
     """
     [2026-10] ラジエルが取得したLLM生成の脅威情報を、人間承認待ちの
-    提案キュー(`sefer/shield_rules_pending.json`)に積むのみ。
+    提案キュー(`runtime_guard/shield_rules_pending.json`)に積むのみ。
     実際に有効な `shield_rules.json` への反映は、`tools/promote_shield_seal.py`
     による人間の明示的承認が必要(Armageddonの raziel_ledger_pending.json
     と同一のパターン)。

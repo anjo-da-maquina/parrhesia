@@ -23,9 +23,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ANGELS_DIR = REPO_ROOT / "angels"
 
 
-def _run_with_stubbed_sefer(stub_script: str, env_extra=None) -> subprocess.CompletedProcess:
+def _run_with_stubbed_runtime_guard(stub_script: str, env_extra=None) -> subprocess.CompletedProcess:
     """guard_sandbox_shell_eval_bypass.py をサブプロセスとして実行し、その内部の
-    run_code_against_sefer呼び出しをstub_scriptで差し替える。"""
+    run_code_against_runtime_guard呼び出しをstub_scriptで差し替える。"""
     script = f"""
 import sys
 sys.path.insert(0, {str(ANGELS_DIR)!r})
@@ -33,7 +33,7 @@ sys.path.insert(0, {str(ANGELS_DIR)!r})
 {stub_script}
 
 import guard_sandbox_shell_eval_bypass
-guard_sandbox_shell_eval_bypass.run_code_against_sefer = _fake_run_code_against_sefer
+guard_sandbox_shell_eval_bypass.run_code_against_runtime_guard = _fake_run_code_against_runtime_guard
 
 import runpy
 sys.argv = ["guard_sandbox_shell_eval_bypass.py"]
@@ -56,10 +56,10 @@ def test_bypass_fails_even_with_chaos_mode_unset():
     """[核心・§BM] CHAOS_MODEが未設定(既定=false、つまり通常のpush時と
     同じ状態)でも、防壁突破が1件でもあれば必ず失敗すること。"""
     stub = """
-def _fake_run_code_against_sefer(code, *a, **kw):
+def _fake_run_code_against_runtime_guard(code, *a, **kw):
     return False, ""  # 突破された(blocked=False)
 """
-    res = _run_with_stubbed_sefer(stub)
+    res = _run_with_stubbed_runtime_guard(stub)
     assert res.returncode == 1, (
         f"CHAOS_MODE未設定下で防壁突破が検知されたのに失敗していない: "
         f"stdout={res.stdout} stderr={res.stderr}"
@@ -71,10 +71,10 @@ def test_bypass_fails_with_chaos_mode_explicitly_false():
     """[回帰防止] CHAOS_MODE=falseを明示しても、以前の実装のように
     失敗判定がスキップされないこと。"""
     stub = """
-def _fake_run_code_against_sefer(code, *a, **kw):
+def _fake_run_code_against_runtime_guard(code, *a, **kw):
     return False, ""
 """
-    res = _run_with_stubbed_sefer(stub, env_extra={"CHAOS_MODE": "false"})
+    res = _run_with_stubbed_runtime_guard(stub, env_extra={"CHAOS_MODE": "false"})
     assert res.returncode == 1, f"stdout={res.stdout} stderr={res.stderr}"
 
 
@@ -82,9 +82,9 @@ def test_no_bypass_passes():
     """[回帰防止] 突破が無い場合は正常にPASSし、過剰検知で常に失敗する
     ようになっていないこと。"""
     stub = """
-def _fake_run_code_against_sefer(code, *a, **kw):
+def _fake_run_code_against_runtime_guard(code, *a, **kw):
     return True, ""  # 遮断された(blocked=True)
 """
-    res = _run_with_stubbed_sefer(stub)
+    res = _run_with_stubbed_runtime_guard(stub)
     assert res.returncode == 0, f"stdout={res.stdout} stderr={res.stderr}"
     assert "PASS" in res.stdout

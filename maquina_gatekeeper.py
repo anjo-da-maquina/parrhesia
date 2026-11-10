@@ -31,10 +31,10 @@ _LAST_TIMESTAMP = datetime.min
 # 一切の検査をせずに即座にreturnしてしまい、`subprocess.Popen`等の
 # 禁止操作が完全に素通りしてしまうことを実機検証済み(メインスレッドでは
 # 正しく遮断される同じ操作が、子スレッドでは無検査で実行できてしまう
-# ことを確認)。`sefer/__init__.py`のMichael側は元々`_active_stack`を
+# ことを確認)。`runtime_guard/__init__.py`のMichael側は元々`_active_stack`を
 # プロセス全体で共有するグローバルなリストとして実装しており、本件は
 # それとは逆に、共有すべき状態を誤ってスレッドローカル化してしまって
-# いたことが原因だった(`sefer/__init__.py`参照)。封鎖フラグをプロセス
+# いたことが原因だった(`runtime_guard/__init__.py`参照)。封鎖フラグをプロセス
 # 全体で共有するグローバル変数に戻し、スレッドを跨いでも封鎖状態が
 # 維持されるよう修正した。
 _sanctuary_seal_lock = threading.Lock()
@@ -143,7 +143,7 @@ def _register_audit_hook_once():
         # が、この列挙から漏れていたことを実機で確認した
         # (`set_sanctuary_sealed(True)`の状態でも`os.fork()`が例外無しで
         # 成立することを確認済み)。これは本ファイルとは別個に独立して
-        # 存在する`sefer/__init__.py`の`_HARD_DENY_EVENTS`が既に
+        # 存在する`runtime_guard/__init__.py`の`_HARD_DENY_EVENTS`が既に
         # "os.fork"/"os.forkpty"を含んでいたにもかかわらず、本フック
         # (`ultimate_audit_hook`)には反映されていなかった――2つの監査
         # フックが構造的に並行しているが共有されていないため、片方の
@@ -174,13 +174,13 @@ def _register_audit_hook_once():
         # 達成できる、という意味で§BW・§CA・§CB・§CC・§CDと同種の
         # 「等価経路によるブロックリスト回避」)。
         #
-        # 独立した別の防御層である`sefer/__init__.py`の
+        # 独立した別の防御層である`runtime_guard/__init__.py`の
         # `_michael_absolute_defense`は、個々のイベント名の列挙ではなく
         # `event.startswith("ctypes.")`という名前空間ごとのデフォルト
         # 拒否(4. デフォルト拒否)を備えているため、"ctypes.dlsym"も
         # "ctypes.dlopen"も最初から自動的に遮断されており、この欠陥の
         # 対象ではないことを実機で確認した(本ファイル側が個別の
-        # イベント名を列挙する狭いallowlist方式であるのに対し、sefer側は
+        # イベント名を列挙する狭いallowlist方式であるのに対し、runtime_guard側は
         # 名前空間ごとの広いdefault-deny方式を採用しているという、
         # 設計そのものの違いに起因する非対称性である)。
         #
@@ -194,7 +194,7 @@ def _register_audit_hook_once():
         # 欠陥――禁止したい意図(接続不要でのデータ送信)は同じなのに、
         # 別のAPI名を使うだけで素通りしてしまう――が、"sendto"を塞いだ
         # 直後にその隣にある"sendmsg"には及んでいなかった。独立した別の
-        # 防御層である`sefer/__init__.py`の`_michael_absolute_defense`は、
+        # 防御層である`runtime_guard/__init__.py`の`_michael_absolute_defense`は、
         # 個々のイベント名の列挙ではなく`"socket" in event`という名前空間
         # ごとのデフォルト拒否を備えているため、"socket.sendmsg"も最初から
         # 自動的に遮断されており、この欠陥の対象ではないことを実機で確認
@@ -213,7 +213,7 @@ def _register_audit_hook_once():
         # `set_sanctuary_sealed(True)`の状態でも`socket.getaddrinfo()`が
         # 例外無しに成立し、このサンドボックス自身のDNS到達性の欠如に
         # よるOSErrorでのみ失敗すること(=本フックが何も遮断していない
-        # こと)を確認した。独立した別の防御層である`sefer/__init__.py`の
+        # こと)を確認した。独立した別の防御層である`runtime_guard/__init__.py`の
         # `_michael_absolute_defense`も、同じ理由でこれまで
         # "socket.getaddrinfo"を無条件に通過させていた(GRIMOIRE.md §CT、
         # 本ファイルの修正はそちらとは独立した同種の修正)。本ファイルは
@@ -231,7 +231,7 @@ def _register_audit_hook_once():
         # forbidden集合に一度も含まれていなかったことを発見した(実機で
         # `set_sanctuary_sealed(True)`の状態でも`socket.gethostbyname()`
         # が例外無しに成立することを確認済み)。独立した別の防御層である
-        # `sefer/__init__.py`の`_michael_absolute_defense`は、これらの
+        # `runtime_guard/__init__.py`の`_michael_absolute_defense`は、これらの
         # イベント名に対する個別の列挙ではなく、引数からホスト名/アドレス
         # を抽出する汎用ロジック(「2. ソケット通信検査」)を既に備えて
         # いたため、§CTより前から自動的に保護されていたことを実機で確認
@@ -271,7 +271,7 @@ def _register_audit_hook_once():
 def _load_or_create_zk_signing_key(key_path: Path) -> bytes:
     """[脆弱性修正 2026-10] ZKAuditTrailのハッシュ連鎖に鍵付けするための
     ローカル専用秘密鍵。初回自動生成・0600権限で作成する
-    (sefer/audit_chain.pyのSignedAuditChainと同一パターン。GRIMOIRE §AE参照)。"""
+    (runtime_guard/audit_chain.pyのSignedAuditChainと同一パターン。GRIMOIRE §AE参照)。"""
     key_path = Path(key_path)
     key_path.parent.mkdir(parents=True, exist_ok=True)
     if key_path.exists():
@@ -333,7 +333,7 @@ class ZKAuditTrail:
     欠陥1(鍵無し・改ざん耐性ゼロ): "current_hash"は秘密鍵を使わない単純な
     SHA-256であり、ファイルへの書き込み権限を持つ攻撃者なら、任意のブロック
     (侵入記録等)を削除した上でチェーン全体を先頭から秘密鍵なしに再計算し
-    直すだけで、検知を一切受けずに改ざんできた(sefer/audit_chain.pyの
+    直すだけで、検知を一切受けずに改ざんできた(runtime_guard/audit_chain.pyの
     SignedAuditChainと同種のバグ。GRIMOIRE §AE参照)。
 
     欠陥2(検証自体が実質的に死んでいた): 旧実装の改ざん検知は、プロセス
@@ -391,7 +391,7 @@ class ZKAuditTrail:
         「監査ログがまだ一度も書かれていない、本当に初回の状態」と
         「攻撃者が`zk_audit_trail.json`を鍵なしで`[]`に書き換え、過去の
         全記録(侵入の証拠を含む)を消去した状態」を一切区別できない
-        ――`sefer/audit_chain.py`のSignedAuditChainで発見・修正した同一
+        ――`runtime_guard/audit_chain.py`のSignedAuditChainで発見・修正した同一
         クラスのバグが、独立した実装である本クラスにも存在していた。
         `.zk_audit_signing_key`と同じ場所にある水位標
         (`_zk_watermark_path()`、鍵ファイルの場所から動的に導出する)が

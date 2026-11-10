@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, report_not_applicable, run_code_against_sefer,
+    report_pass, report_fail, report_info, report_not_applicable, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -12,7 +12,7 @@ NAME = "guard_audit_log_replay - リプレイ攻撃監視: 監査チェーン内
 # リプレイ攻撃監視: 監査チェーン内に同一ハッシュ(=同一イベントの再生)が
 # 重複していないかを検証する。
 def main():
-    log_path = ROOT / "sefer" / "audit_chain.jsonl"
+    log_path = ROOT / "runtime_guard" / "audit_chain.jsonl"
     if not log_path.exists():
         report_not_applicable(NAME, "監査チェーンが未生成のため検査対象なし。")
         return

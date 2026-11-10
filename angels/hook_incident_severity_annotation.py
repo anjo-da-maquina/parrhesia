@@ -9,7 +9,7 @@ NAME = "hook_incident_severity_annotation - 失敗時専用フック: CI失敗�
 
 
 def main():
-    report_path = ROOT / "sefer" / "incident_report.json"
+    report_path = ROOT / "runtime_guard" / "incident_report.json"
     if report_path.exists():
         import json
         incidents = json.loads(report_path.read_text(encoding="utf-8"))

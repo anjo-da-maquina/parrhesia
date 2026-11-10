@@ -3,7 +3,7 @@ tests/test_check_static_analysis_performance.py
 =====================================
 [新設 2026-11] angels/check_static_analysis_performance.py の単体テスト。
 
-本天使(「力天使の試練」)は、`sefer.inquisition()`の静的解析が、大きめ
+本天使(「力天使の試練」)は、`runtime_guard.inquisition()`の静的解析が、大きめ
 の入力(5000行相当)に対しても`MAX_SECONDS`秒以内に完了することを
 検証する(性能劣化の回帰防止)。天使群のテストカバレッジの棚卸しの
 過程で、専用テストが一件も存在しないことが判明した。

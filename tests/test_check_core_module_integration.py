@@ -3,23 +3,23 @@ tests/test_check_core_module_integration.py
 =====================================
 [新設 2026-11] angels/check_core_module_integration.py の単体テスト。
 
-本天使(「権天使の試練」)は、重要モジュール(sefer・anjo_interceptor)が
+本天使(「権天使の試練」)は、重要モジュール(runtime_guard・anjo_interceptor)が
 正しくimportでき、基本的な公開APIが期待通りに動作することをE2Eで検証
-する。具体的には(1)`sefer.inquisition()`が既知の危険コード
+する。具体的には(1)`runtime_guard.inquisition()`が既知の危険コード
 (`os.system`)を検知すること、(2)`IntentInterceptor`がハニーポット
 (`dummy_secrets/dummy_api_key.env`)へのアクセスを
 `SpecificationGamingDetected`として検知すること、を確認する。
 `anjo_interceptor`が未インストールの場合は情報ログのみでスキップする
 設計になっている。
 
-`sefer.inquisition()`・`IntentInterceptor`自体の実装は他のテストで
+`runtime_guard.inquisition()`・`IntentInterceptor`自体の実装は他のテストで
 別途検証済みだが、本天使固有の「E2Eとして両者を実際に呼び出し、結果
 (findings/例外)を正しく判定する」というラッパー判定ロジック自体は、
 天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
 しないことが判明した。
 
-`main()`は`sefer`・`anjo_interceptor.intent_checker`をmain()内部で
-ローカルimportするため、`sefer.inquisition`をモジュール属性として直接
+`main()`は`runtime_guard`・`anjo_interceptor.intent_checker`をmain()内部で
+ローカルimportするため、`runtime_guard.inquisition`をモジュール属性として直接
 monkeypatchし、`anjo_interceptor.intent_checker.IntentInterceptor`は
 クラスメソッドをmonkeypatchする(サインダルフォンの望遠鏡と同様の局所
 import対策)。モジュール未検出の分岐は`builtins.__import__`を一時的に
@@ -32,12 +32,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import check_core_module_integration as pe2e
-import sefer
+import runtime_guard
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のリポジトリでは、sefer.inquisition()が
+    """[実機の裏付け] 現時点のリポジトリでは、runtime_guard.inquisition()が
     既知の危険コードを検知し、IntentInterceptorがハニーポットへの
     アクセスを正しく検知するため、本天使はPASSを報告する。"""
     import io
@@ -50,9 +50,9 @@ def test_real_repository_passes():
 
 
 def test_fails_when_inquisition_detects_nothing(monkeypatch):
-    """[核心] sefer.inquisition()が既知の危険コードに対して空の
+    """[核心] runtime_guard.inquisition()が既知の危険コードに対して空の
     findings(偽の安全)を返す場合、正しくFAILする。"""
-    monkeypatch.setattr(sefer, "inquisition", lambda code: [])
+    monkeypatch.setattr(runtime_guard, "inquisition", lambda code: [])
     try:
         pe2e.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"

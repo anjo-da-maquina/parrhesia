@@ -16,7 +16,7 @@ Armageddon Engineの`raziel_ledger_pending.json`で既に修正したのと
 
 本修正では、鍵対の生成と証明書ペイロードの署名はこの場で行うが、
 `maquina_gatekeeper.py`の書き換えと`ataraxia_certificate.json`の
-発行は行わず、`sefer/provisioning_pending.json`への提案キューイング
+発行は行わず、`runtime_guard/provisioning_pending.json`への提案キューイング
 に留める。人間が`tools/promote_provisioning_seal.py`で内容
 （hardware_fingerprint・client_id・有効期限）を確認し明示的に
 承認して初めて、信頼の起点（公開鍵）が更新され証明書が発行される。
@@ -31,7 +31,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from maquina_gatekeeper import get_absolute_hardware_fingerprint
 
-PENDING_PATH = os.path.join(os.path.dirname(__file__), "..", "sefer", "provisioning_pending.json")
+PENDING_PATH = os.path.join(os.path.dirname(__file__), "..", "runtime_guard", "provisioning_pending.json")
 
 
 def _load_pending():

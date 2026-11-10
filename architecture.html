@@ -111,14 +111,14 @@
             <p>Zero-Trust OS Fortress for Local AI Agents</p>
         </div>
 
-        <div class="section-title">The Canon (Core Defense Layer — sefer.Sanctum)</div>
+        <div class="section-title">The Canon (Core Defense Layer — runtime_guard.Sanctum)</div>
 
         <div class="grid">
             <!-- Gabriel -->
             <div class="card gabriel">
                 <div class="icon">📜</div>
                 <h3>Gabriel (AST Inquisition)</h3>
-                <p>Parses the Abstract Syntax Tree (AST) of AI-generated code before execution via <code>sefer.inquisition()</code>. Detects and rejects banned imports and calls, including fully-qualified forms like <code>os.system(...)</code>.</p>
+                <p>Parses the Abstract Syntax Tree (AST) of AI-generated code before execution via <code>runtime_guard.inquisition()</code>. Detects and rejects banned imports and calls, including fully-qualified forms like <code>os.system(...)</code>.</p>
                 <div class="tech-stack">ast.parse() pre-execution</div>
             </div>
 
@@ -126,7 +126,7 @@
             <div class="card michael">
                 <div class="icon">⚔️</div>
                 <h3>Michael (OS Deep Hook)</h3>
-                <p>The last line of defense inside <code>sefer.Sanctum</code> (function name in code: <code>_michael_absolute_defense</code> — the identifier predates this wording pass). Uses Python's native audit hooks to intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed. This is enforced in-process via <code>sys.addaudithook()</code>, not an OS-level sandbox — see <a href="./README.en.md#limitations--what-this-does-not-guarantee">Limitations</a>.</p>
+                <p>The last line of defense inside <code>runtime_guard.Sanctum</code> (function name in code: <code>_michael_absolute_defense</code> — the identifier predates this wording pass). Uses Python's native audit hooks to intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed. This is enforced in-process via <code>sys.addaudithook()</code>, not an OS-level sandbox — see <a href="./README.en.md#limitations--what-this-does-not-guarantee">Limitations</a>.</p>
                 <div class="tech-stack">sys.addaudithook() runtime</div>
             </div>
 
@@ -198,7 +198,7 @@
             <div class="card michael">
                 <div class="icon">⚔️🤖</div>
                 <h3>Armageddon Engine (Self-Play Evolution)</h3>
-                <p><strong>Lucifer</strong> (red-team AI) forges new attack mutations against Sanctum; <strong>Metatron</strong> (blue-team QA) scores each breach and proposes a new ban rule. Proposals are never applied directly — they're queued to <code>sefer/raziel_ledger_pending.json</code> and require explicit human approval via <code>tools/promote_ledger_seal.py</code> before reaching the live ban list.</p>
+                <p><strong>Lucifer</strong> (red-team AI) forges new attack mutations against Sanctum; <strong>Metatron</strong> (blue-team QA) scores each breach and proposes a new ban rule. Proposals are never applied directly — they're queued to <code>runtime_guard/raziel_ledger_pending.json</code> and require explicit human approval via <code>tools/promote_ledger_seal.py</code> before reaching the live ban list.</p>
                 <div class="tech-stack">LLM red/blue self-play + human-gated promotion</div>
             </div>
         </div>

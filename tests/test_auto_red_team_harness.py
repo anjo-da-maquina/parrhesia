@@ -15,7 +15,7 @@
   2. `exec(payload, {})` が `with Sanctum(...):` の外で直接呼ばれており、
      冒頭の`awaken()`だけでは監査フックが実質的に無効(§AU/local_only_selfplay_gate.py
      と同種の欠陥)だった。さらに、Sanctumが実際に遮断する際の例外は
-     `sefer.LossOfAtaraxia`(`BaseException`直接継承)だが、旧コードは
+     `runtime_guard.LossOfAtaraxia`(`BaseException`直接継承)だが、旧コードは
      `except RuntimeError as e: if "Michael's Sword" in str(e):`という、
      型も文言も一致しない死んだ捕捉を書いていた。
 

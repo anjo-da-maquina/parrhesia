@@ -1,7 +1,7 @@
 import base64
 import binascii
 import traceback
-from sefer import inquisition, awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import inquisition, awaken, Sanctum, LossOfAtaraxia
 
 # 防壁を起動
 awaken()
@@ -64,12 +64,12 @@ for mod_str in obfuscate_string("os"):
                     # [脆弱性修正 2026-10 §AX] 以前は `exec(payload, {})` を
                     # `with Sanctum(...):` の外で直接呼んでいた。本ファイル
                     # 冒頭の `awaken()` はOSレベルの監査フック自体を登録する
-                    # だけで、`sefer._active_stack`(`with Sanctum(...):`に
+                    # だけで、`runtime_guard._active_stack`(`with Sanctum(...):`に
                     # 入っている間だけ積まれる)が空のままでは、登録された
                     # フックは何も検査せず即座にreturnする(§AU/adversarial_training/
                     # local_only_selfplay_gate.pyで発見したのと全く同種の欠陥)。さらに、
                     # Sanctumが実際に遮断する際に送出する例外は
-                    # `sefer.LossOfAtaraxia`(`BaseException`を直接継承し、
+                    # `runtime_guard.LossOfAtaraxia`(`BaseException`を直接継承し、
                     # `Exception`経由ではない)であり、`RuntimeError`では
                     # ないため、修正前の`except RuntimeError as e: if
                     # "Michael's Sword" in str(e):`は型・文言の両方が

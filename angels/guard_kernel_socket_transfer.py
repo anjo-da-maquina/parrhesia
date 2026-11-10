@@ -64,7 +64,7 @@ def _victim_pair(victim_content: bytes, payload_content: bytes):
 def _check_sendfile_write_is_blocked() -> tuple:
     """Sanctumに入る前に確保した書き込み用fdへ、os.sendfile()で別の
     fdから直接データを転送する攻撃が遮断されることを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     original = b"original content, untouched so far............"
     vpath, ppath = _victim_pair(original, b"PWNED_VIA_SENDFILE")
@@ -99,7 +99,7 @@ def _check_sendfile_write_is_blocked() -> tuple:
 def _check_copy_file_range_write_is_blocked() -> tuple:
     """[核心] 同様の攻撃をos.copy_file_range()で行っても遮断されることを
     確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     original = b"original content 2, untouched........"
     vpath, ppath = _victim_pair(original, b"PWNED_VIA_COPY_FILE_RANGE")
@@ -133,7 +133,7 @@ def _check_copy_file_range_write_is_blocked() -> tuple:
 def _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当なsendfileが
     引き続き許可されることを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dst = os.path.join(tmpdir, "ok_dst.txt")
@@ -164,7 +164,7 @@ def _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
 def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当な
     copy_file_rangeが引き続き許可されることを確認する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dst = os.path.join(tmpdir, "ok_dst.txt")
@@ -197,7 +197,7 @@ def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple
 # §CKの「続けて」作業の中で、同じos.sendfileについて別の観点――
 # 送り先fdがファイルではなく**ソケット**である場合、ファイルの内容を
 # そのままネットワーク経由で外部に送出できてしまう――を再検証したところ、
-# `sefer/__init__.py`の`_resolve_fd_path`が、送り先fdが`"socket:"`で
+# `runtime_guard/__init__.py`の`_resolve_fd_path`が、送り先fdが`"socket:"`で
 # 始まるリンクに解決される場合、意図的に`None`を返して
 # `_check_fd_write_allowed`のチェック自体をスキップしていたことが
 # 判明した(ファイル書き込み制限の観点では「パスが存在しないので対象外」
@@ -221,7 +221,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
     起動**後**にos.sendfileでファイル内容を送出する攻撃が、実際に
     遮断されることを確認する(「事前オープンfdバイパス」の前提条件を
     満たした、完全な実攻撃チェーンでの検証)。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     # Sanctum起動前に、実際のTCPループバック接続を確立する
     # (socket.connect自体はmichaelの深層保護で遮断されるため、
@@ -277,7 +277,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
 def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
     """[誤検知防止・§CN] Sanctumを一切使っていない通常時(ガード非有効)
     は、ソケットへの正当なos.sendfileが誤って遮断されないことを確認
-    する(本検査自体がsefer全体を誤作動させていないかの確認)。"""
+    する(本検査自体がruntime_guard全体を誤作動させていないかの確認)。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
     srv.listen(1)
@@ -324,7 +324,7 @@ def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
 # `os.write(sock.fileno(), data)`で実際のデータを書き込めてしまう
 # ことを確認した――§CNのos.sendfileより**さらに基本的な**低レベル
 # API(全てのファイル書き込みの根底にある関数)が、実は同じ穴を
-# 持っていた。`sefer/__init__.py`の`_check_fd_not_socket`
+# 持っていた。`runtime_guard/__init__.py`の`_check_fd_not_socket`
 # (当初§CNでos.sendfile専用として新設したが、本件を機に汎用化した)
 # を、os.write系4関数のラッパーにも追加して修正した。
 
@@ -334,7 +334,7 @@ def _check_os_write_to_presealed_socket_is_blocked_end_to_end() -> tuple:
     起動**後**に`os.write()`で直接書き込む攻撃が遮断されることを確認
     する(「事前オープンfdバイパス」の前提条件を満たした、完全な実
     攻撃チェーンでの検証)。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -373,7 +373,7 @@ def _check_os_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止・§CQ] allowed_dirs内の通常ファイルへの正当な
     os.write()が、本件の修正によって誤って遮断されないことを確認
     する。"""
-    from sefer import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sanctum, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "ok.txt")
@@ -425,15 +425,15 @@ def _check_os_write_without_sanctum_is_unaffected() -> tuple:
 
 
 CHECKS = [
-    ("sefer._guarded_os_sendfile: fd事前オープン書き込み遮断", _check_sendfile_write_is_blocked),
-    ("sefer._guarded_os_copy_file_range: fd事前オープン書き込み遮断", _check_copy_file_range_write_is_blocked),
-    ("sefer._guarded_os_sendfile: allowed_dirs内の誤検知防止", _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
-    ("sefer._guarded_os_copy_file_range: allowed_dirs内の誤検知防止", _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked),
-    ("sefer._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _check_sendfile_to_socket_is_blocked_end_to_end),
-    ("sefer._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", _check_sendfile_to_socket_without_sanctum_is_unaffected),
-    ("sefer._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _check_os_write_to_presealed_socket_is_blocked_end_to_end),
-    ("sefer._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", _check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
-    ("sefer._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", _check_os_write_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_os_sendfile: fd事前オープン書き込み遮断", _check_sendfile_write_is_blocked),
+    ("runtime_guard._guarded_os_copy_file_range: fd事前オープン書き込み遮断", _check_copy_file_range_write_is_blocked),
+    ("runtime_guard._guarded_os_sendfile: allowed_dirs内の誤検知防止", _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
+    ("runtime_guard._guarded_os_copy_file_range: allowed_dirs内の誤検知防止", _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked),
+    ("runtime_guard._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _check_sendfile_to_socket_is_blocked_end_to_end),
+    ("runtime_guard._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", _check_sendfile_to_socket_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _check_os_write_to_presealed_socket_is_blocked_end_to_end),
+    ("runtime_guard._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", _check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
+    ("runtime_guard._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", _check_os_write_without_sanctum_is_unaffected),
 ]
 
 
@@ -446,7 +446,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が

@@ -6,9 +6,9 @@ Pleroma 防衛ダッシュボード生成ツール
 傾向を一目で把握する手段が無かった:
 
   - adversarial_training/selfplay_history.json(旧名tartarus/akashic_records.json) — Armageddon Engine(Lucifer vs Metatron)の戦績
-  - sefer/audit_chain.jsonl          — Michaelが実際に遮断したイベントの監査ログ
-  - sefer/raziel_ledger.json         — 現在有効な禁止イベント一覧
-  - sefer/raziel_ledger_pending.json / shield_rules_pending.json /
+  - runtime_guard/audit_chain.jsonl          — Michaelが実際に遮断したイベントの監査ログ
+  - runtime_guard/raziel_ledger.json         — 現在有効な禁止イベント一覧
+  - runtime_guard/raziel_ledger_pending.json / shield_rules_pending.json /
     provisioning_pending.json        — 人間承認待ちの各種提案
 
 本ツールはこれらを読み取り、単一の自己完結したHTMLファイル(外部CDN等への
@@ -30,12 +30,12 @@ from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
 AKASHIC_RECORDS_PATH = PLEROMA_DIR / "adversarial_training" / "selfplay_history.json"
-AUDIT_CHAIN_PATH = PLEROMA_DIR / "sefer" / "audit_chain.jsonl"
-RAZIEL_LEDGER_PATH = PLEROMA_DIR / "sefer" / "raziel_ledger.json"
+AUDIT_CHAIN_PATH = PLEROMA_DIR / "runtime_guard" / "audit_chain.jsonl"
+RAZIEL_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
 PENDING_PATHS = {
-    "Armageddon Engine (raziel_ledger_pending.json)": PLEROMA_DIR / "sefer" / "raziel_ledger_pending.json",
-    "外部脅威インテリジェンス (shield_rules_pending.json)": PLEROMA_DIR / "sefer" / "shield_rules_pending.json",
-    "証明書発行 (provisioning_pending.json)": PLEROMA_DIR / "sefer" / "provisioning_pending.json",
+    "Armageddon Engine (raziel_ledger_pending.json)": PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json",
+    "外部脅威インテリジェンス (shield_rules_pending.json)": PLEROMA_DIR / "runtime_guard" / "shield_rules_pending.json",
+    "証明書発行 (provisioning_pending.json)": PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json",
 }
 OUTPUT_PATH = PLEROMA_DIR / "dashboard.html"
 

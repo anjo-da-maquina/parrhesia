@@ -24,7 +24,7 @@ class WorkspaceJail:
         # (例: base_dir="jail_workspace" に対し "jail_workspace_EVIL") へも、
         # ".."による1階層分の脱走だけで到達できてしまう欠陥があった(実機検証済み:
         # secure_resolve("../jail_workspace_EVIL/secret.txt") が遮断されずに
-        # 通過することを確認)。sefer/__init__.py のSanctum側は既に
+        # 通過することを確認)。runtime_guard/__init__.py のSanctum側は既に
         # Path.is_relative_to() を使った正しい判定を行っており、本クラスだけが
         # この脆弱な判定方法のまま取り残されていた。Path.is_relative_to()を使い、
         # パスオブジェクトとして厳密に判定するよう修正した。

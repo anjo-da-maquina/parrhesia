@@ -2,9 +2,9 @@ import sys, os, json, tempfile, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import report_pass, report_fail, ROOT
 
-NAME = "guard_audit_log_truncation - sefer.audit_chain.SignedAuditChainを対象に、切り詰め攻撃後も 正しく検知できるかを確認する。"
+NAME = "guard_audit_log_truncation - runtime_guard.audit_chain.SignedAuditChainを対象に、切り詰め攻撃後も 正しく検知できるかを確認する。"
 
-# [新設 2026-10 §BX] 実際に発見した具体例: `sefer/audit_chain.py`の
+# [新設 2026-10 §BX] 実際に発見した具体例: `runtime_guard/audit_chain.py`の
 # `SignedAuditChain.verify_integrity()`、および`maquina_gatekeeper.py`の
 # `ZKAuditTrail._verify_full_chain()`はいずれも、鍵付きHMAC-SHA256による
 # 改ざん耐性を謳っていたが、「ログファイル自体を鍵の知識なしに空へ
@@ -32,7 +32,7 @@ NAME = "guard_audit_log_truncation - sefer.audit_chain.SignedAuditChainを対象
 # ファイルシステム権限で保護される前提であり、攻撃者が水位標ファイルと
 # ログファイルの両方を同時に削除・改ざんできる(例: ディレクトリ全体を
 # 削除してから両方を再生成する)場合は、この修正の範囲外である――これは
-# 本フレームワーク全体が前提とする脅威モデル(sefer.Sanctum配下に
+# 本フレームワーク全体が前提とする脅威モデル(runtime_guard.Sanctum配下に
 # サンドボックス化された、allowed_dirs外のファイルには手が届かない
 # 未信頼AIコード)に依存する、各クラスのdocstringが既に明記している
 # 限界である。
@@ -41,9 +41,9 @@ sys.path.insert(0, str(ROOT))
 
 
 def _check_signed_audit_chain() -> tuple:
-    """sefer.audit_chain.SignedAuditChainを対象に、切り詰め攻撃後も
+    """runtime_guard.audit_chain.SignedAuditChainを対象に、切り詰め攻撃後も
     正しく検知できるかを確認する。戻り値: (success: bool, detail: str)"""
-    from sefer.audit_chain import SignedAuditChain
+    from runtime_guard.audit_chain import SignedAuditChain
 
     tmp_dir = tempfile.mkdtemp(prefix="haniel_sac_")
     try:
@@ -92,7 +92,7 @@ def _check_zk_audit_trail() -> tuple:
 
 
 CHECKS = [
-    ("sefer.audit_chain.SignedAuditChain", _check_signed_audit_chain),
+    ("runtime_guard.audit_chain.SignedAuditChain", _check_signed_audit_chain),
     ("maquina_gatekeeper.ZKAuditTrail", _check_zk_audit_trail),
 ]
 
@@ -105,7 +105,7 @@ def run_battery():
         try:
             success, detail = check_fn()
         except BaseException as e:
-            # [脆弱性修正 2026-10 §CO追記] sefer.LossOfAtaraxia等、
+            # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
             # BaseExceptionを直接継承する例外は`except Exception`では
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が

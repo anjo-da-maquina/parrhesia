@@ -24,7 +24,7 @@ def run_fd_bypass_attempt(target_path: str) -> subprocess.CompletedProcess:
     script = f"""
 import os, sys
 sys.path.insert(0, {repr(str(Path(__file__).resolve().parent.parent))})
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 
 fd = os.open({repr(target_path)}, os.O_WRONLY | os.O_CREAT)
 try:
@@ -55,7 +55,7 @@ def test_stdout_stderr_fd_are_not_blocked():
     script = """
 import sys
 sys.path.insert(0, ".")
-from sefer import Sanctum
+from runtime_guard import Sanctum
 with Sanctum(allowed_dirs=[]):
     import os
     os.write(1, b"hello\\n")

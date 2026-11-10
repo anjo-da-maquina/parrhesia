@@ -23,7 +23,7 @@ def run_with_restrict_reads(target_path: str, restrict_reads: bool) -> subproces
     script = f"""
 import sys
 sys.path.insert(0, {repr(str(Path(__file__).resolve().parent.parent))})
-from sefer import Sanctum, LossOfAtaraxia
+from runtime_guard import Sanctum, LossOfAtaraxia
 try:
     with Sanctum(allowed_dirs=[], restrict_reads={restrict_reads}):
         data = open({repr(target_path)}, "r").read()

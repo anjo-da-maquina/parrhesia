@@ -38,8 +38,8 @@ def test_validate_banned_event_rejects_critical_infrastructure():
 
 
 def test_validate_banned_event_rejects_structurally_unenforceable_events():
-    """[脆弱性修正 2026-10 §BJ] sefer.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
-    イベント名(例: "socket.socket")は、sefer._michael_absolute_defenseが
+    """[脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
+    イベント名(例: "socket.socket")は、runtime_guard._michael_absolute_defenseが
     ソケット検査・デフォルト拒否のいずれの分岐でも常に無条件で通過させるため、
     raziel_ledger.jsonにどれだけ追加しても絶対に禁止できない。人間が『承認した
     のに実は何も保護していない』という偽の安心感を持つことを防ぐため、
@@ -50,7 +50,7 @@ def test_validate_banned_event_rejects_structurally_unenforceable_events():
     いたが、DNS解決そのものがデータ持ち出し経路になり得ること(機密データを
     サブドメインラベルに符号化して解決させるだけで、connect()を一切経由
     せずに攻撃者のDNSサーバーへ送出できる)を実機で確認したため、
-    `sefer._michael_absolute_defense`に専用のallowed_hosts検査を新設し、
+    `runtime_guard._michael_absolute_defense`に専用のallowed_hosts検査を新設し、
     `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外した(GRIMOIRE.md §CT参照)。
     その結果、"socket.getaddrinfo"は"socket.connect"等と同じ「既に別の
     条件付きチェックで実際に保護されている」カテゴリに移ったため、本テスト
@@ -64,7 +64,7 @@ def test_validate_banned_event_rejects_structurally_unenforceable_events():
 
 def test_validate_banned_event_accepts_getaddrinfo_after_ct_fix():
     """[新設 2026-11 §CT] "socket.getaddrinfo"は、§CTの修正により
-    `sefer._michael_absolute_defense`内で実際にallowed_hostsチェックを
+    `runtime_guard._michael_absolute_defense`内で実際にallowed_hostsチェックを
     受ける(見せかけではなく本当に保護される)ようになったため、
     `validate_banned_event`はこれを有効なイベント名として受理する
     (もはや`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれていないことの

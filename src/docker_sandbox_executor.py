@@ -131,7 +131,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
             # を付与し、setuid/setgidビットの付いたバイナリやファイル
             # ケーパビリティによる特権昇格を、カーネルレベルで一切
             # 不可能にする。これらはPython層のaudit hook
-            # (sefer/maquina_gatekeeper)とは独立した、カーネルが直接
+            # (runtime_guard/maquina_gatekeeper)とは独立した、カーネルが直接
             # 強制するOSレベルの防御であり、Sanctumに入る『前』に
             # 解決済みのfd・関数ポインタを使った既知の迂回手口(§CD・§CE)
             # に対しても、「迂回に成功した後にできる操作」そのものを

@@ -12,7 +12,7 @@ tests/test_audit_detection_layer_consensus.py
 本ファイルの新設以前、本天使には専用のテストが一件も存在せず(天使群の
 テストカバレッジの棚卸しで発見)、`main()`のpass/fail判定ロジック自体が
 退行しても、どのテストも検知できない状態だった。`inquisition_catches`・
-`run_code_against_sefer`という共有ヘルパー自体は他のテストファイルで
+`run_code_against_runtime_guard`という共有ヘルパー自体は他のテストファイルで
 間接的に検証されているが、本天使自身の「両方合意しなければFAILにする」
 という判定ロジックは、本天使を直接実行するテストでなければ固定できない。
 """
@@ -41,7 +41,7 @@ def test_fails_when_only_static_layer_agrees(monkeypatch):
     なった(=静的解析のみに実質的に依存する状態に退行した)場合、本天使が
     正しくFAIL(sys.exit(1))することを確認する。"""
     monkeypatch.setattr(sc, "inquisition_catches", lambda code: True)
-    monkeypatch.setattr(sc, "run_code_against_sefer", lambda code: (False, ""))
+    monkeypatch.setattr(sc, "run_code_against_runtime_guard", lambda code: (False, ""))
     try:
         sc.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"
@@ -54,7 +54,7 @@ def test_fails_when_only_dynamic_layer_agrees(monkeypatch):
     監査フックのみに実質的に依存する状態に退行した)場合も、同様に本天使
     が正しくFAILすることを確認する。"""
     monkeypatch.setattr(sc, "inquisition_catches", lambda code: False)
-    monkeypatch.setattr(sc, "run_code_against_sefer", lambda code: (True, ""))
+    monkeypatch.setattr(sc, "run_code_against_runtime_guard", lambda code: (True, ""))
     try:
         sc.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"
@@ -66,7 +66,7 @@ def test_fails_when_neither_layer_agrees(monkeypatch):
     """両方のレイヤーが一致して検知に失敗した場合(多層防御が完全に
     機能していない最悪の状態)も、当然FAILする。"""
     monkeypatch.setattr(sc, "inquisition_catches", lambda code: False)
-    monkeypatch.setattr(sc, "run_code_against_sefer", lambda code: (False, ""))
+    monkeypatch.setattr(sc, "run_code_against_runtime_guard", lambda code: (False, ""))
     try:
         sc.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"
@@ -81,7 +81,7 @@ def test_passes_when_both_layers_agree(monkeypatch):
     from contextlib import redirect_stdout
 
     monkeypatch.setattr(sc, "inquisition_catches", lambda code: True)
-    monkeypatch.setattr(sc, "run_code_against_sefer", lambda code: (True, ""))
+    monkeypatch.setattr(sc, "run_code_against_runtime_guard", lambda code: (True, ""))
     buf = io.StringIO()
     with redirect_stdout(buf):
         sc.main()

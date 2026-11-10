@@ -1,7 +1,7 @@
 ﻿import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
-    report_pass, report_fail, report_info, run_code_against_sefer,
+    report_pass, report_fail, report_info, run_code_against_runtime_guard,
     inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
@@ -12,7 +12,7 @@ NAME = "audit_violation_log_summary - 品質保持証跡一覧出力: これま�
 # 品質保持証跡一覧出力: これまでに記録された監査違反の件数・種別を集計し、
 # 可読なマニフェストとして出力する。
 def main():
-    log_path = ROOT / "sefer" / "audit_chain.jsonl"
+    log_path = ROOT / "runtime_guard" / "audit_chain.jsonl"
     manifest = {"total_violations": 0, "by_event": {}}
     if log_path.exists():
         import json as _json
@@ -24,7 +24,7 @@ def main():
                 manifest["total_violations"] += 1
                 ev = entry.get("event", "unknown")
                 manifest["by_event"][ev] = manifest["by_event"].get(ev, 0) + 1
-    manifest_path = ROOT / "sefer" / "audit_violation_log_summary.json"
+    manifest_path = ROOT / "runtime_guard" / "audit_violation_log_summary.json"
     with open(manifest_path, "w", encoding="utf-8") as f:
         import json as _json
         _json.dump(manifest, f, indent=2, ensure_ascii=False)
