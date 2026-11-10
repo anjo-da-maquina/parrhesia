@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapiからのシンボル解決自体が 遮断され、ファイルが一切変更されないことを確認する。"
 
-# [新設 2026-10 §CE] 実際に発見した具体例: `maquina_gatekeeper.py`の
+# [新設 2026-10 §CE] 実際に発見した具体例: `runtime_audit_gatekeeper.py`の
 # `ultimate_audit_hook`は、`event == "import" and args[0] in
 # {"ctypes", "_ctypes", "threading"}`で、封鎖中に新たに`ctypes`を
 # importすること自体を遮断していた。しかし`ctypes`が封鎖の『前』に
@@ -26,7 +26,7 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # `event.startswith("ctypes.")`という名前空間ごとのデフォルト拒否を
 # 既に備えており、この欠陥の対象ではないことを実機で確認した
 # (既存の未変更のコードのままで"ctypes.dlsym"が正しく遮断される
-# ことを確認済み)。本天使は、maquina_gatekeeper.py側の修正
+# ことを確認済み)。本天使は、runtime_audit_gatekeeper.py側の修正
 # ("ctypes.dlopen"・"ctypes.dlsym"をforbidden集合に追加)を継続的に
 # 再検証し、同時にruntime_guard側が(本修正を加えていない既存のコードの
 # ままで)同じ攻撃に対して既に保護されていることも裏付けとして
@@ -60,7 +60,7 @@ def _check_pythonapi_symbol_resolution_is_blocked() -> tuple:
     try:
         script = f"""
 import ctypes, os, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 mg.set_sanctuary_sealed(True)
@@ -91,7 +91,7 @@ def _check_fresh_cdll_dlopen_is_blocked() -> tuple:
     (ctypes.dlopen)が遮断されることを確認する。"""
     script = """
 import ctypes, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 mg.set_sanctuary_sealed(True)
@@ -115,7 +115,7 @@ def _check_pythonapi_still_works_when_unsealed() -> tuple:
     シンボル解決・呼び出しが引き続き正常に動作することを確認する。"""
     script = """
 import ctypes, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 fn = ctypes.pythonapi.getpid
@@ -164,16 +164,16 @@ except LossOfAtaraxia:
 
 
 CHECKS = [
-    ("maquina_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _check_pythonapi_symbol_resolution_is_blocked),
-    ("maquina_gatekeeper.ultimate_audit_hook: 新規ctypes.CDLL(None) dlopenの遮断", _check_fresh_cdll_dlopen_is_blocked),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_pythonapi_still_works_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _check_pythonapi_symbol_resolution_is_blocked),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 新規ctypes.CDLL(None) dlopenの遮断", _check_fresh_cdll_dlopen_is_blocked),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_pythonapi_still_works_when_unsealed),
     ("runtime_guard._michael_absolute_defense: 既存の名前空間デフォルト拒否による保護の裏付け", _check_runtime_guard_already_protected_without_modification),
 ]
 
 
 def run_battery():
     """ctypes.dlopen/dlsymによる既知の監査回避バイパス経路を、
-    maquina_gatekeeper.pyに対して実際に与えて、正しく処理されるかを
+    runtime_audit_gatekeeper.pyに対して実際に与えて、正しく処理されるかを
     確認する。runtime_guard側は本修正の対象外であることの裏付けも含む。
     戻り値: [(name, detail), ...] (失敗したものだけ)"""
     failures = []

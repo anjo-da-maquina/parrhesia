@@ -5,7 +5,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 2. パスが開通した後に、参照ファイル anjo-da-maquina の中枢モジュールを読み込む
-from maquina_gatekeeper import LossOfAtaraxia
+from runtime_audit_gatekeeper import LossOfAtaraxia
 
 def pytest_exception_interact(node, call, report):
     if call.excinfo and call.excinfo.errisinstance(LossOfAtaraxia):

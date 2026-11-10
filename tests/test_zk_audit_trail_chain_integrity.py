@@ -1,7 +1,7 @@
 """
 tests/test_zk_audit_trail_chain_integrity.py
 ==============================================
-maquina_gatekeeper.py の ZKAuditTrail の回帰テスト。GRIMOIRE.md §AH 参照。
+runtime_audit_gatekeeper.py の ZKAuditTrail の回帰テスト。GRIMOIRE.md §AH 参照。
 
 背景: ZKAuditTrail.verify_and_record() には二つの欠陥が重なっていた。
   1. "current_hash" が秘密鍵を使わない単純なSHA-256に過ぎず、ファイルへの
@@ -21,7 +21,7 @@ maquina_gatekeeper.py の ZKAuditTrail の回帰テスト。GRIMOIRE.md §AH 参
 [注意] 本ファイル名はあえて`test_thread_safety_maquina_seal.py`より辞書順
 で後になるよう選んである。`mini_pytest.py`は全テストファイルを同一プロセス
 内で辞書順(`sorted(tests_dir.glob("test_*.py"))`)に読み込み、
-`sys.modules`を共有するため、本ファイルが`maquina_gatekeeper`(内部で
+`sys.modules`を共有するため、本ファイルが`runtime_audit_gatekeeper`(内部で
 `import rsa`する)を読み込む時点で、`test_thread_safety_maquina_seal.py`が
 既に設置した完全互換の疑似`rsa`モジュールが`sys.modules`に存在している
 必要がある(実運用の`rsa`パッケージは本サンドボックスのegressポリシー上
@@ -36,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import maquina_gatekeeper as mg  # noqa: E402
+import runtime_audit_gatekeeper as mg  # noqa: E402
 
 
 def _chdir_isolated(tmp_path, monkeypatch):

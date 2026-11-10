@@ -16,7 +16,7 @@ def _verify_chain_integrity(trail):
         repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if repo_root not in sys.path:
             sys.path.insert(0, repo_root)
-        from maquina_gatekeeper import ZKAuditTrail
+        from runtime_audit_gatekeeper import ZKAuditTrail
         key = ZKAuditTrail._get_key()
         ZKAuditTrail._verify_full_chain(trail, key)
         return None
@@ -36,7 +36,7 @@ def export_zkp_to_junit(json_path="zk_audit_trail.json", xml_path="zk_audit_repo
     CI/CDダッシュボードはこのXMLの内容だけを見るため、根底の監査ログが
     壊れていてもダッシュボード上は常に緑色になる、という見せかけの
     保護だった(GRIMOIRE.md §BN参照)。本修正では、
-    maquina_gatekeeper.ZKAuditTrailが備える鍵付きHMAC連鎖検証
+    runtime_audit_gatekeeper.ZKAuditTrailが備える鍵付きHMAC連鎖検証
     (_verify_full_chain、通常はverify_and_record呼び出し時に毎回実行
     されているものと同一のロジック)を、エクスポート時にも実際に呼び出し、
     改ざんが検知された場合はfailures="1"と、具体的なエラー内容を含む

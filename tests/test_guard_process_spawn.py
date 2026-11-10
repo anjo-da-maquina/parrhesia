@@ -3,7 +3,7 @@ tests/test_guard_process_spawn.py
 ===============================================
 [新設 2026-10 §CC] angels/guard_process_spawn.py の単体テスト。
 
-実際に発見した具体例: `maquina_gatekeeper.py`の`ultimate_audit_hook`
+実際に発見した具体例: `runtime_audit_gatekeeper.py`の`ultimate_audit_hook`
 ("深層保護")は、新しいOSプロセスの生成を遮断する目的で
 "subprocess.Popen"/"os.system"/"os.exec"/"os.posix_spawn"を`forbidden`
 集合に含めていたが、同じ目的を達成できる`os.fork()`は、専用の別の
@@ -62,7 +62,7 @@ def test_check_forkpty_is_allowed_when_unsealed_directly():
 
 
 def test_battery_detects_reintroduced_forkpty_regression(monkeypatch):
-    """[核心・自己レッドチームの固定・2026-11] `maquina_gatekeeper.py`の
+    """[核心・自己レッドチームの固定・2026-11] `runtime_audit_gatekeeper.py`の
     `forbidden`集合から"os.forkpty"が(将来の変更で)再び外れた場合、
     本天使が正しく「遮断されなかった」として検知することを、実際に
     `forbidden`集合からこのエントリを一時的に取り除いて再現して確認済み
@@ -72,15 +72,15 @@ def test_battery_detects_reintroduced_forkpty_regression(monkeypatch):
         return False, "封鎖中にos.forkpty()によるプロセス生成が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: os.fork遮断", zpg._check_fork_is_blocked_while_sealed),
-        ("maquina_gatekeeper.ultimate_audit_hook: os.forkpty遮断", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: os.forkpty非封鎖時の誤検知防止", zpg._check_forkpty_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: os.fork遮断", zpg._check_fork_is_blocked_while_sealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: os.forkpty遮断", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: os.forkpty非封鎖時の誤検知防止", zpg._check_forkpty_is_allowed_when_unsealed),
     ]
     monkeypatch.setattr(zpg, "CHECKS", patched_checks)
 
     failures = zpg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: os.forkpty遮断"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: os.forkpty遮断"
 
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
@@ -91,14 +91,14 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False, "封鎖中にos.fork()によるプロセス生成が遮断されなかった(模擬)"
 
     patched_checks = [
-        ("maquina_gatekeeper.ultimate_audit_hook: os.fork遮断", _vulnerable_check),
-        ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", zpg._check_fork_is_allowed_when_unsealed),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: os.fork遮断", _vulnerable_check),
+        ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", zpg._check_fork_is_allowed_when_unsealed),
     ]
     monkeypatch.setattr(zpg, "CHECKS", patched_checks)
 
     failures = zpg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "maquina_gatekeeper.ultimate_audit_hook: os.fork遮断"
+    assert failures[0][0] == "runtime_audit_gatekeeper.ultimate_audit_hook: os.fork遮断"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):

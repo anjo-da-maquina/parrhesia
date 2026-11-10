@@ -4,7 +4,7 @@ tests/test_guard_audit_log_truncation.py
 [新設 2026-10 §BX] angels/guard_audit_log_truncation.py の単体テスト。
 
 実際に発見した具体例: `runtime_guard/audit_chain.py`のSignedAuditChain、
-`maquina_gatekeeper.py`のZKAuditTrailはいずれも、鍵付きHMAC-SHA256
+`runtime_audit_gatekeeper.py`のZKAuditTrailはいずれも、鍵付きHMAC-SHA256
 による改ざん耐性を謳っていたが、「ログファイル自体を鍵の知識なしに
 空へ切り詰める」という、暗号的な知識を一切必要としないもっと単純な
 攻撃に対しては無力だった(「0件」と「まだ記録が無い」を区別できて
@@ -58,7 +58,7 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
 
     patched_checks = [
         ("runtime_guard.audit_chain.SignedAuditChain", _vulnerable_check("stub")),
-        ("maquina_gatekeeper.ZKAuditTrail", htg._check_zk_audit_trail),
+        ("runtime_audit_gatekeeper.ZKAuditTrail", htg._check_zk_audit_trail),
     ]
     monkeypatch.setattr(htg, "CHECKS", patched_checks)
 

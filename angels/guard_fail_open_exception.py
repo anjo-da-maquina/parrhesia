@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, report_not_applicable, ROOT
 
 NAME = "guard_fail_open_exception - 例外握り潰し検知: 無言のexcept:passのうち、正当性の自己開示コメントを伴わないものを検出する。"
 
-# [新設 2026-10 §BS] maquina_gatekeeper.pyの_register_audit_hook_once()で
+# [新設 2026-10 §BS] runtime_audit_gatekeeper.pyの_register_audit_hook_once()で
 # 実際に発見した本物の脆弱性――本リポジトリ唯一の深層保護
 # (sys.addaudithookベースのultimate_audit_hook)の設置処理全体が
 # `except Exception: pass`で囲まれていたため、設置自体が失敗しても
@@ -31,7 +31,7 @@ NAME = "guard_fail_open_exception - 例外握り潰し検知: 無言のexcept:pa
 # 「開示の強制」が目的であるため、設計上の意図的な限界である。
 
 TARGET_DIRS = ["angels", "src", "adapters"]
-TARGET_FILES = ["maquina_gatekeeper.py"]
+TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 JUSTIFICATION_MARKERS = (
     "残存する限界", "既知の限界", "正直な注記", "正直に明記", "既知の制限",
@@ -128,7 +128,7 @@ def main():
         report_fail(
             NAME,
             f"理由の説明コメントが無い、無言の例外握り潰し(except ...: pass)が"
-            f"見つかりました(§BSのmaquina_gatekeeper.py._register_audit_hook_once()"
+            f"見つかりました(§BSのruntime_audit_gatekeeper.py._register_audit_hook_once()"
             f"と同種のフェイルオープン・パターン): {detail}。"
             f"安全に握り潰せると判断した場合は、「残存する限界」「既知の限界」等の"
             f"マーカーを含むコメントで、その判断と理由を明示的に書いてください。",

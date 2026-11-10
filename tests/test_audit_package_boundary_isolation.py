@@ -4,7 +4,7 @@ tests/test_audit_package_boundary_isolation.py
 [新設 2026-11] angels/audit_package_boundary_isolation.py の単体テスト。
 
 本天使(「メタトロンの経典印章」)は、「ライセンス証明書機構
-(maquina_gatekeeper)・Tartarusの公開配布(pip配布されるruntime_guardパッケージ)
+(runtime_audit_gatekeeper)・Tartarusの公開配布(pip配布されるruntime_guardパッケージ)
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
 `MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
 
@@ -36,7 +36,7 @@ VALID_PYPROJECT = (
 
 VALID_MANIFEST = (
     "prune tests\n"
-    "exclude maquina_gatekeeper.py\n"
+    "exclude runtime_audit_gatekeeper.py\n"
     "exclude ataraxia_certificate.json\n"
 )
 
@@ -103,9 +103,9 @@ def test_fails_when_packages_declaration_is_missing(monkeypatch, tmp_path):
 
 def test_fails_when_packages_includes_more_than_runtime_guard(monkeypatch, tmp_path):
     """[核心・配布境界破りの検知] `packages`に`runtime_guard`以外の何か(例:
-    `maquina_gatekeeper`・`tartarus`)が混入している場合、正しくFAILする。"""
+    `runtime_audit_gatekeeper`・`tartarus`)が混入している場合、正しくFAILする。"""
     bad_pyproject = VALID_PYPROJECT.replace(
-        'packages = ["runtime_guard"]', 'packages = ["runtime_guard", "maquina_gatekeeper"]'
+        'packages = ["runtime_guard"]', 'packages = ["runtime_guard", "runtime_audit_gatekeeper"]'
     )
     _write_fixtures(tmp_path, pyproject=bad_pyproject)
     _expect_fail(monkeypatch, tmp_path)
@@ -122,16 +122,16 @@ def test_fails_when_manifest_does_not_prune_tests(monkeypatch, tmp_path):
 def test_fails_when_manifest_does_not_exclude_gatekeeper_files(monkeypatch, tmp_path):
     """`MANIFEST.in`がライセンス証明書機構関連ファイルを除外していない
     場合、正しくFAILする。"""
-    bad_manifest = "prune tests\n"  # maquina_gatekeeper/ataraxia_certificateへの言及が無い
+    bad_manifest = "prune tests\n"  # runtime_audit_gatekeeper/ataraxia_certificateへの言及が無い
     _write_fixtures(tmp_path, manifest=bad_manifest)
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_runtime_guard_file_imports_maquina_gatekeeper_via_import(monkeypatch, tmp_path):
+def test_fails_when_runtime_guard_file_imports_runtime_audit_gatekeeper_via_import(monkeypatch, tmp_path):
     """[核心・配布境界破りの検知] `runtime_guard/*.py`が`import
-    maquina_gatekeeper`の形でライセンス機構をimportしている場合、正しく
+    runtime_audit_gatekeeper`の形でライセンス機構をimportしている場合、正しく
     FAILする。"""
-    _write_fixtures(tmp_path, runtime_guard_file_content="import maquina_gatekeeper\n")
+    _write_fixtures(tmp_path, runtime_guard_file_content="import runtime_audit_gatekeeper\n")
     _expect_fail(monkeypatch, tmp_path)
 
 

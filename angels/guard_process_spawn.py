@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_process_spawn - 封鎖中にos.fork()が正しく遮断されるかを確認する。"
 
-# [新設 2026-10 §CC] 実際に発見した具体例: `maquina_gatekeeper.py`の
+# [新設 2026-10 §CC] 実際に発見した具体例: `runtime_audit_gatekeeper.py`の
 # `ultimate_audit_hook`("深層保護")は、新しいOSプロセスの生成を遮断
 # する目的で`forbidden`集合に"subprocess.Popen"・"os.system"・
 # "os.exec"・"os.posix_spawn"の4つのaudit eventを含めていた。しかし
@@ -57,7 +57,7 @@ sys.path.insert(0, str(ROOT))
 def _check_fork_is_blocked_while_sealed() -> tuple:
     """封鎖中にos.fork()が正しく遮断されるかを確認する。
     戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -84,7 +84,7 @@ def _check_fork_is_blocked_while_sealed() -> tuple:
 def _check_fork_is_allowed_when_unsealed() -> tuple:
     """[誤検知防止] 封鎖していない通常時は、os.fork()が誤って遮断され
     ないかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -108,7 +108,7 @@ def _check_forkpty_is_blocked_while_sealed() -> tuple:
     """[新設 2026-11] 封鎖中にos.forkpty()が正しく遮断されるかを確認
     する(os.fork()とは別のaudit eventを発火する、別の具体的なAPI)。
     戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -133,7 +133,7 @@ def _check_forkpty_is_blocked_while_sealed() -> tuple:
 def _check_forkpty_is_allowed_when_unsealed() -> tuple:
     """[新設 2026-11・誤検知防止] 封鎖していない通常時は、os.forkpty()
     が誤って遮断されないかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -154,10 +154,10 @@ def _check_forkpty_is_allowed_when_unsealed() -> tuple:
 
 
 CHECKS = [
-    ("maquina_gatekeeper.ultimate_audit_hook: os.fork遮断", _check_fork_is_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_fork_is_allowed_when_unsealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: os.forkpty遮断", _check_forkpty_is_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: os.forkpty非封鎖時の誤検知防止", _check_forkpty_is_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: os.fork遮断", _check_fork_is_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_fork_is_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: os.forkpty遮断", _check_forkpty_is_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: os.forkpty非封鎖時の誤検知防止", _check_forkpty_is_allowed_when_unsealed),
 ]
 
 

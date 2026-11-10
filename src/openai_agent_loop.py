@@ -5,7 +5,7 @@ src/openai_agent_loop.py
 称していたが、実態は以下の通り壊れていた:
 
   1. `enforce_maquina_seal` が失敗した場合のフォールバックimport
-     (`anjo_interceptor.maquina_gatekeeper`) がリポジトリ内に存在せず、
+     (`anjo_interceptor.runtime_audit_gatekeeper`) がリポジトリ内に存在せず、
      本番では絶対に通らない死んだコードパスだった。
   2. `_execute_safe_action` が実際のファイルI/Oを一切行わないダミー実装で、
      `runtime_guard.Sanctum` (OSレベルの最終防衛線) も `AegisSystem`
@@ -38,7 +38,7 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
-from maquina_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
+from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
 from runtime_guard import Sanctum, LossOfAtaraxia as SeferLossOfAtaraxia
 from aegis_system import AegisSystem
 from futility_guard import FutilityGuard

@@ -5,7 +5,7 @@ from _common import report_pass, report_fail, ROOT
 NAME = "guard_audit_log_truncation - runtime_guard.audit_chain.SignedAuditChainを対象に、切り詰め攻撃後も 正しく検知できるかを確認する。"
 
 # [新設 2026-10 §BX] 実際に発見した具体例: `runtime_guard/audit_chain.py`の
-# `SignedAuditChain.verify_integrity()`、および`maquina_gatekeeper.py`の
+# `SignedAuditChain.verify_integrity()`、および`runtime_audit_gatekeeper.py`の
 # `ZKAuditTrail._verify_full_chain()`はいずれも、鍵付きHMAC-SHA256による
 # 改ざん耐性を謳っていたが、「ログファイル自体を鍵の知識なしに空へ
 # 切り詰める」という、暗号的な知識を一切必要としないもっと単純な攻撃に
@@ -67,9 +67,9 @@ def _check_signed_audit_chain() -> tuple:
 
 
 def _check_zk_audit_trail() -> tuple:
-    """maquina_gatekeeper.ZKAuditTrailを対象に、切り詰め攻撃後も正しく
+    """runtime_audit_gatekeeper.ZKAuditTrailを対象に、切り詰め攻撃後も正しく
     検知できるかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     original_cwd = os.getcwd()
     tmp_dir = tempfile.mkdtemp(prefix="haniel_zkt_")
@@ -93,7 +93,7 @@ def _check_zk_audit_trail() -> tuple:
 
 CHECKS = [
     ("runtime_guard.audit_chain.SignedAuditChain", _check_signed_audit_chain),
-    ("maquina_gatekeeper.ZKAuditTrail", _check_zk_audit_trail),
+    ("runtime_audit_gatekeeper.ZKAuditTrail", _check_zk_audit_trail),
 ]
 
 

@@ -4,7 +4,7 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮断されるかを確認する。"
 
-# [新設 2026-10 §CA] 実際に発見した具体例: `maquina_gatekeeper.py`の
+# [新設 2026-10 §CA] 実際に発見した具体例: `runtime_audit_gatekeeper.py`の
 # `ultimate_audit_hook`("深層保護"、`sys.addaudithook`ベースの唯一の
 # ランタイム防御層)は、ネットワーク通信を遮断する目的で"socket.connect"
 # をforbidden集合に含めていた。しかしUDPの`socket.sendto()`は事前の
@@ -57,7 +57,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # ことを発見した。独立した別の防御層`runtime_guard/__init__.py`の
 # `_michael_absolute_defense`は、引数からホスト名/アドレスを抽出する
 # 汎用ロジックを既に備えていたため、これらは§CTより前から自動的に
-# 保護されていた(本件はmaquina_gatekeeper側のみの欠陥)。
+# 保護されていた(本件はruntime_audit_gatekeeper側のみの欠陥)。
 
 sys.path.insert(0, str(ROOT))
 
@@ -65,7 +65,7 @@ sys.path.insert(0, str(ROOT))
 def _check_udp_sendto_is_blocked_while_sealed() -> tuple:
     """封鎖中にUDPのsendto()が正しく遮断されるかを確認する。
     戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -84,7 +84,7 @@ def _check_udp_sendto_is_blocked_while_sealed() -> tuple:
 def _check_udp_sendto_is_allowed_when_unsealed() -> tuple:
     """[誤検知防止] 封鎖していない通常時は、socket.sendto()が誤って
     遮断されないかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -112,7 +112,7 @@ def _check_udp_sendmsg_is_blocked_while_sealed() -> tuple:
     audit event("socket.sendmsg")を発火するため、forbidden集合への
     追加が別途必要だった(§CAのsendtoの修正では対象外のままだった)。
     戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -131,7 +131,7 @@ def _check_udp_sendmsg_is_blocked_while_sealed() -> tuple:
 def _check_udp_sendmsg_is_allowed_when_unsealed() -> tuple:
     """[新設 §CM・誤検知防止] 封鎖していない通常時は、socket.sendmsg()が
     誤って遮断されないかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -155,7 +155,7 @@ def _check_getaddrinfo_is_blocked_while_sealed() -> tuple:
     """[新設 §CT] 封鎖中にsocket.getaddrinfo()によるDNS名前解決(DNS
     exfiltration経路)が正しく遮断されるかを確認する。戻り値:
     (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -183,7 +183,7 @@ def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
     """[新設 §CT・誤検知防止] 封鎖していない通常時は、
     socket.getaddrinfo()が誤って遮断されないかを確認する。戻り値:
     (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -205,7 +205,7 @@ def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
 
 
 def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
-    """[新設 §CT] `maquina_gatekeeper.py`とは独立した別の防御層である
+    """[新設 §CT] `runtime_audit_gatekeeper.py`とは独立した別の防御層である
     `runtime_guard.Sanctum`(allowed_hosts方式)自身も、同じDNS exfiltration
     経路を正しく遮断することを確認する。許可ホストに含まれていない
     ホスト名(機密データを符号化したサブドメインを模したもの)での
@@ -224,7 +224,7 @@ def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
             except runtime_guard.LossOfAtaraxia:
                 return True, "OK"
             except OSError as e:
-                # [正直な注記] 上のmaquina_gatekeeper版と同じ理由により、
+                # [正直な注記] 上のruntime_audit_gatekeeper版と同じ理由により、
                 # ここに到達すること自体が「遮断されず実際のOS解決処理
                 # まで進んでしまった」ことの証拠であり、安全側に倒して
                 # 失敗として報告する。
@@ -259,7 +259,7 @@ def _check_legacy_dns_lookups_are_blocked_while_sealed() -> tuple:
     """[新設 §CU] 封鎖中にgethostbyname/gethostbyname_ex/gethostbyaddr/
     getnameinfoによるDNS関連の名前解決・逆引きが正しく遮断されるかを
     確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     mg.set_sanctuary_sealed(True)
@@ -290,7 +290,7 @@ def _check_legacy_dns_lookups_are_blocked_while_sealed() -> tuple:
 def _check_legacy_dns_lookups_are_allowed_when_unsealed() -> tuple:
     """[新設 §CU・誤検知防止] 封鎖していない通常時は、これらの関数が
     誤って遮断されないかを確認する。戻り値: (success: bool, detail: str)"""
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
     if mg.is_sanctuary_sealed():
@@ -314,16 +314,16 @@ def _check_legacy_dns_lookups_are_allowed_when_unsealed() -> tuple:
 
 
 CHECKS = [
-    ("maquina_gatekeeper.ultimate_audit_hook: UDP sendto遮断", _check_udp_sendto_is_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendto)", _check_udp_sendto_is_allowed_when_unsealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)", _check_udp_sendmsg_is_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", _check_udp_sendmsg_is_allowed_when_unsealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _check_getaddrinfo_is_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", _check_getaddrinfo_is_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendto遮断", _check_udp_sendto_is_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendto)", _check_udp_sendto_is_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: UDP sendmsg遮断(§CM)", _check_udp_sendmsg_is_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", _check_udp_sendmsg_is_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _check_getaddrinfo_is_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", _check_getaddrinfo_is_allowed_when_unsealed),
     ("runtime_guard.Sanctum: DNS名前解決の許可ホスト検査(§CT)", _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo),
     ("runtime_guard.Sanctum: 許可ホスト・バインド用解決の誤検知防止(§CT)", _check_runtime_guard_sanctum_allows_approved_host_getaddrinfo),
-    ("maquina_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _check_legacy_dns_lookups_are_blocked_while_sealed),
-    ("maquina_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", _check_legacy_dns_lookups_are_allowed_when_unsealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _check_legacy_dns_lookups_are_blocked_while_sealed),
+    ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", _check_legacy_dns_lookups_are_allowed_when_unsealed),
 ]
 
 
@@ -369,7 +369,7 @@ def main():
     report_pass(
         NAME,
         "封鎖中のUDP sendto()・sendmsg()による接続不要のデータ送信、"
-        "getaddrinfo()によるDNS名前解決(§CT、maquina_gatekeeper・"
+        "getaddrinfo()によるDNS名前解決(§CT、runtime_audit_gatekeeper・"
         "runtime_guard.Sanctumの両方の独立した防御層)、およびgethostbyname/"
         "gethostbyaddr/getnameinfo等の旧API経由のDNS関連呼び出し(§CU)が"
         "いずれも正しく遮断され、かつ非封鎖時・許可ホスト・バインド用"

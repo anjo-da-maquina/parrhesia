@@ -3,7 +3,7 @@
 # setuptoolsのsdistは、明示的な指定がなくても慣習的に `tests/` ディレクトリ
 # 全体を配布物に含めてしまう(実機検証済み: python -m sdist実行時、
 # tests/test_sanctuary.py や tests/test_armageddon_core.py のような、
-# maquina_gatekeeper(ライセンスゲート)やTartarus(闘技場)のAPIサーフェスを
+# runtime_audit_gatekeeper(旧名maquina_gatekeeper、ライセンスゲート)やTartarus(闘技場)のAPIサーフェスを
 # 直接参照する運用者向けの内部テストまで、公開配布物(経典)に同梱されて
 # しまっていた。runtime_guard単体を安全に配布するためには、これらを明示的に
 # 除外する必要がある。
@@ -27,7 +27,7 @@ prune hooks
 prune dummy_secrets
 prune jail_workspace
 prune assets
-exclude maquina_gatekeeper.py
+exclude runtime_audit_gatekeeper.py
 exclude ataraxia_certificate.json
 exclude GRIMOIRE.md
 exclude COMMANDS.md

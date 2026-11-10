@@ -5,14 +5,14 @@ from pathlib import Path
 
 # [修正 2026-10] `python src/ollama_agent_loop.py` として直接実行すると、
 # スクリプト自身のディレクトリ(src/)のみがsys.pathに入り、リポジトリルートに
-# ある anjo_interceptor / maquina_gatekeeper / runtime_guard を解決できず
+# ある anjo_interceptor / runtime_audit_gatekeeper / runtime_guard を解決できず
 # ModuleNotFoundError で起動不能になっていた。
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
-from maquina_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
+from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
 from runtime_guard import Sanctum, LossOfAtaraxia as RuntimeGuardLossOfAtaraxia
 from aegis_system import AegisSystem
 from futility_guard import FutilityGuard

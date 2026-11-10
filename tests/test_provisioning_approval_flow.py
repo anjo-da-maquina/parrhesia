@@ -5,7 +5,7 @@ adapters/provisioning_agent.py の再構築(2026-10)を検証する回帰テス�
 詳細な経緯は同モジュールのdocstring、および GRIMOIRE.md §O 参照。
 
 確認する点:
-  1. provision_sanctuary() が、maquina_gatekeeper.py の
+  1. provision_sanctuary() が、runtime_audit_gatekeeper.py の
      MAQUINA_PUBLIC_KEY_PEM を直接書き換えず、また ataraxia_certificate.json
      を即座に発行しないこと(自己署名による無条件自己承認の防止)。
   2. 提案が runtime_guard/provisioning_pending.json に
@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 # [2026-10] 実運用の `rsa` パッケージ(PyPI配布)は、本テストを実行する
 # サンドボックス環境にはインストールできない(組織のegressポリシーでPyPIが
-# 遮断されているため)。maquina_gatekeeper.py / provisioning_agent.py は
+# 遮断されているため)。runtime_audit_gatekeeper.py / provisioning_agent.py は
 # モジュール読み込み時に `import rsa` するため、本テストはキュー登録→
 # 承認/拒否という「どのファイルが・いつ・何を書き換えるか」という構造を
 # 検証するのが目的であり、署名の暗号学的な正しさそのものはテスト範囲外
@@ -67,11 +67,11 @@ if "rsa" not in sys.modules:
 
 def test_provision_sanctuary_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, monkeypatch):
     import provisioning_agent as pa
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     pending_file = tmp_path / "provisioning_pending.json"
     cert_file = tmp_path / "ataraxia_certificate.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
     gatekeeper_file.write_text(mg.__file__ and open(mg.__file__, encoding="utf-8").read(), encoding="utf-8")
     original_gatekeeper_src = gatekeeper_file.read_text(encoding="utf-8")
 
@@ -81,7 +81,7 @@ def test_provision_sanctuary_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, 
 
     assert not cert_file.exists(), "ataraxia_certificate.json が即座に発行されてしまっている(人間承認を経ない自己署名)"
     assert gatekeeper_file.read_text(encoding="utf-8") == original_gatekeeper_src, (
-        "maquina_gatekeeper.py のMAQUINA_PUBLIC_KEY_PEMが提案者自身によって書き換えられてしまっている"
+        "runtime_audit_gatekeeper.py のMAQUINA_PUBLIC_KEY_PEMが提案者自身によって書き換えられてしまっている"
     )
 
     pending = json.loads(pending_file.read_text(encoding="utf-8"))
@@ -95,11 +95,11 @@ def test_provision_sanctuary_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, 
 def test_promote_provisioning_seal_approval_flow(tmp_path, monkeypatch):
     import provisioning_agent as pa
     import promote_provisioning_seal as pps
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     pending_file = tmp_path / "provisioning_pending.json"
     cert_file = tmp_path / "ataraxia_certificate.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
     gatekeeper_file.write_text(open(mg.__file__, encoding="utf-8").read(), encoding="utf-8")
 
     monkeypatch.setattr(pa, "PENDING_PATH", str(pending_file))
@@ -132,8 +132,8 @@ def test_promote_provisioning_seal_supersedes_stale_duplicate_pending_entries(tm
 
     pending_file = tmp_path / "provisioning_pending.json"
     cert_file = tmp_path / "ataraxia_certificate.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
-    import maquina_gatekeeper as mg
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
+    import runtime_audit_gatekeeper as mg
     gatekeeper_file.write_text(open(mg.__file__, encoding="utf-8").read(), encoding="utf-8")
 
     monkeypatch.setattr(pps, "PENDING_PATH", pending_file)
@@ -182,7 +182,7 @@ def test_list_pending_displays_proposed_key_fingerprint_and_flags_rotation(tmp_p
     """
     [脆弱性修正の回帰テスト・核心 §BY] 修正前の `list_pending()` は、
     client_id・hardware_fingerprint・valid_untilだけを表示し、承認に
-    よって実際に`maquina_gatekeeper.py`の信頼の起点として書き込まれる
+    よって実際に`runtime_audit_gatekeeper.py`の信頼の起点として書き込まれる
     `public_key_pem`そのものを一切表示していなかった。これらの表示項目
     は、提案が本当に正当なデバイスから来たことを何一つ保証しない
     (hardware_fingerprintは誰でもローカルで計算できる非秘密値であり、
@@ -200,7 +200,7 @@ def test_list_pending_displays_proposed_key_fingerprint_and_flags_rotation(tmp_p
     import promote_provisioning_seal as pps
 
     pending_file = tmp_path / "provisioning_pending.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
 
     current_pem = "-----BEGIN RSA PUBLIC KEY-----\nCURRENTLYTRUSTEDKEYDATA\n-----END RSA PUBLIC KEY-----"
     proposed_pem = "-----BEGIN RSA PUBLIC KEY-----\nATTACKERCONTROLLEDKEYDATA\n-----END RSA PUBLIC KEY-----"
@@ -253,7 +253,7 @@ def test_list_pending_reports_no_rotation_when_proposed_key_matches_current(tmp_
     import promote_provisioning_seal as pps
 
     pending_file = tmp_path / "provisioning_pending.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
 
     same_pem = "-----BEGIN RSA PUBLIC KEY-----\nSAMEKEYBOTHSIDES\n-----END RSA PUBLIC KEY-----"
     gatekeeper_file.write_text(
@@ -293,7 +293,7 @@ def test_list_pending_handles_no_open_items(tmp_path, monkeypatch, capsys):
     import promote_provisioning_seal as pps
 
     pending_file = tmp_path / "provisioning_pending.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"  # 存在しない
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"  # 存在しない
 
     pending_file.write_text(json.dumps([]), encoding="utf-8")
 
@@ -308,11 +308,11 @@ def test_list_pending_handles_no_open_items(tmp_path, monkeypatch, capsys):
 def test_promote_provisioning_seal_reject_does_not_touch_gatekeeper(tmp_path, monkeypatch):
     import provisioning_agent as pa
     import promote_provisioning_seal as pps
-    import maquina_gatekeeper as mg
+    import runtime_audit_gatekeeper as mg
 
     pending_file = tmp_path / "provisioning_pending.json"
     cert_file = tmp_path / "ataraxia_certificate.json"
-    gatekeeper_file = tmp_path / "maquina_gatekeeper.py"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
     original_src = open(mg.__file__, encoding="utf-8").read()
     gatekeeper_file.write_text(original_src, encoding="utf-8")
 

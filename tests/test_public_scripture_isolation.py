@@ -2,7 +2,7 @@
 [テスト追加 2026-10] 「ライセンス証明書機構の公開配布からの分離」の回帰テスト。
 
 実際に sdist をビルドし、その内容を検査することで、将来 pyproject.toml や
-MANIFEST.in が変更されても、maquina_gatekeeper.py / ataraxia_certificate.json /
+MANIFEST.in が変更されても、runtime_audit_gatekeeper.py / ataraxia_certificate.json /
 adapters/provisioning_agent.py / adversarial_training(旧名tartarus、Creator's Air) /
 運用者向けの内部テスト(tests/)が、公開配布物(経典)に紛れ込んでいないことを
 保証する。
@@ -50,7 +50,7 @@ def test_sdist_is_clean_and_contains_only_the_runtime_guard_package(tmp_path: Pa
       2. 運用者向けの内部テスト(tests/)が同梱されていないこと
          ([実機で発見した回帰] setuptoolsのsdistは慣習的にtests/全体を
          自動的に含めてしまい、MANIFEST.inでの明示的な除外が無いと、
-         maquina_gatekeeper/local_only_selfplay_gateを直接参照する内部テストまで
+         runtime_audit_gatekeeper/local_only_selfplay_gateを直接参照する内部テストまで
          公開配布物に紛れ込んでしまっていた)
       3. 過剰な除外で空っぽの配布物になっていない(runtime_guard本体は残っている)こと
     """

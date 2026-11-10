@@ -53,7 +53,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 TARGET_DIRS_FOR_IMPORT_SCAN = [
     "angels", "src", "adapters", "anjo_interceptor", "runtime_guard", "tools",
 ]
-TARGET_FILES_FOR_IMPORT_SCAN = ["maquina_gatekeeper.py"]
+TARGET_FILES_FOR_IMPORT_SCAN = ["runtime_audit_gatekeeper.py"]
 
 REQUIREMENTS_PATH = ROOT / "requirements.txt"
 WORKFLOW_DIR = ROOT / ".github" / "workflows"

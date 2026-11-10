@@ -1,6 +1,6 @@
 import os
 import pytest
-from maquina_gatekeeper import LossOfAtaraxia, enforce_maquina_seal
+from runtime_audit_gatekeeper import LossOfAtaraxia, enforce_maquina_seal
 
 # GitHub Actionsなどの未承認クラウド環境であるかを判定
 IS_UNVERIFIED_CLOUD = os.getenv("GITHUB_ACTIONS") == "true"
@@ -34,7 +34,7 @@ def test_verified_environment_success():
         # [修正 2026-10] 以前は "寿命が尽きました。"(証明書の期限切れ)だけを
         # 期待していたが、bb18b69で証明書を有効期限内のものへ再発行した後は、
         # クラウド環境では「期限切れ」ではなく「ハードウェア指紋の不一致」で
-        # 遮断されるようになった(いずれも maquina_gatekeeper.py の異なる
+        # 遮断されるようになった(いずれも runtime_audit_gatekeeper.py の異なる
         # チェック箇所が送出する正当なLossOfAtaraxiaであり、どちらが先に
         # 発火するかは証明書の有効期限という運用上の状態に依存する)。
         # テストの意図は「ゼロトラスト方針により未承認環境では必ず遮断される

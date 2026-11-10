@@ -1,7 +1,7 @@
 """
 [脆弱性修正 2026-10 §BC] 「天使(angels/*.py)の配線漏れ」の回帰テスト。
 
-`angels/audit_package_boundary_isolation.py`は、「ライセンス証明書機構(maquina_gatekeeper)
+`angels/audit_package_boundary_isolation.py`は、「ライセンス証明書機構(runtime_audit_gatekeeper)
 の公開配布からの分離」を静的に検証する正しいロジックを持つスクリプトとして
 実在していたが、どのCIワークフローファイルのrun:ステップからも一度も呼び出
 されておらず、GRIMOIRE.mdの解説文の中だけに「配線されている」と記述されて

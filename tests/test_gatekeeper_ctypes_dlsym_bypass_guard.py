@@ -1,7 +1,7 @@
 """
 tests/test_gatekeeper_ctypes_dlsym_bypass_guard.py
 =============================================
-[新設 2026-10 §CE] maquina_gatekeeper.pyのultimate_audit_hookが、
+[新設 2026-10 §CE] runtime_audit_gatekeeper.pyのultimate_audit_hookが、
 "ctypes.dlopen"・"ctypes.dlsym"の両audit eventを一度も検査していな
 かった欠陥の回帰テスト。
 
@@ -23,7 +23,7 @@ audit eventを発生させる)のいずれも、この`forbidden`集合とは一
 名前空間ごとのデフォルト拒否を既に備えており、この欠陥の対象では
 ないことを実機で確認した(実際に試し、既存の未変更のコードで
 "ctypes.dlsym"がデフォルト拒否によって正しく遮断されることを確認
-済み)。本ファイル(`maquina_gatekeeper.py`)側が個々のイベント名を
+済み)。本ファイル(`runtime_audit_gatekeeper.py`)側が個々のイベント名を
 列挙する狭いallowlist方式であるのに対し、runtime_guard側は名前空間ごとの
 広いdefault-deny方式を採用しているという、設計そのものの違いに
 起因する非対称性である。
@@ -53,7 +53,7 @@ def test_pythonapi_symbol_resolution_is_blocked_while_sealed():
 
         script = f"""
 import ctypes, os, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 mg.set_sanctuary_sealed(True)
@@ -79,7 +79,7 @@ def test_fresh_cdll_dlopen_is_blocked_while_sealed():
     (専用audit event "ctypes.dlopen")自体が遮断されることを確認する。"""
     script = """
 import ctypes, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 mg.set_sanctuary_sealed(True)
@@ -101,7 +101,7 @@ def test_pythonapi_resolution_still_works_when_not_sealed():
     シンボル解決・呼び出しが引き続き正常に動作することを確認する。"""
     script = """
 import ctypes, sys
-import maquina_gatekeeper as mg
+import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
 fn = ctypes.pythonapi.getpid
@@ -119,7 +119,7 @@ def test_runtime_guard_already_blocks_the_same_scenario_via_its_existing_default
     (runtime_guard/__init__.py)は、本修正を一切加えていない既存のコードの
     ままで、同じ"ctypes.pythonapi"経由の攻撃を既存の名前空間
     デフォルト拒否によって正しく遮断することを確認する(§CEの対象は
-    maquina_gatekeeper.py側のみであることの裏付け)。"""
+    runtime_audit_gatekeeper.py側のみであることの裏付け)。"""
     with tempfile.TemporaryDirectory() as tmpdir:
         victim = os.path.join(tmpdir, "victim.txt")
         with open(victim, "wb") as f:
