@@ -30,7 +30,7 @@ prune assets
 exclude runtime_audit_gatekeeper.py
 exclude ataraxia_certificate.json
 exclude GRIMOIRE.md
-exclude COMMANDS.md
+exclude docs/COMMANDS.md
 exclude docker-compose.yml
 exclude Dockerfile
 exclude architecture.html

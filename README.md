@@ -4,7 +4,7 @@
 [![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(GRIMOIRE.md)](./GRIMOIRE.md) ・ [担当範囲の境界線(BOUNDARY.md)](./BOUNDARY.md)
+作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(GRIMOIRE.md)](./GRIMOIRE.md) ・ [担当範囲の境界線(BOUNDARY.md)](./docs/BOUNDARY.md)
 
 **あなたのAIエージェントが、省略した・隠した・偽装したものを捕まえる。**
 

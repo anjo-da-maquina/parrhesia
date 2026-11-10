@@ -16,7 +16,7 @@ Parrhesia(パレーシア)— 生成AI(AIDD中・AIDD前の両方)の手抜き�
 を目的とする。既存コードへの変更は最小限にとどめ、本パッケージは
 既存の部品(runtime_guard.inquisition等)を呼ぶ側であり、呼ばれる側にはならない。
 
-開発の出発点・設計思想は、リポジトリルートの `PARRHESIA_PLAN.md`
+開発の出発点・設計思想は、`docs/PARRHESIA_PLAN.md`
 (2026-11-03提出の実装計画書)を参照。
 """
 from parrhesia._brand import PRODUCT_NAME, LEGACY_NAMES
