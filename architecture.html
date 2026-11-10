@@ -111,7 +111,7 @@
             <p>Zero-Trust OS Fortress for Local AI Agents</p>
         </div>
 
-        <div class="section-title">The Canon (Core Absolute Defense — sefer.Sanctum)</div>
+        <div class="section-title">The Canon (Core Defense Layer — sefer.Sanctum)</div>
 
         <div class="grid">
             <!-- Gabriel -->
@@ -126,7 +126,7 @@
             <div class="card michael">
                 <div class="icon">⚔️</div>
                 <h3>Michael (OS Deep Hook)</h3>
-                <p>The final absolute defense inside <code>sefer.Sanctum</code>. Uses Python's native audit hooks (<code>_michael_absolute_defense</code>) to physically intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed.</p>
+                <p>The last line of defense inside <code>sefer.Sanctum</code> (function name in code: <code>_michael_absolute_defense</code> — the identifier predates this wording pass). Uses Python's native audit hooks to intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed. This is enforced in-process via <code>sys.addaudithook()</code>, not an OS-level sandbox — see <a href="./README.en.md#limitations--what-this-does-not-guarantee">Limitations</a>.</p>
                 <div class="tech-stack">sys.addaudithook() runtime</div>
             </div>
 
