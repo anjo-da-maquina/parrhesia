@@ -158,7 +158,7 @@ def build_demo_repo(repo: Path) -> None:
 
 
 def main() -> int:
-    tmp = Path(tempfile.mkdtemp(prefix="pleroma_portfolio_demo_"))
+    tmp = Path(tempfile.mkdtemp(prefix="parrhesia_portfolio_demo_"))
     try:
         repo = tmp / "sample_ai_repo"
         build_demo_repo(repo)
