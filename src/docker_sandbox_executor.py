@@ -7,11 +7,14 @@ from pathlib import Path
 # [2026-10 改修] これまで本モジュールはCLIから手動で呼び出す場合のみ
 # 機能する独立ツールであり、AegisSystem/AI実行経路からは一度も呼ばれて
 # いなかった（=「Docker隔離は任意・手動のおまけ」でしかなかった）。
-# `run_in_sandalphon()` を切り出し、aegis_system.py からの
+# `run_in_docker_sandbox()` を切り出し、aegis_system.py からの
 # 強制的（mandatory）な動的検証に使えるようにする。
-_SANDALPHON_IMAGE = "sandalphon-jail"
-_SANDALPHON_DOCKERFILE_DIR = Path(__file__).resolve().parent / "sandalphon"
-_SANDALPHON_SECCOMP_PROFILE = _SANDALPHON_DOCKERFILE_DIR / "seccomp-profile.json"
+# [改名 2026-11 — docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §3]
+# 旧名 sandalphon_jail / run_in_sandalphon / _SANDALPHON_* から改名。
+# ロジックは一切変更していない(識別子の置換のみ)。
+_DOCKER_SANDBOX_IMAGE = "docker-sandbox-executor"
+_DOCKER_SANDBOX_DOCKERFILE_DIR = Path(__file__).resolve().parent / "docker_sandbox"
+_DOCKER_SANDBOX_SECCOMP_PROFILE = _DOCKER_SANDBOX_DOCKERFILE_DIR / "seccomp-profile.json"
 
 
 def check_docker_available() -> tuple[bool, str]:
@@ -47,17 +50,17 @@ def check_docker_available() -> tuple[bool, str]:
 def _ensure_image_built() -> None:
     try:
         subprocess.run(
-            ["docker", "image", "inspect", _SANDALPHON_IMAGE],
+            ["docker", "image", "inspect", _DOCKER_SANDBOX_IMAGE],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True,
         )
     except subprocess.CalledProcessError:
         subprocess.run(
-            ["docker", "build", "-t", _SANDALPHON_IMAGE, str(_SANDALPHON_DOCKERFILE_DIR)],
+            ["docker", "build", "-t", _DOCKER_SANDBOX_IMAGE, str(_DOCKER_SANDBOX_DOCKERFILE_DIR)],
             check=True,
         )
 
 
-def run_in_sandalphon(code: str, timeout: int = 5) -> dict:
+def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
     """渡されたPythonコード文字列を、ネットワーク完全遮断・読み取り専用の
     Dockerコンテナ内で動的に実行し、結果を構造化して返す。
 
@@ -145,15 +148,15 @@ def run_in_sandalphon(code: str, timeout: int = 5) -> dict:
             # ずに呼べてしまう。§CD・§CEで発見した「Sanctumに入る前に
             # 確保済みのfd・関数ポインタを使った迂回」は、まさにこの
             # 「無権限のままでも到達できるシステムコール」の範疇にある。
-            # seccompプロファイル(src/sandalphon/seccomp-profile.json)
+            # seccompプロファイル(src/docker_sandbox/seccomp-profile.json)
             # は、カーネルレベルでこれらのシステムコール自体を直接
             # 拒否する、ケーパビリティ剥奪とは独立したもう一枚の壁で
             # ある。プロファイルの設計方針・denylist各項目の根拠は
             # 当該JSONファイル内のcommentフィールドとGRIMOIRE.md §CG
             # に詳述している。
-            f"--security-opt=seccomp={_SANDALPHON_SECCOMP_PROFILE}",
+            f"--security-opt=seccomp={_DOCKER_SANDBOX_SECCOMP_PROFILE}",
             "-v", f"{tmp_path}:/jail/target.py:ro",
-            _SANDALPHON_IMAGE, "target.py",
+            _DOCKER_SANDBOX_IMAGE, "target.py",
         ]
         try:
             proc = subprocess.run(run_cmd, capture_output=True, text=True, timeout=timeout)
@@ -170,9 +173,9 @@ def run_in_sandalphon(code: str, timeout: int = 5) -> dict:
     return result
 
 
-def execute_in_sandalphon(target_file):
-    """CLIから `python src/sandalphon_jail.py <file>` として手動実行するための
-    従来互換のラッパー。実体は run_in_sandalphon() に委譲する。"""
+def execute_in_docker_sandbox(target_file):
+    """CLIから `python src/docker_sandbox_executor.py <file>` として手動実行するための
+    従来互換のラッパー。実体は run_in_docker_sandbox() に委譲する。"""
     print(f"=== [サンダルフォンの絶対隔離結界] '{target_file}' を隔離次元へ転送します ===")
     file_path = Path(target_file).absolute()
 
@@ -182,7 +185,7 @@ def execute_in_sandalphon(target_file):
 
     print("[システム] 隔離結界(Dockerコンテナ)の展開状況を確認中...")
     code = file_path.read_text(encoding="utf-8")
-    result = run_in_sandalphon(code)
+    result = run_in_docker_sandbox(code)
 
     if not result["docker_available"]:
         print(f"[致命的エラー] {result['reason']} サンダルフォンを召喚するには、ホストOSでDockerデーモンが起動している必要があります。")
@@ -205,6 +208,6 @@ def execute_in_sandalphon(target_file):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("使用法: python src/sandalphon_jail.py <対象のPythonファイル>")
+        print("使用法: python src/docker_sandbox_executor.py <対象のPythonファイル>")
         sys.exit(1)
-    execute_in_sandalphon(sys.argv[1])
+    execute_in_docker_sandbox(sys.argv[1])

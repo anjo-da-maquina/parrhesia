@@ -13,7 +13,7 @@ NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼�
 # 繰り返し記してきた。
 #
 # 本件は、ユーザーからその恒久対策に実際に着手するよう依頼を受けて行った
-# 調査である。既にSandalphon(`src/sandalphon_jail.py`の`run_in_sandalphon`)
+# 調査である。既にDockerSandbox(旧名Sandalphon、`src/docker_sandbox_executor.py`の`run_in_docker_sandbox`)
 # は、未知のAI生成コードをDockerコンテナ内で動的に検証する「OSレベルの
 # 隔離結界」を備えていたが、実際の`docker run`呼び出しを確認したところ、
 # ネットワーク完全遮断(`--network none`)・読み取り専用(`--read-only`)・
@@ -35,7 +35,7 @@ NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼�
 # の`check_docker_available()`が想定していなかった第三の状態である)。
 # そのため、この環境では実際にコンテナを起動してケーパビリティ剥奪が
 # 本当にカーネルによって強制されていることまでは確認できない。本天使は、
-# (A) 常にこの環境でも実行できる静的検証(`run_in_sandalphon`の実装に
+# (A) 常にこの環境でも実行できる静的検証(`run_in_docker_sandbox`の実装に
 # 必要な3つのオプションが実際に含まれているか)と、(B) イメージが取得
 # できる環境でのみ実行できる動的検証(実際にコンテナを起動し、剥奪され
 # ているはずのケーパビリティに依存する操作が本当に失敗するか)を分離
@@ -46,11 +46,11 @@ NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼�
 
 
 def _check_static_flags_present() -> tuple:
-    """`run_in_sandalphon`のdocker run呼び出しに、ケーパビリティ剥奪・
+    """`run_in_docker_sandbox`のdocker run呼び出しに、ケーパビリティ剥奪・
     特権昇格禁止・プロセス数上限の3つのオプションが実際に含まれている
     ことを静的に確認する(イメージ取得やデーモン起動を一切必要としない
     ため、ネットワーク制限下のこの環境でも常に実行可能)。"""
-    path = ROOT / "src" / "sandalphon_jail.py"
+    path = ROOT / "src" / "docker_sandbox_executor.py"
     if not path.exists():
         return False, f"対象ファイルが見つかりません: {path}"
     text = path.read_text(encoding="utf-8-sig")
@@ -62,7 +62,7 @@ def _check_static_flags_present() -> tuple:
     ]
     missing = [label for pattern, label in required if not re.search(pattern, text)]
     if missing:
-        return False, f"run_in_sandalphon()のdocker run呼び出しに、以下のOSレベル強制オプションが見つかりません: {', '.join(missing)}"
+        return False, f"run_in_docker_sandbox()のdocker run呼び出しに、以下のOSレベル強制オプションが見つかりません: {', '.join(missing)}"
     return True, "OK"
 
 
@@ -75,14 +75,14 @@ def _check_dynamic_capability_is_actually_dropped():
     戻り値: ("PASS"|"FAIL"|"INCONCLUSIVE", detail)
     """
     sys.path.insert(0, str(ROOT / "src"))
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as dse
 
-    available, reason = sj.check_docker_available()
+    available, reason = dse.check_docker_available()
     if not available:
         return "INCONCLUSIVE", f"Dockerデーモン自体が利用不可のため動的検証を実施できません: {reason}"
 
     try:
-        sj._ensure_image_built()
+        dse._ensure_image_built()
     except subprocess.SubprocessError as e:
         return "INCONCLUSIVE", (
             f"隔離結界イメージの取得・構築ができないため、この環境では動的検証を実施できません"
@@ -107,7 +107,7 @@ def _check_dynamic_capability_is_actually_dropped():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8") as tf:
         tf.write(script)
         tmp_path = tf.name
-    # [自己発見・緊急修正 2026-10 §CF-1] src/sandalphon_jail.py側と同じ
+    # [自己発見・緊急修正 2026-10 §CF-1] src/docker_sandbox_executor.py側と同じ
     # 理由(CAP_DAC_OVERRIDE剥奪後、既定モード0600のままでは`prisoner`
     # ユーザーがこのファイルを開けずPermission deniedになる)で、ここも
     # 同様にchmodする。GRIMOIRE.md §CF追記参照。
@@ -118,7 +118,7 @@ def _check_dynamic_capability_is_actually_dropped():
             "--network", "none", "--read-only",
             "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=32",
             "-v", f"{tmp_path}:/jail/target.py:ro",
-            sj._SANDALPHON_IMAGE, "target.py",
+            dse._DOCKER_SANDBOX_IMAGE, "target.py",
         ]
         proc = subprocess.run(run_cmd, capture_output=True, text=True, timeout=15)
     finally:
@@ -151,7 +151,7 @@ def main():
 
     report_pass(
         NAME,
-        "Sandalphon隔離結界のdocker run呼び出しに、全Linuxケーパビリティの剥奪・特権昇格禁止・"
+        "DockerSandbox(旧名Sandalphon)隔離結界のdocker run呼び出しに、全Linuxケーパビリティの剥奪・特権昇格禁止・"
         "プロセス数上限の3オプションが存在し、実際にコンテナ内でos.setuid(0)が"
         "PermissionErrorで遮断されることを実機で確認しました。",
     )

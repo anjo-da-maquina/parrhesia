@@ -30,7 +30,7 @@ except ModuleNotFoundError as e:
 # さらに、AI生成ペイロードの実行時の通信遮断そのものは、`EvolvingAngel.
 # defend_and_execute()`が呼ぶ`AegisSystem.execute_ai_intent()`内で、既に
 # Dockerコンテナの`--network none`によってOSレベルで提供されている
-# (`src/sandalphon_jail.py`)。CassielsVeilの結界はそれより弱い追加の一層
+# (`src/docker_sandbox_executor.py`)。CassielsVeilの結界はそれより弱い追加の一層
 # でしかなく、ここでの展開は保護の上積みなしに正規の学習通信を壊すだけ
 # だったため、統合をやめた。
 

@@ -3,7 +3,7 @@ tests/test_guard_container_capabilities.py
 ============================================
 [新設 2026-10 §CF] angels/guard_container_capabilities.py の単体テスト。
 
-実際に発見した具体例: `src/sandalphon_jail.py`の`run_in_sandalphon()`が
+実際に発見した具体例: `src/docker_sandbox_executor.py`の`run_in_docker_sandbox()`が
 展開する隔離結界(Docker)は、ネットワーク完全遮断・読み取り専用・
 非rootユーザーの3点にしか依存しておらず、コンテナ自体にはDockerの
 既定のLinuxケーパビリティ集合(CAP_DAC_OVERRIDE・CAP_SETUID等)が残って
@@ -37,7 +37,7 @@ def test_static_check_detects_missing_cap_drop_regression(tmp_path, monkeypatch)
     する。"""
     fake_root = tmp_path
     (fake_root / "src").mkdir()
-    (fake_root / "src" / "sandalphon_jail.py").write_text(
+    (fake_root / "src" / "docker_sandbox_executor.py").write_text(
         'run_cmd = ["docker", "run", "--rm", "--network", "none", "--read-only"]\n',
         encoding="utf-8",
     )
@@ -52,7 +52,7 @@ def test_static_check_detects_missing_cap_drop_regression(tmp_path, monkeypatch)
 def test_static_check_detects_partial_regression_missing_only_pids_limit(tmp_path, monkeypatch):
     fake_root = tmp_path
     (fake_root / "src").mkdir()
-    (fake_root / "src" / "sandalphon_jail.py").write_text(
+    (fake_root / "src" / "docker_sandbox_executor.py").write_text(
         'run_cmd = ["docker", "run", "--cap-drop=ALL", "--security-opt=no-new-privileges"]\n',
         encoding="utf-8",
     )
@@ -74,7 +74,7 @@ def test_dynamic_check_is_inconclusive_when_docker_daemon_unavailable(monkeypatc
     """[正直な注記の固定] Dockerデーモン自体が利用できない場合、
     「失敗(FAIL)」ではなく「検証不能(INCONCLUSIVE)」として報告され、
     PASSに偽装しないことを確認する。"""
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as sj
     monkeypatch.setattr(sj, "check_docker_available", lambda: (False, "テスト: デーモン未起動"))
     status, detail = ncsg._check_dynamic_capability_is_actually_dropped()
     assert status == "INCONCLUSIVE"
@@ -86,7 +86,7 @@ def test_dynamic_check_is_inconclusive_when_image_build_fails(monkeypatch):
     環境そのものが、まさにこの分岐(デーモンは起動できるがコンテナ
     レジストリへのアクセスがネットワーク許可一覧で遮断されている)を
     通ることを、実機で確認済み。"""
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as sj
     monkeypatch.setattr(sj, "check_docker_available", lambda: (True, ""))
 
     def _boom():
@@ -103,7 +103,7 @@ def test_dynamic_check_detects_capability_not_actually_dropped_regression(monkey
     os.setuid(0)が実際に成功してしまった場合、本天使が正しくFAILを
     報告することを確認する(コンテナの起動自体をモックして、ロジック
     単体の正しさを検証する)。"""
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as sj
     monkeypatch.setattr(sj, "check_docker_available", lambda: (True, ""))
     monkeypatch.setattr(sj, "_ensure_image_built", lambda: None)
 
@@ -119,7 +119,7 @@ def test_dynamic_check_detects_capability_not_actually_dropped_regression(monkey
 
 
 def test_dynamic_check_passes_when_setuid_is_correctly_blocked(monkeypatch):
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as sj
     monkeypatch.setattr(sj, "check_docker_available", lambda: (True, ""))
     monkeypatch.setattr(sj, "_ensure_image_built", lambda: None)
 

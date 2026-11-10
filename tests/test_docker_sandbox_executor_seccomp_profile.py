@@ -1,8 +1,8 @@
 """
-tests/test_sandalphon_seccomp_profile.py
+tests/test_docker_sandbox_executor_seccomp_profile.py
 =========================================
-[新設 2026-10 §CG] `run_in_sandalphon()`が、実際に
-`src/sandalphon/seccomp-profile.json`を`--security-opt=seccomp=`で
+[新設 2026-10 §CG] `run_in_docker_sandbox()`が、実際に
+`src/docker_sandbox/seccomp-profile.json`を`--security-opt=seccomp=`で
 docker runへ渡していることの回帰テスト。
 
 §CFで導入したLinuxケーパビリティの剥奪は「root相当の特権の有無」を
@@ -19,12 +19,12 @@ SRC = Path(__file__).resolve().parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-import sandalphon_jail as sj
+import docker_sandbox_executor as dse
 
 
 def _captured_run_cmd(monkeypatch):
-    monkeypatch.setattr(sj, "check_docker_available", lambda: (True, ""))
-    monkeypatch.setattr(sj, "_ensure_image_built", lambda: None)
+    monkeypatch.setattr(dse, "check_docker_available", lambda: (True, ""))
+    monkeypatch.setattr(dse, "_ensure_image_built", lambda: None)
 
     captured = []
 
@@ -37,12 +37,12 @@ def _captured_run_cmd(monkeypatch):
         return _FakeProc()
 
     monkeypatch.setattr(subprocess, "run", _fake_run)
-    sj.run_in_sandalphon("print('ok')")
+    dse.run_in_docker_sandbox("print('ok')")
     assert captured, "docker runが一度も呼ばれなかった"
     return captured[0]
 
 
-def test_run_in_sandalphon_passes_the_seccomp_profile(monkeypatch):
+def test_run_in_docker_sandbox_passes_the_seccomp_profile(monkeypatch):
     cmd = _captured_run_cmd(monkeypatch)
     seccomp_args = [a for a in cmd if a.startswith("--security-opt=seccomp=")]
     assert seccomp_args, f"docker run呼び出しに--security-opt=seccomp=...が見つかりません: {cmd}"
@@ -61,7 +61,7 @@ def test_seccomp_profile_path_in_the_command_actually_exists_on_disk(monkeypatch
     assert profile_path.name == "seccomp-profile.json"
 
 
-def test_run_in_sandalphon_still_keeps_capability_and_privilege_flags(monkeypatch):
+def test_run_in_docker_sandbox_still_keeps_capability_and_privilege_flags(monkeypatch):
     """[誤検知防止・§CFの非退行] seccompプロファイルの追加が、既存の
     §CFのケーパビリティ剥奪・特権昇格禁止オプションを置き換えたり
     消したりしていないことを確認する(多層防御の各層が互いを壊さない
