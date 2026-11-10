@@ -5,7 +5,7 @@ tests/test_guard_docker_sandbox_enforcement_decay.py
 
 本天使(「サンダルフォンの勅令」)は、「Docker/OSレベルの強制サンド
 ボックス化」が、静的検閲のみの張りぼてに戻されていないかを、
-`src/aegis_system.py`・`src/sandalphon_jail.py`・
+`src/aegis_system.py`・`src/docker_sandbox_executor.py`・
 `src/ollama_agent_loop.py`の内容を直接文字列検査することで静的に
 検証する(§BCで新設)。天使群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。本天使が検査する項目は
@@ -28,14 +28,14 @@ VALID_AEGIS_TEXT = (
     "    def __init__(self, require_docker_sandbox: bool = True):\n"
     "        pass\n"
     "    def execute(self):\n"
-    "        run_in_sandalphon(...)\n"
+    "        run_in_docker_sandbox(...)\n"
     "        if not docker_available:\n"
     "            raise PermissionError('docker unavailable')\n"
     "        if timed_out:\n"
     "            raise TimeoutError()\n"
 )
 
-VALID_SANDALPHON_TEXT = (
+VALID_DOCKER_SANDBOX_TEXT = (
     "def check_docker_available():\n"
     "    subprocess.run(['docker', 'info'])\n"
 )
@@ -46,12 +46,12 @@ VALID_OLLAMA_LOOP_TEXT = (
 )
 
 
-def _write_fixtures(root, aegis_text=VALID_AEGIS_TEXT, sandalphon_text=VALID_SANDALPHON_TEXT,
+def _write_fixtures(root, aegis_text=VALID_AEGIS_TEXT, sandalphon_text=VALID_DOCKER_SANDBOX_TEXT,
                      ollama_text=VALID_OLLAMA_LOOP_TEXT, include_ollama_loop=True):
     src_dir = root / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
     (src_dir / "aegis_system.py").write_text(aegis_text, encoding="utf-8")
-    (src_dir / "sandalphon_jail.py").write_text(sandalphon_text, encoding="utf-8")
+    (src_dir / "docker_sandbox_executor.py").write_text(sandalphon_text, encoding="utf-8")
     if include_ollama_loop:
         (src_dir / "ollama_agent_loop.py").write_text(ollama_text, encoding="utf-8")
 
@@ -79,12 +79,12 @@ def test_real_repository_passes():
 
 
 def test_fails_when_required_file_is_missing(monkeypatch, tmp_path):
-    """`aegis_system.py`・`sandalphon_jail.py`のいずれかが存在しない
+    """`aegis_system.py`・`docker_sandbox_executor.py`のいずれかが存在しない
     場合、正しくFAILする。"""
     src_dir = tmp_path / "src"
     src_dir.mkdir()
     (src_dir / "aegis_system.py").write_text(VALID_AEGIS_TEXT, encoding="utf-8")
-    # sandalphon_jail.pyを意図的に作らない
+    # docker_sandbox_executor.pyを意図的に作らない
     _expect_fail(monkeypatch, tmp_path)
 
 
@@ -105,10 +105,10 @@ def test_fails_when_default_is_not_true(monkeypatch, tmp_path):
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_run_in_sandalphon_is_not_called(monkeypatch, tmp_path):
-    """[核心] `run_in_sandalphon`の呼び出しが無い(静的検閲のみの張り
+def test_fails_when_run_in_docker_sandbox_is_not_called(monkeypatch, tmp_path):
+    """[核心] `run_in_docker_sandbox`の呼び出しが無い(静的検閲のみの張り
     ぼて)場合、正しくFAILする。"""
-    _write_fixtures(tmp_path, aegis_text=VALID_AEGIS_TEXT.replace("run_in_sandalphon", "something_else"))
+    _write_fixtures(tmp_path, aegis_text=VALID_AEGIS_TEXT.replace("run_in_docker_sandbox", "something_else"))
     _expect_fail(monkeypatch, tmp_path)
 
 
@@ -129,12 +129,12 @@ def test_fails_when_timeout_handling_is_missing(monkeypatch, tmp_path):
 
 
 def test_fails_when_sandalphon_daemon_check_is_missing(monkeypatch, tmp_path):
-    """[核心] `sandalphon_jail.py`が実際のDockerデーモン接続確認
+    """[核心] `docker_sandbox_executor.py`が実際のDockerデーモン接続確認
     (`docker info`相当)を行っていない場合、正しくFAILする(CLIバイナリ
     の存在確認だけでは偽陽性になるため)。"""
     _write_fixtures(
         tmp_path,
-        sandalphon_text=VALID_SANDALPHON_TEXT.replace("docker info", "docker --version")
+        sandalphon_text=VALID_DOCKER_SANDBOX_TEXT.replace("docker info", "docker --version")
         .replace("check_docker_available", "something_else"),
     )
     _expect_fail(monkeypatch, tmp_path)

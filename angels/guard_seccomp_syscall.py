@@ -21,7 +21,7 @@ NAME = "guard_seccomp_syscall - システムコール監査: seccomp-profile.jso
 # `python:3.11-alpine`イメージ自体が取得できない)により、実際の
 # コンテナ内で全syscallを網羅的にstraceして真に必要な許可リストを
 # 実証的に洗い出すことができない。そこで本プロファイル
-# (`src/sandalphon/seccomp-profile.json`)は、defaultAction を
+# (`src/docker_sandbox/seccomp-profile.json`)は、defaultAction を
 # SCMP_ACT_ALLOW とするdenylist方式を採用した――個々の危険な
 # システムコール(プロセス生成・ptrace・mount・カーネルモジュール・
 # 特権関連・生ソケット・時刻変更・NUMA/keyring)を明示的にERRNO拒否
@@ -34,7 +34,7 @@ NAME = "guard_seccomp_syscall - システムコール監査: seccomp-profile.jso
 # 未着手の課題として残す。
 #
 # 本天使は3段階の検証を行う: (A) プロファイルJSON自体の静的な健全性
-# (denylistの中核項目が後退していないか)、(B) `run_in_sandalphon()`
+# (denylistの中核項目が後退していないか)、(B) `run_in_docker_sandbox()`
 # が実際にこのプロファイルを`docker run`へ渡しているかの静的確認、
 # (C) Dockerを一切使わず、libseccomp(C ABI)への直接ctypes呼び出しで
 # 実際にこのプロファイルと同じdenylistをこの実機のカーネルへロードし、
@@ -47,7 +47,7 @@ NAME = "guard_seccomp_syscall - システムコール監査: seccomp-profile.jso
 # 内の実地検証も試みるが、この環境ではこれまで同様イメージ取得に
 # 失敗するため、ここは§CFと同じくINCONCLUSIVEとして正直に報告する。
 
-_PROFILE_PATH = ROOT / "src" / "sandalphon" / "seccomp-profile.json"
+_PROFILE_PATH = ROOT / "src" / "docker_sandbox" / "seccomp-profile.json"
 
 # [正直な注記] この一覧は「後退検知のための最小限の核」であり、
 # プロファイルJSON全体の完全な複製ではない。プロファイル側で項目が
@@ -129,15 +129,15 @@ def _check_profile_json_is_well_formed() -> tuple:
 
 
 def _check_docker_run_references_profile() -> tuple:
-    """`run_in_sandalphon()`のdocker run呼び出しが、実際に本プロファイル
+    """`run_in_docker_sandbox()`のdocker run呼び出しが、実際に本プロファイル
     を`--security-opt seccomp=`で参照しているかを静的に確認する。"""
-    path = ROOT / "src" / "sandalphon_jail.py"
+    path = ROOT / "src" / "docker_sandbox_executor.py"
     if not path.exists():
         return False, f"対象ファイルが見つかりません: {path}"
     text = path.read_text(encoding="utf-8-sig")
     if not re.search(r"--security-opt=seccomp=", text):
-        return False, "run_in_sandalphon()のdocker run呼び出しに、--security-opt=seccomp=... が見つかりません(§CGの回帰)。"
-    if "_SANDALPHON_SECCOMP_PROFILE" not in text:
+        return False, "run_in_docker_sandbox()のdocker run呼び出しに、--security-opt=seccomp=... が見つかりません(§CGの回帰)。"
+    if "_DOCKER_SANDBOX_SECCOMP_PROFILE" not in text:
         return False, "docker run呼び出しが、本プロファイルファイルへのパスを参照していないようです。"
     return True, "OK"
 
@@ -464,18 +464,18 @@ def _check_docker_dynamic_if_possible() -> tuple:
     戻り値: ("PASS"|"FAIL"|"INCONCLUSIVE", detail)
     """
     sys.path.insert(0, str(ROOT / "src"))
-    import sandalphon_jail as sj
+    import docker_sandbox_executor as dse
 
-    available, reason = sj.check_docker_available()
+    available, reason = dse.check_docker_available()
     if not available:
         return "INCONCLUSIVE", f"Dockerデーモン自体が利用不可のため、コンテナ内での動的検証を実施できません: {reason}"
 
     try:
-        sj._ensure_image_built()
+        dse._ensure_image_built()
     except subprocess.SubprocessError as e:
         return "INCONCLUSIVE", f"隔離結界イメージの取得・構築ができないため、この環境では動的検証を実施できません(ネットワーク許可一覧によるコンテナレジストリ遮断が原因である可能性が高い): {e}"
 
-    result = sj.run_in_sandalphon("import os, sys\ntry:\n    os.fork()\n    print('FORK_SUCCEEDED')\nexcept OSError:\n    print('FORK_BLOCKED')\n")
+    result = dse.run_in_docker_sandbox("import os, sys\ntry:\n    os.fork()\n    print('FORK_SUCCEEDED')\nexcept OSError:\n    print('FORK_BLOCKED')\n")
     if not result["executed"]:
         return "INCONCLUSIVE", f"コンテナの実行自体に到達できませんでした: {result}"
     if "FORK_BLOCKED" in result["stdout"]:

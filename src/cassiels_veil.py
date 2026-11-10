@@ -18,7 +18,7 @@ class CassielsVeil:
          システム自体が機能不能になる。
       2. AI生成コードの動的実行は、既に`src/aegis_system.py`経由で
          Dockerコンテナの`--network none`によってOSレベルで通信遮断
-         されている(src/sandalphon_jail.py)。本クラスの手法は
+         されている(src/docker_sandbox_executor.py)。本クラスの手法は
          プロセス単体のパッチに過ぎず、Dockerのネットワーク名前空間
          分離より弱い多重防御の一層にしかならず、かつ(1)の副作用を
          抱えるため、現行アーキテクチャ上は組み込む安全な場所がない。

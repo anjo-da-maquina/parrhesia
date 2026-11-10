@@ -8,8 +8,8 @@ tests/test_guard_seccomp_syscall.py
 呼べるか」は制御しない。§CD・§CEで発見した「Sanctumに入る前に確保済み
 のfd・関数ポインタを使った迂回」は、特権を一切必要とせず、無権限プロ
 セスのままでも到達できるシステムコールの範疇にある。本テストは、
-`src/sandalphon/seccomp-profile.json`(denylist方式のseccompプロファ
-イル)・`src/sandalphon_jail.py`からの参照・libseccompによる生カーネル
+`src/docker_sandbox/seccomp-profile.json`(denylist方式のseccompプロファ
+イル)・`src/docker_sandbox_executor.py`からの参照・libseccompによる生カーネル
 への直接ロードの3層が、それぞれ正しく機能し、正しく後退を検知する
 ことを確認する。
 """
@@ -127,7 +127,7 @@ def test_profile_json_check_detects_io_uring_denylist_regression(tmp_path, monke
 def test_docker_run_reference_check_detects_missing_security_opt(tmp_path, monkeypatch):
     fake_root = tmp_path
     (fake_root / "src").mkdir()
-    (fake_root / "src" / "sandalphon_jail.py").write_text(
+    (fake_root / "src" / "docker_sandbox_executor.py").write_text(
         'run_cmd = ["docker", "run", "--rm", "--cap-drop=ALL"]\n', encoding="utf-8",
     )
     monkeypatch.setattr(dsg, "ROOT", fake_root)

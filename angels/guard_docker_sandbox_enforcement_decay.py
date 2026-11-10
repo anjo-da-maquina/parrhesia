@@ -19,7 +19,7 @@ NAME = "guard_docker_sandbox_enforcement_decay - 思考統制監査: 「Docker/O
 #      AegisSystem(Gabriel+Sandalphon込み)を経由していること。
 def main():
     aegis_path = ROOT / "src" / "aegis_system.py"
-    sandalphon_path = ROOT / "src" / "sandalphon_jail.py"
+    sandalphon_path = ROOT / "src" / "docker_sandbox_executor.py"
     ollama_loop_path = ROOT / "src" / "ollama_agent_loop.py"
 
     for p in (aegis_path, sandalphon_path):
@@ -36,19 +36,19 @@ def main():
     if "require_docker_sandbox: bool = True" not in aegis_text and "require_docker_sandbox=True" not in aegis_text:
         report_fail(NAME, "require_docker_sandboxの既定値がTrue(強制)になっていません。フェイルオープンな設定は認められません。")
 
-    # A-2: 実際にSandalphonの動的実行結果を見て拒否しているか
-    if "run_in_sandalphon" not in aegis_text:
-        report_fail(NAME, "AegisSystemがSandalphon(run_in_sandalphon)を呼び出していません。静的検閲のみの張りぼてに戻っています。")
+    # A-2: 実際にDockerSandbox(旧名Sandalphon)の動的実行結果を見て拒否しているか
+    if "run_in_docker_sandbox" not in aegis_text:
+        report_fail(NAME, "AegisSystemがDockerSandbox(run_in_docker_sandbox)を呼び出していません。静的検閲のみの張りぼてに戻っています。")
     if "docker_available" not in aegis_text or "PermissionError" not in aegis_text:
         report_fail(NAME, "Dockerデーモン不在時にPermissionErrorでフェイルクローズドする実装が見つかりません。")
     if "timed_out" not in aegis_text:
         report_fail(NAME, "Sandalphonのタイムアウト(無限ループ等の遅延攻撃)を検知して拒否する実装が見つかりません。")
 
-    # B: sandalphon_jail.py が「デーモンへの実際の接続確認」をしているか
+    # B: docker_sandbox_executor.py が「デーモンへの実際の接続確認」をしているか
     #    (docker --version だけではCLIバイナリの存在しか確認できず、
     #     デーモン未起動でも偽陽性で通過してしまうため)
     if "docker info" not in sandalphon_text and "check_docker_available" not in sandalphon_text:
-        report_fail(NAME, "sandalphon_jail.pyがDockerデーモンへの実際の接続確認(docker info相当)を行っていません。")
+        report_fail(NAME, "docker_sandbox_executor.pyがDockerデーモンへの実際の接続確認(docker info相当)を行っていません。")
 
     # C: 唯一の実運用ループが実際にAegisSystemを経由しているか
     if ollama_loop_path.exists():

@@ -233,10 +233,10 @@ docstringが明記する通りB章の検出器限定であり、E章(verify/)・
   Actions CIでの確認、という既存の規律をそのまま継続している。
 - Dockerによる隔離実行の必須化(`src/aegis_system.py`の
   `require_docker_sandbox`、`angels/guard_docker_sandbox_enforcement_decay.py`
-  が監査)自体はAegisSystem/sandalphon_jail側の既存機能であり、Parrhesia
-  側の対応は「E章のindependent_rerun/canary_injectionが、呼び出し側から
-  Docker隔離実行のラッパーをcommandとして渡せる形になっているか」に
+  が監査)自体はAegisSystem/docker_sandbox_executor(旧名sandalphon_jail)側の
+  既存機能であり、Parrhesia側の対応は「E章のindependent_rerun/canary_injectionが、
+  呼び出し側からDocker隔離実行のラッパーをcommandとして渡せる形になっているか」に
   限定される。[2026-11-04 更新] この2モジュールは特定の隔離実行機構に
-  依存しない汎用設計で実装済みだが、実際に`sandalphon_jail.run_in_sandalphon`
+  依存しない汎用設計で実装済みだが、実際に`docker_sandbox_executor.run_in_docker_sandbox`
   をcommandとして接続する統合作業自体はまだ行っていない(E章全体が
   「枠組みの提供」に留まる、という上記の限界と同根)。

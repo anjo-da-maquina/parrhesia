@@ -14,7 +14,7 @@ test_integrated_defense モジュール自体がリポジトリのどこにも�
   1. Gabriel (sefer.inquisition)   — 静的AST解析による危険コードの事前検知
   2. IntentInterceptor             — ハニーポット・ディレクトリトラバーサル検知
   3. WorkspaceJail                 — パスの物理的隔離(secure_resolve)
-  4. Sandalphon (Docker隔離結界)    — OSレベルの動的実行検証（強制・既定でON）
+  4. DockerSandbox (Docker隔離結界、旧名Sandalphon) — OSレベルの動的実行検証（強制・既定でON）
 
 [重要: 2026-10 改修] 1〜3は静的解析・文字列パターンに基づく「事前検閲」であり、
 難読化・動的コード生成（`getattr(__builtins__, ''.join(chr(...)...))`等）を
@@ -42,7 +42,7 @@ if str(_REPO_ROOT) not in sys.path:
 from sefer import inquisition
 from workspace_manager import WorkspaceJail
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
-from sandalphon_jail import run_in_sandalphon
+from docker_sandbox_executor import run_in_docker_sandbox
 
 
 class AegisSystem:
@@ -84,17 +84,17 @@ class AegisSystem:
         except SpecificationGamingDetected as e:
             raise PermissionError(f"[Aegis: IntentInterceptor/Traversal] {e}")
 
-        # 4. Sandalphon: Docker隔離結界内での動的実行検証（既定で強制）
+        # 4. DockerSandbox(旧名Sandalphon): Docker隔離結界内での動的実行検証（既定で強制）
         if self.require_docker_sandbox:
-            result = run_in_sandalphon(code, timeout=self.sandbox_timeout)
+            result = run_in_docker_sandbox(code, timeout=self.sandbox_timeout)
             if not result["docker_available"]:
                 raise PermissionError(
-                    f"[Aegis: Sandalphon] {result['reason']} "
+                    f"[Aegis: DockerSandbox] {result['reason']} "
                     "ゼロトラスト方針により、動的検証ができないコードの実行を拒否します。"
                 )
             if result["timed_out"]:
                 raise PermissionError(
-                    f"[Aegis: Sandalphon] 隔離結界内での実行が{self.sandbox_timeout}秒を"
+                    f"[Aegis: DockerSandbox] 隔離結界内での実行が{self.sandbox_timeout}秒を"
                     "超過しました。無限ループ等の遅延攻撃と断定し拒否します。"
                 )
 
