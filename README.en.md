@@ -16,8 +16,8 @@ python3 demo/build_and_audit_demo.py
 ```
 
 > A `Dockerfile` is included for running this (and the test suite) in an
-> isolated container — `docker build -t pleroma-demo . && docker run --rm
-> pleroma-demo python3 demo/build_and_audit_demo.py`. That exact command has
+> isolated container — `docker build -t parrhesia-demo . && docker run --rm
+> parrhesia-demo python3 demo/build_and_audit_demo.py`. That exact command has
 > **not** been verified in the environment this README was written in (no
 > Docker daemon available there); the command above, run directly, is the
 > one actually verified below. If you run it, it only touches a disposable

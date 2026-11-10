@@ -1,4 +1,4 @@
-# 開発ログ — Pleromaで見つけてきたもの
+# 開発ログ — Parrhesia(旧名Pleroma)で見つけてきたもの
 
 [トップに戻る](./README.md)
 

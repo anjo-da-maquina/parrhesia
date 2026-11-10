@@ -15,7 +15,7 @@ git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 python3 demo/build_and_audit_demo.py
 ```
 
-`Dockerfile`も用意していますが(`docker build -t pleroma-demo . && docker run --rm pleroma-demo python3 demo/build_and_audit_demo.py`)、本READMEを書いたセッションの環境にDockerデーモンが無く、**そのコマンド自体は検証できていません**。上記の直接実行コマンドのみ、実機で検証済みです。実行内容は使い捨ての一時ディレクトリ内で完結し、それ以外の場所は一切読み書きしません。
+`Dockerfile`も用意していますが(`docker build -t parrhesia-demo . && docker run --rm parrhesia-demo python3 demo/build_and_audit_demo.py`)、本READMEを書いたセッションの環境にDockerデーモンが無く、**そのコマンド自体は検証できていません**。上記の直接実行コマンドのみ、実機で検証済みです。実行内容は使い捨ての一時ディレクトリ内で完結し、それ以外の場所は一切読み書きしません。
 
 このデモは、「エッジケースを全て検証し、堅牢性を向上させました」という、いかにもAIエージェントが書きそうなコミットメッセージを持つ一時的なgitリポジトリを実際に作成し、そこに典型的な手抜きを5パターン仕込みます。その上で、本物の監査を実行して結果を表示します(以下はこのコマンドを実際に実行して得た出力そのもの。手で編集していません。最新の実行結果は[`demo/DEMO_REPORT.md`](./demo/DEMO_REPORT.md)参照):
 
