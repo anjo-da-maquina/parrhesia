@@ -24,8 +24,8 @@ if (-not (Test-Path $RenewScript)) {
 
 $TaskName = "Parrhesia-CertRenewal-Weekly"
 
-$Action = New-ScheduledTaskAction -Execute "powershell.exe" `
-    -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$RenewScript`" *>> `"$LogFile`""
+$RenewArg = '-NoProfile -ExecutionPolicy Bypass -File "' + $RenewScript + '" *>> "' + $LogFile + '"'
+$Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $RenewArg
 
 # 毎週月曜の午前9時に実行(パソコンがその時刻にスリープ中でも、
 # 次に起動したタイミングで実行される設定にしている)
@@ -45,7 +45,7 @@ Write-Host "実行結果は次のファイルに記録されます:"
 Write-Host "  $LogFile"
 Write-Host ""
 Write-Host "今すぐ1回だけ試しに実行して確認したい場合は、次を実行してください:"
-Write-Host "  Start-ScheduledTask -TaskName `"$TaskName`""
+Write-Host ('  Start-ScheduledTask -TaskName "' + $TaskName + '"')
 Write-Host ""
 Write-Host "登録されているか確認したい場合は、次を実行してください:"
-Write-Host "  Get-ScheduledTask -TaskName `"$TaskName`""
+Write-Host ('  Get-ScheduledTask -TaskName "' + $TaskName + '"')
