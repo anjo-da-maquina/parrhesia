@@ -99,100 +99,36 @@ evaluator at a prospective employer)**. For a document whose whole selling
 point is honesty, misstating who the reviewer was would defeat the purpose, so
 this is stated plainly.
 
-### First round of fixes
+### First round of fixes (3 lines)
 
-- The certificate-automation behavior, which looked inconsistent with the
-  project's "zero-trust" claim, was neither hidden nor glossed over — it was
-  recorded as a self-found defect, [DEFECTS.md §CX](../../DEFECTS.md).
-- A placeholder-looking CI run reference was replaced with a real URL, and the
-  commit each number came from is now stated explicitly.
-- The `conftest.py` bug that broke test collection entirely in any environment
-  without `rsa` was actually fixed in code (an earlier version of this document
-  described as "unverifiable in the sandbox" something that this fix made
-  verifiable).
-- A defect count ("81") in DEFECTS.md turned out to be stale once actually
-  recounted; it has been corrected.
-- An opening claim that "everything here was actually run and checked"
-  contradicted a later section disclosing sandbox-unverified work; the document
-  now explicitly separates what was confirmed in CI from what was confirmed on
-  the user's own machine.
+Recorded the certificate-automation inconsistency as a self-found defect
+([DEFECTS.md §CX](../../DEFECTS.md)) instead of hiding it, replaced a
+placeholder CI reference with a real URL, actually fixed the `conftest.py`
+bug that broke test collection without `rsa`, corrected a stale defect count
+("81"), and separated CI-confirmed claims from sandbox-unverified ones.
 
-### Second round of fixes (after even more specific feedback)
+### Second round of fixes (after even more specific feedback, 2 lines)
 
-- **The defect numbering itself was actually wrong**: "§AV is the 32nd entry,
-  §CX is the 101st" turned out to be mis-counted — the real alphabetic
-  sequence number (A=1, Z=26, AA=27, ...) puts §AV at 48th and §CX at 102nd.
-  Hand-counting was dropped entirely in favor of quoting only the output of a
-  counting script
-  ([`tools/count_defects_entries.py`](../../tools/count_defects_entries.py)).
-- **Misstated reviewer identity**: this worklog had incorrectly said it
-  received "red-line comments from an actual evaluator"; corrected to
-  "informal feedback from an external AI assistant" (as stated at the top of
-  this section).
-- **The sandbox's one failing test turned out to be a general defect, not just
-  a sandbox quirk**: the failure attributed to a missing git-signing symlink
-  was actually caused by the test depending on the executor's global git
-  config (`commit.gpgsign`) — a real defect that would reproduce in any
-  third party's environment with that setting. This was actually reproduced
-  (4 of 5 tests failing in an isolated environment with
-  `commit.gpgsign = true`), fixed, and re-verified (all 5 passing)
-  ([DEFECTS.md §CY](../../DEFECTS.md)).
-- **The xpassed design itself was revisited, not just re-explained**: rather
-  than merely wording the 11 `xpassed` results more carefully, the design was
-  changed from `xfail(strict=False)` to `pytest.mark.skipif`, eliminating the
-  unnecessary `xpassed` state on CI altogether
-  ([DEFECTS.md §DA](../../DEFECTS.md)).
-- **The §CX contradiction was actually fixed, not just found**: the "cert
-  renewal bypasses human out-of-band confirmation" contradiction recorded in
-  §CX was fixed with a `--check-rotation` mechanism that auto-approves only
-  when the key is unchanged, and refuses to auto-approve a real rotation
-  ([DEFECTS.md §CZ](../../DEFECTS.md)).
-- **The document's structure was reorganized**: dropped the "what this cannot
-  detect"-first opening in favor of a 3-line summary ("what this tool does,
-  what it found") plus a reproduce-it-yourself command at the very top.
+Corrected the defect numbering (now quoted only from
+[`tools/count_defects_entries.py`](../../tools/count_defects_entries.py))
+and the misstated reviewer identity (informal feedback from an external AI
+assistant, not an actual evaluator). Found that the sandbox's one failing
+test was actually a general defect, not a sandbox quirk
+([DEFECTS.md §CY](../../DEFECTS.md)); revisited the `xpassed` design itself
+([DEFECTS.md §DA](../../DEFECTS.md)); actually fixed the §CX contradiction
+([DEFECTS.md §CZ](../../DEFECTS.md)); reorganized the document's structure.
 
-### Third round of fixes (even more detailed feedback, including a check on the numbers' internal consistency)
+### Third round of fixes (even more detailed feedback, including a check on the numbers' internal consistency, 3 lines)
 
-- **The "found by its own red team" limitation was missing**: all 105 entries
-  were found by this project's own red-team code, and the person who found
-  each one and the person who fixed it are the same. This is stated plainly
-  as the 4th bullet of §0 now — not stating it invited exactly the "self-
-  graded, so no independence" objection any reviewer would raise.
-- **The `--check-rotation` threat model went unanswered**: two concrete
-  questions — "where is the 'trusted key' stored, and can the automation
-  itself rewrite it?" and "if a rotation stops auto-approval, is the weekly
-  task's failure actively notified or does it just silently stop?" — were
-  answered by actually reading the code. (1) The "currently trusted key" is
-  read from the very same file `--approve` itself writes to
-  (`runtime_audit_gatekeeper.py`), so it is not independent of the
-  automation — it prevents an unannounced change *between* automated runs,
-  but not a bad initial approval or a direct file edit. (2) On a stopped
-  rotation, `renew_certificate.ps1`/`.sh` exits with a nonzero code (2),
-  which Windows Task Scheduler records as a failed run in its history, but no
-  active notification (e.g. email) is sent by default. Both are now recorded
-  as a threat model in [docs/BOUNDARY.md](../BOUNDARY.md).
-- **The first screen was dominated by this document's own revision history**:
-  the summary, §2.1 and §4.1 repeatedly said "after external review feedback."
-  That's working-process detail, not a description of the tool, so it was all
-  moved here, leaving the overview with only the technical outcome of what was
-  found and fixed.
-- **It was too long (200+ lines)**: §2 (what the tool does) duplicated the
-  summary and was dropped; §7 (reproduce-it-yourself) duplicated the top of
-  the document and was dropped too. §4's detailed sandbox-results breakdown
-  and the history of `xpassed` going from 11 to 1 to 0 across two pushes are
-  change history, not current state, so both moved here. The overview is now
-  roughly 130 lines.
-- **The expired-certificate xfail looked like a ticking time bomb**: a
-  one-line explanation was added for why this doesn't matter on CI — the
-  certificate is intentionally short-lived by design (7 days, which is the
-  whole reason the weekly renewal automation exists), and on CI,
-  `GITHUB_ACTIONS=true` makes cloud execution itself get blocked before the
-  certificate's state is even checked.
-- **"About 55" was also hand-counted**: like the DEFECTS.md defect count, the
-  number of CI checks under `checks/` had been hand-counted too. A new script,
-  [`tools/count_ci_checks.py`](../../tools/count_ci_checks.py), parses
-  `.github/workflows/*.yml` and counts only the scripts actually wired into
-  CI, confirming the figure of 55 before it was quoted again.
+Stated plainly that all 105 entries were found by the project's own red-team
+code (no independent audit yet), and answered the `--check-rotation` threat
+model's two open questions (where the trusted key lives; whether a stopped
+rotation notifies actively) by reading the code, recorded in
+[docs/BOUNDARY.md](../BOUNDARY.md). Moved this revision history out of the
+main overview (now ~130 lines), added a one-line note on why the expired-
+certificate xfail is harmless on CI, and replaced the hand-counted "about 55"
+CI-check figure with the output of
+[`tools/count_ci_checks.py`](../../tools/count_ci_checks.py).
 
 This red-lining is recorded here too, rather than silently folded in, for the
 same reason as everything else in this document.
