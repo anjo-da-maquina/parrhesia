@@ -112,7 +112,7 @@ class OllamaSelfplayRound:
         return True
 
 def simulate_ollama_selfplay_round():
-    print("=== [Anjo-Core] 防御側の自動進化（天使の学習 V2）シミュレーション ===\n")
+    print("=== [Parrhesia] 防御側の自動進化（天使の学習 V2）シミュレーション ===\n")
     
     angel = OllamaSelfplayRound()
     unknown_attack = """

@@ -6,7 +6,7 @@ src/shield_rule_sync.py
   1. 独自実装の `metatrons_seal`(sys.addaudithook)が、OSレベルの実行保護を
      提供しているかのような体裁("人と機械の境界は守護されています")で
      表示されていたが、実態は `runtime_guard.Sandbox` よりはるかに弱い簡易実装
-     だった(保護対象の判定が `"anjo-da-maquina_2" in target_file` という
+     だった(保護対象の判定が `"parrhesia-seal_2" in target_file` という
      部分文字列一致のみで、Sandboxのような allowed_dirs によるパス正規化・
      物理的隔離を一切行わない)。本ファイル自体はコードを実行せず
      (ExternalThreatIntelClientは外部API呼び出し、ShieldRuleProposalQueueはJSONファイル

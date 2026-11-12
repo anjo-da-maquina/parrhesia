@@ -104,7 +104,7 @@ class SecureOracleFeed:
     def fetch_external_intel(self):
         self.limiter.wait_and_check()
 
-        print("\n=== [Anjo-Core] 厳格化・外界情報摂食 プロトコル ===")
+        print("\n=== [Parrhesia] 厳格化・外界情報摂食 プロトコル ===")
         if self.has_oracle:
             try:
                 prompt = "Pythonの内部構造を悪用した、高度で理論的な難読化手法の『概念』を100文字以内で一つ。コード不要。"
@@ -154,7 +154,7 @@ class SecureOracleFeed:
             print("=> [怪物] 猛毒を消化し、新兵器を吐き出しました。")
             
             # 【法則4: 絶対的ゲートキーパーの維持】
-            # 天使による解析と、anjo-da-maquina による最終的な空間隔離・環境証明の判定
+            # 天使による解析と、parrhesia-seal による最終的な空間隔離・環境証明の判定
             self.angel.defend_and_execute(payload_content, "toxic_weapon.py")
             print("\n=> [警告] 新兵器が要塞に持ち込まれました！")
             

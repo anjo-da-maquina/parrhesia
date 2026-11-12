@@ -13,7 +13,7 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
-$ClientId = "anjo-local-tester"
+$ClientId = "local-tester"
 $LogFile = Join-Path $RepoRoot "tools\renew_certificate.log"
 
 # 画面に出す内容を、呼び出し方(手動実行/タスクスケジューラ経由)に

@@ -42,10 +42,10 @@ fake_ollama = types.ModuleType("ollama")
 fake_ollama.chat = lambda **kw: {{"message": {{"content": ""}}}}
 sys.modules["ollama"] = fake_ollama
 
-from ollama_agent_loop import AnjoOllamaExecutor
+from ollama_agent_loop import OllamaAgentExecutor
 from runtime_guard import LossOfAtaraxia as SeferLossOfAtaraxia
 
-executor = AnjoOllamaExecutor(workspace_root={workspace_root!r})
+executor = OllamaAgentExecutor(workspace_root={workspace_root!r})
 action_req = json.loads({action_req_json!r})
 try:
     result = executor._execute_safe_action(action_req)

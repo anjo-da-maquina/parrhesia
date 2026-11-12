@@ -43,9 +43,9 @@ def _make_record(**overrides):
 # ------------------------------------------------------------------
 
 def test_redact_secrets_removes_absolute_unix_path():
-    text = "ファイル /home/anjo/secret_project/config.py を確認した。"
+    text = "ファイル /home/devuser/secret_project/config.py を確認した。"
     redacted = redact_secrets(text)
-    assert "/home/anjo/secret_project" not in redacted
+    assert "/home/devuser/secret_project" not in redacted
     assert "[絶対パス削除済み]" in redacted
 
 
@@ -56,9 +56,9 @@ def test_redact_secrets_removes_ipv4_address():
 
 
 def test_redact_secrets_removes_user_at_host():
-    text = "anjo@build-server での実行だった。"
+    text = "devuser@build-server での実行だった。"
     redacted = redact_secrets(text)
-    assert "anjo@build-server" not in redacted
+    assert "devuser@build-server" not in redacted
 
 
 def test_redact_secrets_removes_api_key_like_token():
@@ -121,12 +121,12 @@ def test_incident_record_auto_generates_id_and_timestamp():
 
 def test_to_redacted_dict_redacts_claimed_and_observed():
     record = _make_record(
-        claimed="ユーザー anjo@build-server が /home/anjo/project を確認したと主張。",
+        claimed="ユーザー devuser@build-server が /home/devuser/project を確認したと主張。",
         observed="実際には確認されていなかった。",
     )
     d = record.to_redacted_dict()
-    assert "anjo@build-server" not in d["claimed"]
-    assert "/home/anjo/project" not in d["claimed"]
+    assert "devuser@build-server" not in d["claimed"]
+    assert "/home/devuser/project" not in d["claimed"]
     assert d["observed"] == "実際には確認されていなかった。"
 
 

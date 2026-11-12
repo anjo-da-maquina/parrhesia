@@ -41,7 +41,7 @@ def _fake_exporter_writing(xml_content):
 VALID_PASS_XML = (
     '<?xml version="1.0" ?>\n'
     '<testsuites>\n'
-    '  <testsuite name="Anjo_Core_ZKP_Audit" tests="1" failures="0" errors="0">\n'
+    '  <testsuite name="Parrhesia_ZKP_Audit" tests="1" failures="0" errors="0">\n'
     '    <testcase classname="ZKAuditTrail" name="AuditBlock_0_record"/>\n'
     '  </testsuite>\n'
     '</testsuites>\n'
@@ -50,7 +50,7 @@ VALID_PASS_XML = (
 TAMPERED_FAIL_XML = (
     '<?xml version="1.0" ?>\n'
     '<testsuites>\n'
-    '  <testsuite name="Anjo_Core_ZKP_Audit" tests="2" failures="1" errors="0">\n'
+    '  <testsuite name="Parrhesia_ZKP_Audit" tests="2" failures="1" errors="0">\n'
     '    <testcase classname="ZKAuditTrail" name="AuditBlock_0_record"/>\n'
     '    <testcase classname="ZKAuditTrail" name="ChainIntegrityVerification">\n'
     '      <failure message="HMAC連鎖に改ざんを検知しました">詳細</failure>\n'

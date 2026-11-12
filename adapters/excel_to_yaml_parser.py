@@ -5,7 +5,7 @@ adapters/excel_to_yaml_parser.py
 いかなる処理も行わない「中身のないプレースホルダー」だった:
 
     import os, sys
-    print(f'[Anjo da máquina] Module {__file__} initialized. Zero-Trust audit passed.')
+    print(f'[Parrhesia] Module {__file__} initialized. Zero-Trust audit passed.')
 
 CIワークフロー(.github/workflows/regression_checks_ci.yml)では、本
 ステップは「3.8. 外部要件の抽出 (Excel to YAML Parser)」として実行され、

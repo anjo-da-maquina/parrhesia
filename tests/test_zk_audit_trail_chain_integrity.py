@@ -196,7 +196,7 @@ def test_fresh_unused_trail_with_no_watermark_still_works(tmp_path, monkeypatch)
 
 
 def test_zk_proof_field_is_not_a_fabricated_claim(tmp_path, monkeypatch):
-    """旧実装の"zk_proof"は"Verified by Anjo da máquina"という固定文字列
+    """旧実装の"zk_proof"は"Verified by Parrhesia"という固定文字列
     (何の検証も行わない見せかけ)だった。本修正後は、実際に行っている処理
     (鍵付きHMAC-SHA256連鎖であり、真のゼロ知識証明ではないこと)を誠実に
     説明する注記になっていることを固定する。"""
@@ -204,7 +204,7 @@ def test_zk_proof_field_is_not_a_fabricated_claim(tmp_path, monkeypatch):
     mg.ZKAuditTrail.verify_and_record("some_action")
     with open(mg.ZKAuditTrail.FILE_NAME, "r", encoding="utf-8") as f:
         trail = json.load(f)
-    assert trail[0]["zk_proof"] != "Verified by Anjo da máquina"
+    assert trail[0]["zk_proof"] != "Verified by Parrhesia"
     assert "ゼロ知識証明ではな" in trail[0]["zk_proof"]
 
 

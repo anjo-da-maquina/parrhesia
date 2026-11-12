@@ -5,7 +5,7 @@ adapters/external_qa_wrapper.py
 いかなる処理も行わない「中身のないプレースホルダー」だった:
 
     import os, sys
-    print(f'[Anjo da máquina] Module {__file__} initialized. Zero-Trust audit passed.')
+    print(f'[Parrhesia] Module {__file__} initialized. Zero-Trust audit passed.')
 
 CIワークフロー(.github/workflows/regression_checks_ci.yml)では、本
 ステップは「18. 外部QAツールの実行 (External QA Adapter)」として実行され、

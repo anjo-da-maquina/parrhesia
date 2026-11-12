@@ -59,7 +59,7 @@ def export_zkp_to_junit(json_path="zk_audit_trail.json", xml_path="zk_audit_repo
     testsuite = SubElement(
         testsuites,
         'testsuite',
-        name="Anjo_Core_ZKP_Audit",
+        name="Parrhesia_ZKP_Audit",
         tests=str(len(trail) + (1 if tamper_error else 0)),
         failures="1" if tamper_error else "0",
         errors="0"

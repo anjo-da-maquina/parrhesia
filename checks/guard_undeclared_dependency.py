@@ -51,7 +51,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 # スコープを超えるため、意図的に将来の課題として切り出す。
 
 TARGET_DIRS_FOR_IMPORT_SCAN = [
-    "checks", "src", "adapters", "anjo_interceptor", "runtime_guard", "tools",
+    "checks", "src", "adapters", "agent_interceptor", "runtime_guard", "tools",
 ]
 TARGET_FILES_FOR_IMPORT_SCAN = ["runtime_audit_gatekeeper.py"]
 

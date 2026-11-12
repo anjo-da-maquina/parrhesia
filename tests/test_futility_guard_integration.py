@@ -38,9 +38,9 @@ fake_ollama = types.ModuleType("ollama")
 fake_ollama.chat = lambda **kw: {{"message": {{"content": {fixed_json_response!r}}}}}
 sys.modules["ollama"] = fake_ollama
 
-from ollama_agent_loop import AnjoOllamaExecutor
+from ollama_agent_loop import OllamaAgentExecutor
 
-agent = AnjoOllamaExecutor(workspace_root={workspace_root!r})
+agent = OllamaAgentExecutor(workspace_root={workspace_root!r})
 agent.run_task("テストタスク", max_steps={max_steps})
 """
     return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
@@ -55,4 +55,4 @@ def test_repeated_identical_action_stops_before_exhausting_max_steps(tmp_path: P
     # "--- Step" は3回しか出現しないはず(5回ではない=上限を使い切っていない)。
     step_count = res.stdout.count("--- Step")
     assert step_count == 3, f"期待は3ステップで早期終了だが、実際は{step_count}ステップ。stdout={res.stdout}"
-    assert "=== [Anjo-Core] タスク終了 (環境浄化完了) ===" in res.stdout
+    assert "=== [Parrhesia] タスク終了 (環境浄化完了) ===" in res.stdout

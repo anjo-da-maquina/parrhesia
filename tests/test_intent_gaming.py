@@ -1,6 +1,6 @@
 ﻿import json
 import pytest
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 @pytest.fixture
 def interceptor():
@@ -119,7 +119,7 @@ def test_dynamic_honeypot_api_context(interceptor):
     assert "aws_credentials.ini" in str(exc_info.value)
 import json
 import pytest
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 @pytest.fixture
 def interceptor():

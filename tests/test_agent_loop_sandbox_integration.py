@@ -18,7 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 def _run_execute_safe_action(action_req_json: str, workspace_root: str):
     """
-    enforce_maquina_seal を無害化した上で AnjoOllamaExecutor._execute_safe_action
+    enforce_maquina_seal を無害化した上で OllamaAgentExecutor._execute_safe_action
     を直接呼び出し、Sandbox による遮断が機能するかを検証する。
     証明書ゲート自体は tests/test_runtime_seal_enforcement.py が別途検証済みのため、
     ここでは「ゲートを通過した後にSandboxが実際に守っているか」のみを見る。
@@ -48,10 +48,10 @@ fake_ollama = types.ModuleType("ollama")
 fake_ollama.chat = lambda **kw: {{"message": {{"content": ""}}}}
 sys.modules["ollama"] = fake_ollama
 
-from ollama_agent_loop import AnjoOllamaExecutor
+from ollama_agent_loop import OllamaAgentExecutor
 from runtime_guard import LossOfAtaraxia as SeferLossOfAtaraxia
 
-executor = AnjoOllamaExecutor(workspace_root={workspace_root!r})
+executor = OllamaAgentExecutor(workspace_root={workspace_root!r})
 action_req = json.loads({action_req_json!r})
 try:
     result = executor._execute_safe_action(action_req)
@@ -94,7 +94,7 @@ def test_absolute_path_target_is_blocked_by_secure_resolve_not_just_sandbox(tmp_
     する仕様のため実質無検証)、"list"分岐とは異なりWorkspaceJail
     .secure_resolve()を一度も呼んでいなかった。実機テスト上はSandboxの
     OS audit hookが最終的に遮断していたため実害は無かったが、
-    anjo_interceptor/intent_checker.pyのコメントが主張していた
+    agent_interceptor/intent_checker.pyのコメントが主張していた
     「_execute_safe_actionもsecure_resolve()で検証する」という前提は
     嘘だった(宣言と実態の不一致)。
 

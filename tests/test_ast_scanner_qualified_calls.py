@@ -61,7 +61,7 @@ def test_dotted_submodule_import_bypass_is_now_detected():
     `import os.path`(alias.name=="os.path")のようなドット付き
     サブモジュールimportを素通りさせていた。Pythonの言語仕様上、これは
     名前空間に`os`そのもの(os.remove等)を束縛するため、実質的な
-    ブロックリスト回避になっていた。`anjo_interceptor/intent_checker.py`
+    ブロックリスト回避になっていた。`agent_interceptor/intent_checker.py`
     で発見・修正した同一クラスのバグの、本モジュールでの再現固定。"""
     try:
         verify_intent("import os.path\nos.remove('/etc/passwd')\n")

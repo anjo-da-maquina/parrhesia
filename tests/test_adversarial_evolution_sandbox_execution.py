@@ -68,7 +68,7 @@ def test_bypass_payload_passes_scan_source_static_analysis():
 def test_bypass_payload_also_passes_intent_interceptor():
     """[脆弱性の核心・前提確認] 同じペイロードはIntentInterceptorの
     forbidden_modules/forbidden_calls検査も無傷で通過する(例外なし)。"""
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "anjo_interceptor"))
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "agent_interceptor"))
     from intent_checker import IntentInterceptor
     import json
 

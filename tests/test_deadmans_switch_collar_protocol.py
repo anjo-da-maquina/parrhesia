@@ -5,7 +5,7 @@ tests/test_deadmans_switch_collar_protocol.py
 
 checks/audit_security_flag_test_coverage.py(新設、§BP)による機械的な洗い出しで、
 `src/deadmans_switch.py`のCollarProtocol.verify_collar()が、環境変数
-ANJO_COLLAR_SEALによって「正常稼働を継続する」か「os._exit(1)で即時
+AGENT_COLLAR_SEALによって「正常稼働を継続する」か「os._exit(1)で即時
 自壊する」かが切り替わる、セキュリティ上最も重要な分岐(ミュトス級AIの
 封じ込め機構そのもの)でありながら、どのテストファイルにも一件も
 言及されていないことが判明した。
@@ -29,7 +29,7 @@ def _run_collar_check(seal_set: str, seal_expected: str) -> subprocess.Completed
     script = (
         "import sys; sys.path.insert(0, %r)\n"
         "import os\n"
-        "os.environ['ANJO_COLLAR_SEAL'] = %r\n"
+        "os.environ['AGENT_COLLAR_SEAL'] = %r\n"
         "from src.deadmans_switch import CollarProtocol\n"
         "collar = CollarProtocol(%r)\n"
         "collar.verify_collar()\n"

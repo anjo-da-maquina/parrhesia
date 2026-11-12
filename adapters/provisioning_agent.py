@@ -47,7 +47,7 @@ def _save_pending(entries):
         json.dump(entries, f, indent=2, ensure_ascii=False)
 
 
-def provision_registration(client_id="anjo-local-tester"):
+def provision_registration(client_id="local-tester"):
     print("\n[Provisioning Agent] 新たな鍵対を生成し、承認を提案します...")
     # 2048bitの強力なRSA鍵対を新規生成（この場限り。秘密鍵は保存しない）
     pubkey, privkey = rsa.newkeys(2048)

@@ -19,7 +19,7 @@ if _REPO_ROOT not in sys.path:
 from runtime_guard import awaken, Sandbox, LossOfAtaraxia
 
 # 自軍の完全統制下であることを示す環境変数をセット（首輪の鍵）
-os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
+os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
 
 
 def execute_payload_under_sandbox(content: str):
@@ -59,7 +59,7 @@ class AdversarialEvolution:
         self.starvation = StarvationProtocol(lifespan_seconds=10)
 
     def run_evolution(self, generations=3):
-        print("=== [Anjo-Core] 敵対的自律進化（自己対戦）シミュレーション ===")
+        print("=== [Parrhesia] 敵対的自律進化（自己対戦）シミュレーション ===")
         print("[システム] 首輪と餓死プロトコルを作動。怪物を進化の檻に放ちます...\n")
 
         messages = [

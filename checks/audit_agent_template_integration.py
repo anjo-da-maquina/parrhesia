@@ -10,7 +10,7 @@ NAME = "audit_agent_template_integration - 思考統制監査: src/openai_agent_
 #
 # [背景 2026-10] 旧版は以下の2点が壊れていた:
 #   1. enforce_maquina_seal 失敗時のフォールバックimport先
-#      (anjo_interceptor.runtime_audit_gatekeeper) がリポジトリに存在せず、
+#      (agent_interceptor.runtime_audit_gatekeeper) がリポジトリに存在せず、
 #      本番では絶対に通らない死んだコードパスだった。
 #   2. _execute_safe_action が実ファイルI/Oを一切行わないダミー実装で、
 #      runtime_guard.Sandbox も DefenseOrchestrator も統合されていなかった。
@@ -28,16 +28,16 @@ def main():
     text = target.read_text(encoding="utf-8-sig")
 
     # A: 存在しないフォールバックimportが復活していないか
-    if "anjo_interceptor.runtime_audit_gatekeeper" in text:
+    if "agent_interceptor.runtime_audit_gatekeeper" in text:
         # docstring内の「過去の欠陥の説明」としての言及は許容するが、
         # 実際の import文として復活していないかを厳密にチェックする。
         for line in text.splitlines():
             stripped = line.strip()
-            if stripped.startswith("from anjo_interceptor.runtime_audit_gatekeeper") or \
-               stripped.startswith("import anjo_interceptor.runtime_audit_gatekeeper"):
+            if stripped.startswith("from agent_interceptor.runtime_audit_gatekeeper") or \
+               stripped.startswith("import agent_interceptor.runtime_audit_gatekeeper"):
                 report_fail(
                     NAME,
-                    "存在しないフォールバックimport 'anjo_interceptor.runtime_audit_gatekeeper' が"
+                    "存在しないフォールバックimport 'agent_interceptor.runtime_audit_gatekeeper' が"
                     "実行コードとして復活しています。"
                 )
 

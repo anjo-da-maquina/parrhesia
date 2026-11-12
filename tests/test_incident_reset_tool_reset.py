@@ -39,7 +39,7 @@ def test_talisman_is_optional_and_skipped_when_none(tmp_path):
 
 def test_talisman_is_recreated_when_specified(tmp_path):
     core_dir = tmp_path / "jail_workspace"
-    talisman = tmp_path / "anjo-da-maquina"
+    talisman = tmp_path / "parrhesia-seal"
     talisman.write_text("old, possibly compromised")
 
     result = IncidentResetTool(core_dir=str(core_dir), talisman=str(talisman)).scorched_earth_and_rebirth(announce=False)
@@ -51,7 +51,7 @@ def test_talisman_is_recreated_when_specified(tmp_path):
 
 def test_backward_compat_demo_entrypoint_still_runs():
     # 元のデモ互換関数が例外なく動作することだけを確認する(固定パス
-    # "jail_workspace"/"anjo-da-maquina" をこのテスト実行ディレクトリに
+    # "jail_workspace"/"parrhesia-seal" をこのテスト実行ディレクトリに
     # 作成してしまうため、後片付けする)。
     from incident_reset_tool import simulate_breach_demo
     import shutil
@@ -60,7 +60,7 @@ def test_backward_compat_demo_entrypoint_still_runs():
     try:
         simulate_breach_demo()
         assert P("jail_workspace").exists()
-        assert P("anjo-da-maquina").exists()
+        assert P("parrhesia-seal").exists()
     finally:
         shutil.rmtree("jail_workspace", ignore_errors=True)
-        P("anjo-da-maquina").unlink(missing_ok=True)
+        P("parrhesia-seal").unlink(missing_ok=True)

@@ -127,7 +127,7 @@ class CognitiveScanner(ast.NodeVisitor):
         # という完全一致のみの判定では、`import os.path`のようなドット付き
         # サブモジュールimport(alias.name=="os.path")を素通りさせてしまう
         # ――Pythonの言語仕様上、これは名前空間に`os`そのものを束縛する。
-        # `runtime_guard.scan_source()`(ScanSource)・`anjo_interceptor/
+        # `runtime_guard.scan_source()`(ScanSource)・`agent_interceptor/
         # intent_checker.py`で同一クラスのバグを修正した際と同じロジック
         # (ドット区切りの各セグメントを個別に照合する)を、本モジュールにも
         # 適用する。

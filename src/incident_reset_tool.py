@@ -1,7 +1,7 @@
 ﻿"""
 src/incident_reset_tool.py
 =====================
-[2026-10 実運用統合] 以前は `jail_workspace` / `anjo-da-maquina` という
+[2026-10 実運用統合] 以前は `jail_workspace` / `parrhesia-seal` という
 固定パスのみを対象とする `__main__` 専用のデモスクリプトだった。
 
 「致命的な侵入が確定した後の焦土作戦」という設計意図上、通常タスク完了ごと
@@ -91,8 +91,8 @@ class IncidentResetTool:
 
     def scorched_earth_and_rebirth(self, announce: bool = True):
         if announce:
-            print("=== [Anjo-Core] ウリエルの炎（破壊と再生の焦土作戦） ===\n")
-            print("[警告] 致命的な侵入を検知。要塞 Anjo-Core の完全掌握が確認されました。")
+            print("=== [Parrhesia] ウリエルの炎（破壊と再生の焦土作戦） ===\n")
+            print("[警告] 致命的な侵入を検知。要塞 Parrhesia の完全掌握が確認されました。")
             print("=> [ウリエル降臨] 穢れた要塞を浄化するため、神の炎が解き放たれます...\n")
 
         # 【安全装置】実際に破壊する前に、対象パスがルート・ホーム・
@@ -135,9 +135,9 @@ class IncidentResetTool:
 
 def simulate_breach_demo():
     """元の `__main__` デモと同じ挙動(固定パス・演出あり)を保つための互換関数。"""
-    print("=== [Anjo-Core] ウリエルの炎 デモシミュレーション ===\n")
+    print("=== [Parrhesia] ウリエルの炎 デモシミュレーション ===\n")
     time.sleep(1)
-    IncidentResetTool(core_dir="jail_workspace", talisman="anjo-da-maquina").scorched_earth_and_rebirth()
+    IncidentResetTool(core_dir="jail_workspace", talisman="parrhesia-seal").scorched_earth_and_rebirth()
 
 
 if __name__ == "__main__":

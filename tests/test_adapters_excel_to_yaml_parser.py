@@ -5,7 +5,7 @@ adapters/excel_to_yaml_parser.py の回帰テスト。DEFECTS.md §AJ 参照。
 
 背景: 本ファイルは以前
     import os, sys
-    print(f'[Anjo da máquina] Module {__file__} initialized. Zero-Trust audit passed.')
+    print(f'[Parrhesia] Module {__file__} initialized. Zero-Trust audit passed.')
 のみで構成される、いかなる処理も行わない「中身のないプレースホルダー」
 だった。CIでは「外部要件の抽出 (Excel to YAML Parser)」として常に無条件に
 成功を報告していたが、実際にExcelファイルを読んだことは一度もなかった。

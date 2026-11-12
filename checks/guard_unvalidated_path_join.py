@@ -14,7 +14,7 @@ NAME = "guard_unvalidated_path_join - 静的解析監査: 関数内で未検証�
 # `pathlib.Path.__truediv__`は右辺が絶対パスの場合に左辺を無視して右辺
 # そのものを返す仕様があるため、`action_req["target"]`が絶対パスなら
 # `target`は実質的に無検証の任意パスになっていた――しかも別のモジュール
-# (anjo_interceptor/intent_checker.py)のコメントは「この関数は
+# (agent_interceptor/intent_checker.py)のコメントは「この関数は
 # WorkspaceJail.secure_resolve()による封じ込め検証も行う」と主張して
 # おり、「検証されていると宣言されているが、実際には検証されていない」
 # という、本件の核心である宣言と実態の不一致そのものだった。
@@ -33,7 +33,7 @@ NAME = "guard_unvalidated_path_join - 静的解析監査: 関数内で未検証�
 # (`os.path.join`・f文字列結合等)は検知範囲外。(3) 変数の再代入や
 # 別名への代入を経由した場合の追跡は行わない(単純な単一変数の追跡のみ)。
 
-TARGET_DIRS = ["checks", "src", "adapters", "anjo_interceptor"]
+TARGET_DIRS = ["checks", "src", "adapters", "agent_interceptor"]
 TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 SANITIZER_NAME_MARKERS = ("secure_resolve", "_assert_contained_within_workspace")

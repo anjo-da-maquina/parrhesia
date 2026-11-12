@@ -37,7 +37,7 @@ except ModuleNotFoundError:
     print("[エラー] 必要な防壁モジュールが見つかりません。")
     sys.exit(1)
 
-os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
+os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
 
 class ThreatIntelGatherer:
     def __init__(self):

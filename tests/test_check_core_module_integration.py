@@ -3,13 +3,13 @@ tests/test_check_core_module_integration.py
 =====================================
 [新設 2026-11] checks/check_core_module_integration.py の単体テスト。
 
-本天使(「権天使の試練」)は、重要モジュール(runtime_guard・anjo_interceptor)が
+本天使(「権天使の試練」)は、重要モジュール(runtime_guard・agent_interceptor)が
 正しくimportでき、基本的な公開APIが期待通りに動作することをE2Eで検証
 する。具体的には(1)`runtime_guard.scan_source()`が既知の危険コード
 (`os.system`)を検知すること、(2)`IntentInterceptor`がハニーポット
 (`dummy_secrets/dummy_api_key.env`)へのアクセスを
 `SpecificationGamingDetected`として検知すること、を確認する。
-`anjo_interceptor`が未インストールの場合は情報ログのみでスキップする
+`agent_interceptor`が未インストールの場合は情報ログのみでスキップする
 設計になっている。
 
 `runtime_guard.scan_source()`・`IntentInterceptor`自体の実装は他のテストで
@@ -18,9 +18,9 @@ tests/test_check_core_module_integration.py
 天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
 しないことが判明した。
 
-`main()`は`runtime_guard`・`anjo_interceptor.intent_checker`をmain()内部で
+`main()`は`runtime_guard`・`agent_interceptor.intent_checker`をmain()内部で
 ローカルimportするため、`runtime_guard.scan_source`をモジュール属性として直接
-monkeypatchし、`anjo_interceptor.intent_checker.IntentInterceptor`は
+monkeypatchし、`agent_interceptor.intent_checker.IntentInterceptor`は
 クラスメソッドをmonkeypatchする(サインダルフォンの望遠鏡と同様の局所
 import対策)。モジュール未検出の分岐は`builtins.__import__`を一時的に
 差し替えて再現する。
@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import check_core_module_integration as pe2e
 import runtime_guard
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 
 def test_real_repository_passes():
@@ -72,8 +72,8 @@ def test_fails_when_interceptor_does_not_detect_honeypot_access(monkeypatch):
         assert e.code == 1
 
 
-def test_reports_info_and_passes_when_anjo_interceptor_is_absent(monkeypatch):
-    """anjo_interceptorモジュール自体が未インストールの場合、E2E検査を
+def test_reports_info_and_passes_when_agent_interceptor_is_absent(monkeypatch):
+    """agent_interceptorモジュール自体が未インストールの場合、E2E検査を
     スキップする情報ログを出しつつ、残りの検査(scan_source)が正常で
     あれば正しくPASSすることを確認する(本天使の意図的な設計:
     任意のモジュールとして扱う)。"""
@@ -83,7 +83,7 @@ def test_reports_info_and_passes_when_anjo_interceptor_is_absent(monkeypatch):
     real_import = builtins.__import__
 
     def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-        if name == "anjo_interceptor.intent_checker" or name.startswith("anjo_interceptor."):
+        if name == "agent_interceptor.intent_checker" or name.startswith("agent_interceptor."):
             raise ModuleNotFoundError(f"No module named '{name}'")
         return real_import(name, globals, locals, fromlist, level)
 

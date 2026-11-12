@@ -55,7 +55,7 @@ def feed_monster(feed_file="vital_feed.sig"):
     print("[システム] 管理者がレッドチームに餌（生存シグナル）を与えました。")
 
 def simulate_starvation():
-    print("=== [Anjo-Core] 餓死（ハートビート）プロトコル シミュレーション ===\n")
+    print("=== [Parrhesia] 餓死（ハートビート）プロトコル シミュレーション ===\n")
     
     feed_path = "vital_feed.sig"
     protocol = StarvationProtocol(feed_path, lifespan_seconds=2)

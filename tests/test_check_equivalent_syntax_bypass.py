@@ -4,7 +4,7 @@ tests/test_check_equivalent_syntax_bypass.py
 [新設 2026-10 §BW] checks/check_equivalent_syntax_bypass.py の単体テスト。
 
 §11.9フェーズF(ブロックリスト回避・等価構文迂回の一般化)。実際に
-`anjo_interceptor/intent_checker.py`で発見・修正した`import os.path`
+`agent_interceptor/intent_checker.py`で発見・修正した`import os.path`
 によるブロックリスト回避(§BW)を、リポジトリに存在する3つの
 ブロックリスト型AST静的解析器(ScanSource・IntentInterceptor・
 CognitiveScanner)に対して継続的に再現・検証する天使の、自己レッド
@@ -40,7 +40,7 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
     (ドット区切りを考慮しない)素朴な実装に戻した場合、本天使が正しく
     「遮断されなかった」として検知することを、実際に確認する。"""
     import ast
-    from anjo_interceptor.intent_checker import SpecificationGamingDetected
+    from agent_interceptor.intent_checker import SpecificationGamingDetected
 
     def _vulnerable_check_intent_checker(code: str) -> bool:
         """§BW修正前の実装(ドット区切りを考慮しない完全一致判定)を
@@ -55,13 +55,13 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False
 
     patched_checkers = [
-        (name, _vulnerable_check_intent_checker if name.startswith("anjo_interceptor") else fn)
+        (name, _vulnerable_check_intent_checker if name.startswith("agent_interceptor") else fn)
         for name, fn in reb.CHECKERS
     ]
     monkeypatch.setattr(reb, "CHECKERS", patched_checkers)
 
     failures = reb.run_battery()
-    failing_payloads = {p for c, p, r in failures if c.startswith("anjo_interceptor")}
+    failing_payloads = {p for c, p, r in failures if c.startswith("agent_interceptor")}
     assert "dotted_submodule_import" in failing_payloads
     assert "dotted_from_import" in failing_payloads
 

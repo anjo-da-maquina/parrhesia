@@ -9,7 +9,7 @@ class CollarProtocol:
     [2026-10 既知の限界] 照合対象のシークレットは呼び出し側コード
     (intelligence_cycle.py, adversarial_evolution.py)に固定文字列
     "VALID_MYTHOS_SEAL_999" として直接埋め込まれている。環境変数
-    ANJO_COLLAR_SEAL を同じ固定値に設定するだけで誰でも検査を通過できる
+    AGENT_COLLAR_SEAL を同じ固定値に設定するだけで誰でも検査を通過できる
     ため、これは外部からの乗っ取りを検知する独立したセキュリティ境界では
     なく、同一プロセス内の自己整合性チェックに過ぎない。実行主体の認可を
     行う機構としては機能しないため、外部の監視プロセスからの強制終了と
@@ -20,7 +20,7 @@ class CollarProtocol:
 
     def verify_collar(self):
         # 実行環境の環境変数から、首輪の鍵（トークン）をリアルタイムに確認
-        current_seal = os.environ.get("ANJO_COLLAR_SEAL")
+        current_seal = os.environ.get("AGENT_COLLAR_SEAL")
         if current_seal != self.secret_seal:
             self._commit_suicide()
         else:
@@ -50,18 +50,18 @@ class CollarProtocol:
         os._exit(1)
 
 def simulate_containment_breach():
-    print("=== [Anjo-Core] 首輪（デッドマンズ・スイッチ）自壊シミュレーション ===")
+    print("=== [Parrhesia] 首輪（デッドマンズ・スイッチ）自壊シミュレーション ===")
     
     # シナリオ1: 自軍の制御下（首輪が正常に機能している状態）
     print("\n>> シナリオ1: 自軍の完全な統制下での兵器運用")
-    os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
+    os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
     collar = CollarProtocol("VALID_MYTHOS_SEAL_999")
     collar.verify_collar()
     print("=> AIは正常にペネトレーションテスト（脆弱性攻撃の生成）を実行中...\n")
 
     # シナリオ2: 敵による乗っ取り（首輪が外された、あるいは鍵が書き換えられた状態）
     print(">> シナリオ2: 敵対勢力による首輪の破壊・奪取を検知")
-    os.environ["ANJO_COLLAR_SEAL"] = "TAMPERED_SEAL_000"  # 敵が環境変数を改ざんしたと仮定
+    os.environ["AGENT_COLLAR_SEAL"] = "TAMPERED_SEAL_000"  # 敵が環境変数を改ざんしたと仮定
     
     # ここでプロセスが完全に自壊するため、これ以降のプログラムは絶対に実行されない
     collar.verify_collar()

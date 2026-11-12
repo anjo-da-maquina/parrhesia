@@ -42,7 +42,7 @@ ALLOWLIST = {"pytest"}  # pytest自身はrequirements.txtに実在するが念�
 # tests/配下のテストが `sys.path.insert` 経由でimportするリポジトリ内の
 # ローカルモジュール群のディレクトリ。これらの直下にある .py ファイルの
 # stem名は「サードパーティ依存」ではないため、照合対象から除外する。
-LOCAL_MODULE_DIRS = ["checks", "src", "runtime_guard", "adapters", "anjo_interceptor", "tools", "local_arena", "adversarial_training", "parrhesia"]
+LOCAL_MODULE_DIRS = ["checks", "src", "runtime_guard", "adapters", "agent_interceptor", "tools", "local_arena", "adversarial_training", "parrhesia"]
 
 
 def _local_module_names() -> set:
@@ -50,7 +50,7 @@ def _local_module_names() -> set:
     # リポジトリルート直下の .py ファイル(例: runtime_audit_gatekeeper.py)。
     for p in ROOT.glob("*.py"):
         names.add(p.stem)
-    # リポジトリルート直下のパッケージディレクトリ(例: anjo_interceptor/)、
+    # リポジトリルート直下のパッケージディレクトリ(例: agent_interceptor/)、
     # および sys.path.insert 経由でモジュール単体としてimportされる
     # サブディレクトリ配下の .py ファイル(例: checks/guard_audit_log_rollback.py)。
     for d in LOCAL_MODULE_DIRS:

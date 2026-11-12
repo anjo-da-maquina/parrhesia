@@ -48,7 +48,7 @@ class SelfplayReportGenerator:
             intel_formatted = intel
             
         # 表示バグ回避のため、Markdownのコードブロック記号を排除しています
-        report_content = f"""# 🛡️ Anjo-Core 統合防衛レポート (Cycle: {cycle_id})
+        report_content = f"""# 🛡️ Parrhesia 統合防衛レポート (Cycle: {cycle_id})
 *生成日時: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 
 ## 👁️ ラジエルの偵察 (Intelligence)
@@ -60,7 +60,7 @@ class SelfplayReportGenerator:
 {payload[:300]}...
 
 ## ⚔️ 天使の防壁 (Defense & Evolution)
-認知的防壁（ASTスキャン）とDockerの隔離結界（通信遮断・動的検証）、そして絶対的護符である anjo-da-maquina の監視下で行われた迎撃結果:
+認知的防壁（ASTスキャン）とDockerの隔離結界（通信遮断・動的検証）、そして絶対的護符である parrhesia-seal の監視下で行われた迎撃結果:
 **戦果:** {defense_result}
 """
         with open(report_path, "w", encoding="utf-8") as f:
@@ -75,7 +75,7 @@ class SelfplayOrchestrator:
         self.scan_source = SelfplayReportGenerator()
 
     def execute_holy_war(self, cycles=1):
-        print("=== [Anjo-Core] メタトロンの統括（完全自動化防衛ループ） ===")
+        print("=== [Parrhesia] メタトロンの統括（完全自動化防衛ループ） ===")
         print("[システム] 神の代理人が要塞の全機能を掌握しました。これより自律進化を開始します。\n")
         
         for i in range(1, cycles + 1):

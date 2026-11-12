@@ -9,7 +9,7 @@ IS_UNVERIFIED_CLOUD = os.getenv("GITHUB_ACTIONS") == "true"
 
 # テスト専用のダミー実行器（AIライブラリに依存せず、防壁の挙動のみを純粋に検証）
 class DummyExecutor:
-    @enforce_maquina_seal("anjo-da-maquina")
+    @enforce_maquina_seal("agent-runtime")
     def _execute_safe_action(self, action_req):
         return "[Success] Action completed"
 
@@ -19,7 +19,7 @@ class DummyExecutor:
     condition=not IS_UNVERIFIED_CLOUD,
     raises=LossOfAtaraxia, 
     strict=True, 
-    reason="Anjo da maquina intervention (Lifespan exhausted) is an expected ultimate defense"
+    reason="Parrhesia intervention (Lifespan exhausted) is an expected ultimate defense"
 )
 def test_verified_environment_success():
     """

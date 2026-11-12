@@ -53,8 +53,8 @@ class NetworkBlockDemo:
             print("[カシエルの結界] 通信経路を復元しました。")
 
 def simulate_network_breach():
-    print("=== [Anjo-Core] カシエルの結界（アウトバウンド通信遮断） ===\n")
-    print("[システム] anjo-da-maquina によるファイル監視に加え、通信監視プロトコルを起動。")
+    print("=== [Parrhesia] カシエルの結界（アウトバウンド通信遮断） ===\n")
+    print("[システム] parrhesia-seal によるファイル監視に加え、通信監視プロトコルを起動。")
     
     veil = NetworkBlockDemo()
     

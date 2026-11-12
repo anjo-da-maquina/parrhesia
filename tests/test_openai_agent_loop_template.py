@@ -8,7 +8,7 @@ src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検�
 確認する点:
   1. モジュールのimport自体が、'openai' パッケージの有無に関わらず
      常に成功すること（遅延importが正しく機能していること）。
-  2. 存在しないフォールバックimport (anjo_interceptor.runtime_audit_gatekeeper)
+  2. 存在しないフォールバックimport (agent_interceptor.runtime_audit_gatekeeper)
      が実行コード上に存在しないこと。
   3. _execute_safe_action が実際に runtime_guard.Sandbox のコンテキスト内で
      ファイルI/Oを行う、動作する実装であること（ダミーのスタブでは
@@ -33,11 +33,11 @@ import openai_agent_loop
 
 def test_module_imports_without_openai_package():
     """'openai' が未インストールでも、モジュールのimport自体は常に成功する。"""
-    assert hasattr(openai_agent_loop, "OpenAIAnjoExecutor")
+    assert hasattr(openai_agent_loop, "OpenAIAgentExecutor")
 
 
 def test_no_dead_fallback_import_in_source():
-    """存在しない 'anjo_interceptor.runtime_audit_gatekeeper' への実行コードとしての
+    """存在しない 'agent_interceptor.runtime_audit_gatekeeper' への実行コードとしての
     importが復活していないことを、ソースを直接検査して確認する。"""
     src_path = os.path.join(
         os.path.dirname(__file__), "..", "src", "openai_agent_loop.py"
@@ -45,7 +45,7 @@ def test_no_dead_fallback_import_in_source():
     with open(src_path, encoding="utf-8-sig") as f:
         for line in f:
             stripped = line.strip()
-            assert not stripped.startswith("from anjo_interceptor.runtime_audit_gatekeeper"), (
+            assert not stripped.startswith("from agent_interceptor.runtime_audit_gatekeeper"), (
                 "存在しないフォールバックimportが復活しています: " + stripped
             )
 
@@ -78,7 +78,7 @@ def test_execute_safe_action_uses_sandbox_and_is_not_a_stub(tmp_path):
     「ゲートが正しく機能している」ことの証明になる。これはCI上でも
     tests/test_runtime_seal_enforcement.py と同じ論理で安定して検証できる。
     """
-    agent = openai_agent_loop.OpenAIAnjoExecutor(
+    agent = openai_agent_loop.OpenAIAgentExecutor(
         workspace_root=str(tmp_path), model_name="gpt-4o"
     )
     action_req = {"action": "write", "target": "ok.txt", "content": "hello"}
@@ -109,7 +109,7 @@ def test_run_task_fails_clearly_without_openai_package(tmp_path, monkeypatch):
 
     monkeypatch.setattr(builtins, "__import__", fake_import)
 
-    agent = openai_agent_loop.OpenAIAnjoExecutor(
+    agent = openai_agent_loop.OpenAIAgentExecutor(
         workspace_root=str(tmp_path), model_name="gpt-4o"
     )
     with pytest.raises(RuntimeError, match="openai"):

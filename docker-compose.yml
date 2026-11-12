@@ -11,7 +11,7 @@
 # 実運用エージェントをOllamaと通信させたい場合は、このコンテナの外、ホスト上で
 # 直接実行するか、network_modeを緩めた別のcomposeサービスを新設すること。
 services:
-  anjo_core_ai:
+  agent_core_ai:
     build: .
     # 【絶対的拘束】コンテナからネットワークインターフェースを物理的に消去する
     network_mode: "none"

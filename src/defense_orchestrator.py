@@ -41,7 +41,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from runtime_guard import scan_source
 from workspace_manager import WorkspaceJail
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from docker_sandbox_executor import run_in_docker_sandbox
 
 

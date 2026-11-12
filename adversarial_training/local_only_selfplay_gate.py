@@ -23,7 +23,7 @@ COMMANDER_HASH = "466f54711c8649770242ce401c27fe69046d4b0a355285f2ecc0f769e0d3ba
 
 def _verify_hardware_match():
     mac_address = str(uuid.getnode())
-    salt = "ANJO_DA_MAQUINA_APOCRYPHA"
+    salt = "PARRHESIA_SELFPLAY_SALT_V1"
     current_hash = hashlib.sha256((mac_address + salt).encode()).hexdigest()
     if current_hash != COMMANDER_HASH:
         print("\n[!!!] FATAL: HARDWARE MISMATCH [!!!]")

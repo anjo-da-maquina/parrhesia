@@ -18,4 +18,4 @@ parrhesia/_brand.py
 PRODUCT_NAME = "Parrhesia"
 
 # 旧称(歴史的経緯として残す。削除しない)。
-LEGACY_NAMES = ("Pleroma", "Merkabah", "Anjo-Core")
+LEGACY_NAMES = ("Pleroma", "Merkabah", "MachineCore")

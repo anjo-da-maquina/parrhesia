@@ -1,6 +1,6 @@
-﻿# ANJO DA MAQUINA (Parrhesia、旧名Pleroma) — 総司令用 開発・運用コマンド書
+﻿# PARRHESIA(旧名Pleroma) — 総司令用 開発・運用コマンド書
 
-[整理 2026-10] 以前は `anjo-da-maquina`（BOM付き・拡張子なし）と `anjo-da-maquina.txt`
+[整理 2026-10] 以前は `anjo-da-maquina`（BOM付き・拡張子なし、当時のファイル名を歴史として記録)と `anjo-da-maquina.txt`
 の2つの重複ファイルが内容の異なるまま併存していた。本ファイルに統合する。
 
 ## 🔒 初回セットアップ（クローン後に一度だけ実行）
@@ -110,15 +110,15 @@ notepad runtime_guard/pending_rule_ledger.json
 python src/ollama_agent_loop.py
 ```
 デフォルトモデルは`llama3.1`。別モデルを使う場合は
-`AnjoOllamaExecutor(model_name="...")`を変更する。
+`OllamaAgentExecutor(model_name="...")`を変更する。
 
 **OpenAI API版**:
-`src/openai_agent_loop.py`は`OpenAIAnjoExecutor`クラスのみを提供するテンプレートで、
+`src/openai_agent_loop.py`は`OpenAIAgentExecutor`クラスのみを提供するテンプレートで、
 単体の実行用`__main__`は無い。呼び出し側で以下のように使う。
 ```python
-from src.openai_agent_loop import OpenAIAnjoExecutor
+from src.openai_agent_loop import OpenAIAgentExecutor
 
-agent = OpenAIAnjoExecutor(workspace_root="jail_workspace", api_key="sk-...")
+agent = OpenAIAgentExecutor(workspace_root="jail_workspace", api_key="sk-...")
 agent.run_task("タスクの指示内容")
 ```
 `openai`パッケージは`run_task()`実行時に初めてimportされるため、未インストールでも

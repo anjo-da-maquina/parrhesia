@@ -5,7 +5,7 @@ from _common import report_pass, report_fail, ROOT
 NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組み合わせを実行し、遮断できなかった 組み合わせの一覧を返す。"
 
 # [新設 2026-10 §BW] §11.9フェーズF(ブロックリスト回避・等価構文迂回の
-# 一般化)。実際に発見した具体例: `anjo_interceptor/intent_checker.py`の
+# 一般化)。実際に発見した具体例: `agent_interceptor/intent_checker.py`の
 # `IntentInterceptor.evaluate_action()`(「深層検閲」)が、
 # `alias.name in self.forbidden_modules`という完全一致のみで判定していた
 # ため、`import os.path`(alias.name=="os.path")のようなドット付き
@@ -41,7 +41,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # (2) `importlib.import_module("os").remove(...)`のような二重の間接化
 # (import自体をimportlib経由にし、かつ呼び出し関数名を既知の
 # forbidden_calls/banned_functionsに含まれない名前にする)は、
-# `anjo_interceptor/intent_checker.py`・`src/ast_scanner.py`いずれも
+# `agent_interceptor/intent_checker.py`・`src/ast_scanner.py`いずれも
 # 依然として検知できない(`src/ast_scanner.py`自身のKNOWN_LIMITATIONS
 # が既に文書化している、denylist方式そのものの構造的限界)。この限界は
 # `tests/test_check_equivalent_syntax_bypass.py`に明示的な既知の限界として
@@ -68,7 +68,7 @@ def _check_runtime_guard_scan_source(code: str) -> bool:
 
 
 def _check_intent_checker(code: str) -> bool:
-    from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+    from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
     ic = IntentInterceptor(workspace_root=str(ROOT))
     payload = {"action": "write", "target": "src/_remiel_probe.py", "content": code}
     try:
@@ -89,7 +89,7 @@ def _check_ast_scanner(code: str) -> bool:
 
 CHECKERS = [
     ("runtime_guard.scan_source (ScanSource)", _check_runtime_guard_scan_source),
-    ("anjo_interceptor.intent_checker.IntentInterceptor (深層検閲)", _check_intent_checker),
+    ("agent_interceptor.intent_checker.IntentInterceptor (深層検閲)", _check_intent_checker),
     ("src/ast_scanner.verify_intent (CognitiveScanner)", _check_ast_scanner),
 ]
 

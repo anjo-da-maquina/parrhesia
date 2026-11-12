@@ -110,7 +110,7 @@ def test_file_with_no_slash_join_reports_not_applicable(monkeypatch, tmp_path, c
     (tmp_path / "checks").mkdir()
     (tmp_path / "src").mkdir()
     (tmp_path / "adapters").mkdir()
-    (tmp_path / "anjo_interceptor").mkdir()
+    (tmp_path / "agent_interceptor").mkdir()
     (tmp_path / "src" / "clean.py").write_text("print('hello')\n", encoding="utf-8")
     monkeypatch.setattr(hpg, "ROOT", tmp_path)
     hpg.main()

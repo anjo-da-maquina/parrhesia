@@ -14,7 +14,7 @@
 #
 set -euo pipefail
 
-CLIENT_ID="${1:-anjo-local-tester}"
+CLIENT_ID="${1:-local-tester}"
 
 echo "== 1/4: 必要な道具(rsaライブラリ)の確認 =="
 if ! python3 -c "import rsa" >/dev/null 2>&1; then

@@ -2,7 +2,7 @@
 tests/test_intent_checker_dotted_import_evasion.py
 =====================================================
 [新設 2026-10 §BW] §11.9フェーズF(ブロックリスト回避・等価構文迂回の
-一般化)。anjo_interceptor/intent_checker.pyのIntentInterceptor.
+一般化)。agent_interceptor/intent_checker.pyのIntentInterceptor.
 evaluate_action()の"write"分岐、「深層検閲」ブロックで実際に発見した、
 `import os.path`という構文的には無害に見える等価構文によって、
 forbidden_modulesの完全一致チェックを迂回できる実在のバグを固定する。
@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 
 def _evaluate(content: str):

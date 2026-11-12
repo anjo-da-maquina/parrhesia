@@ -5,7 +5,7 @@ adapters/external_qa_wrapper.py の回帰テスト。DEFECTS.md §AJ 参照。
 
 背景: 本ファイルは以前
     import os, sys
-    print(f'[Anjo da máquina] Module {__file__} initialized. Zero-Trust audit passed.')
+    print(f'[Parrhesia] Module {__file__} initialized. Zero-Trust audit passed.')
 のみで構成される、いかなる処理も行わない「中身のないプレースホルダー」
 だった。CIでは「外部QAツールの実行 (External QA Adapter)」として常に
 無条件に成功を報告していたが、実際にブラウザでコードを実行したことは

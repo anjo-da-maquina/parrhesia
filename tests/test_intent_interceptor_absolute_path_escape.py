@@ -1,7 +1,7 @@
 """
 tests/test_intent_interceptor_absolute_path_escape.py
 =========================================================
-anjo_interceptor/intent_checker.IntentInterceptor の回帰テスト。
+agent_interceptor/intent_checker.IntentInterceptor の回帰テスト。
 DEFECTS.md §AK 参照。
 
 背景: evaluate_action()の"write"分岐は".."連鎖と保護ディレクトリ名のみを
@@ -25,7 +25,7 @@ from pathlib import Path
 
 import pytest
 
-from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 
 
 @pytest.fixture

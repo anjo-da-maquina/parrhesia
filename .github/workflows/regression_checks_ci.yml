@@ -320,7 +320,7 @@ jobs:
         if: success()
         run: python checks/guard_undeclared_dependency.py
       - name: 22.79. 等価構文によるブロックリスト回避の継続的検知 (Equivalence Syntax Audit)
-        # [新設 2026-10 §BW] §11.9フェーズF。anjo_interceptor/
+        # [新設 2026-10 §BW] §11.9フェーズF。agent_interceptor/
         # intent_checker.pyの「深層検閲」が`import os.path`のようなドット
         # 付きサブモジュールimportでforbidden_modulesの完全一致判定を
         # 回避され(os.remove等が無検知で通過)、src/ast_scanner.pyの
@@ -680,14 +680,14 @@ jobs:
 
           JOB_ID=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
             --jq '.jobs[] | select(.name=="聖なる統合監査 (Angelic Zero-Trust Audit)") | .id' \
-            2> /tmp/anjo_jobid_stderr.txt | head -n1)
+            2> /tmp/ci_jobid_stderr.txt | head -n1)
           JOBID_LOOKUP_EXIT=$?
           if [ -z "$JOB_ID" ]; then
             {
               echo "[警告] regression-checks-auditのjob_idを特定できませんでした(exit=${JOBID_LOOKUP_EXIT})。"
               echo "--- stderr ---"
-              cat /tmp/anjo_jobid_stderr.txt
-            } > /tmp/anjo_job_log.txt
+              cat /tmp/ci_jobid_stderr.txt
+            } > /tmp/ci_job_log.txt
           else
             # [実機で3回目に発見した誤り(正直な自己開示)] `set +e`の修正後、
             # ついに本処理のエラーハンドリングが実際に実行され、実機の
@@ -706,33 +706,33 @@ jobs:
             HTTP_CODE=$(curl -sL -w '%{http_code}' \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
-              -o /tmp/anjo_job_log.txt \
+              -o /tmp/ci_job_log.txt \
               "https://api.github.com/repos/${{ github.repository }}/actions/jobs/${JOB_ID}/logs" \
-              2> /tmp/anjo_job_log_stderr.txt)
+              2> /tmp/ci_job_log_stderr.txt)
             CURL_EXIT=$?
             if [ "$CURL_EXIT" -ne 0 ] || [ "${HTTP_CODE:-000}" -ge 400 ] 2>/dev/null; then
               {
                 echo "[警告] ジョブログの取得自体に失敗しました(job_id=${JOB_ID}, curl_exit=${CURL_EXIT}, http=${HTTP_CODE})。"
                 echo "--- stderr ---"
-                cat /tmp/anjo_job_log_stderr.txt
-              } > /tmp/anjo_job_log.txt
+                cat /tmp/ci_job_log_stderr.txt
+              } > /tmp/ci_job_log.txt
             fi
           fi
 
           # GitHub側のコメント本文サイズ上限(65536文字)を超えないよう、
           # 末尾(最も直近の、失敗に直結する出力が集中する部分)を優先して
           # 60000バイトに切り詰める(§BQと同じ方針)。
-          tail -c 60000 /tmp/anjo_job_log.txt > /tmp/anjo_job_log_tail.txt
+          tail -c 60000 /tmp/ci_job_log.txt > /tmp/ci_job_log_tail.txt
           {
             echo "### 🔥 Regression Checks CI (\`regression-checks-audit\`) — 失敗"
             echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             echo
             echo '```'
-            cat /tmp/anjo_job_log_tail.txt
+            cat /tmp/ci_job_log_tail.txt
             echo '```'
-          } > /tmp/anjo_job_comment_body.md
+          } > /tmp/ci_job_comment_body.md
 
-          post_comment /tmp/anjo_job_comment_body.md > /tmp/anjo_post_stdout.txt 2> /tmp/anjo_post_stderr.txt
+          post_comment /tmp/ci_job_comment_body.md > /tmp/ci_post_stdout.txt 2> /tmp/ci_post_stderr.txt
           POST_EXIT=$?
 
           if [ "$POST_EXIT" -ne 0 ]; then
@@ -748,12 +748,12 @@ jobs:
               echo '```'
               echo "post exit=${POST_EXIT}"
               echo "--- stdout ---"
-              cat /tmp/anjo_post_stdout.txt
+              cat /tmp/ci_post_stdout.txt
               echo "--- stderr ---"
-              cat /tmp/anjo_post_stderr.txt
+              cat /tmp/ci_post_stderr.txt
               echo '```'
-            } > /tmp/anjo_fallback_comment_body.md
-            post_comment /tmp/anjo_fallback_comment_body.md
+            } > /tmp/ci_fallback_comment_body.md
+            post_comment /tmp/ci_fallback_comment_body.md
           fi
 
           # このジョブ自体は「可視化のための計器」であり、計器の不調が

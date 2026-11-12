@@ -6,10 +6,10 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "check_core_module_integration - 機能要件E2E監査: 重要モジュール(runtime_guard, anjo_interceptor)が正しくimportでき…"
+NAME = "check_core_module_integration - 機能要件E2E監査: 重要モジュール(runtime_guard, agent_interceptor)が正しくimportでき…"
 
 
-# 機能要件E2E監査: 重要モジュール(runtime_guard, anjo_interceptor)が正しくimportでき、
+# 機能要件E2E監査: 重要モジュール(runtime_guard, agent_interceptor)が正しくimportでき、
 # 基本的な公開APIが期待通りに動作することをE2Eで検証する。
 def main():
     sys.path.insert(0, str(ROOT))
@@ -19,7 +19,7 @@ def main():
         report_fail(NAME, "scan_source()が既知の危険コードを検知できませんでした。")
 
     try:
-        from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
+        from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
         import json as _json
         interceptor = IntentInterceptor()
         try:
@@ -28,7 +28,7 @@ def main():
         except SpecificationGamingDetected:
             pass
     except ModuleNotFoundError:
-        report_info(NAME, "anjo_interceptor が見つからないためスキップ。")
+        report_info(NAME, "agent_interceptor が見つからないためスキップ。")
 
     report_pass(NAME, "主要モジュールのE2E動作確認が完了しました。")
 
