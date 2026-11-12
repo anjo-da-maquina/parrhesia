@@ -5,10 +5,10 @@ Parrhesia(旧名Pleroma) 防衛ダッシュボード生成ツール
 生データファイルに分散しており、それぞれを個別に`cat`するしかなく、全体の
 傾向を一目で把握する手段が無かった:
 
-  - adversarial_training/selfplay_history.json(旧名tartarus/akashic_records.json) — Armageddon Engine(Lucifer vs Metatron)の戦績
+  - adversarial_training/selfplay_history.json(旧名local_arena/akashic_records.json) — Selfplay Engine(Lucifer vs Selfplay)の戦績
   - runtime_guard/audit_chain.jsonl          — AuditHookが実際に遮断したイベントの監査ログ
-  - runtime_guard/raziel_ledger.json         — 現在有効な禁止イベント一覧
-  - runtime_guard/raziel_ledger_pending.json / shield_rules_pending.json /
+  - runtime_guard/pending_rule_ledger.json         — 現在有効な禁止イベント一覧
+  - runtime_guard/proposed_rule_queue.json / shield_rules_pending.json /
     provisioning_pending.json        — 人間承認待ちの各種提案
 
 本ツールはこれらを読み取り、単一の自己完結したHTMLファイル(外部CDN等への
@@ -31,9 +31,9 @@ from pathlib import Path
 PLEROMA_DIR = Path(__file__).parent.parent
 AKASHIC_RECORDS_PATH = PLEROMA_DIR / "adversarial_training" / "selfplay_history.json"
 AUDIT_CHAIN_PATH = PLEROMA_DIR / "runtime_guard" / "audit_chain.jsonl"
-RAZIEL_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
+RAZIEL_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
 PENDING_PATHS = {
-    "Armageddon Engine (raziel_ledger_pending.json)": PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json",
+    "Selfplay Engine (proposed_rule_queue.json)": PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json",
     "外部脅威インテリジェンス (shield_rules_pending.json)": PLEROMA_DIR / "runtime_guard" / "shield_rules_pending.json",
     "証明書発行 (provisioning_pending.json)": PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json",
 }
@@ -213,7 +213,7 @@ def build_dashboard(
 
   <div class="cards">
     <div class="card">
-      <div class="label">Armageddon 総戦績</div>
+      <div class="label">Selfplay 総戦績</div>
       <div class="value">{total_battles}</div>
     </div>
     <div class="card">
@@ -253,9 +253,9 @@ def build_dashboard(
   </div>
 
   <div class="section">
-    <h2>Armageddon Engine 戦闘記録 (直近20件)</h2>
+    <h2>Selfplay Engine 戦闘記録 (直近20件)</h2>
     <table>
-      <tr><th>世代</th><th>結果</th><th>QAスコア</th><th>日時</th><th>Metatronのヒント</th></tr>
+      <tr><th>世代</th><th>結果</th><th>QAスコア</th><th>日時</th><th>Selfplayのヒント</th></tr>
       {battle_rows}
     </table>
   </div>

@@ -154,7 +154,7 @@ SECRET_PATTERNS = [
 # 自身を含む)は、いずれも`scan_for_leaked_secrets(root=tmp_path)`のように
 # 明示的な一時ディレクトリを渡して検証するため、実リポジトリの"tests"を
 # 除外しても、既存のテスト自体の検証能力には一切影響しない。
-EXCLUDED_SECRET_SCAN_DIRS = {"dummy_secrets", ".git", "__pycache__", "runtime_guard/.angel_state", "revelations", "tests"}
+EXCLUDED_SECRET_SCAN_DIRS = {"dummy_secrets", ".git", "__pycache__", "runtime_guard/.angel_state", "reports", "tests"}
 
 
 def scan_for_leaked_secrets(root: Path = None):

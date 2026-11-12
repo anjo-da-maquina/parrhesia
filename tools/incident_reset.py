@@ -1,7 +1,7 @@
 ﻿"""
 tools/incident_reset.py
 ========================
-[新規 2026-10] `src/uriel_phoenix.UrielPhoenix`(旧: __main__専用デモ)を
+[新規 2026-10] `src/incident_reset_tool.IncidentResetTool`(旧: __main__専用デモ)を
 実運用の人間操作用インシデント対応ツールとして公開する。
 
 これは「致命的な侵入が確定した後の焦土作戦（破壊と再生）」であり、通常の
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-from uriel_phoenix import UrielPhoenix, UrielPhoenixUnsafeTargetError
+from incident_reset_tool import IncidentResetTool, IncidentResetUnsafeTargetError
 
 
 def main():
@@ -53,10 +53,10 @@ def main():
             sys.exit(1)
 
     try:
-        result = UrielPhoenix(
+        result = IncidentResetTool(
             core_dir=args.core_dir, talisman=args.talisman, allow_shallow_path=args.allow_shallow_path
         ).scorched_earth_and_rebirth()
-    except UrielPhoenixUnsafeTargetError as e:
+    except IncidentResetUnsafeTargetError as e:
         print(f"\n{e}")
         sys.exit(1)
     print(f"\n完了: {result}")

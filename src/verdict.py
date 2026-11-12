@@ -1,13 +1,13 @@
 ﻿"""
 src/verdict.py
 ========================
-[再構築 2026-10] angelic_shield.py と同じ欠陥を共有していたため作り直した。
+[再構築 2026-10] shield_rule_sync.py と同じ欠陥を共有していたため作り直した。
 
   1. 独自実装の `metatrons_seal`(sys.addaudithook)を撤去した。本ファイルは
      対象ファイルを `ast.parse` で静的解析するのみで、コードを一切実行
      しない。実行を伴わない静的解析ツールにOSレベルのaudit hookを仕掛ける
      ことは何の追加保護にもならず、「保護されている」という誤った印象を
-     与えるだけの表示だった(angelic_shield.py モジュールdocstring参照)。
+     与えるだけの表示だった(shield_rule_sync.py モジュールdocstring参照)。
 
   2. `runtime_guard.scan_source()`(ScanSource)で発見・修正したのと同じバグが
      `ShieldRuleScanner.visit_Call` にも存在した: `node.func.attr` は
@@ -19,7 +19,7 @@ src/verdict.py
      修正した。既知の限界(別名importでの回避)も同様に残る。
 
 `shield_rules.json` は人間承認済みのルールのみを含む
-(`angelic_shield.py` の `ZadkielDominion` が提案し、
+(`shield_rule_sync.py` の `ShieldRuleProposalQueue` が提案し、
 `tools/promote_shield_seal.py` で承認されたもの)。
 """
 import sys

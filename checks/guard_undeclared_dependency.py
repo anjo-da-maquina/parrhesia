@@ -93,25 +93,25 @@ def _is_local_module_name(name: str) -> bool:
     # リポジトリ直下、またはスキャン対象ディレクトリ直下に
     # <name>.pyが存在する場合もローカルモジュールとみなす。
     #
-    # [脆弱性修正 2026-10 §BZ] 以前はここに`tartarus/`が含まれておらず、
-    # `tartarus/armageddon_core.py`のような、リポジトリ内部の純粋ロジック
-    # モジュール(`sys.path.insert(0, ".../tartarus")`した上で`import
-    # armageddon_core`のように、ディレクトリ名を介さずトップレベル名で
+    # [脆弱性修正 2026-10 §BZ] 以前はここに`local_arena/`が含まれておらず、
+    # `local_arena/selfplay_core.py`のような、リポジトリ内部の純粋ロジック
+    # モジュール(`sys.path.insert(0, ".../local_arena")`した上で`import
+    # selfplay_core`のように、ディレクトリ名を介さずトップレベル名で
     # importする、本リポジトリの`tests/`で既に使われている確立済みの
     # パターン)を、`checks/`配下のファイルが同じ流儀でimportすると、
     # 「requirements.txtに未宣言のサードパーティimport」という偽陽性で
     # 検知してしまう欠陥があった。実機で確認済み: 新設した
     # `checks/guard_rejection_memory.py`(§BZ)がこの流儀で
-    # `armageddon_core`をimportしたところ、本天使自身がそれを誤検知し、
-    # マージ前のリポジトリ全体pytest実行で初めて発覚した。`tartarus/`は
+    # `selfplay_core`をimportしたところ、本天使自身がそれを誤検知し、
+    # マージ前のリポジトリ全体pytest実行で初めて発覚した。`local_arena/`は
     # 他のローカルディレクトリ(angels・src・adapters等)と全く同じ
     # カテゴリ(リポジトリ内部の自作コード)であり、第三者パッケージでは
     # ないため、検索対象ディレクトリに追加した。
-    # [改名 2026-11] tartarus/ は adversarial_training/ に改名された
+    # [改名 2026-11] local_arena/ は adversarial_training/ に改名された
     # (docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §2参照)。両方を残して
     # いるのは後方互換のための保険であり、実体は既にadversarial_training/
     # のみである。
-    for d in [ROOT, ROOT / "tartarus", ROOT / "adversarial_training", *[ROOT / td for td in TARGET_DIRS_FOR_IMPORT_SCAN]]:
+    for d in [ROOT, ROOT / "local_arena", ROOT / "adversarial_training", *[ROOT / td for td in TARGET_DIRS_FOR_IMPORT_SCAN]]:
         if (d / f"{name}.py").exists():
             return True
     return False

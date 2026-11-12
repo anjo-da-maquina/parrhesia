@@ -4,7 +4,7 @@ tests/test_guard_shield_rule_autoapply_and_key_leak.py
 [新設 2026-11] checks/guard_shield_rule_autoapply_and_key_leak.py の単体テスト。
 
 本天使(「ザドキエルの勅令」)は、外部脅威インテリジェンス取り込み機構
-(src/angelic_shield.py・src/verdict.py)の再構築が、以下5点の
+(src/shield_rule_sync.py・src/verdict.py)の再構築が、以下5点の
 修正を保ったままであることを静的に検証する:
   A. LLM生出力をshield_rules.jsonへ直接反映せず、人間承認待ちキュー
      (shield_rules_pending.json)に積むのみであること。
@@ -21,7 +21,7 @@ main()内で先頭から順に評価され、最初に満たさない条件の�
 しないことが判明した。本天使はLLM生出力の自動反映という本質的に
 危険な経路(思考統制監査)を守る中核であるため、優先して対応する。
 
-`main()`は`ROOT / "src" / "angelic_shield.py"`等の固定パスを直接読む
+`main()`は`ROOT / "src" / "shield_rule_sync.py"`等の固定パスを直接読む
 ため、`guard_shield_rule_autoapply_and_key_leak.ROOT`を一時ディレクトリへmonkeypatchし、
 各検査項目を満たす/満たさないフィクスチャを置いて検証する。
 """
@@ -33,7 +33,7 @@ import guard_shield_rule_autoapply_and_key_leak as zsd
 
 VALID_SHIELD_TEXT = (
     "import os\n"
-    "class ZadkielDominion:\n"
+    "class ShieldRuleProposalQueue:\n"
     "    def propose_knowledge(self, data):\n"
     "        self._queue('shield_rules_pending')\n"
     "    def _clear_key(self):\n"
@@ -62,7 +62,7 @@ def _write_fixtures(root, shield_text=VALID_SHIELD_TEXT, judgment_text=VALID_JUD
     tools_dir = root / "tools"
     tools_dir.mkdir(parents=True, exist_ok=True)
     if include_shield:
-        (src_dir / "angelic_shield.py").write_text(shield_text, encoding="utf-8")
+        (src_dir / "shield_rule_sync.py").write_text(shield_text, encoding="utf-8")
     if include_judgment:
         (src_dir / "verdict.py").write_text(judgment_text, encoding="utf-8")
     if include_promote:
@@ -91,7 +91,7 @@ def test_real_repository_passes():
 
 
 def test_fails_when_required_file_is_missing(monkeypatch, tmp_path):
-    """angelic_shield.py・verdict.py・promote_shield_seal.pyの
+    """shield_rule_sync.py・verdict.py・promote_shield_seal.pyの
     いずれかが存在しない場合、正しくFAILする。"""
     _write_fixtures(tmp_path, include_promote=False)
     _expect_fail(monkeypatch, tmp_path)
@@ -146,7 +146,7 @@ def test_fails_when_qualified_call_name_check_is_missing(monkeypatch, tmp_path):
 
 def test_fails_when_duplicate_audit_hook_is_revived_in_shield(monkeypatch, tmp_path):
     """[核心・E] 撤去済みの独自audit hook実装(metatrons_seal)が
-    angelic_shield.py側に復活している場合、正しくFAILする。"""
+    shield_rule_sync.py側に復活している場合、正しくFAILする。"""
     bad_shield = VALID_SHIELD_TEXT + "\n    def metatrons_seal(self):\n        pass\n"
     _write_fixtures(tmp_path, shield_text=bad_shield)
     _expect_fail(monkeypatch, tmp_path)

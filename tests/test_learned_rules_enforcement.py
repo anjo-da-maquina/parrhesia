@@ -4,10 +4,10 @@ tests/test_learned_rules_enforcement.py
 runtime_guard/__init__.py の回帰テスト。DEFECTS.md §AG 参照。
 
 背景: 本フレームワークには2つの「学習」ワークフローがあった:
-  1. adversarial_training/local_only_selfplay_gate.py(旧名tartarus/armageddon.py、Lucifer vs Sefer自己対戦)が発見した新たな
+  1. adversarial_training/local_only_selfplay_gate.py(旧名local_arena/selfplay.py、Lucifer vs Sefer自己対戦)が発見した新たな
      脱走経路を、人間が tools/promote_ledger_seal.py で承認し
-     runtime_guard/raziel_ledger.json に反映する。
-  2. angelic_shield.py(外部LLM脅威インテリジェンス)が提案した危険な
+     runtime_guard/pending_rule_ledger.json に反映する。
+  2. shield_rule_sync.py(外部LLM脅威インテリジェンス)が提案した危険な
      モジュール/関数を、人間が tools/promote_shield_seal.py で承認し
      shield_rules.json に反映する。
 
@@ -36,7 +36,7 @@ sys.path.insert(0, str(REPO_ROOT))
 import runtime_guard  # noqa: E402
 
 
-def _point_raziel_ledger_at(monkeypatch, path: Path):
+def _point_threat_intel_ledger_at(monkeypatch, path: Path):
     monkeypatch.setattr(runtime_guard, "_RAZIEL_LEDGER_PATH", path)
     monkeypatch.setattr(runtime_guard, "_dynamic_banned_events_cache", {"mtime": None, "events": frozenset()})
 
@@ -49,14 +49,14 @@ def _point_shield_rules_at(monkeypatch, path: Path):
     )
 
 
-def test_raziel_ledger_unknown_approved_event_is_blocked(tmp_path, monkeypatch):
-    """[脆弱性修正の回帰テスト] raziel_ledger.jsonで承認された、既存の
+def test_threat_intel_ledger_unknown_approved_event_is_blocked(tmp_path, monkeypatch):
+    """[脆弱性修正の回帰テスト] pending_rule_ledger.jsonで承認された、既存の
     どの固定カテゴリにも該当しない未知のイベントは、絶対拒否されなければ
     ならない。"""
-    ledger_path = tmp_path / "raziel_ledger.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
         json.dump({"banned_events": ["zzz.custom_exfil_event"]}, f)
-    _point_raziel_ledger_at(monkeypatch, ledger_path)
+    _point_threat_intel_ledger_at(monkeypatch, ledger_path)
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
@@ -68,13 +68,13 @@ def test_raziel_ledger_unknown_approved_event_is_blocked(tmp_path, monkeypatch):
             pass
 
 
-def test_raziel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeypatch):
+def test_threat_intel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeypatch):
     """ledgerに登録されていない未知のイベントは、従来通り素通りする
     (新しい統合によって無関係なイベントまで誤って遮断されないことの確認)。"""
-    ledger_path = tmp_path / "raziel_ledger.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
         json.dump({"banned_events": ["zzz.custom_exfil_event"]}, f)
-    _point_raziel_ledger_at(monkeypatch, ledger_path)
+    _point_threat_intel_ledger_at(monkeypatch, ledger_path)
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
@@ -82,17 +82,17 @@ def test_raziel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeyp
         sys.audit("zzz.not_in_ledger", "payload")  # 例外が出なければ成功
 
 
-def test_raziel_ledger_entries_already_covered_by_existing_categories_do_not_regress(tmp_path, monkeypatch):
-    """[回帰防止の核心] raziel_ledger.jsonの既定値には"os.remove"のような、
+def test_threat_intel_ledger_entries_already_covered_by_existing_categories_do_not_regress(tmp_path, monkeypatch):
+    """[回帰防止の核心] pending_rule_ledger.jsonの既定値には"os.remove"のような、
     AuditHookが既に条件付きチェック(allowed_dirs)で扱っているイベント名が
     含まれる。これを本関数の先頭で無条件の絶対拒否にしてしまうと、
     AI自身のjail_workspace配下での正当なファイル操作まで一律遮断する
     重大な機能破壊になる。許可された領域内であれば従来通り許可される
     ことを固定する。"""
-    ledger_path = tmp_path / "raziel_ledger.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
         json.dump({"banned_events": ["os.remove", "os.rename", "socket.connect"]}, f)
-    _point_raziel_ledger_at(monkeypatch, ledger_path)
+    _point_threat_intel_ledger_at(monkeypatch, ledger_path)
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
@@ -138,13 +138,13 @@ def test_shield_rules_unrelated_same_named_function_is_not_flagged(tmp_path, mon
 
 def test_always_passthrough_events_really_are_unenforceable_via_ledger(tmp_path, monkeypatch):
     """[脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
-    イベント名は、raziel_ledger.jsonにどれだけ追加しても実際に遮断されない
-    ことを実機で固定する(adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py)のvalidate_banned_event()
+    イベント名は、pending_rule_ledger.jsonにどれだけ追加しても実際に遮断されない
+    ことを実機で固定する(adversarial_training/selfplay_engine_core.py(旧名local_arena/selfplay_core.py)のvalidate_banned_event()
     がこの集合を参照して事前に提案自体を拒否するようになった根拠)。"""
-    ledger_path = tmp_path / "raziel_ledger.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
     with open(ledger_path, "w", encoding="utf-8") as f:
         json.dump({"banned_events": list(runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS)}, f)
-    _point_raziel_ledger_at(monkeypatch, ledger_path)
+    _point_threat_intel_ledger_at(monkeypatch, ledger_path)
 
     base = tmp_path / "jail_workspace"
     base.mkdir()

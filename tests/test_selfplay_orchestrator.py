@@ -1,19 +1,19 @@
 ﻿"""
-[テスト追加 2026-10] src/metatron_orchestrator.py を実運用対応として
+[テスト追加 2026-10] src/selfplay_orchestrator.py を実運用対応として
 promoteするための回帰テスト。
 
 実機にOllama/Dockerが無い環境(本テスト実行環境を含む)では、
 `DefenseOrchestrator.execute_ai_intent` はSandalphon(Docker)段でフェイルクローズド
 に`PermissionError`を送出する。これは「防御が機能している」ことの証左であり、
-`MetatronOrchestrator.execute_holy_war`は本来これを捕捉して
+`SelfplayOrchestrator.execute_holy_war`は本来これを捕捉して
 「✅ 迎撃成功」として扱うべきだが、修正前は
-`RazielIntelligence.analyze_aidd_artifact()`内の、信頼済みの内部レポート
+`ThreatIntelGatherer.analyze_aidd_artifact()`内の、信頼済みの内部レポート
 書き込みにまで誤って`execute_ai_intent`(AI生成コード審査パイプライン)を
 通していたため、サイクル1回目の偵察フェーズで無関係な`PermissionError`が
 捕捉されずに伝播し、オーケストレーター全体がクラッシュしていた
 (実機検証済み)。
 
-本テストは、Ollama自体の呼び出し(`SamaelWeaponization.craft_poison`)に
+本テストは、Ollama自体の呼び出し(`PayloadWeaponization.craft_poison`)に
 到達する前に、この偵察フェーズだけで異常終了しないことを固定する。
 Ollamaサーバーが無い環境では`craft_poison`以降はOllama接続エラーで
 失敗するため、本テストはそこを呼び出し側の`try/except`が正しく
@@ -40,7 +40,7 @@ if "ollama" not in sys.modules:
     _stub.chat = _unexpected_chat
     sys.modules["ollama"] = _stub
 
-from intelligence_cycle import RazielIntelligence
+from intelligence_cycle import ThreatIntelGatherer
 
 
 def test_analyze_aidd_artifact_does_not_require_docker_or_ai_review(tmp_path, monkeypatch):
@@ -52,11 +52,11 @@ def test_analyze_aidd_artifact_does_not_require_docker_or_ai_review(tmp_path, mo
     (secure_resolve)だけで十分であり、Dockerの有無に依存してはならない。
     """
     monkeypatch.chdir(tmp_path)
-    raziel = RazielIntelligence()
+    threat_intel = ThreatIntelGatherer()
 
     # 例外を送出せずに完了し、レポートファイルがジェイル内に書き込まれること
-    intel_json = raziel.analyze_aidd_artifact()
+    intel_json = threat_intel.analyze_aidd_artifact()
 
     assert intel_json  # JSON文字列が返る
-    report_path = raziel.defense.jail.secure_resolve("raziel_aidd_report.json")
+    report_path = threat_intel.defense.jail.secure_resolve("threat_intel_aidd_report.json")
     assert report_path.exists(), "偵察レポートが隔離領域内に書き込まれているべき"

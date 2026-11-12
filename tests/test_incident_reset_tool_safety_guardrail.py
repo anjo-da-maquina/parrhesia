@@ -1,9 +1,9 @@
 """
-tests/test_uriel_phoenix_safety_guardrail.py
+tests/test_incident_reset_tool_safety_guardrail.py
 ==============================================
-src/uriel_phoenix.UrielPhoenix の回帰テスト。DEFECTS.md §AI 参照。
+src/incident_reset_tool.IncidentResetTool の回帰テスト。DEFECTS.md §AI 参照。
 
-背景: UrielPhoenix.scorched_earth_and_rebirth()は`shutil.rmtree()`/
+背景: IncidentResetTool.scorched_earth_and_rebirth()は`shutil.rmtree()`/
 `Path.unlink()`による不可逆な破壊的操作を行うが、`core_dir`/`talisman`を
 一般化して任意のパスを指定可能にした際、対象パスの安全性検証を一切
 追加していなかった。本クラスは`tools/incident_reset.py`という、人間が
@@ -13,7 +13,7 @@ src/uriel_phoenix.UrielPhoenix の回帰テスト。DEFECTS.md §AI 参照。
 全体やホームディレクトリの削除)を及ぼせる構造的な欠陥があった。
 
 本テストは、ファイルシステムのルート・ホームディレクトリ・極端に浅い
-パスへの指定が安全装置(UrielPhoenixUnsafeTargetError)によって拒否される
+パスへの指定が安全装置(IncidentResetUnsafeTargetError)によって拒否される
 こと、かつ正常系(十分に深いパス、テストのtmp_path等)には一切影響しない
 ことを固定する。
 """
@@ -22,16 +22,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from uriel_phoenix import UrielPhoenix, UrielPhoenixUnsafeTargetError
+from incident_reset_tool import IncidentResetTool, IncidentResetUnsafeTargetError
 
 
 def test_filesystem_root_is_rejected():
     """[脆弱性修正の核心] core_dirがファイルシステムのルートそのものである
     場合、rmtree()を実行する前に拒否されなければならない。"""
     try:
-        UrielPhoenix(core_dir="/").scorched_earth_and_rebirth(announce=False)
+        IncidentResetTool(core_dir="/").scorched_earth_and_rebirth(announce=False)
         assert False, "ファイルシステムのルートに対する焦土作戦が拒否されなかった。"
-    except UrielPhoenixUnsafeTargetError:
+    except IncidentResetUnsafeTargetError:
         pass
 
 
@@ -40,9 +40,9 @@ def test_home_directory_is_rejected():
     拒否されなければならない。"""
     home = str(Path.home())
     try:
-        UrielPhoenix(core_dir=home).scorched_earth_and_rebirth(announce=False)
+        IncidentResetTool(core_dir=home).scorched_earth_and_rebirth(announce=False)
         assert False, "ホームディレクトリに対する焦土作戦が拒否されなかった。"
-    except UrielPhoenixUnsafeTargetError:
+    except IncidentResetUnsafeTargetError:
         pass
 
 
@@ -54,12 +54,12 @@ def test_shallow_system_like_path_is_rejected_by_default(tmp_path, monkeypatch):
     # (tmp_path自体が十分深い)ため、ルートから1階層の実在しないパスで
     # 深さ判定ロジックそのものを検証する。実在しないパスでも.resolve()で
     # 深さは計算できるため、実際に削除が走る前に拒否されることを確認する。
-    shallow_path = Path("/this_dir_should_not_exist_uriel_test")
+    shallow_path = Path("/this_dir_should_not_exist_incident_reset_test")
     assert not shallow_path.exists(), "テスト前提が崩れている(実在してはいけない)"
     try:
-        UrielPhoenix(core_dir=str(shallow_path)).scorched_earth_and_rebirth(announce=False)
+        IncidentResetTool(core_dir=str(shallow_path)).scorched_earth_and_rebirth(announce=False)
         assert False, "浅いパスに対する焦土作戦が拒否されなかった。"
-    except UrielPhoenixUnsafeTargetError:
+    except IncidentResetUnsafeTargetError:
         pass
     assert not shallow_path.exists(), "拒否されたにもかかわらずディレクトリが作成されてしまった。"
 
@@ -74,7 +74,7 @@ def test_shallow_path_can_be_explicitly_allowed(tmp_path, monkeypatch):
     # 本テストの目的はallow_shallow_path=Trueが例外を発生させず正常に
     # 動作を許すことの確認に限定する)。
     core_dir = tmp_path / "jail_workspace"
-    UrielPhoenix(core_dir=str(core_dir), allow_shallow_path=True).scorched_earth_and_rebirth(announce=False)
+    IncidentResetTool(core_dir=str(core_dir), allow_shallow_path=True).scorched_earth_and_rebirth(announce=False)
     assert core_dir.exists()
 
 
@@ -85,7 +85,7 @@ def test_deep_tmp_path_is_unaffected_by_the_guardrail(tmp_path):
     core_dir.mkdir()
     (core_dir / "evidence.txt").write_text("x")
 
-    UrielPhoenix(core_dir=str(core_dir)).scorched_earth_and_rebirth(announce=False)
+    IncidentResetTool(core_dir=str(core_dir)).scorched_earth_and_rebirth(announce=False)
 
     assert core_dir.exists()
     assert list(core_dir.iterdir()) == []
@@ -95,9 +95,9 @@ def test_talisman_is_also_validated():
     """talismanにファイルシステムのルート相当の危険なパスを指定した場合も、
     core_dirと同様に拒否されなければならない。"""
     try:
-        UrielPhoenix(core_dir="/this_dir_should_not_exist_uriel_test_2", talisman="/").scorched_earth_and_rebirth(
+        IncidentResetTool(core_dir="/this_dir_should_not_exist_incident_reset_test_2", talisman="/").scorched_earth_and_rebirth(
             announce=False
         )
         assert False, "危険なtalismanパスが拒否されなかった。"
-    except UrielPhoenixUnsafeTargetError:
+    except IncidentResetUnsafeTargetError:
         pass

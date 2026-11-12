@@ -1,8 +1,8 @@
 ﻿"""
-[テスト追加 2026-10] Tartarusの「創造主の呼吸」(MACアドレスゲート)が
+[テスト追加 2026-10] Local Arenaの「創造主の呼吸」(MACアドレスゲート)が
 意図通り機能し続けていることを保証する回帰テスト。
 
-このゲートが弱体化・削除されると、Tartarus（闘技場）が創造主の
+このゲートが弱体化・削除されると、Local Arena（闘技場）が創造主の
 ローカル環境以外でも起動してしまう致命的な回帰となるため、
 CI上では必ず exit(666) で拒否されることを確認する。
 """
@@ -17,7 +17,7 @@ def test_local_only_selfplay_gate_exits_666_on_unmatched_hardware():
     """
     CI環境（およびこのリポジトリを手にした大半の第三者環境）では
     uuid.getnode() が創造主のMACアドレスと一致しないため、
-    local_only_selfplay_gate.py(旧名armageddon.py)は import された瞬間に exit(666) するべきである。
+    local_only_selfplay_gate.py(旧名selfplay.py)は import された瞬間に exit(666) するべきである。
     """
     script = f"""
 import sys

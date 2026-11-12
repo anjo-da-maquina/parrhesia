@@ -37,7 +37,7 @@ def test_dashboard_renders_summary_cards_from_real_looking_data(tmp_path: Path):
         {"event": "exec", "timestamp": 3.0},
     ])
 
-    ledger_path = tmp_path / "raziel_ledger.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
     _write_json(ledger_path, {"banned_events": ["os.system", "subprocess.Popen"]})
 
     pending_path = tmp_path / "pending.json"

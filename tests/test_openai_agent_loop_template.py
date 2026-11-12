@@ -15,7 +15,7 @@ src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検�
      ないこと）。
   4. run_task() が 'openai' パッケージ未インストール時、クラッシュせず
      明確な RuntimeError を送出すること（無関係な依存の有無でゲート自体の
-     信頼性が揺らがないこと。tartarus/armageddon.py の脆弱性修正と同じ
+     信頼性が揺らがないこと。local_arena/selfplay.py の脆弱性修正と同じ
      教訓）。
 """
 import os

@@ -3,9 +3,9 @@ tests/test_audit_ledger_schema.py
 =====================================
 [新設 2026-11] checks/audit_ledger_schema.py の単体テスト。
 
-本天使(「ラジエルの書」)は、`runtime_guard/raziel_ledger.json`のスキーマと、
+本天使(「ラジエルの書」)は、`runtime_guard/pending_rule_ledger.json`のスキーマと、
 禁止イベント名が妥当なPython audit event名の形式であること(LLM幻覚に
-よるデータ汚染検知)、および`runtime_guard/raziel_ledger_pending.json`の各
+よるデータ汚染検知)、および`runtime_guard/proposed_rule_queue.json`の各
 エントリのstatusが既知の値であることを検証する。天使群のテスト
 カバレッジの棚卸しの過程で、専用テストが一件も存在しないことが判明
 した。
@@ -25,16 +25,16 @@ def _fake_load_json(ledger=None, pending=None):
     """audit_ledger_schema.load_jsonを、パス文字列に応じて異なる戻り値を
     返す偽の関数に差し替えるためのヘルパー。"""
     def _fn(relative_path):
-        if relative_path == "runtime_guard/raziel_ledger.json":
+        if relative_path == "runtime_guard/pending_rule_ledger.json":
             return ledger
-        if relative_path == "runtime_guard/raziel_ledger_pending.json":
+        if relative_path == "runtime_guard/proposed_rule_queue.json":
             return pending
         raise AssertionError(f"想定外のパスで呼ばれました: {relative_path}")
     return _fn
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のリポジトリの実際のraziel_ledger.jsonは
+    """[実機の裏付け] 現時点のリポジトリの実際のpending_rule_ledger.jsonは
     妥当なスキーマであるため、本天使はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout

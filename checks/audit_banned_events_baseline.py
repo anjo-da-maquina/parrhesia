@@ -6,21 +6,21 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "audit_banned_events_baseline - 分散型オラクル真理監査: raziel_ledger.json のベースライン禁止イベントが 欠落・改変されていないかを検証する…"
+NAME = "audit_banned_events_baseline - 分散型オラクル真理監査: pending_rule_ledger.json のベースライン禁止イベントが 欠落・改変されていないかを検証する…"
 
 
-# 分散型オラクル真理監査: raziel_ledger.json のベースライン禁止イベントが
+# 分散型オラクル真理監査: pending_rule_ledger.json のベースライン禁止イベントが
 # 欠落・改変されていないかを検証する（オラクルの「真実性」チェック）。
 BASELINE_EVENTS = {"os.system", "subprocess.Popen", "os.remove"}
 
 def main():
-    ledger = load_json("runtime_guard/raziel_ledger.json")
+    ledger = load_json("runtime_guard/pending_rule_ledger.json")
     if ledger is None:
-        report_fail(NAME, "raziel_ledger.json が存在しません。")
+        report_fail(NAME, "pending_rule_ledger.json が存在しません。")
     missing = BASELINE_EVENTS - set(ledger.get("banned_events", []))
     if missing:
         report_fail(NAME, f"ベースラインの禁止イベントが欠落しています: {missing}")
-    report_pass(NAME, "オラクル（Raziel's Ledger）のベースライン真実性を確認しました。")
+    report_pass(NAME, "オラクル（ThreatIntel's Ledger）のベースライン真実性を確認しました。")
 
 if __name__ == "__main__":
     main()

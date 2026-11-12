@@ -10,8 +10,8 @@ adapters/provisioning_agent.py
 `enforce_maquina_seal`（runtime_audit_gatekeeper.py）によるライセンス
 証明書チェックは、本スクリプトを実行できる者なら誰でも自分自身を
 無条件に「承認済み」にできてしまい、実質的に何の認可も提供していな
-かった。§Fの`ZadkielDominion`（LLM提案ルールの無審査反映）や
-Armageddon Engineの`raziel_ledger_pending.json`で既に修正したのと
+かった。§Fの`ShieldRuleProposalQueue`（LLM提案ルールの無審査反映）や
+Selfplay Engineの`proposed_rule_queue.json`で既に修正したのと
 同種の脆弱性である。
 
 本修正では、鍵対の生成と証明書ペイロードの署名はこの場で行うが、

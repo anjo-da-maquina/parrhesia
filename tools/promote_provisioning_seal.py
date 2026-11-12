@@ -9,8 +9,8 @@ Provisioning 承認プロモーションツール
 
 これにより、提案者（本スクリプトを実行できる任意のローカル環境）が
 自分自身を無条件に承認済みにできてしまう自己署名の構造的欠陥を防ぐ。
-`tools/promote_shield_seal.py`(Zadkiel向け)・`tools/promote_ledger_seal.py`
-(Armageddon Engine向け)と同一のパターン。
+`tools/promote_shield_seal.py`(ShieldRuleQueue向け)・`tools/promote_ledger_seal.py`
+(Selfplay Engine向け)と同一のパターン。
 
 使い方:
     python tools/promote_provisioning_seal.py --list

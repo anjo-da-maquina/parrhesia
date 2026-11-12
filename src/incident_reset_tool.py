@@ -1,5 +1,5 @@
 ﻿"""
-src/uriel_phoenix.py
+src/incident_reset_tool.py
 =====================
 [2026-10 実運用統合] 以前は `jail_workspace` / `anjo-da-maquina` という
 固定パスのみを対象とする `__main__` 専用のデモスクリプトだった。
@@ -46,7 +46,7 @@ import time
 from pathlib import Path
 
 
-class UrielPhoenixUnsafeTargetError(Exception):
+class IncidentResetUnsafeTargetError(Exception):
     """rmtree()/unlink()の対象パスが危険すぎる(ルート・ホーム・極端に浅い)場合に送出する。"""
     pass
 
@@ -58,7 +58,7 @@ def _ensure_safe_destructive_target(path: Path, kind: str, allow_shallow_path: b
     resolved = path.resolve()
 
     if str(resolved) == resolved.anchor:
-        raise UrielPhoenixUnsafeTargetError(
+        raise IncidentResetUnsafeTargetError(
             f"[安全装置作動] {kind}の対象がファイルシステムのルート({resolved})です。実行を拒否します。"
         )
 
@@ -67,14 +67,14 @@ def _ensure_safe_destructive_target(path: Path, kind: str, allow_shallow_path: b
     except Exception:
         home = None
     if home is not None and resolved == home:
-        raise UrielPhoenixUnsafeTargetError(
+        raise IncidentResetUnsafeTargetError(
             f"[安全装置作動] {kind}の対象がホームディレクトリ({resolved})そのものです。実行を拒否します。"
         )
 
     if not allow_shallow_path:
         depth = len(resolved.relative_to(resolved.anchor).parts)
         if depth < _MIN_SAFE_PATH_DEPTH:
-            raise UrielPhoenixUnsafeTargetError(
+            raise IncidentResetUnsafeTargetError(
                 f"[安全装置作動] {kind}の対象({resolved})はルートから{depth}階層しかなく、"
                 "システム標準ディレクトリの誤指定の疑いがあります。本当に意図したものであれば"
                 "allow_shallow_path=True(CLIでは--allow-shallow-path)を明示してください。"
@@ -83,7 +83,7 @@ def _ensure_safe_destructive_target(path: Path, kind: str, allow_shallow_path: b
     return resolved
 
 
-class UrielPhoenix:
+class IncidentResetTool:
     def __init__(self, core_dir="jail_workspace", talisman=None, allow_shallow_path: bool = False):
         self.core_dir = Path(core_dir)
         self.talisman = Path(talisman) if talisman else None
@@ -137,7 +137,7 @@ def simulate_breach_demo():
     """元の `__main__` デモと同じ挙動(固定パス・演出あり)を保つための互換関数。"""
     print("=== [Anjo-Core] ウリエルの炎 デモシミュレーション ===\n")
     time.sleep(1)
-    UrielPhoenix(core_dir="jail_workspace", talisman="anjo-da-maquina").scorched_earth_and_rebirth()
+    IncidentResetTool(core_dir="jail_workspace", talisman="anjo-da-maquina").scorched_earth_and_rebirth()
 
 
 if __name__ == "__main__":

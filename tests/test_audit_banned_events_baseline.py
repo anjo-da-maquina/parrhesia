@@ -3,13 +3,13 @@ tests/test_audit_banned_events_baseline.py
 =====================================
 [新設 2026-11] checks/audit_banned_events_baseline.py の単体テスト。
 
-本天使(「エノク語の神託」)は、分散型オラクル台帳(`runtime_guard/raziel_ledger.json`)
+本天使(「エノク語の神託」)は、分散型オラクル台帳(`runtime_guard/pending_rule_ledger.json`)
 のベースライン禁止イベント(`os.system`・`subprocess.Popen`・`os.remove`)
 が欠落・改変されていないかを検証する(オラクルの「真実性」チェック)。
 天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在しない
 ことが判明した。
 
-`load_json`は`_common.ROOT`を閉じた状態で`runtime_guard/raziel_ledger.json`を
+`load_json`は`_common.ROOT`を閉じた状態で`runtime_guard/pending_rule_ledger.json`を
 直接読むため、`audit_banned_events_baseline.load_json`自体をモジュールレベルで
 monkeypatchして、実際のファイルI/Oを介さずに判定ロジックのみを検証
 する。
@@ -22,7 +22,7 @@ import audit_banned_events_baseline as eo
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のリポジトリのraziel_ledger.jsonには、
+    """[実機の裏付け] 現時点のリポジトリのpending_rule_ledger.jsonには、
     ベースライン禁止イベントが全て含まれているため、本天使はPASSを
     報告する。"""
     import io
@@ -35,7 +35,7 @@ def test_real_repository_passes():
 
 
 def test_fails_when_ledger_is_missing(monkeypatch):
-    """raziel_ledger.json自体が存在しない(load_jsonがNoneを返す)場合、
+    """pending_rule_ledger.json自体が存在しない(load_jsonがNoneを返す)場合、
     正しくFAILする。"""
     monkeypatch.setattr(eo, "load_json", lambda path: None)
     try:

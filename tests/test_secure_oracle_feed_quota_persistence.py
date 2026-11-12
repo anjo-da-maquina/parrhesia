@@ -33,15 +33,15 @@ def limiter_env(tmp_path, monkeypatch):
     import types
 
     # secure_oracle_feed.py はモジュールレベルで google.generativeai・ollama・
-    # defense_orchestrator・angelic_evolution をimportしており、このテスト環境には
+    # defense_orchestrator・ollama_selfplay_round をimportしており、このテスト環境には
     # 存在しない可能性がある。それらをスタブ化してから本体をimportする。
-    stub_names = ["ollama", "google", "google.generativeai", "defense_orchestrator", "angelic_evolution"]
+    stub_names = ["ollama", "google", "google.generativeai", "defense_orchestrator", "ollama_selfplay_round"]
     saved = {}
     for name in stub_names:
         saved[name] = sys.modules.get(name)
         sys.modules[name] = types.ModuleType(name)
     sys.modules["defense_orchestrator"].DefenseOrchestrator = type("DefenseOrchestrator", (), {"__init__": lambda self: None})
-    sys.modules["angelic_evolution"].EvolvingAngel = type("EvolvingAngel", (), {"__init__": lambda self: None})
+    sys.modules["ollama_selfplay_round"].OllamaSelfplayRound = type("OllamaSelfplayRound", (), {"__init__": lambda self: None})
 
     try:
         if "secure_oracle_feed" in sys.modules:

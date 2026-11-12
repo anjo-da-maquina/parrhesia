@@ -35,7 +35,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # (3) 本天使が検証する深層保護は、本リポジトリ全体のゼロトラスト
 # アーキテクチャの一層(defense in depth)に過ぎず、唯一の防衛線では
 # ない――Docker等によるOSレベルのネットワーク隔離(`--network none`)が
-# 一次防衛線であることは、本ファイルより前の`cassiels_veil`関連の
+# 一次防衛線であることは、本ファイルより前の`network_block_demo`関連の
 # GRIMOIRE記述(§L等)が既に明記している前提と同じである。
 #
 # [新設 2026-11 §CT] `connect`を一切経由しない接続不要の送信経路として、

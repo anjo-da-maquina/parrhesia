@@ -6,15 +6,15 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "audit_ledger_schema - スマートコントラクト監査: raziel_ledger.json のスキーマと、禁止イベント名が 妥当なPython audit event名の形式であるこ…"
+NAME = "audit_ledger_schema - スマートコントラクト監査: pending_rule_ledger.json のスキーマと、禁止イベント名が 妥当なPython audit event名の形式であるこ…"
 
 
-# スマートコントラクト監査: raziel_ledger.json のスキーマと、禁止イベント名が
+# スマートコントラクト監査: pending_rule_ledger.json のスキーマと、禁止イベント名が
 # 妥当なPython audit event名の形式であることを検証する（データ汚染検知）。
 def main():
-    ledger = load_json("runtime_guard/raziel_ledger.json")
+    ledger = load_json("runtime_guard/pending_rule_ledger.json")
     if ledger is None or "banned_events" not in ledger:
-        report_fail(NAME, "raziel_ledger.json が存在しない、または banned_events キーがありません。")
+        report_fail(NAME, "pending_rule_ledger.json が存在しない、または banned_events キーがありません。")
     events = ledger["banned_events"]
     if not isinstance(events, list) or not events:
         report_fail(NAME, "banned_events が空、または不正な形式です。")
@@ -22,7 +22,7 @@ def main():
     if malformed:
         report_fail(NAME, f"不正な形式のイベント名を検知しました（LLM幻覚の疑い）: {malformed}")
 
-    pending = load_json("runtime_guard/raziel_ledger_pending.json") or []
+    pending = load_json("runtime_guard/proposed_rule_queue.json") or []
     bad_status = [p for p in pending if p.get("status") not in {"PENDING_HUMAN_REVIEW", "APPROVED", "REJECTED"}]
     if bad_status:
         report_fail(NAME, f"承認待ちキューに不正なstatusのエントリがあります: {bad_status}")

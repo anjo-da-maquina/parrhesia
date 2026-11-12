@@ -2,13 +2,13 @@
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import report_pass, report_fail, ROOT
 
-NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/angelic_shield.py / src/verdict.py の再構築が…"
+NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/shield_rule_sync.py / src/verdict.py の再構築が…"
 
-# 思考統制監査: src/angelic_shield.py / src/verdict.py の再構築が、
+# 思考統制監査: src/shield_rule_sync.py / src/verdict.py の再構築が、
 # 以下3点の修正を保ったままであることを静的に検証する。
-#   A. ZadkielDominionがLLM生出力をshield_rules.jsonへ直接反映せず、
+#   A. ShieldRuleProposalQueueがLLM生出力をshield_rules.jsonへ直接反映せず、
 #      人間承認待ちキュー(shield_rules_pending.json)に積むのみであること
-#      (adversarial_training/local_only_selfplay_gate.py の raziel_ledger_pending.json と同一原則)。
+#      (adversarial_training/local_only_selfplay_gate.py の proposed_rule_queue.json と同一原則)。
 #   B. tools/promote_shield_seal.py による人間承認の昇格経路が存在すること。
 #   C. GEMINI_API_KEY を os.environ.pop() で即時消去していること
 #      (os.environ.get() のままの読み取り専用アクセスに戻っていないか)。
@@ -17,7 +17,7 @@ NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/angel
 
 
 def main():
-    shield_path = ROOT / "src" / "angelic_shield.py"
+    shield_path = ROOT / "src" / "shield_rule_sync.py"
     judgment_path = ROOT / "src" / "verdict.py"
     promote_tool_path = ROOT / "tools" / "promote_shield_seal.py"
 
@@ -31,7 +31,7 @@ def main():
 
     # A: 人間承認待ちキューへの提案のみ（直接反映の禁止）
     if "shield_rules_pending" not in shield_text:
-        report_fail(NAME, "ZadkielDominionが承認待ちキュー(shield_rules_pending.json)を使用していません。")
+        report_fail(NAME, "ShieldRuleProposalQueueが承認待ちキュー(shield_rules_pending.json)を使用していません。")
     if "def assimilate_knowledge" in shield_text:
         report_fail(NAME, "LLM出力を即時反映する旧メソッド 'assimilate_knowledge' が復活しています。"
                            "'propose_knowledge' によるキューイングのみを許可します。")
@@ -55,7 +55,7 @@ def main():
         report_fail(NAME, "撤去済みの独自audit hook実装(metatrons_seal)が復活しています。"
                            "実行を伴わない本ファイル群にOSレベルhookを装う表示は誤解を招くため禁止します。")
 
-    report_pass(NAME, "外部脅威インテリジェンス取り込み(angelic_shield.py/verdict.py)が、"
+    report_pass(NAME, "外部脅威インテリジェンス取り込み(shield_rule_sync.py/verdict.py)が、"
                        "人間承認ゲート・APIキー即時消去・完全修飾名照合を保ったまま提供されています。")
 
 

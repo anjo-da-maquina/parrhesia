@@ -37,35 +37,35 @@
 - **PyPI配布名の変更を含む**ため、既存ユーザーが `pip install sefer` で導入している場合、
   パッケージ名変更は破壊的変更(breaking change)になる。`pyproject.toml`の`name`変更は
   実質的にメジャーバージョンアップ相当の判断が必要。
-- `tartarus/armageddon_core.py` が `from sefer import ALWAYS_PASSTHROUGH_AUDIT_EVENTS` のように
+- `local_arena/selfplay_core.py` が `from sefer import ALWAYS_PASSTHROUGH_AUDIT_EVENTS` のように
   パッケージ名をハードコードでimportしている(ドリフト防止のための単一の正、§BJのコメント参照)。
 - `.gitignore`/`.dockerignore` 中の `sefer/.audit_signing_key` 等、ファイルパスとしての参照も多数。
 
 ---
 
-## 2. `tartarus/` ディレクトリ
+## 2. `local_arena/` ディレクトリ
 
 ### 現状
-- `tartarus/armageddon.py` — 起動直後に `_verify_creators_air()`(創造主のMACアドレスのハッシュ照合)を行い、
+- `local_arena/selfplay.py` — 起動直後に `_verify_creators_air()`(創造主のMACアドレスのハッシュ照合)を行い、
   不一致なら即座に終了する。**創造主のローカルPC以外では絶対に起動しない設計**のゲート。
-- `tartarus/armageddon_core.py` — MACアドレスチェックに依存しない「純粋ロジック」部分を分離したもの。
+- `local_arena/selfplay_core.py` — MACアドレスチェックに依存しない「純粋ロジック」部分を分離したもの。
   Red Team(Lucifer)側がBlue Team(Sefer)側の防御を突破しようと試行し続ける自己対戦エンジンで、
-  新たな禁止イベント案を`akashic_records.json`に記録し、人間が承認すれば`sefer/raziel_ledger.json`
-  (Razielの台帳)に反映される仕組み。
-- `tartarus/akashic_records.json` — 自己対戦の世代ごとの試行記録(ペイロード・成否・スコア等)。
+  新たな禁止イベント案を`akashic_records.json`に記録し、人間が承認すれば`sefer/pending_rule_ledger.json`
+  (ThreatIntelの台帳)に反映される仕組み。
+- `local_arena/akashic_records.json` — 自己対戦の世代ごとの試行記録(ペイロード・成否・スコア等)。
 
 ### 提案名
 `adversarial_training/`(ディレクトリ名)、内部ファイルは
-`armageddon.py`→`local_only_selfplay_gate.py`、
-`armageddon_core.py`→`selfplay_engine_core.py`、
+`selfplay.py`→`local_only_selfplay_gate.py`、
+`selfplay_core.py`→`selfplay_engine_core.py`、
 `akashic_records.json`→`selfplay_history.json`
 
 理由: 「創造主のローカル環境限定で動く、攻撃側・防御側の自己対戦による新しい脆弱性発見エンジン」
 という実際の役割をそのまま表す。
 
 ### 影響範囲
-- `.py`ファイル中の `tartarus` 参照: **27ファイル**。
-- `sefer/__init__.py`側のコメント(§BJ)が`tartarus/armageddon_core.py`を名指しで参照しているため、
+- `.py`ファイル中の `local_arena` 参照: **27ファイル**。
+- `sefer/__init__.py`側のコメント(§BJ)が`local_arena/selfplay_core.py`を名指しで参照しているため、
   2のパッケージ名改名(1.)と同時に行う場合は相互参照の更新順序に注意が必要。
 - ローカル限定ゲートという設計意図上、CI上では実行されない(MACアドレス不一致で即終了)ため、
   CI側への影響は小さいと推測されるが、実機(創造主のPC)での動作確認が改名後に必須。
@@ -93,9 +93,9 @@
 ### 影響範囲
 以下15ファイルで `sandalphon_jail` という識別子が参照されている(grep確認済み):
 - `src/sandalphon_jail.py` (本体)
-- `src/metatron_orchestrator.py`
+- `src/selfplay_orchestrator.py`
 - `src/defense_orchestrator.py`
-- `src/cassiels_veil.py`
+- `src/network_block_demo.py`
 - `.github/workflows/regression_checks_ci.yml`
 - `DEFECTS.md`
 - `tests/test_sandalphon_jail_mount_permissions.py`
@@ -175,12 +175,12 @@
 | 対象 | 参照ファイル数 | 破壊的変更の有無 | リスク |
 |---|---|---|---|
 | `sandalphon_jail` | 15 | なし(内部識別子のみ) | 低〜中 |
-| `tartarus/` | 27 | なし(ローカル限定・CI非実行) | 低〜中 |
+| `local_arena/` | 27 | なし(ローカル限定・CI非実行) | 低〜中 |
 | `sefer/` | 113 | **あり**(PyPI配布名) | 高 |
 | `maquina_gatekeeper.py` | 42 | なし(内部識別子のみ、ただし最終防衛線ロジックに近接) | 中〜高 |
 | Pleroma(プロジェクト名) | 17 | **あり**(リポジトリ外部識別子全般) | 最高 |
 
-`sandalphon_jail`・`tartarus/`は`checks/`改名と同じ手順(`git mv`+識別子置換+テスト前後比較)が
+`sandalphon_jail`・`local_arena/`は`checks/`改名と同じ手順(`git mv`+識別子置換+テスト前後比較)が
 そのまま適用できる低リスク候補。`sefer/`と`Pleroma`自体は外部に公開された名前の変更を伴うため、
 実行判断には別途、創造主自身による「破壊的変更を受け入れるか」の意思決定が必要。
 

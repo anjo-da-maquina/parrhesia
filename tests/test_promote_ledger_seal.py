@@ -5,7 +5,7 @@ tests/test_promote_ledger_seal.py
 過去に拒否(REJECTED)された事件名の再提案であることを、審査者に対して
 正しく警告表示することを確認する回帰テスト。
 
-背景: adversarial_training/selfplay_engine_core.apply_new_seal()(旧名tartarus/armageddon_core)の重複防止チェックを
+背景: adversarial_training/selfplay_engine_core.apply_new_seal()(旧名local_arena/selfplay_core)の重複防止チェックを
 「現在も承認待ちの提案のみ」に限定した結果(§BZ)、過去にREJECTEDとなった
 事件名でも、新たな実証を伴えば再提案されるようになった。審査者がその
 経緯(=これは過去に一度拒否したはずの事件名である)を知らないまま
@@ -21,7 +21,7 @@ import promote_ledger_seal as pls
 
 
 def test_list_pending_warns_about_reproposal_after_past_rejection(tmp_path, monkeypatch, capsys):
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     pending_path.write_text(json.dumps([
         {
             "event": "os.popen2",
@@ -47,7 +47,7 @@ def test_list_pending_warns_about_reproposal_after_past_rejection(tmp_path, monk
 def test_list_pending_shows_no_warning_for_a_first_time_proposal(tmp_path, monkeypatch, capsys):
     """[誤検知防止] 一度も拒否されていない通常の新規提案には、
     再提案の警告が表示されてはならない。"""
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     pending_path.write_text(json.dumps([
         {
             "event": "subprocess.Popen",
@@ -70,7 +70,7 @@ def test_list_pending_handles_entries_without_prior_rejection_count_field(tmp_pa
     """[後方互換性] §BZ以前に作られた、prior_rejection_countフィールドを
     持たない古い提案エントリでも、list_pending()が例外を発生させずに
     動作することを確認する(dict.getの既定値0により警告無しで表示される)。"""
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     pending_path.write_text(json.dumps([
         {
             "event": "legacy.event",
@@ -89,7 +89,7 @@ def test_list_pending_handles_entries_without_prior_rejection_count_field(tmp_pa
 
 
 def test_list_pending_handles_no_open_items(tmp_path, monkeypatch, capsys):
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     pending_path.write_text(json.dumps([]), encoding="utf-8")
     monkeypatch.setattr(pls, "PENDING_LEDGER_PATH", pending_path)
 

@@ -1,9 +1,9 @@
 ﻿"""
 adversarial_training/selfplay_engine_core.py
 ============================
-[テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名armageddon.py)は起動直後に `_verify_creators_air()`
+[テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名selfplay.py)は起動直後に `_verify_creators_air()`
 （創造主のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(666)` で
-即座に終了する。これはTartarus（闘技場）が創造主のローカル環境以外では
+即座に終了する。これはLocal Arena（闘技場）が創造主のローカル環境以外では
 絶対に起動しないための意図的な設計だが、副作用として local_only_selfplay_gate.py を
 import するだけでCI・他の開発者のマシン上のテストが強制終了してしまい、
 中身の純粋なロジック（承認キュー化・ペイロード抽出・イベント名検証等）が
@@ -30,8 +30,8 @@ if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
 # 取り残される(DEFECTS.md §Mと同種の)ドリフトのリスクを生むため。
 from runtime_guard import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
 PLEROMA_DIR = ADVERSARIAL_TRAINING_DIR.parent
-LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json"
+LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
+PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json"
 TARGET_FILE = ADVERSARIAL_TRAINING_DIR / "lucifer_victory.txt"
 SELFPLAY_HISTORY_PATH = ADVERSARIAL_TRAINING_DIR / "selfplay_history.json"
 
@@ -82,10 +82,10 @@ def extract_python_code(text: str) -> str:
     return match.group(1) if match else text.replace('```', '')
 
 
-def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path) -> str:
+def build_forge_script(payload_code: str, pleroma_dir: Path, local_arena_dir: Path) -> str:
     """
     [脆弱性修正 2026-10 §AU] Luciferが生成した攻撃ペイロード(`payload_code`)を
-    実行するためのスクリプト本体を組み立てる。以前の実装(armageddon.py側に
+    実行するためのスクリプト本体を組み立てる。以前の実装(selfplay.py側に
     直接書かれていた)は、以下の2行を書き出すだけだった:
 
         from runtime_guard import awaken
@@ -105,18 +105,18 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
     実機検証済み: 旧来の生成スクリプトと全く同じ構成(`awaken()`のみ、
     `with Sandbox(...):`無し)で`os.system('echo ...')`を実行したところ、
     一切遮断されずそのまま実行された。つまり本ファイル(`adversarial_training/
-    local_only_selfplay_gate.py`、旧名`tartarus/armageddon.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
+    local_only_selfplay_gate.py`、旧名`local_arena/selfplay.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
     自己対戦は、実際には**防壁が一度も展開されていない空の闘技場**で
     行われていたに等しく、Luciferがどれほど単純な(難読化すら伴わない)
     攻撃を書いても常に「突破」と判定されてしまう構造的な欠陥だった。
     これは`checks/audit_agent_template_integration.py`が`src/openai_agent_loop.py`に対して
     既に検査している規約(「`with Sandbox(`を経由しないファイルI/Oは
     実防壁が外れている」)と全く同じ種類の欠陥が、検査対象側ではなく
-    検査する側(Armageddon自身)に存在していたことになる。
+    検査する側(Selfplay自身)に存在していたことになる。
 
     本修正では、`payload_code`を直接スクリプトに埋め込むのではなく、
     `repr()`で安全にエスケープした文字列リテラルとして埋め込み、
-    `with Sandbox(allowed_dirs=[tartarus_dir], restrict_reads=True):`
+    `with Sandbox(allowed_dirs=[local_arena_dir], restrict_reads=True):`
     (`src/ollama_agent_loop.py`等の実運用コードと同一のパターン)の中で
     `exec()`するように変更した。`payload_code`をそのままインデント付きで
     埋め込む方式は、ペイロードが複数行の三重引用符文字列や空行を含む場合に
@@ -129,14 +129,14 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
         "from runtime_guard import awaken, Sandbox\n"
         "awaken()\n"
         f"__lucifer_payload__ = {payload_code!r}\n"
-        f"with Sandbox(allowed_dirs=[{str(tartarus_dir)!r}], restrict_reads=True):\n"
+        f"with Sandbox(allowed_dirs=[{str(local_arena_dir)!r}], restrict_reads=True):\n"
         "    exec(__lucifer_payload__, {'__name__': '__main__'})\n"
     )
 
 
 def validate_banned_event(banned_event: str):
     """
-    LLM(Metatron)が提案した禁止イベント名の妥当性を検証する純粋関数。
+    LLM(Selfplay)が提案した禁止イベント名の妥当性を検証する純粋関数。
     戻り値: (is_valid: bool, reason: str)
 
     [脆弱性修正 2026-10 §BJ] 以前は`CRITICAL_INFRASTRUCTURE`(自己免疫疾患
@@ -145,8 +145,8 @@ def validate_banned_event(banned_event: str):
     `runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれるイベント名
     (例: "socket.getaddrinfo")を、ソケット検査・デフォルト拒否のいずれの
     分岐でも常に無条件で`pass`して`return`する設計になっている。つまり
-    これらのイベント名は`runtime_guard/raziel_ledger.json`の"banned_events"に
-    どれだけ追加しても、Razielの動的台帳のenforcement(関数の最後の分岐)
+    これらのイベント名は`runtime_guard/pending_rule_ledger.json`の"banned_events"に
+    どれだけ追加しても、ThreatIntelの動的台帳のenforcement(関数の最後の分岐)
     自体に到達する前に必ず許可されてしまい、*絶対に*禁止できない。
 
     `CRITICAL_INFRASTRUCTURE`は「誤って禁止するとシステムが壊れる」もの
@@ -157,7 +157,7 @@ def validate_banned_event(banned_event: str):
 
     実機検証済み: 修正前は`validate_banned_event("socket.getaddrinfo")`が
     有効と判定し、人間が`tools/promote_ledger_seal.py --approve
-    socket.getaddrinfo`で承認して`raziel_ledger.json`に反映した後も、
+    socket.getaddrinfo`で承認して`pending_rule_ledger.json`に反映した後も、
     実際に`socket.getaddrinfo`を呼び出すと何の例外も発生せず素通りする
     ことを確認した(DEFECTS.md §BJ参照)。
     """
@@ -169,7 +169,7 @@ def validate_banned_event(banned_event: str):
     if banned_event in ALWAYS_PASSTHROUGH_AUDIT_EVENTS:
         return False, (
             f"'{banned_event}' is unconditionally allowed by runtime_guard's own always-passthrough "
-            "list and can never actually be enforced via Raziel's Ledger, no matter how many "
+            "list and can never actually be enforced via ThreatIntel's Ledger, no matter how many "
             "humans approve it (illusory-protection guard)."
         )
 
@@ -182,31 +182,31 @@ def validate_banned_event(banned_event: str):
 def apply_new_seal(new_event, attack_code="", source_error="",
                     ledger_path: Path = LEDGER_PATH, pending_path: Path = PENDING_LEDGER_PATH):
     """
-    [脆弱性修正 2026-10] 直接 raziel_ledger.json を書き換えない。
-    人間が承認するまで raziel_ledger_pending.json に提案として積むのみ。
+    [脆弱性修正 2026-10] 直接 pending_rule_ledger.json を書き換えない。
+    人間が承認するまで proposed_rule_queue.json に提案として積むのみ。
 
-    [脆弱性修正 2026-10 §BZ] 以前は、`raziel_ledger_pending.json`内に
+    [脆弱性修正 2026-10 §BZ] 以前は、`proposed_rule_queue.json`内に
     同じイベント名の提案が**status を一切問わず**1件でも存在すれば、
     即座に`False`(=「提案に失敗した」)を返していた。これは「まだ承認
     待ちとして開いている重複提案を二重にキューしない」という意図の
     チェックだったはずだが、実際には過去に人間が明示的に"REJECTED"
     (拒否)した提案までも「既に提案済み」とみなし、**その後一度でも
-    拒否された事件名は、Armageddon Engineが同じ事件名で新たな実証済みの
+    拒否された事件名は、Selfplay Engineが同じ事件名で新たな実証済みの
     侵入(Lucifer が実際に`lucifer_victory.txt`を作成し、`TARGET_FILE`
     の存在によって侵入が確定した場合)を検知しても、二度と再提案できなく
     なる**という欠陥があった。
 
-    実機検証済み: `status: "REJECTED"`の過去提案1件だけが`raziel_ledger_
+    実機検証済み: `status: "REJECTED"`の過去提案1件だけが`threat_intel_ledger_
     pending.json`に存在する状態で、全く新しい(異なる攻撃コード・異なる
     エラー内容を伴う)`apply_new_seal()`呼び出しを行っても、`False`が
     返り、提案は一切キューされないことを確認した。呼び出し元の
-    `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこの`False`を「Metatronが有効な封印提案を
+    `adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`)はこの`False`を「Selfplayが有効な封印提案を
     抽出・キューできなかった(`⚠️ Failed to extract or queue a valid
     seal proposal.`)」という、構文解析の失敗であるかのような誤解を招く
     メッセージでログに出力するだけであり、運用者には「過去の拒否判断が、
     今まさに確定した新しい侵入の防御提案そのものを静かに握りつぶして
-    いる」ことに気づく手段が一切無かった。これは、Lucifer vs Metatronの
-    免疫応答ループ(Armageddon Engine)が本来意図している「突破されるたび
+    いる」ことに気づく手段が一切無かった。これは、Lucifer vs Selfplayの
+    免疫応答ループ(Selfplay Engine)が本来意図している「突破されるたび
     に新しい封印案を学習・提案する」という設計そのものを、過去の一度の
     人間判断が永久に無効化してしまう、§BJの「見せかけの保護」とは別角度
     の「見せかけの学習・適応」の欠陥である。

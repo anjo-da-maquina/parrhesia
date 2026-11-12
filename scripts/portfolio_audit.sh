@@ -37,7 +37,7 @@ if [ "$n" -gt 12 ]; then wn "ルート直下のファイルが ${n} 個(12以下
 echo "-- 拡張子なしファイル --"
 git ls-files | grep -v / | grep -v '\.' | grep -vE '^(LICENSE|Dockerfile|Makefile|NOTICE|CHANGELOG)' || echo "(なし)"
 echo "-- 神話・内輪の名前を含むパス --"
-git ls-files | grep -iE 'grimoire|underground|ataraxia|raziel|merkabah|chotam|tartarus' || echo "(なし)"
+git ls-files | grep -iE 'grimoire|underground|ataraxia|threat_intel|merkabah|chotam|local_arena' || echo "(なし)"
 
 echo "== 4. 秘密情報らしき文字列 =="
 git grep -nIE 'AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{20,}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----' \

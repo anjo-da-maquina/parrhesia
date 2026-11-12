@@ -101,7 +101,7 @@ jobs:
         run: python checks/guard_sandbox_core_attack_battery.py
       - name: scan_source
         run: python checks/guard_precommit_secret_leak.py
-      - name: raziel
+      - name: threat_intel
         run: python checks/audit_ledger_schema.py
 """)
     import io

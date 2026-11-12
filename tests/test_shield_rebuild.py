@@ -1,12 +1,12 @@
 ﻿"""
 tests/test_shield_rebuild.py
 ==============================
-src/angelic_shield.py / src/verdict.py の再構築(2026-10)を検証する
+src/shield_rule_sync.py / src/verdict.py の再構築(2026-10)を検証する
 回帰テスト。詳細な経緯は両モジュールのdocstring、および
 checks/guard_shield_rule_autoapply_and_key_leak.py 参照。
 
 確認する点:
-  1. ZadkielDominion.propose_knowledge() が、LLM生出力を即時に
+  1. ShieldRuleProposalQueue.propose_knowledge() が、LLM生出力を即時に
      shield_rules.json へ反映せず、承認待ちキュー(pending file)に
      積むだけであること(人間承認を経ない自動ルール変更の防止)。
   2. tools/promote_shield_seal.py が、承認待ちの提案を正しく
@@ -23,14 +23,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tools")))
 
-from angelic_shield import ZadkielDominion
+from shield_rule_sync import ShieldRuleProposalQueue
 import verdict as kj
 
 
 def test_propose_knowledge_does_not_mutate_rules_file(tmp_path):
     rules_file = tmp_path / "shield_rules.json"
     pending_file = tmp_path / "shield_rules_pending.json"
-    z = ZadkielDominion(rules_file=rules_file, pending_file=pending_file)
+    z = ShieldRuleProposalQueue(rules_file=rules_file, pending_file=pending_file)
 
     intel = {
         "vulnerability_name": "Fake Vuln",
@@ -60,7 +60,7 @@ def test_promote_shield_seal_approval_flow(tmp_path, monkeypatch):
     monkeypatch.setattr(pss, "RULES_PATH", rules_file)
     monkeypatch.setattr(pss, "PENDING_RULES_PATH", pending_file)
 
-    z = ZadkielDominion(rules_file=rules_file, pending_file=pending_file)
+    z = ShieldRuleProposalQueue(rules_file=rules_file, pending_file=pending_file)
     z.propose_knowledge({
         "vulnerability_name": "Fake Vuln 2",
         "dangerous_modules": ["ctypes"],
@@ -90,7 +90,7 @@ def test_promote_shield_seal_approves_latest_proposal_not_stale_one(tmp_path, mo
     monkeypatch.setattr(pss, "RULES_PATH", rules_file)
     monkeypatch.setattr(pss, "PENDING_RULES_PATH", pending_file)
 
-    z = ZadkielDominion(rules_file=rules_file, pending_file=pending_file)
+    z = ShieldRuleProposalQueue(rules_file=rules_file, pending_file=pending_file)
 
     # 1回目の提案・承認: "old_danger" のみを禁止
     z.propose_knowledge({

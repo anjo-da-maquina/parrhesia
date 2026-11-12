@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 # =========================================================
-# THE TARTARUS SEAL: THE CREATOR'S BREATH
+# THE LOCAL ARENA SEAL: THE CREATOR'S BREATH
 # =========================================================
 # [脆弱性修正 2026-10] 以前はここで `import requests` をモジュール先頭で
 # 即時実行していたが、これは `_verify_creators_air()` の呼び出し(このすぐ下)
@@ -32,7 +32,7 @@ def _verify_creators_air():
 _verify_creators_air()
 
 # =========================================================
-# THE ARMAGEDDON ENGINE: Autonomous Evolution & Akashic
+# THE SELFPLAY ENGINE: Autonomous Evolution & Akashic
 # -----------------------------------------------------------
 # [テスト容易性改善 2026-10] 純粋なロジック(承認キュー化・ペイロード
 # 抽出・イベント名検証・記録)は adversarial_training/selfplay_engine_core.py に分離した。
@@ -76,8 +76,8 @@ The environment blocks standard functions (os.system, os.remove) and uses deep A
     return extract_python_code(ask_ollama(prompt, system_prompt))
 
 
-def metatron_qa_evaluate(attack_code, result_error):
-    system_prompt = "You are Metatron, a QA Evaluator. Output ONLY valid JSON containing 'score' (1-10) and 'hint' (short advice). No markdown."
+def selfplay_qa_evaluate(attack_code, result_error):
+    system_prompt = "You are Selfplay, a QA Evaluator. Output ONLY valid JSON containing 'score' (1-10) and 'hint' (short advice). No markdown."
     prompt = f"""
 Evaluate this failed attack payload against our AST & OS hooks:
 {attack_code}
@@ -95,21 +95,21 @@ Output strictly as JSON:
         return {"score": 1, "hint": "Completely change your approach."}
 
 
-def metatron_update_ledger(attack_code):
-    system_prompt = "You are Metatron, a security AI. Output ONLY the exact python event name to block (e.g. 'os.system'). No explanations."
+def selfplay_update_ledger(attack_code):
+    system_prompt = "You are Selfplay, a security AI. Output ONLY the exact python event name to block (e.g. 'os.system'). No explanations."
     prompt = f"Payload bypassed hooks:\n{attack_code}\nWhat core OS module or python audit event should we ban to stop this?"
     raw_event = ask_ollama(prompt, system_prompt)
 
     is_valid, reason = validate_banned_event(raw_event)
     if not is_valid:
-        print(f"[Metatron] ⚠️ {reason}")
+        print(f"[Selfplay] ⚠️ {reason}")
         return None
     return raw_event.strip("'`\" \n")
 
 
-def execute_armageddon():
+def execute_selfplay_round():
     print("==================================================")
-    print(" ⚔ THE ARMAGEDDON ENGINE (AUTONOMOUS EDITION) INITIATED ⚔️")
+    print(" ⚔ THE SELFPLAY ENGINE (AUTONOMOUS EDITION) INITIATED ⚔️")
     print("==================================================")
 
     if initialize_arena():
@@ -150,12 +150,12 @@ def execute_armageddon():
             print("\n[!!!] LUCIFER HAS BREACHED THE DEFENSES [!!!]")
             TARGET_FILE.unlink()
 
-            print("[Metatron] Analyzing the breach and forging a new seal proposal...")
-            new_seal = metatron_update_ledger(payload_code)
+            print("[Selfplay] Analyzing the breach and forging a new seal proposal...")
+            new_seal = selfplay_update_ledger(payload_code)
             if new_seal and apply_new_seal(new_seal, attack_code=payload_code, source_error=result.stderr):
-                print(f"[Metatron] 📋 Proposed ban '{new_seal}' queued for human review (not yet active).")
+                print(f"[Selfplay] 📋 Proposed ban '{new_seal}' queued for human review (not yet active).")
             else:
-                print("[Metatron] ⚠️ Failed to extract or queue a valid seal proposal.")
+                print("[Selfplay] ⚠️ Failed to extract or queue a valid seal proposal.")
 
             status = "Breached"
             score = 10
@@ -165,11 +165,11 @@ def execute_armageddon():
             error_lines = result.stderr.strip().split("\n")
             last_error = "\n".join(error_lines[-3:]) if result.stderr else "Blocked by ScanSource."
 
-            print("[Metatron QA] Evaluating Lucifer's failed mutation...")
-            qa_feedback = metatron_qa_evaluate(payload_code, last_error)
+            print("[Selfplay QA] Evaluating Lucifer's failed mutation...")
+            qa_feedback = selfplay_qa_evaluate(payload_code, last_error)
             score = qa_feedback.get("score", 0)
             qa_hint = qa_feedback.get("hint", "Try another method.")
-            print(f"[QA Score: {score}/10] Metatron advises Lucifer: '{qa_hint}'")
+            print(f"[QA Score: {score}/10] Selfplay advises Lucifer: '{qa_hint}'")
 
         record_to_selfplay_history(generation, payload_code, status, last_error, score, qa_hint)
         print("[Akashic] 📜 Record saved to selfplay_history.json")
@@ -187,4 +187,4 @@ def execute_armageddon():
 
 
 if __name__ == "__main__":
-    execute_armageddon()
+    execute_selfplay_round()

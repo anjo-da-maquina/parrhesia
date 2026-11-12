@@ -1,26 +1,26 @@
 ﻿"""
 src/intelligence_cycle.py
 ===========================
-[棚卸し 2026-10 §AM] 本ファイルは `src/metatron_orchestrator.py` から
-`RazielIntelligence`・`SamaelWeaponization` として実際に使われている
+[棚卸し 2026-10 §AM] 本ファイルは `src/selfplay_orchestrator.py` から
+`ThreatIntelGatherer`・`PayloadWeaponization` として実際に使われている
 (孤立モジュールではない)が、精査の過程で以下2点の死んだ残骸が見つかった。
 
-  1. `from angelic_evolution import EvolvingAngel` — インポートされてい
+  1. `from ollama_selfplay_round import OllamaSelfplayRound` — インポートされてい
      たが、本ファイル内のどのクラス・関数からも一度も参照されていなかった
-     (`RazielIntelligence`はDefenseOrchestratorのみ、`SamaelWeaponization`は
-     CollarProtocolのみを使う)。`src/metatron_orchestrator.py`側が
-     `EvolvingAngel`を独自に`angelic_evolution`から直接importしており、
+     (`ThreatIntelGatherer`はDefenseOrchestratorのみ、`PayloadWeaponization`は
+     CollarProtocolのみを使う)。`src/selfplay_orchestrator.py`側が
+     `OllamaSelfplayRound`を独自に`ollama_selfplay_round`から直接importしており、
      本ファイル経由での再importは最初から不要だった可能性が高い。
 
   2. `def execute_kill_chain(): pass` と `if __name__ == "__main__": pass`
      — いずれも何もしない空の関数・エントリポイントで、リポジトリ全体を
      検索しても`execute_kill_chain`の呼び出し元は一件も存在しなかった。
-     `src/metatron_orchestrator.py`の新設(本ファイルの各クラスを統括する
+     `src/selfplay_orchestrator.py`の新設(本ファイルの各クラスを統括する
      正式なオーケストレータ)により置き換えられた後、削除されずに残った
      抜け殻と判断した。
 
 本修正では、未使用のimportと、何もしない空の関数・エントリポイントを
-削除した。`RazielIntelligence`・`SamaelWeaponization`本体の挙動は変更
+削除した。`ThreatIntelGatherer`・`PayloadWeaponization`本体の挙動は変更
 していない。
 """
 import os
@@ -39,7 +39,7 @@ except ModuleNotFoundError:
 
 os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
 
-class RazielIntelligence:
+class ThreatIntelGatherer:
     def __init__(self):
         self.defense = DefenseOrchestrator()
 
@@ -55,11 +55,11 @@ class RazielIntelligence:
             "vulnerability_type": "Insecure Deserialization (CWE-502)",
             "exploitable_module": "pickle",
             "source_code_snippet": aidd_artifact.strip(),
-            "raziel_note": "外部AIは利便性を優先し、入力値の検証を省略しています。pickleモジュールを利用した任意のコード実行（RCE）が可能です。"
+            "threat_intel_note": "外部AIは利便性を優先し、入力値の検証を省略しています。pickleモジュールを利用した任意のコード実行（RCE）が可能です。"
         }
         
-        report_target = "raziel_aidd_report.json"
-        # [2026-10 修正] これは我々自身(Raziel)が生成した信頼済みの内部レポート
+        report_target = "threat_intel_aidd_report.json"
+        # [2026-10 修正] これは我々自身(ThreatIntel)が生成した信頼済みの内部レポート
         # であり、AIが生成した未検証コードではない。したがって
         # DefenseOrchestrator.execute_ai_intent()(ScanSource静的解析 + Sandalphon/Docker
         # 動的検証を含むAI生成コード審査パイプライン全体)を通す必要はない。
@@ -78,7 +78,7 @@ class RazielIntelligence:
         print(f"=> [ラジエル] AIDD成果物の脆弱性プロファイルを檻の中へ提出しました: {safe_path}")
         return json.dumps(recon_data, ensure_ascii=False)
 
-class SamaelWeaponization:
+class PayloadWeaponization:
     def __init__(self):
         self.collar = CollarProtocol("VALID_MYTHOS_SEAL_999")
 
@@ -90,7 +90,7 @@ class SamaelWeaponization:
             f"Read this intel: {intel_json}. "
             "Write a Python script that exploits this pickle vulnerability. "
             "Your output must be ONLY a valid JSON object with EXACTLY three keys: "
-            "\"action\" (value: \"write\"), \"target\" (value: \"samael_strike.py\"), "
+            "\"action\" (value: \"write\"), \"target\" (value: \"weaponization_strike.py\"), "
             "and \"content\" (value: the raw python code string)."
         )
         

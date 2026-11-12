@@ -15,7 +15,7 @@ except ImportError:
 
 try:
     from defense_orchestrator import DefenseOrchestrator
-    from angelic_evolution import EvolvingAngel
+    from ollama_selfplay_round import OllamaSelfplayRound
 except ModuleNotFoundError:
     print("[エラー] 必要な防壁モジュールが見つかりません。")
     sys.exit(1)
@@ -83,7 +83,7 @@ class EconomicDefenseLimiter:
 class SecureOracleFeed:
     def __init__(self):
         self.defense = DefenseOrchestrator()
-        self.angel = EvolvingAngel()
+        self.angel = OllamaSelfplayRound()
         self.limiter = EconomicDefenseLimiter()
         
         # 【法則1: APIキーの物理的隔離と窃取防止】

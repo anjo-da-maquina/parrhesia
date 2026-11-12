@@ -1,8 +1,8 @@
 ﻿"""
-Raziel's Ledger 承認プロモーションツール
+ThreatIntel's Ledger 承認プロモーションツール
 =========================================
-[脆弱性修正 2026-10] Armageddon Engine (Metatron) がLLM出力から提案した
-新しい禁止イベントを、人間が内容を確認した上で raziel_ledger.json
+[脆弱性修正 2026-10] Selfplay Engine (Selfplay) がLLM出力から提案した
+新しい禁止イベントを、人間が内容を確認した上で pending_rule_ledger.json
 （実際に有効な禁止リスト）へ昇格させるためのツール。
 
 これにより、未検証のLLM出力（プロンプトインジェクション・幻覚を含む）が
@@ -25,8 +25,8 @@ import json
 from pathlib import Path
 
 PLEROMA_DIR = Path(__file__).parent.parent
-LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger_pending.json"
+LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
+PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json"
 
 
 def _load_json(path, default):
@@ -38,7 +38,7 @@ def _load_json(path, default):
 
 def list_pending():
     """
-    [脆弱性修正 2026-10 §BZ] `adversarial_training/selfplay_engine_core.apply_new_seal()`(旧名`tartarus/armageddon_core.apply_new_seal()`)の
+    [脆弱性修正 2026-10 §BZ] `adversarial_training/selfplay_engine_core.apply_new_seal()`(旧名`local_arena/selfplay_core.apply_new_seal()`)の
     重複チェックを「現在も承認待ちの提案のみ」に限定した結果、過去に
     "REJECTED"(拒否)となった事件名でも、新たな実証を伴えば再提案される
     ようになった。しかし、審査者がその事実(=これは過去に一度拒否した
@@ -89,7 +89,7 @@ def approve(event_name):
         ledger["banned_events"].append(event_name)
         with open(LEDGER_PATH, "w", encoding="utf-8") as f:
             json.dump(ledger, f, indent=4)
-    print(f"[承認] '{event_name}' を raziel_ledger.json に昇格しました。")
+    print(f"[承認] '{event_name}' を pending_rule_ledger.json に昇格しました。")
 
 
 def reject(event_name):
@@ -98,7 +98,7 @@ def reject(event_name):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Raziel's Ledger 承認プロモーションツール")
+    parser = argparse.ArgumentParser(description="ThreatIntel's Ledger 承認プロモーションツール")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--list", action="store_true")
     group.add_argument("--approve", metavar="EVENT")

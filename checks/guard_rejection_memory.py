@@ -4,15 +4,15 @@ from _common import report_pass, report_fail, ROOT
 
 NAME = "guard_rejection_memory - 過去にREJECTEDとなった事件名でも、新たな実証を伴う再提案が 正しく受理されるかを確認する。"
 
-# [新設 2026-10 §BZ] 実際に発見した具体例: `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の
-# `apply_new_seal()`は、同じ事件名の提案が`raziel_ledger_pending.json`に
+# [新設 2026-10 §BZ] 実際に発見した具体例: `adversarial_training/selfplay_engine_core.py`(旧名`local_arena/selfplay_core.py`)の
+# `apply_new_seal()`は、同じ事件名の提案が`proposed_rule_queue.json`に
 # 1件でも存在すれば、そのstatusを一切問わずに重複とみなし`False`を返して
 # いた。これは「まだ承認待ちで開いている重複提案を防ぐ」という意図の
 # チェックだったが、実際には過去に人間が明示的に"REJECTED"(拒否)した
-# 提案までも「既に提案済み」と扱ってしまい、Armageddon Engineが同じ
+# 提案までも「既に提案済み」と扱ってしまい、Selfplay Engineが同じ
 # 事件名で全く新しい(異なる攻撃コード・異なる文脈を伴う)侵入を実証
 # しても、二度と再提案できなくなるという欠陥だった。呼び出し元の
-# `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこの`False`を、構文解析の失敗であるかの
+# `adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`)はこの`False`を、構文解析の失敗であるかの
 # ような誤解を招くメッセージでログに出力するだけであり、運用者には
 # 「過去の一度の拒否判断が、今まさに確定した新しい侵入の防御提案
 # そのものを静かに握りつぶしている」ことに気づく手段が一切無かった。
@@ -43,8 +43,8 @@ def _check_reproposal_after_rejection_is_accepted() -> tuple:
 
     tmp_dir = tempfile.mkdtemp(prefix="guard_rejection_memory_")
     try:
-        ledger_path = os.path.join(tmp_dir, "raziel_ledger.json")
-        pending_path = os.path.join(tmp_dir, "raziel_ledger_pending.json")
+        ledger_path = os.path.join(tmp_dir, "pending_rule_ledger.json")
+        pending_path = os.path.join(tmp_dir, "proposed_rule_queue.json")
         with open(ledger_path, "w", encoding="utf-8") as f:
             json.dump({"banned_events": []}, f)
         with open(pending_path, "w", encoding="utf-8") as f:
@@ -71,8 +71,8 @@ def _check_still_open_duplicate_is_still_rejected() -> tuple:
 
     tmp_dir = tempfile.mkdtemp(prefix="guard_rejection_memory_")
     try:
-        ledger_path = os.path.join(tmp_dir, "raziel_ledger.json")
-        pending_path = os.path.join(tmp_dir, "raziel_ledger_pending.json")
+        ledger_path = os.path.join(tmp_dir, "pending_rule_ledger.json")
+        pending_path = os.path.join(tmp_dir, "proposed_rule_queue.json")
         with open(ledger_path, "w", encoding="utf-8") as f:
             json.dump({"banned_events": []}, f)
         with open(pending_path, "w", encoding="utf-8") as f:
@@ -129,7 +129,7 @@ def main():
         detail = "; ".join(f"{n}({d})" for n, d in failures)
         report_fail(
             NAME,
-            f"Armageddon Engineの提案再キュー化ロジックに、少なくとも1つの"
+            f"Selfplay Engineの提案再キュー化ロジックに、少なくとも1つの"
             f"既知の問題が再発しています(§BZの回帰): {detail}",
             evidence={"failures": failures},
         )

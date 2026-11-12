@@ -4,7 +4,7 @@ tests/test_audit_package_boundary_isolation.py
 [新設 2026-11] checks/audit_package_boundary_isolation.py の単体テスト。
 
 本天使(「メタトロンの経典印章」)は、「ライセンス証明書機構
-(runtime_audit_gatekeeper)・Tartarusの公開配布(pip配布されるruntime_guardパッケージ)
+(runtime_audit_gatekeeper)・Local Arenaの公開配布(pip配布されるruntime_guardパッケージ)
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
 `MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
 
@@ -103,7 +103,7 @@ def test_fails_when_packages_declaration_is_missing(monkeypatch, tmp_path):
 
 def test_fails_when_packages_includes_more_than_runtime_guard(monkeypatch, tmp_path):
     """[核心・配布境界破りの検知] `packages`に`runtime_guard`以外の何か(例:
-    `runtime_audit_gatekeeper`・`tartarus`)が混入している場合、正しくFAILする。"""
+    `runtime_audit_gatekeeper`・`local_arena`)が混入している場合、正しくFAILする。"""
     bad_pyproject = VALID_PYPROJECT.replace(
         'packages = ["runtime_guard"]', 'packages = ["runtime_guard", "runtime_audit_gatekeeper"]'
     )
@@ -135,10 +135,10 @@ def test_fails_when_runtime_guard_file_imports_runtime_audit_gatekeeper_via_impo
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_runtime_guard_file_imports_tartarus_via_from_import(monkeypatch, tmp_path):
-    """`runtime_guard/*.py`が`from tartarus import ...`の形でTartarusをimport
+def test_fails_when_runtime_guard_file_imports_local_arena_via_from_import(monkeypatch, tmp_path):
+    """`runtime_guard/*.py`が`from local_arena import ...`の形でLocal Arenaをimport
     している場合も、同様に正しくFAILする。"""
-    _write_fixtures(tmp_path, runtime_guard_file_content="from tartarus import armageddon_core\n")
+    _write_fixtures(tmp_path, runtime_guard_file_content="from local_arena import selfplay_core\n")
     _expect_fail(monkeypatch, tmp_path)
 
 

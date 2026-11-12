@@ -19,8 +19,8 @@ git config core.hooksPath hooks
 
 ## ⚔️ 闘争と進化（アリーナ運用）
 闘技場を起動し、ルシファー（攻撃AI・堕天使）とメタトロン（防衛・QA）を3戦戦わせる。
-闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`tartarus/akashic_records.json`)に記録され、次回起動時に自動浄化される。
-メタトロンが提案する新しい禁止ルールは、直接は反映されず `runtime_guard/raziel_ledger_pending.json`
+闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`local_arena/akashic_records.json`)に記録され、次回起動時に自動浄化される。
+メタトロンが提案する新しい禁止ルールは、直接は反映されず `runtime_guard/proposed_rule_queue.json`
 に人間承認待ちとしてキューイングされる。
 
 ```
@@ -36,12 +36,12 @@ python tools/promote_ledger_seal.py --reject  <event名>
 
 ## 🔭 外部脅威インテリジェンス取り込み（Merkabah）
 Gemini APIキーを `GEMINI_API_KEY` 環境変数に設定した上で、外界の脅威情報を取得し
-防壁ルールの更新を提案させる。Armageddonと同様、ラジエル（Gemini）の出力は
+防壁ルールの更新を提案させる。Selfplayと同様、ラジエル（Gemini）の出力は
 人間承認なしに `shield_rules.json` へは反映されず、`runtime_guard/shield_rules_pending.json`
 に提案としてキューイングされるのみ。
 
 ```
-python src/angelic_shield.py [脅威名（省略可）]
+python src/shield_rule_sync.py [脅威名（省略可）]
 ```
 
 ### 承認待ちルールの確認・昇格
@@ -71,7 +71,7 @@ python checks/guard_precommit_secret_leak.py
 ```
 
 ## 📊 防衛ダッシュボードの生成
-Armageddon Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`tartarus/akashic_records.json`)、AuditHookが実際に
+Selfplay Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`local_arena/akashic_records.json`)、AuditHookが実際に
 遮断したイベントの監査ログ(`runtime_guard/audit_chain.jsonl`)、現在の禁止イベント
 一覧、各種人間承認待ちキューの件数を、1枚の自己完結したHTMLにまとめて
 可視化する。外部ライブラリ・CDNへの依存なし(オフラインで閲覧可能)。
@@ -90,7 +90,7 @@ cat adversarial_training/selfplay_history.json
 
 現在ミカエルが絶対禁止としているイベントのリスト（動的ルール帳）を開く。
 ```
-notepad runtime_guard/raziel_ledger.json
+notepad runtime_guard/pending_rule_ledger.json
 ```
 
 ## 🤖 実運用エージェントループ（ローカルLLMにタスクを実行させる）
@@ -124,24 +124,24 @@ agent.run_task("タスクの指示内容")
 `openai`パッケージは`run_task()`実行時に初めてimportされるため、未インストールでも
 本ファイルをimportするだけなら例外は発生しない。
 
-## 🌀 メタトロンの統括（完全自動化防衛ループ、`revelations/`へレポート出力）
+## 🌀 メタトロンの統括（完全自動化防衛ループ、`reports/`へレポート出力）
 ラジエル(偵察)→サマエル(ローカルOllamaによる攻撃コード生成)→天使(Blue Team、
 ScanSource静的解析+Sandalphon動的隔離検証)→ガブリエル(Markdownレポート生成)の
 一連を1サイクルとして自動実行する。実行には**Ollama**(デフォルトモデル`llama3.1`)
 と**Dockerデーモン**の両方が必要(Sandalphon層が実行前にコンテナ内で動的検証するため)。
 
 ```
-python src/metatron_orchestrator.py
+python src/selfplay_orchestrator.py
 ```
-実行結果は`revelations/scan_source_revelation_<サイクルID>.md`に記録される。デフォルトは
+実行結果は`reports/scan_source_revelation_<サイクルID>.md`に記録される。デフォルトは
 1サイクルのみ。複数サイクル回す場合はコード側で
-`MetatronOrchestrator().execute_holy_war(cycles=N)`を呼ぶ。
+`SelfplayOrchestrator().execute_holy_war(cycles=N)`を呼ぶ。
 
 ## 🔑 証明書（ataraxia_certificate.json）の再発行
 [2026-10改訂] 以前は`provisioning_agent.py`実行後に`ataraxia_certificate.json`と
 `maquina_gatekeeper.py`の両方を即座にコミットする運用だったが、これは提案者が
 自分自身を無条件に承認済みにできてしまう自己署名の構造的欠陥だったため、
-Armageddon・Zadkielと同じ「提案キューイング＋人間承認」パターンに改めた
+Selfplay・ShieldRuleQueueと同じ「提案キューイング＋人間承認」パターンに改めた
 （詳細はDEFECTS.md §O参照）。
 
 ローカルマシンでのみ実行すること（ハードウェア指紋がマシン固有のため）。
@@ -162,7 +162,7 @@ python tools/promote_provisioning_seal.py --reject  "<client_id>"
 
 ## 📦 経典（公開配布物）のビルドと検査
 pip配布用の`runtime_guard`単体パッケージ（経典）を実際にビルドし、ライセンス証明書機構
-（ゲートキーパー）やadversarial_training（闘技場、旧名Tartarus）が一切混入していないことを検査する。
+（ゲートキーパー）やadversarial_training（闘技場、旧名Local Arena）が一切混入していないことを検査する。
 公開配布（PyPI等へのアップロード）の前に必ず実行すること。
 ```
 python tools/build_public_scripture.py
@@ -175,12 +175,12 @@ python tools/build_public_scripture.py
 
 PowerShell:
 ```
-Set-Content -Path "runtime_guard/raziel_ledger.json" -Value '{"banned_events": ["os.system", "subprocess.Popen", "os.remove", "os.rmdir", "os.rename", "socket.connect", "urllib.Request"]}' -Encoding UTF8
+Set-Content -Path "runtime_guard/pending_rule_ledger.json" -Value '{"banned_events": ["os.system", "subprocess.Popen", "os.remove", "os.rmdir", "os.rename", "socket.connect", "urllib.Request"]}' -Encoding UTF8
 ```
 
 bash:
 ```
-cat > runtime_guard/raziel_ledger.json << 'EOF'
+cat > runtime_guard/pending_rule_ledger.json << 'EOF'
 {"banned_events": ["os.system", "subprocess.Popen", "os.remove", "os.rmdir", "os.rename", "socket.connect", "urllib.Request"]}
 EOF
 ```

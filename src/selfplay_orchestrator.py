@@ -6,15 +6,15 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from intelligence_cycle import RazielIntelligence, SamaelWeaponization
-    from angelic_evolution import EvolvingAngel
+    from intelligence_cycle import ThreatIntelGatherer, PayloadWeaponization
+    from ollama_selfplay_round import OllamaSelfplayRound
 except ModuleNotFoundError as e:
     print(f"[エラー] 必要な天使モジュールが見つかりません: {e}")
     sys.exit(1)
 
-# [脆弱性修正 2026-10 §AW] 以前はここで `from cassiels_veil import CassielsVeil`
-# をimportし、`execute_holy_war()`内で`EvolvingAngel.defend_and_execute()`の
-# 直前に`CassielsVeil.activate_seal()`(socket.socketをプロセスグローバルに
+# [脆弱性修正 2026-10 §AW] 以前はここで `from network_block_demo import NetworkBlockDemo`
+# をimportし、`execute_holy_war()`内で`OllamaSelfplayRound.defend_and_execute()`の
+# 直前に`NetworkBlockDemo.activate_seal()`(socket.socketをプロセスグローバルに
 # ブロック版へ置き換える通信遮断)を展開していた。しかし`defend_and_execute()`
 # は内部で`learn_threat()`を呼び、これは実運用のローカルOllamaサーバーへ
 # `ollama.chat(...)`で通信する。つまり、我々自身の正規の「防御側AIによる
@@ -23,21 +23,21 @@ except ModuleNotFoundError as e:
 # ローカルホストへの接続を試みたところ、結界展開中は`ConnectionRefusedError`
 # で遮断されることを確認した)。
 #
-# DEFECTS.md §Lは、全く同じ理由(CassielsVeilはローカルOllamaサーバーへの
-# 通信まで一緒に遮断してしまうため)で、CassielsVeilを実運用パイプラインへは
+# DEFECTS.md §Lは、全く同じ理由(NetworkBlockDemoはローカルOllamaサーバーへの
+# 通信まで一緒に遮断してしまうため)で、NetworkBlockDemoを実運用パイプラインへは
 # 統合しない(教材として保持するのみ)と既に確定していた。本ファイルは後から
 # 新設された際、まさにその禁止されていた統合を自ら行ってしまっていた。
-# さらに、AI生成ペイロードの実行時の通信遮断そのものは、`EvolvingAngel.
+# さらに、AI生成ペイロードの実行時の通信遮断そのものは、`OllamaSelfplayRound.
 # defend_and_execute()`が呼ぶ`DefenseOrchestrator.execute_ai_intent()`内で、既に
 # Dockerコンテナの`--network none`によってOSレベルで提供されている
-# (`src/docker_sandbox_executor.py`)。CassielsVeilの結界はそれより弱い追加の一層
+# (`src/docker_sandbox_executor.py`)。NetworkBlockDemoの結界はそれより弱い追加の一層
 # でしかなく、ここでの展開は保護の上積みなしに正規の学習通信を壊すだけ
 # だったため、統合をやめた。
 
-class ScanSourceRevelation:
+class SelfplayReportGenerator:
     def generate_report(self, cycle_id, intel, payload, defense_result):
         print("\n[ガブリエル] 攻防の記録を編纂し、神託（レポート）を作成中...")
-        report_dir = Path("revelations")
+        report_dir = Path("reports")
         report_dir.mkdir(exist_ok=True)
         report_path = report_dir / f"scan_source_revelation_{cycle_id}.md"
         
@@ -67,12 +67,12 @@ class ScanSourceRevelation:
             f.write(report_content)
         print(f"=> [ガブリエル] 啓示の書を '{report_path}' に記録しました。")
 
-class MetatronOrchestrator:
+class SelfplayOrchestrator:
     def __init__(self):
-        self.raziel = RazielIntelligence()
-        self.samael = SamaelWeaponization()
-        self.angel = EvolvingAngel()
-        self.scan_source = ScanSourceRevelation()
+        self.threat_intel = ThreatIntelGatherer()
+        self.weaponization = PayloadWeaponization()
+        self.angel = OllamaSelfplayRound()
+        self.scan_source = SelfplayReportGenerator()
 
     def execute_holy_war(self, cycles=1):
         print("=== [Anjo-Core] メタトロンの統括（完全自動化防衛ループ） ===")
@@ -82,10 +82,10 @@ class MetatronOrchestrator:
             cycle_id = f"{i:03d}"
             print(f"--- [メタトロン] 進化サイクル 第 {cycle_id} 階層 ---")
             
-            intel = self.raziel.analyze_aidd_artifact()
+            intel = self.threat_intel.analyze_aidd_artifact()
             
             try:
-                payload = self.samael.craft_poison(intel)
+                payload = self.weaponization.craft_poison(intel)
             except Exception as e:
                 print(f"[システムエラー] サマエルの崩壊: {e}")
                 continue
@@ -93,7 +93,7 @@ class MetatronOrchestrator:
             defense_result = ""
             try:
                 print("\n[メタトロン] サマエルの毒を天使(Blue Team)に解剖させます...")
-                self.angel.defend_and_execute(payload, f"metatron_strike_{cycle_id}.py")
+                self.angel.defend_and_execute(payload, f"selfplay_strike_{cycle_id}.py")
                 defense_result = "❌ 致命的敗北: サマエルの毒が防壁を突破しました。"
                 print(f"=> {defense_result}")
             except Exception as e:
@@ -106,4 +106,4 @@ class MetatronOrchestrator:
             time.sleep(1)
 
 if __name__ == "__main__":
-    MetatronOrchestrator().execute_holy_war(cycles=1)
+    SelfplayOrchestrator().execute_holy_war(cycles=1)

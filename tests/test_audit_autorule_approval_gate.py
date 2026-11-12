@@ -3,9 +3,9 @@ tests/test_audit_autorule_approval_gate.py
 =====================================
 [新設 2026-11] checks/audit_autorule_approval_gate.py の単体テスト。
 
-本天使(「メタトロンの啓示」)は、Armageddonエンジン
-(`tartarus/armageddon.py`・`tartarus/armageddon_core.py`)の自動ルール
-更新が、必ず人間承認キュー(`raziel_ledger_pending.json`・
+本天使(「メタトロンの啓示」)は、Selfplayエンジン
+(`local_arena/selfplay.py`・`local_arena/selfplay_core.py`)の自動ルール
+更新が、必ず人間承認キュー(`proposed_rule_queue.json`・
 `PENDING_HUMAN_REVIEW`)を経由する実装になっているかを静的に検証する
 (思考統制監査)。天使群のテストカバレッジの棚卸しの過程で、専用テスト
 が一件も存在しないことが判明した。
@@ -20,19 +20,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_autorule_approval_gate as mrm
 
-VALID_ARMAGEDDON_CORE_TEXT = (
-    "PENDING_LEDGER_PATH = 'raziel_ledger_pending.json'\n"
+VALID_SELFPLAY_CORE_TEXT = (
+    "PENDING_LEDGER_PATH = 'proposed_rule_queue.json'\n"
     "PENDING_HUMAN_REVIEW = 'pending'\n"
     "def apply_new_seal(rule):\n"
     "    queue_for_review(rule)\n"
 )
 
 
-def _write_fixtures(root, core_text=VALID_ARMAGEDDON_CORE_TEXT, main_text=""):
-    tartarus_dir = root / "adversarial_training"
-    tartarus_dir.mkdir(parents=True, exist_ok=True)
-    (tartarus_dir / "local_only_selfplay_gate.py").write_text(main_text, encoding="utf-8")
-    (tartarus_dir / "selfplay_engine_core.py").write_text(core_text, encoding="utf-8")
+def _write_fixtures(root, core_text=VALID_SELFPLAY_CORE_TEXT, main_text=""):
+    local_arena_dir = root / "adversarial_training"
+    local_arena_dir.mkdir(parents=True, exist_ok=True)
+    (local_arena_dir / "local_only_selfplay_gate.py").write_text(main_text, encoding="utf-8")
+    (local_arena_dir / "selfplay_engine_core.py").write_text(core_text, encoding="utf-8")
 
 
 def _expect_fail(monkeypatch, root):
@@ -45,7 +45,7 @@ def _expect_fail(monkeypatch, root):
 
 
 def test_real_repository_passes_or_is_not_applicable():
-    """[実機の裏付け] 現時点のリポジトリでは、Armageddonエンジンが
+    """[実機の裏付け] 現時点のリポジトリでは、Selfplayエンジンが
     人間承認ゲートを経由する実装になっているか、該当ファイル自体が
     まだ存在しないため、本天使はPASSまたはNOT_APPLICABLEのいずれかを
     報告する(FAILではない)。"""
@@ -60,7 +60,7 @@ def test_real_repository_passes_or_is_not_applicable():
 
 
 def test_reports_not_applicable_when_neither_file_exists(monkeypatch, tmp_path):
-    """armageddon.py・armageddon_core.pyのいずれも存在しない場合は、
+    """selfplay.py・selfplay_core.pyのいずれも存在しない場合は、
     PASSではなくNOT_APPLICABLEを報告する。"""
     import io
     from contextlib import redirect_stdout
@@ -75,7 +75,7 @@ def test_reports_not_applicable_when_neither_file_exists(monkeypatch, tmp_path):
 def test_fails_when_pending_ledger_path_is_missing(monkeypatch, tmp_path):
     """[核心・人間承認ゲート迂回の検知] PENDING_LEDGER_PATHへの言及が
     見つからない場合、正しくFAILする。"""
-    bad_core = VALID_ARMAGEDDON_CORE_TEXT.replace("PENDING_LEDGER_PATH", "DIRECT_LEDGER_PATH")
+    bad_core = VALID_SELFPLAY_CORE_TEXT.replace("PENDING_LEDGER_PATH", "DIRECT_LEDGER_PATH")
     _write_fixtures(tmp_path, core_text=bad_core)
     _expect_fail(monkeypatch, tmp_path)
 
@@ -83,7 +83,7 @@ def test_fails_when_pending_ledger_path_is_missing(monkeypatch, tmp_path):
 def test_fails_when_pending_human_review_is_missing(monkeypatch, tmp_path):
     """[核心・人間承認ゲート迂回の検知] PENDING_HUMAN_REVIEWへの言及が
     見つからない場合、正しくFAILする。"""
-    bad_core = VALID_ARMAGEDDON_CORE_TEXT.replace("PENDING_HUMAN_REVIEW", "AUTO_APPLIED")
+    bad_core = VALID_SELFPLAY_CORE_TEXT.replace("PENDING_HUMAN_REVIEW", "AUTO_APPLIED")
     _write_fixtures(tmp_path, core_text=bad_core)
     _expect_fail(monkeypatch, tmp_path)
 
@@ -91,21 +91,21 @@ def test_fails_when_pending_human_review_is_missing(monkeypatch, tmp_path):
 def test_fails_when_apply_new_seal_is_missing(monkeypatch, tmp_path):
     """[核心] apply_new_seal()自体が見つからない場合、承認キュー化
     ロジックの欠落として正しくFAILする。"""
-    bad_core = VALID_ARMAGEDDON_CORE_TEXT.replace("def apply_new_seal", "def legacy_apply_seal")
+    bad_core = VALID_SELFPLAY_CORE_TEXT.replace("def apply_new_seal", "def legacy_apply_seal")
     _write_fixtures(tmp_path, core_text=bad_core)
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_passes_when_checks_satisfied_via_armageddon_py_alone(monkeypatch, tmp_path):
-    """armageddon_core.pyが存在せず、armageddon.py単体に全条件が揃って
+def test_passes_when_checks_satisfied_via_selfplay_py_alone(monkeypatch, tmp_path):
+    """selfplay_core.pyが存在せず、selfplay.py単体に全条件が揃って
     いる場合でも(2026-10分離前の構成)、両ファイルの内容を結合して
     判定するため正しくPASSすることを確認する。"""
     import io
     from contextlib import redirect_stdout
 
-    tartarus_dir = tmp_path / "adversarial_training"
-    tartarus_dir.mkdir(parents=True)
-    (tartarus_dir / "local_only_selfplay_gate.py").write_text(VALID_ARMAGEDDON_CORE_TEXT, encoding="utf-8")
+    local_arena_dir = tmp_path / "adversarial_training"
+    local_arena_dir.mkdir(parents=True)
+    (local_arena_dir / "local_only_selfplay_gate.py").write_text(VALID_SELFPLAY_CORE_TEXT, encoding="utf-8")
     monkeypatch.setattr(mrm, "ROOT", tmp_path)
     buf = io.StringIO()
     with redirect_stdout(buf):

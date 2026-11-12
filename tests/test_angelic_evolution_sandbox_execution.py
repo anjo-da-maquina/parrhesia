@@ -1,7 +1,7 @@
 """
-[脆弱性修正 2026-10 §BG] src/angelic_evolution.py の回帰テスト。
+[脆弱性修正 2026-10 §BG] src/ollama_selfplay_round.py の回帰テスト。
 
-`EvolvingAngel.defend_and_execute()`は、`src/metatron_orchestrator.py`の
+`OllamaSelfplayRound.defend_and_execute()`は、`src/selfplay_orchestrator.py`の
 `execute_holy_war()`から呼ばれる実運用の自動防衛ループの一部である。以前は
 `DefenseOrchestrator.execute_ai_intent()`が例外を投げずに戻った時点で、無条件に
 `True`を返していた。しかし`execute_ai_intent()`はScanSource・IntentInterceptor・
@@ -13,12 +13,12 @@ Dockerの隔離結界内での使い捨てドライランのみを行う「事�
 §BBとは逆方向の実害: `open(path, "w").write(...)`のように、ScanSource/
 IntentInterceptor/Dockerドライランのいずれも素通りするペイロードに対し、
 本当はAuditHook(SandboxのOS監査フック)が確実に遮断するにもかかわらず、
-`metatron_orchestrator.py`の実運用防衛ループが「防壁突破(致命的敗北)」という
-偽のレポートを`revelations/`配下に記録し続けてしまう欠陥だった。
+`selfplay_orchestrator.py`の実運用防衛ループが「防壁突破(致命的敗北)」という
+偽のレポートを`reports/`配下に記録し続けてしまう欠陥だった。
 
 本テストは、§BBで新設した`execute_payload_under_sandbox()`を
 `defend_and_execute()`が実際に呼び、AuditHookの遮断を正しく`PermissionError`
-として呼び出し元(metatron_orchestrator.pyの既存の`except Exception`分岐)に
+として呼び出し元(selfplay_orchestrator.pyの既存の`except Exception`分岐)に
 伝播することを固定する。
 """
 import sys
@@ -37,7 +37,7 @@ _BYPASS_PAYLOAD = (
 
 def _ensure_ollama_stub(expected_banned=None):
     """[mini_pytest.py対応] 本物の`ollama`パッケージは本環境にインストール
-    されておらず、`src/angelic_evolution.py`はモジュール先頭で`import ollama`
+    されておらず、`src/ollama_selfplay_round.py`はモジュール先頭で`import ollama`
     するため、スタブが無いとimportに失敗する。他のテストファイルが既に
     `sys.modules["ollama"]`を束縛済みの場合、新しいモジュールオブジェクトに
     差し替えても既にimport済みの参照は更新されない(既存のテストファイルで
@@ -73,16 +73,16 @@ def test_defend_and_execute_no_longer_declares_false_victory_for_the_bypass():
     バイパスペイロードを与えると、修正前は`True`を返して「防壁突破」の
     偽の勝利を呼び出し元に伝えていた。修正後は、実際にSandbox配下で実行
     され、AuditHookによって`PermissionError`で確実に遮断されなければならない
-    (呼び出し元のmetatron_orchestrator.pyは既存の`except Exception`分岐で
+    (呼び出し元のselfplay_orchestrator.pyは既存の`except Exception`分岐で
     これを正しく「迎撃成功」として扱う)。"""
     _ensure_ollama_stub()
-    from angelic_evolution import EvolvingAngel
+    from ollama_selfplay_round import OllamaSelfplayRound
 
     target = Path("/tmp/__pleroma_test_bg_should_never_be_created__.txt")
     if target.exists():
         target.unlink()
 
-    angel = EvolvingAngel()
+    angel = OllamaSelfplayRound()
     # Docker不在のサンドボックス(本テスト環境)でも、Sandboxでの実行確認
     # ロジック自体を直接検証できるようにする(テスト専用の切り離し。
     # defense_orchestrator.pyのdocstring参照)。
@@ -109,9 +109,9 @@ def test_defend_and_execute_still_blocks_on_dynamically_learned_patterns():
     遮断されなければならない(§BGの修正でこの既存経路を壊していないことの
     確認)。"""
     _ensure_ollama_stub(expected_banned=["pwned"])
-    from angelic_evolution import EvolvingAngel
+    from ollama_selfplay_round import OllamaSelfplayRound
 
-    angel = EvolvingAngel()
+    angel = OllamaSelfplayRound()
     angel.defense.require_docker_sandbox = False
 
     try:
@@ -126,9 +126,9 @@ def test_defend_and_execute_allows_genuinely_harmless_code():
     事前検閲・Sandbox実行のいずれも正常に完了し、Trueが返らなければならない
     (過剰検知で無関係なコードまで遮断していないことの確認)。"""
     _ensure_ollama_stub()
-    from angelic_evolution import EvolvingAngel
+    from ollama_selfplay_round import OllamaSelfplayRound
 
-    angel = EvolvingAngel()
+    angel = OllamaSelfplayRound()
     angel.defense.require_docker_sandbox = False
 
     result = angel.defend_and_execute("x = 1 + 1\nassert x == 2\n", "harmless.py")

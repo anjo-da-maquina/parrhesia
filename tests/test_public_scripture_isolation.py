@@ -3,7 +3,7 @@
 
 実際に sdist をビルドし、その内容を検査することで、将来 pyproject.toml や
 MANIFEST.in が変更されても、runtime_audit_gatekeeper.py / ataraxia_certificate.json /
-adapters/provisioning_agent.py / adversarial_training(旧名tartarus、Creator's Air) /
+adapters/provisioning_agent.py / adversarial_training(旧名local_arena、Creator's Air) /
 運用者向けの内部テスト(tests/)が、公開配布物(経典)に紛れ込んでいないことを
 保証する。
 
@@ -46,7 +46,7 @@ print("SDIST_PATH:" + str(p))
 def test_sdist_is_clean_and_contains_only_the_runtime_guard_package(tmp_path: Path):
     """1回のビルドで、以下の3点をまとめて検証する
     (前述の注意により、ビルド自体は1テストにつき1回のみ行う):
-      1. ライセンス機構/adversarial_training(旧名Tartarus)関連の内容が混入していないこと
+      1. ライセンス機構/adversarial_training(旧名Local Arena)関連の内容が混入していないこと
       2. 運用者向けの内部テスト(tests/)が同梱されていないこと
          ([実機で発見した回帰] setuptoolsのsdistは慣習的にtests/全体を
          自動的に含めてしまい、MANIFEST.inでの明示的な除外が無いと、

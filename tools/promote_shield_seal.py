@@ -1,7 +1,7 @@
 ﻿"""
 Shield Rules 承認プロモーションツール
 ========================================
-[新設 2026-10] `src/angelic_shield.py` の `ZadkielDominion` が
+[新設 2026-10] `src/shield_rule_sync.py` の `ShieldRuleProposalQueue` が
 Gemini(LLM)から取得した脅威情報を元に提案した防壁ルール
 (`runtime_guard/shield_rules_pending.json`)を、人間が内容を確認した上で
 `shield_rules.json`(実際に `src/verdict.py` が使用する
@@ -9,7 +9,7 @@ Gemini(LLM)から取得した脅威情報を元に提案した防壁ルール
 
 これにより、未検証のLLM出力（プロンプトインジェクション・幻覚を含む）が
 そのまま実運用の防御ルールに反映されることを防ぐ。
-`tools/promote_ledger_seal.py`(Armageddon Engine向け)と同一のパターン。
+`tools/promote_ledger_seal.py`(Selfplay Engine向け)と同一のパターン。
 
 使い方:
     python tools/promote_shield_seal.py --list

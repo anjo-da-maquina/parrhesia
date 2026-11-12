@@ -158,16 +158,16 @@ _HARD_DENY_EVENTS = {
 # [脆弱性修正 2026-10 §BJ] `_runtime_audit_hook`の2(ソケット検査)・
 # 4(デフォルト拒否)は、以下のイベント名を常に無条件で通過させる
 # (`pass`してこのブロック自体を`return`で抜ける)。これらは
-# `runtime_guard/raziel_ledger.json`(Razielの台帳、Armageddonの自己対戦が発見し
+# `runtime_guard/pending_rule_ledger.json`(ThreatIntelの台帳、Selfplayの自己対戦が発見し
 # 人間が承認した新しい禁止イベントを反映する動的な仕組み)がどれだけ
-# "banned_events"に含めても、本関数の5(Razielの台帳の enforcement)自体に
+# "banned_events"に含めても、本関数の5(ThreatIntelの台帳の enforcement)自体に
 # 到達する前に必ずこの時点で無条件に許可されて`return`するため、*絶対に*
 # 禁止できない。元々この2つの集合はそれぞれの検査ブロック内にリテラルの
 # `{...}`として個別に書かれていたため、一方だけ変更して他方が取り残される
 # ドリフトのリスクがあった(DEFECTS.md §Mと同種)ため、ここに統合した上で
 # 各検査ブロックから参照する。
 #
-# `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の`validate_banned_event()`は、この集合を
+# `adversarial_training/selfplay_engine_core.py`(旧名`local_arena/selfplay_core.py`)の`validate_banned_event()`は、この集合を
 # 用いて「台帳に追加しても構造的に絶対に効果が無い」イベント名の承認提案を
 # 事前に拒否する(詳細はDEFECTS.md §BJ参照)。
 ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
@@ -195,18 +195,18 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
 })
 
 # Pythonの audit event 名として妥当な形式のみ許可（例: "os.system", "subprocess.Popen"）。
-# adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py) / checks/_common.py と同一の正規表現。
+# adversarial_training/selfplay_engine_core.py(旧名local_arena/selfplay_core.py) / checks/_common.py と同一の正規表現。
 VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$")
 
-# [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`、Lucifer vs Sefer自己対戦)が
+# [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`、Lucifer vs Sefer自己対戦)が
 # 発見し、`tools/promote_ledger_seal.py`で人間が明示的に承認した新たな禁止
-# イベント(`runtime_guard/raziel_ledger.json`の`banned_events`)は、これまで
+# イベント(`runtime_guard/pending_rule_ledger.json`の`banned_events`)は、これまで
 # `_runtime_audit_hook`から一切読み込まれておらず、承認してもシステム
 # の実際の防御には何ら反映されない「学習したつもりになっているだけ」の状態
 # だった(`checks/audit_ledger_schema.py`はファイルのスキーマ検証のみで、実際に
 # 読み込まれ enforce されているかは検証していなかった)。
 #
-# [設計上の制約・安全性の確認] 本番の`runtime_guard/raziel_ledger.json`には既定で
+# [設計上の制約・安全性の確認] 本番の`runtime_guard/pending_rule_ledger.json`には既定で
 # "os.remove"・"os.rmdir"・"os.rename"・"socket.connect"のように、AuditHook
 # が既に個別の条件付きチェック(allowed_dirs/allowed_hosts。下記の各`return`
 # 文)で扱っているイベント名が含まれている。これらを本関数の先頭で無条件の
@@ -216,13 +216,13 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 # 既に`return`で処理し終えた後に到達する関数の\*\*最後\*\*でのみ適用する。
 # これにより、既存の条件付きチェックで既にカバーされているイベント名
 # (os.remove等)は従来通りの挙動(allowed_dirs内なら許可)を維持したまま、
-# どのカテゴリにも当てはまらない\*\*未知の新しい脱走経路\*\*(Armageddonが
+# どのカテゴリにも当てはまらない\*\*未知の新しい脱走経路\*\*(Selfplayが
 # 今後発見し人間が承認した、現行のどの固定カテゴリにも該当しないイベント)
 # だけを新たに絶対拒否できるようにする。ファイルのmtimeをキャッシュキーに
 # 使い、audit hookの頻繁な呼び出しごとに毎回ファイルを読み直すことによる
 # 性能劣化を避けつつ、人間の承認がプロセス再起動不要で即座に反映されるよう
 # にする。
-_RAZIEL_LEDGER_PATH = Path("runtime_guard/raziel_ledger.json")
+_RAZIEL_LEDGER_PATH = Path("runtime_guard/pending_rule_ledger.json")
 _dynamic_banned_events_cache = {"mtime": None, "events": frozenset()}
 
 
@@ -271,8 +271,8 @@ def _runtime_audit_hook(event: str, args: tuple):
         # 発見: "socket.getaddrinfo"は、本関数が新設された当初から
         # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれ、ソケット通信検査
         # (下記2)・デフォルト拒否(下記4)のいずれでも無条件に`pass`して
-        # 通過していた。これは`adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の
-        # `validate_banned_event`(§BJ)が「raziel_ledger.jsonにどれだけ
+        # 通過していた。これは`adversarial_training/selfplay_engine_core.py`(旧名`local_arena/selfplay_core.py`)の
+        # `validate_banned_event`(§BJ)が「pending_rule_ledger.jsonにどれだけ
         # 追加しても絶対に禁止できない、見せかけの保護」の具体例として
         # 既に認識し、人間が誤って安心しないように台帳での承認自体を
         # 事前に拒否する仕組みまで用意していた――しかし、この判断の前提
@@ -433,16 +433,16 @@ def _runtime_audit_hook(event: str, args: tuple):
                 _trigger_violation(event, args, f"Default-deny blocked unwhitelisted system event '{event}'.")
             return
 
-        # 5. [脆弱性修正 2026-10] Armageddonの自己対戦が発見し、人間が承認した
-        # 未知の脱走経路(runtime_guard/raziel_ledger.json)を、ここで初めて enforce する。
+        # 5. [脆弱性修正 2026-10] Selfplayの自己対戦が発見し、人間が承認した
+        # 未知の脱走経路(runtime_guard/pending_rule_ledger.json)を、ここで初めて enforce する。
         # 上記1〜4のいずれかで既に`return`済みのイベント(os.remove等、既存の
         # 条件付きチェックで処理されるもの)はこの行に到達しないため、既存の
         # allowed_dirs/allowed_hosts に基づく挙動は変わらない。ここに到達する
         # のは、どの既存カテゴリにも該当しなかった(=これまで一切チェックされ
-        # ていなかった)イベントのみであり、そのうち raziel_ledger.json で
+        # ていなかった)イベントのみであり、そのうち pending_rule_ledger.json で
         # 承認済みのものだけを絶対拒否する。
         if event in _load_dynamic_banned_events():
-            _trigger_violation(event, args, f"Raziel's Ledger(学習済みの禁止イベント)が'{event}'を遮断しました。")
+            _trigger_violation(event, args, f"ThreatIntel's Ledger(学習済みの禁止イベント)が'{event}'を遮断しました。")
     finally:
         _hook_state.in_hook = False
 
@@ -469,7 +469,7 @@ def _load_dynamic_shield_rules() -> tuple:
     読み込まれておらず、承認してもシステムの実際の検閲には何ら反映されない
     「学習したつもりになっているだけ」の状態だった(`checks/guard_shield_rule_autoapply_and_key_leak.py`
     は承認ワークフロー自体の構造検証のみで、実際にenforceされているかは
-    検証していなかった。`runtime_guard/raziel_ledger.json`がAuditHook側から一切
+    検証していなかった。`runtime_guard/pending_rule_ledger.json`がAuditHook側から一切
     読まれていなかった件と同種の欠陥。本ファイル内の対になる修正も参照)。
 
     [安全な適用方法] `blocked_functions`(例: "loads", "load", "Unpickler")を

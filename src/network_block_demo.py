@@ -4,7 +4,7 @@ import socket
 import urllib.request
 import time
 
-class CassielsVeil:
+class NetworkBlockDemo:
     """
     【孤独の天使：結界 カシエル】
     隔離領域内で実行されるコードの外部通信（アウトバウンド）を論理的に完全遮断する。
@@ -56,7 +56,7 @@ def simulate_network_breach():
     print("=== [Anjo-Core] カシエルの結界（アウトバウンド通信遮断） ===\n")
     print("[システム] anjo-da-maquina によるファイル監視に加え、通信監視プロトコルを起動。")
     
-    veil = CassielsVeil()
+    veil = NetworkBlockDemo()
     
     # 外部と通信しようとするサマエルの毒（ペイロード）を想定
     def malicious_network_payload():

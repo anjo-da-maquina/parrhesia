@@ -12,10 +12,10 @@ tools/build_public_scripture.py
 本プロジェクトが掲げる「ゼロトラスト」の精神に反する。本モジュールは
 実際にsdist(ソース配布物)をビルドし、その内容そのものを検査して、
 ライセンス証明書機構(runtime_audit_gatekeeper.py / ataraxia_certificate.json /
-adapters/provisioning_agent.py)やadversarial_training(旧名Tartarus、闘技場・creator's air)が
+adapters/provisioning_agent.py)やadversarial_training(旧名Local Arena、闘技場・creator's air)が
 一切含まれていないことを機械的に確認してから「公開配布可能」と
 報告する。これを「経典(scripture)のビルド」と呼ぶ
-— 世界に配るのは天使(Sefer)のみであり、堕天使(Tartarus)や
+— 世界に配るのは天使(Sefer)のみであり、堕天使(Local Arena)や
 鍵(ゲートキーパー)を同梱してはならない、というプロジェクトの
 世界観に基づく命名。
 
@@ -34,11 +34,11 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 # (ファイル名を変えて同じ内容を混入させる手口への対策)。
 FORBIDDEN_FILENAME_FRAGMENTS = [
     "runtime_audit_gatekeeper", "ataraxia_certificate", "provisioning_agent",
-    # [改名 2026-11] armageddon(.py/_core.py) は local_only_selfplay_gate /
+    # [改名 2026-11] selfplay(.py/_core.py) は local_only_selfplay_gate /
     # selfplay_engine_core に改名された(docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §2)。
     # 旧名も残しているのは、改名前のアーカイブやバックアップに対しても
     # 本チェックが引き続き機能するための保険であり、実体は新名の方である。
-    "armageddon", "local_only_selfplay_gate", "selfplay_engine_core",
+    "selfplay", "local_only_selfplay_gate", "selfplay_engine_core",
     "zk_audit_trail", "remote_ledger_sync",
 ]
 FORBIDDEN_CONTENT_FRAGMENTS = [
@@ -100,7 +100,7 @@ def main() -> int:
             print(f"  - {p}", file=sys.stderr)
         return 1
 
-    print("\n=== ✅ [検査合格] ライセンス証明書機構・adversarial_training(旧名Tartarus)関連の内容は含まれていません ===")
+    print("\n=== ✅ [検査合格] ライセンス証明書機構・adversarial_training(旧名Local Arena)関連の内容は含まれていません ===")
     print(f"公開配布可能な経典: {sdist_path}")
     return 0
 

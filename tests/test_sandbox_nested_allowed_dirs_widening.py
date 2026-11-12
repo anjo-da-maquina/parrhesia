@@ -2,8 +2,8 @@
 [脆弱性修正 2026-10 §AV] runtime_guard.Sandbox のネストした allowed_dirs 絞り込みに
 対する回帰テスト。
 
-発見の経緯: §AU (adversarial_training/selfplay_engine_core.build_forge_script、旧名tartarus/armageddon_core) の修正で、
-AI生成ペイロードを `with Sandbox(allowed_dirs=[tartarus_dir], ...):` の
+発見の経緯: §AU (adversarial_training/selfplay_engine_core.build_forge_script、旧名local_arena/selfplay_core) の修正で、
+AI生成ペイロードを `with Sandbox(allowed_dirs=[local_arena_dir], ...):` の
 内側で exec() するように変更した。この変更が本当に安全かを確認するため
 `Sandbox.__init__` のネスト処理を再点検したところ、子スコープが親より
 **広い**ディレクトリ(祖先ディレクトリ、最悪の場合 "/")を指定すると、

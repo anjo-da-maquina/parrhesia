@@ -1,7 +1,7 @@
 ﻿"""
-[テスト追加 2026-10] adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py)の純粋ロジックに対する回帰テスト。
+[テスト追加 2026-10] adversarial_training/selfplay_engine_core.py(旧名local_arena/selfplay_core.py)の純粋ロジックに対する回帰テスト。
 
-local_only_selfplay_gate.py(旧名armageddon.py)本体はMACアドレスゲートにより創造主のローカル環境以外では
+local_only_selfplay_gate.py(旧名selfplay.py)本体はMACアドレスゲートにより創造主のローカル環境以外では
 起動しないため、ゲートに依存しない selfplay_engine_core.py を直接テストする。
 """
 import json
@@ -41,7 +41,7 @@ def test_validate_banned_event_rejects_structurally_unenforceable_events():
     """[脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTSに含まれる
     イベント名(例: "socket.socket")は、runtime_guard._runtime_audit_hookが
     ソケット検査・デフォルト拒否のいずれの分岐でも常に無条件で通過させるため、
-    raziel_ledger.jsonにどれだけ追加しても絶対に禁止できない。人間が『承認した
+    pending_rule_ledger.jsonにどれだけ追加しても絶対に禁止できない。人間が『承認した
     のに実は何も保護していない』という偽の安心感を持つことを防ぐため、
     この時点で事前に拒否されなければならない(CRITICAL_INFRASTRUCTUREの
     自己免疫疾患ガードとは別の、見せかけの保護ガード)。
@@ -75,7 +75,7 @@ def test_validate_banned_event_accepts_getaddrinfo_after_ct_fix():
 
 def test_validate_banned_event_still_accepts_genuinely_new_enforceable_events():
     """[回帰防止] §BJの修正が、既存カテゴリに全く該当しない本当に新しい
-    イベント名(例: Armageddonが発見する未知の脱走経路)まで誤って拒否
+    イベント名(例: Selfplayが発見する未知の脱走経路)まで誤って拒否
     するようになっていないことを確認する。"""
     ok, reason = core.validate_banned_event("urllib.Request")
     assert ok is True, f"本来受理されるべきイベント名が拒否された: {reason}"
@@ -96,8 +96,8 @@ def test_validate_banned_event_rejects_malformed_hallucination():
 
 
 def test_apply_new_seal_queues_pending_not_live_ledger(tmp_path: Path):
-    ledger_path = tmp_path / "raziel_ledger.json"
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     ledger_path.write_text(json.dumps({"banned_events": ["os.system"]}), encoding="utf-8")
 
     result = core.apply_new_seal(
@@ -118,8 +118,8 @@ def test_apply_new_seal_queues_pending_not_live_ledger(tmp_path: Path):
 
 
 def test_apply_new_seal_rejects_duplicate_already_live(tmp_path: Path):
-    ledger_path = tmp_path / "raziel_ledger.json"
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     ledger_path.write_text(json.dumps({"banned_events": ["os.system"]}), encoding="utf-8")
 
     result = core.apply_new_seal("os.system", ledger_path=ledger_path, pending_path=pending_path)
@@ -127,8 +127,8 @@ def test_apply_new_seal_rejects_duplicate_already_live(tmp_path: Path):
 
 
 def test_apply_new_seal_rejects_duplicate_already_pending(tmp_path: Path):
-    ledger_path = tmp_path / "raziel_ledger.json"
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     ledger_path.write_text(json.dumps({"banned_events": []}), encoding="utf-8")
 
     first = core.apply_new_seal("os.popen2", ledger_path=ledger_path, pending_path=pending_path)
@@ -143,20 +143,20 @@ def test_apply_new_seal_rejects_duplicate_already_pending(tmp_path: Path):
 def test_apply_new_seal_can_be_reproposed_after_a_past_rejection(tmp_path: Path):
     """
     [脆弱性修正の回帰テスト・核心 §BZ] 以前は、過去に人間が"REJECTED"
-    (拒否)した事件名が`raziel_ledger_pending.json`に1件でも残っていると、
+    (拒否)した事件名が`proposed_rule_queue.json`に1件でも残っていると、
     `any(p["event"] == new_event for p in pending)`がstatusを一切問わず
-    Trueになってしまい、Armageddon Engineが同じ事件名で全く新しい
+    Trueになってしまい、Selfplay Engineが同じ事件名で全く新しい
     (異なる攻撃コード・異なるエラー内容を伴う)侵入を実証しても、
     二度と再提案できなくなる欠陥があった。実機で確認済み: 修正前の
     ロジックでは本テストと同じ状況で`apply_new_seal()`が無条件に`False`
-    を返し、`adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`)はこれを「Metatronが有効な封印提案を
+    を返し、`adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`)はこれを「Selfplayが有効な封印提案を
     抽出できなかった」という誤解を招くログで報告するだけだった。
 
     修正後は、"REJECTED"の過去提案は「現在も開いている重複」とは見なさず、
     新たな実証を伴う再提案を正しく受理しなければならない。
     """
-    ledger_path = tmp_path / "raziel_ledger.json"
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     ledger_path.write_text(json.dumps({"banned_events": []}), encoding="utf-8")
     pending_path.write_text(json.dumps([
         {
@@ -172,7 +172,7 @@ def test_apply_new_seal_can_be_reproposed_after_a_past_rejection(tmp_path: Path)
     )
     assert result is True, (
         "過去に拒否された事件名への、新たな実証を伴う再提案が受理されなかった"
-        "(§BZの回帰: Armageddon Engineの学習・適応ループが永久に無効化される)"
+        "(§BZの回帰: Selfplay Engineの学習・適応ループが永久に無効化される)"
     )
 
     pending = json.loads(pending_path.read_text(encoding="utf-8"))
@@ -190,8 +190,8 @@ def test_apply_new_seal_still_rejects_duplicate_still_open_pending_regardless_of
     修正が、「現在も開いている重複提案を防ぐ」という元々の目的自体を
     損なっていないことを確認する(REJECTEDな古い提案と、まだ開いている
     提案が両方存在する場合でも、開いている方は正しく二重キューを防ぐ)。"""
-    ledger_path = tmp_path / "raziel_ledger.json"
-    pending_path = tmp_path / "raziel_ledger_pending.json"
+    ledger_path = tmp_path / "pending_rule_ledger.json"
+    pending_path = tmp_path / "proposed_rule_queue.json"
     ledger_path.write_text(json.dumps({"banned_events": []}), encoding="utf-8")
     pending_path.write_text(json.dumps([
         {"event": "os.popen2", "proposed_at": "2026-01-01T00:00:00", "status": "REJECTED"},
@@ -246,7 +246,7 @@ def test_build_forge_script_actually_blocks_hard_denied_event(tmp_path):
     )
 
 
-def test_build_forge_script_still_allows_legitimate_write_within_tartarus_dir(tmp_path):
+def test_build_forge_script_still_allows_legitimate_write_within_local_arena_dir(tmp_path):
     """[回帰防止] 正規の(禁止操作を使わない)ファイル書き込みは、
     allowed_dirs(闘技場ディレクトリ)内であれば引き続き成功すること。
     §AUの修正がSandboxを正しく機能させつつ、過剰検知で全てを

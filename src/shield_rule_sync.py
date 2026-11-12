@@ -1,5 +1,5 @@
 ﻿"""
-src/angelic_shield.py
+src/shield_rule_sync.py
 =======================
 [再構築 2026-10] セルフレビューで以下3点の欠陥が発覚したため作り直した。
 
@@ -9,19 +9,19 @@ src/angelic_shield.py
      だった(保護対象の判定が `"anjo-da-maquina_2" in target_file` という
      部分文字列一致のみで、Sandboxのような allowed_dirs によるパス正規化・
      物理的隔離を一切行わない)。本ファイル自体はコードを実行せず
-     (RazielCherubimは外部API呼び出し、ZadkielDominionはJSONファイル
+     (ExternalThreatIntelClientは外部API呼び出し、ShieldRuleProposalQueueはJSONファイル
      読み書きのみ)、audit hookを仕掛ける意味自体がそもそも薄かった。
      本当にOSレベルの保護が必要な箇所(AIが生成したコードの実行)は、
      `src/defense_orchestrator.py` の `DefenseOrchestrator` と `runtime_guard.Sandbox` が担う。
      本ファイルはそれらの代替ではないため、誤解を招く表示を撤去した。
 
-  2. `ZadkielDominion.assimilate_knowledge()` が、Gemini(LLM)の生出力を
+  2. `ShieldRuleProposalQueue.assimilate_knowledge()` が、Gemini(LLM)の生出力を
      人間の承認なしに直接 `shield_rules.json`(実際に有効な禁止ルール)へ
      反映していた。これは `adversarial_training/local_only_selfplay_gate.py` で既に修正した
      「LLM出力を直接運用ルールに反映しない」という原則(§C, DEFECTS.md)
      に違反する、同種の脆弱性だった。プロンプトインジェクションや幻覚に
      よって、無関係な正規モジュール/関数が誤って禁止リストに追加される
-     リスクがある。本修正では Armageddon の `raziel_ledger_pending.json`
+     リスクがある。本修正では Selfplay の `proposed_rule_queue.json`
      と同じパターンを採用し、提案はまず `runtime_guard/shield_rules_pending.json`
      に積むのみとし、`tools/promote_shield_seal.py` による人間の明示的
      承認を経て初めて `shield_rules.json` に反映されるようにした。
@@ -45,7 +45,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 PENDING_RULES_PATH = _REPO_ROOT / "runtime_guard" / "shield_rules_pending.json"
 
 
-class RazielCherubim:
+class ExternalThreatIntelClient:
     """外界(Gemini)から脆弱性の構造と防衛策に関する知識を取得する。"""
 
     def __init__(self, api_key):
@@ -87,12 +87,12 @@ class RazielCherubim:
         sys.exit(1)
 
 
-class ZadkielDominion:
+class ShieldRuleProposalQueue:
     """
     [2026-10] ラジエルが取得したLLM生成の脅威情報を、人間承認待ちの
     提案キュー(`runtime_guard/shield_rules_pending.json`)に積むのみ。
     実際に有効な `shield_rules.json` への反映は、`tools/promote_shield_seal.py`
-    による人間の明示的承認が必要(Armageddonの raziel_ledger_pending.json
+    による人間の明示的承認が必要(Selfplayの proposed_rule_queue.json
     と同一のパターン)。
     """
 
@@ -147,12 +147,12 @@ if __name__ == "__main__":
     cycles = 1 if target_threat else 3
 
     print("=== [Merkabah] 熾天使ハシュマリエル: 外部脅威インテリジェンス取り込みサイクル ===")
-    raziel = RazielCherubim(api_key)
+    threat_intel = ExternalThreatIntelClient(api_key)
     del api_key  # メモリ上の変数からも明示的に破棄
-    zadkiel = ZadkielDominion()
+    shield_rule_queue = ShieldRuleProposalQueue()
 
     for i in range(1, cycles + 1):
         print(f"\n--- 脅威インテリジェンス取り込みサイクル 第 {i:03d} 階層 ---")
-        intel = raziel.fetch_threat_signature(target_threat)
-        zadkiel.propose_knowledge(intel)
+        intel = threat_intel.fetch_threat_signature(target_threat)
+        shield_rule_queue.propose_knowledge(intel)
         time.sleep(2)

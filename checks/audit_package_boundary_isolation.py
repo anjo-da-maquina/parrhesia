@@ -13,7 +13,7 @@ NAME = "audit_package_boundary_isolation - 思考統制監査: 「ライセン�
 # 分離」が将来静かに退行していないかを静的に検証する。
 #
 # 世界に配る経典(= pip配布されるruntime_guard単体パッケージ)には、ゲートキーパー
-# (ライセンス証明書機構)やadversarial_training(闘技場・Creator's Air、旧名tartarus)を一切含めない、
+# (ライセンス証明書機構)やadversarial_training(闘技場・Creator's Air、旧名local_arena)を一切含めない、
 # という設計判断を以下の3点で守る:
 #   A. pyproject.toml の [tool.setuptools] packages が "runtime_guard" 単体のみ
 #      であること(他のディレクトリが紛れ込んでいないか)。
@@ -60,13 +60,13 @@ def main():
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.name in ("runtime_audit_gatekeeper", "adapters", "tartarus", "adversarial_training"):
+                    if alias.name in ("runtime_audit_gatekeeper", "adapters", "local_arena", "adversarial_training"):
                         report_fail(NAME, f"runtime_guard/{py_file.name} がライセンス機構/adversarial_training({alias.name})をimportしています。配布境界が破られています。")
             elif isinstance(node, ast.ImportFrom):
-                if node.module in ("runtime_audit_gatekeeper", "adapters", "tartarus", "adversarial_training"):
+                if node.module in ("runtime_audit_gatekeeper", "adapters", "local_arena", "adversarial_training"):
                     report_fail(NAME, f"runtime_guard/{py_file.name} がライセンス機構/adversarial_training({node.module})をimportしています。配布境界が破られています。")
 
-    report_pass(NAME, "ライセンス証明書機構・adversarial_training(旧名tartarus)は、公開配布される経典(runtime_guardパッケージ)から正しく分離されています。")
+    report_pass(NAME, "ライセンス証明書機構・adversarial_training(旧名local_arena)は、公開配布される経典(runtime_guardパッケージ)から正しく分離されています。")
 
 if __name__ == "__main__":
     main()

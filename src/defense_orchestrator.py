@@ -2,7 +2,7 @@
 src/defense_orchestrator.py
 =====================
 [新設 2026-10] src/*.py のうち8ファイル
-(mythos_weaponization.py, angelic_evolution.py, gemini_oracle_feed.py,
+(mythos_weaponization.py, ollama_selfplay_round.py, gemini_oracle_feed.py,
 intelligence_cycle.py, secure_oracle_feed.py, adversarial_evolution.py,
 claude_agent_loop.py, final_agent_loop.py, oracle_feed.py)が
 `from test_integrated_defense import DefenseOrchestrator` としてimportしていたが、
