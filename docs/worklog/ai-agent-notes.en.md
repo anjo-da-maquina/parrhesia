@@ -131,5 +131,48 @@ this is stated plainly.
   detect"-first opening in favor of a 3-line summary ("what this tool does,
   what it found") plus a reproduce-it-yourself command at the very top.
 
+### Third round of fixes (even more detailed feedback, including a check on the numbers' internal consistency)
+
+- **The "found by its own red team" limitation was missing**: all 105 entries
+  were found by this project's own red-team code, and the person who found
+  each one and the person who fixed it are the same. This is stated plainly
+  as the 4th bullet of §0 now — not stating it invited exactly the "self-
+  graded, so no independence" objection any reviewer would raise.
+- **The `--check-rotation` threat model went unanswered**: two concrete
+  questions — "where is the 'trusted key' stored, and can the automation
+  itself rewrite it?" and "if a rotation stops auto-approval, is the weekly
+  task's failure actively notified or does it just silently stop?" — were
+  answered by actually reading the code. (1) The "currently trusted key" is
+  read from the very same file `--approve` itself writes to
+  (`runtime_audit_gatekeeper.py`), so it is not independent of the
+  automation — it prevents an unannounced change *between* automated runs,
+  but not a bad initial approval or a direct file edit. (2) On a stopped
+  rotation, `renew_certificate.ps1`/`.sh` exits with a nonzero code (2),
+  which Windows Task Scheduler records as a failed run in its history, but no
+  active notification (e.g. email) is sent by default. Both are now recorded
+  as a threat model in [docs/BOUNDARY.md](../BOUNDARY.md).
+- **The first screen was dominated by this document's own revision history**:
+  the summary, §2.1 and §4.1 repeatedly said "after external review feedback."
+  That's working-process detail, not a description of the tool, so it was all
+  moved here, leaving the overview with only the technical outcome of what was
+  found and fixed.
+- **It was too long (200+ lines)**: §2 (what the tool does) duplicated the
+  summary and was dropped; §7 (reproduce-it-yourself) duplicated the top of
+  the document and was dropped too. §4's detailed sandbox-results breakdown
+  and the history of `xpassed` going from 11 to 1 to 0 across two pushes are
+  change history, not current state, so both moved here. The overview is now
+  roughly 130 lines.
+- **The expired-certificate xfail looked like a ticking time bomb**: a
+  one-line explanation was added for why this doesn't matter on CI — the
+  certificate is intentionally short-lived by design (7 days, which is the
+  whole reason the weekly renewal automation exists), and on CI,
+  `GITHUB_ACTIONS=true` makes cloud execution itself get blocked before the
+  certificate's state is even checked.
+- **"About 55" was also hand-counted**: like the GRIMOIRE.md defect count, the
+  number of CI checks under `angels/` had been hand-counted too. A new script,
+  [`tools/count_ci_checks.py`](../../tools/count_ci_checks.py), parses
+  `.github/workflows/*.yml` and counts only the scripts actually wired into
+  CI, confirming the figure of 55 before it was quoted again.
+
 This red-lining is recorded here too, rather than silently folded in, for the
 same reason as everything else in this document.
