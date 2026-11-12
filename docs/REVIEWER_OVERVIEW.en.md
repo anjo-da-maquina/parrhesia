@@ -2,15 +2,34 @@
 
 [Back to top](../README.en.md) | [日本語版](./REVIEWER_OVERVIEW.md)
 
-This document exists so a reviewer can get oriented in a few minutes: what the
-project does, how it keeps finding its own defects, and — since the project's
-whole premise is auditing an AI agent's behavior — a transparent record of what
-the AI agent actually did while building and maintaining it. Everything below was
-actually run and checked; nothing here is a projection of what "should" be true.
+**A note on what kind of claim each statement below is.** There are three kinds:
+(1) results quoted from a real GitHub Actions CI run, which has no network
+restrictions; (2) results actually run on the user's own Windows machine; (3)
+things that could not be verified in the sandbox this document was written in
+(each one is labeled as such). There is no single blanket claim that "everything
+here was run and checked."
 
----
+## 0. Up front: what this tool cannot detect (3 lines)
 
-## 1. What this project is
+- Whether a natural-language claim in a comment or PR ("all edge cases
+  verified") is actually true — that needs a separate mechanism (a second model
+  or a human reviewer).
+- A measured false-positive rate on a large sample of legitimate commits
+  (current negative-control coverage is one test file).
+- A guarantee that this project's own operational tooling (e.g. certificate
+  management) always follows the principles it states. In fact, one known
+  inconsistency exists (see §2).
+
+## 1. Glossary (for a first-time reader)
+
+| Term in this repo | Plain meaning |
+| --- | --- |
+| **angels/** | About 55 CI checks: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. |
+| **GRIMOIRE.md** | The raw record of every defect found (sequentially numbered §A–§CX). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
+| **Sanctuary / Sanctum** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
+| **§A–§CX** | Sequential (alphabetic) IDs for individual defect write-ups in GRIMOIRE.md. E.g. §AV is the 32nd entry, §CX is the 101st. |
+
+## 2. What this project does
 
 **Parrhesia** audits the commits an AI coding agent produces, directly from the
 diff, for five concrete shortcuts agents take under time pressure: deleting the
@@ -25,141 +44,136 @@ That self-application is the project's main piece of evidence.
 - Details: [README.en.md](../README.en.md) / [README.md (Japanese)](../README.md)
 - A reproducible demo with real output: [docs/CASE_STUDY.md](./CASE_STUDY.md)
 
-## 2. How it keeps finding defects
+### 2.1 A known self-inconsistency (disclosed, not hidden)
 
-About 80 CI checks under `angels/` (called "angels" in this repo) mechanically
-re-check that every previously-found defect stays fixed. **81 defects (§A–§CC)**
-have been recorded so far. The raw record is [GRIMOIRE.md](../GRIMOIRE.md); a
-narrative version is [DEVLOG.md](../DEVLOG.md).
+This toolkit claims "zero trust," yet the helper script that renews its own
+certificate weekly (`tools/renew_certificate.ps1`/`.sh`) replaces a step that is
+supposed to require human, out-of-band confirmation with automatic approval.
+Running it produces a log showing the trust root's (public key's) fingerprint
+changing on every run.
 
-Those 81 fall into three broad patterns (see DEVLOG.md for the full list):
+Rather than hide this, it is recorded as a **self-found defect**:
+[GRIMOIRE.md §CX](../GRIMOIRE.md), with a corresponding entry added to
+[docs/BOUNDARY.md](./BOUNDARY.md)'s known limitations. A permanent fix (keeping
+the out-of-band check outside the automation, or technically enforcing a
+single-trusted-device assumption) is not yet implemented as of this writing.
+This is placed near the top because it's the first thing a reviewer should
+check when judging this project's internal consistency.
 
-1. **The same bypass exists under a different name** — e.g. a code-review layer
-   that blocked `import os` was fully bypassed by `import os.path`.
+## 3. How it keeps finding defects
+
+CI checks under `angels/` mechanically re-check that every previously-found
+defect stays fixed. As of this writing, GRIMOIRE.md actually contains **101
+entries (§A–§CX)**, counted directly (DEVLOG.md's narrative version still says
+81 and has not been updated since; that document now notes this explicitly).
+
+Those 101 fall into three broad patterns:
+
+1. **The same bypass exists under a different name** — e.g. a layer blocking
+   `import os` was fully bypassed by `import os.path`.
 2. **Something that looks approved or learned was never actually wired in** —
-   e.g. a human-approved threat record that the real enforcement hook never
-   read at all.
+   e.g. a human-approved threat record the real enforcement hook never read.
 3. **Nobody ever confirmed the safety mechanism actually fires** — e.g. a
    verdict message saying "execution is impossible" next to a process exit code
    that was always 0 (success).
 
-The single most surprising find was a nested-sandbox bug: a mechanism meant to
-*narrow* permissions when nested instead *widened* them to the entire
-filesystem — exactly the kind of "this is obviously a safety-tightening change,
-so why bother attacking it" assumption that QA should never make.
+### Three representative entries (reproduction, commit, evidence)
 
-### Current state of the test suite (measured, with its source)
+| Entry | What was wrong | Reproduction (actually run) | Fix commit |
+| --- | --- | --- | --- |
+| [§AV](../GRIMOIRE.md) — the most surprising find | A nested sandbox's permission scope, meant to only *narrow*, instead *widened* to the entire filesystem. A direction-of-containment bug in the merge logic let a child declaring `allowed_dirs=["/"]` inside a parent `allowed_dirs=["jail_workspace"]` promote the effective scope to `/`. | Opened a child `Sanctum(allowed_dirs=["/"])` inside a parent `Sanctum(allowed_dirs=["jail_workspace"])` and wrote to `/tmp/` → the write succeeded with no exception (confirmed jailbreak). Fixed; 5 new tests in `tests/test_sanctum_nested_allowed_dirs_widening.py`. | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
+| [§AR](../GRIMOIRE.md) | A judgment message said "execution is impossible," but the CLI's exit code was always `0` (success). A caller could never detect a violation from the exit code. | Ran `python src/kamael_judgment.py <violating file>` → the screen shows a rejection, but `echo $?` is always 0. | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
+| [§CT](../GRIMOIRE.md) | `socket.getaddrinfo()` (DNS resolution) bypassed both independent defense layers entirely, since it never calls `connect()`. Secret data could be exfiltrated by encoding it into a subdomain label and resolving it (classic DNS exfiltration). | Called `getaddrinfo()` on a disallowed hostname (`"<secret>.attacker.example.com"`) → nothing blocked it; it only failed with the sandbox's own DNS-unreachable OS error (proof nothing was actually enforced). After the fix, the full DNS-exfiltration chain was reproduced and confirmed blocked on both layers. | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) → real-CI confirmation [`90e0c1a`](https://github.com/anjo-da-maquina/parrhesia/commit/90e0c1a85ecb66aef1e1d1b9ef8ef4e7d4bff974) |
 
-Not a guess — this is quoted directly from a real GitHub Actions run.
+The full record is [GRIMOIRE.md](../GRIMOIRE.md); a narrative version is
+[DEVLOG.md](../DEVLOG.md).
+
+## 4. Current state of the test suite (measured, with sources)
+
+### On CI (no network restrictions)
 
 ```
-commit:  c527630 (main, latest at the time this document was written)
-run:     Sanctuary CI/CD #<run 43158850109>, conclusion: success
-result:  828 passed, 2 xfailed, 11 xpassed, 2 warnings in 51.11s
+commit:     f83a17a
+run:        Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43173405996
+conclusion: success (zero failure-comments)
+result:     828 passed, 2 xfailed, 11 xpassed, 2 warnings in 43.59s
 ```
 
-The 11 `xpassed` are intentional. Some tests depend on the `rsa` library, but the
-sandbox normally used to work on this project has no outbound access to PyPI, so
-`rsa` cannot be installed there. Those tests carry a documented
-`pytest.mark.xfail(strict=False)`. `strict=False` is deliberate: on GitHub
-Actions, which does have network access, those same tests actually pass, and the
-intent is for that unexpected pass to be evidence the mechanism works in a real
-environment — not a reason to turn CI red.
+The 11 `xpassed` are intentional. They belong to tests depending on the `rsa`
+library (e.g. one to four each in `tests/test_guard_ctypes_dlsym_bypass.py`,
+`tests/test_gatekeeper_ctypes_dlsym_bypass_guard.py`,
+`tests/test_thread_safety_maquina_seal.py`,
+`tests/test_openai_agent_loop_template.py`). The sandbox this document is
+written in has no PyPI access and cannot install `rsa`, so those tests carry a
+documented `pytest.mark.xfail(strict=False)` there. On CI, where `rsa` actually
+installs, they simply pass — reported as `xpassed`, and `strict=False` means
+this never turns CI red. **This is a record of an environment difference, not
+evidence that more xpasses are better** — in any third-party environment with
+`rsa` installed, these 11 would just show as ordinary `passed`.
 
-## 3. A transparency record of the AI agent's own work on this project
+The remaining `2 xfailed` are unrelated to `rsa`:
+`tests/test_orchestrator.py::test_orchestrator_initialization` (reason:
+"Orchestrator API is pending implementation") and
+`tests/test_sandbox.py::test_docker_sandbox_isolation` (reason: "DockerSandbox
+implementation is pending") — both long-standing `strict=True` xfails for
+features that simply aren't implemented yet.
 
-This project is built jointly by its human owner and Claude (an AI agent built by
-Anthropic). Since auditing AI-agent behavior is the whole point of the project,
-the same standard is applied to the agent's own process. Concrete examples
-follow.
+### In this exact sandbox (actually fixed during this review)
 
-### 3.1 Standing discipline applied to every change
+This sandbox has no `rsa` installed and no PyPI access (confirmed by actually
+running `pip install rsa`, which failed with a DNS resolution error). Before
+this review, that meant `tests/conftest.py` itself failed to import, which
+**stopped test collection for the entire suite** (confirmed by actually running
+`python3 -m pytest`: exit code 4, zero tests run).
 
-- Every commit is SSH-signed, and the signature block is actually verified
-  (`git cat-file commit HEAD | grep gpgsig`) before pushing — never assumed.
-- After every push, a real GitHub Actions run is watched to completion
-  (`gh run watch`) rather than assuming it will pass.
-- Zero failure-comments on the commit (`gh api .../commits/<sha>/comments`) is
-  checked every time.
-- Sandbox-specific instability (a signing symlink that occasionally disappears,
-  `/tmp` being wiped entirely) is investigated and reported honestly rather than
-  hidden.
+This was fixed as part of responding to this review (wrapping the import in
+`tests/conftest.py` in a try/except, and adding `pytest.importorskip("rsa")` to
+the handful of files that import `runtime_audit_gatekeeper` unconditionally).
+Re-running the exact same sandbox afterward gives (actually run, not estimated):
 
-### 3.2 A disclosed process violation
+```
+$ python3 -m pytest -q
+825 passed, 1 failed, 1 skipped, 14 xfailed, 62 warnings in 28.26s
+```
 
-In November 2026, it was discovered that part of this project's portfolio-polish
-work had already been merged to `main`, in direct violation of an explicit
-instruction not to merge without a human decision. Investigation traced the merge
-to an earlier instance of the same AI agent, in the same session, with no
-recorded justification for the decision — and no justification was invented after
-the fact. This was reported to the user plainly, without excuses. It is a record
-of a failure, but it is kept here because applying "report what you found, even
-when it's your own mistake" to the agent's own behavior is exactly what the
-project's stated values require.
+- **1 failed**:
+  `tests/test_pre_commit_secret_scan.py::test_preexisting_secret_in_unchanged_lines_is_not_reflagged`.
+  Not a code defect — a known, sandbox-specific flake (the git-signing symlink
+  `/tmp/code-sign` occasionally disappears, breaking `git commit` inside this
+  one test). Confirmed the symlink was indeed missing.
+- **1 skipped**: `tests/test_audit_hook_registration_fails_closed.py` (depends
+  on `rsa`, skipped with an explicit reason).
+- **14 xfailed**: mostly the same documented `rsa`-dependent environment gap,
+  plus one unrelated to this review (a genuinely expired test certificate).
 
-### 3.3 A recent concrete example: the weekly certificate-renewal script
+## 5. The human and AI agent's own working process on this project
 
-This repository has a certificate (`ataraxia_certificate.json`) that needs
-periodic renewal to keep its integrity checks valid. While building a PowerShell
-script to automate that renewal weekly on Windows, three distinct bugs were found
-— each one **from a real error screen the user pasted from their own Windows
-machine** — and each was diagnosed, fixed, CI-verified, and re-checked on the
-user's machine in turn:
+This project is built jointly by its human owner and Claude (an AI agent built
+by Anthropic). Signed commits, CI verification on every change, a disclosed past
+process violation, and a three-round real-machine debugging session for the
+certificate-automation script are recorded in detail in a separate file:
 
-1. **A parse error** — a backtick-escaped quote nested inside a double-quoted
-   string was fragile for the PowerShell parser. Fixed by switching to
-   concatenated single-quoted strings instead.
-2. **The same error, in a different place** — after that fix, the exact same
-   symptom recurred. The real cause was encoding: the files were saved as UTF-8
-   without a BOM, so Windows PowerShell 5.1 under a Japanese locale was decoding
-   them with the system code page instead of UTF-8, corrupting quote characters
-   near Japanese text. Fixed by adding a UTF-8 BOM to both files.
-3. **Silent success, no evidence** — the scheduled task reported
-   `LastTaskResult: 0` (success) but never wrote a log file. The cause:
-   `powershell.exe -File` does not honor a trailing shell redirect
-   (`*>> logfile`) — it just passes that text as a literal argument to the
-   script. Fixed by having the renewal script manage its own logging
-   (`Start-Transcript`/`Stop-Transcript`) instead of relying on the caller.
+→ [docs/worklog/ai-agent-notes.en.md](./worklog/ai-agent-notes.en.md)
 
-All of this happened under a real constraint: this sandbox cannot install
-PowerShell itself (the network allowlist blocks Microsoft's package repository),
-so **every fix was explicitly disclosed as unverified by the sandbox**, and the
-user's own error screens and success screens were treated as the real test
-results. The cycle ended with the user's own machine showing the complete,
-real log — key proposal, review, approval, and certificate issuance — all the
-way through.
-
-### 3.4 What this sandbox can and cannot confirm right now (as of writing)
-
-Checked directly while preparing this document:
-
-- The `rsa` package is not installed, and PyPI is unreachable, so it cannot be
-  installed here either (`pip install rsa` was actually run; it failed with a
-  DNS resolution error).
-- Because of that, running the full `pytest` suite here fails at collection —
-  `conftest.py` itself fails to import (`ModuleNotFoundError: No module named
-  'rsa'`), confirmed by actually running it.
-- The "828 passed, 2 xfailed, 11 xpassed" figure above was not invented or
-  estimated in this sandbox — it was pulled directly from a real GitHub Actions
-  run's log, which does have network access.
-
-## 4. Further reading
+## 6. Further reading
 
 | Document | Covers |
 | --- | --- |
 | [README.en.md](../README.en.md) / [README.md](../README.md) | Overview, usage, threat model, design principles |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | Reproducible demo, including the honest record of its first run scoring 2/5, not 5/5 |
-| [DEVLOG.md](../DEVLOG.md) | The 81 recorded defects, as a narrative |
-| [GRIMOIRE.md](../GRIMOIRE.md) | §A–§CC, the raw, most detailed record |
+| [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see GRIMOIRE.md for the current count) |
+| [GRIMOIRE.md](../GRIMOIRE.md) | §A–§CX, 101 entries, the raw, most detailed record |
 | [docs/FAQ.md](./FAQ.md) | Differentiation, limitations, and other Q&A |
 | [docs/WHY.md](./WHY.md) | The design rationale for auditing rather than trusting AI agents |
-| [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do |
+| [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do (including the §CX inconsistency) |
+| [docs/worklog/ai-agent-notes.en.md](./worklog/ai-agent-notes.en.md) | Detailed record of the AI agent's own working process |
 
-## 5. Reproduce it yourself
+## 7. Reproduce it yourself
 
 ```bash
 git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
 python3 demo/build_and_audit_demo.py
 ```
 
-No network access and no state left behind afterward.
+No network access and no state left behind afterward. Even without `rsa`,
+`python3 -m pytest` now collects and runs the whole suite (see §4).
