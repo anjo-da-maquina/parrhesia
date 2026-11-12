@@ -103,19 +103,19 @@ python3 demo/build_and_audit_demo.py
 
 ### CI(ネットワーク制限なし)での結果
 
-<!-- CI-RESULT-PLACEHOLDER: 本節は、このレビュー対応一式をpushした直後の
-     real CI実行結果で更新する。手集計・推測の値は書かない。 -->
 ```
-commit:  (push後に実際のコミットハッシュへ更新)
-run:     (push後に実際のGitHub Actions実行URLへ更新)
-結論:    (push後に更新)
-結果:    (push後に更新)
+commit:  f1e9d01
+run:     Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+結論:    success(失敗コメント0件)
+結果:    843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
 ```
 
-このセクションは、2026-10のレビュー対応で`xpassed`方式から`skipif`方式に設計を変更した
-ため、CIでは`rsa`依存のテストが`xpassed`としてではなく通常の`passed`として現れる
-はずです(§4.1参照)。実際の数値は、push後のCI実行で確認してから本節を更新します
-(確認前の推測は書きません)。
+`xpassed`は11件から0件になりました。設計変更の1回目のpush直後([`70fa173`](https://github.com/anjo-da-maquina/parrhesia/commit/70fa173f45908ac4c3e6f3ef3f67e398ad1afb86)のCI結果は`842 passed, 2 xfailed, 1 xpassed`)で1件だけ残っていた
+`tests/test_openai_agent_loop_template.py::test_execute_safe_action_uses_sanctum_and_is_not_a_stub`
+についても、実際のCIログから原因(無条件`xfail`がCI専用の別分岐でも適用されていた
+こと)を特定し、`condition=`でCI実行時は対象外にする追加修正を行いました
+([GRIMOIRE.md §DA](../GRIMOIRE.md))。残る`2 xfailed`は、rsaとは無関係な
+Orchestrator/DockerSandboxの未実装によるものです(§4.1に詳細)。
 
 #### 4.1 設計変更: `xfail(strict=False)` → `skipif`
 

@@ -114,19 +114,23 @@ The full record is [GRIMOIRE.md](../GRIMOIRE.md); a narrative version is
 
 ### On CI (no network restrictions)
 
-<!-- CI-RESULT-PLACEHOLDER: fill in with the real CI run right after pushing
-     this round of fixes. Never write a guessed or hand-counted number here. -->
 ```
-commit:     (to be filled in with the real commit hash after pushing)
-run:        (to be filled in with the real GitHub Actions run URL after pushing)
-conclusion: (to be filled in after pushing)
-result:     (to be filled in after pushing)
+commit:     f1e9d01
+run:        Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+conclusion: success (zero failure-comments)
+result:     843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
 ```
 
-Because this review round changed the `xpassed` design to `skipif` (§4.1), the
-`rsa`-dependent tests should now show up as ordinary `passed` on CI rather than
-`xpassed`. The real numbers will be filled in once the CI run for this push
-completes (no guessed numbers are written here in the meantime).
+`xpassed` went from 11 to 0. Right after the first push of the design change
+(CI result for [`70fa173`](https://github.com/anjo-da-maquina/parrhesia/commit/70fa173f45908ac4c3e6f3ef3f67e398ad1afb86)
+was `842 passed, 2 xfailed, 1 xpassed`), one case was still xpassing:
+`tests/test_openai_agent_loop_template.py::test_execute_safe_action_uses_sanctum_and_is_not_a_stub`.
+The real CI log showed the cause — an unconditional `xfail` was also being
+applied on the CI-only branch where it always structurally passes regardless
+of rsa/cert state — and a follow-up fix scoped the `xfail`'s `condition=` to
+exclude CI runs ([GRIMOIRE.md §DA](../GRIMOIRE.md)). The remaining `2 xfailed`
+are unrelated to rsa — the Orchestrator/DockerSandbox not-yet-implemented cases
+detailed in §4.1.
 
 #### 4.1 Design change: `xfail(strict=False)` → `skipif`
 
