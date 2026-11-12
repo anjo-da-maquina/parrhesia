@@ -1,4 +1,4 @@
-# tools/setup_weekly_renewal_task.ps1
+﻿# tools/setup_weekly_renewal_task.ps1
 #
 # これを1回だけ実行すると、Windowsの「タスクスケジューラ」に
 # 「毎週、証明書を自動更新する」予定が登録される。

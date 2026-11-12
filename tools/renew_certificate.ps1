@@ -1,4 +1,4 @@
-# tools/renew_certificate.ps1
+﻿# tools/renew_certificate.ps1
 #
 # 証明書(ataraxia_certificate.json)の「提案→確認→承認」を自動で行う
 # Windows版スクリプト。tools/renew_certificate.sh のPowerShell版。
