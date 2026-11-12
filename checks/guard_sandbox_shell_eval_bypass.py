@@ -6,10 +6,10 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "guard_sandbox_shell_eval_bypass - カオスエンジニアリング: 難読化攻撃の小規模バッテリーをSeferに対して実行し、 突破数をレポートする。"
+NAME = "guard_sandbox_shell_eval_bypass - カオスエンジニアリング: 難読化攻撃の小規模バッテリーをRuntimeGuardに対して実行し、 突破数をレポートする。"
 
 
-# カオスエンジニアリング: 難読化攻撃の小規模バッテリーをSeferに対して実行し、
+# カオスエンジニアリング: 難読化攻撃の小規模バッテリーをRuntimeGuardに対して実行し、
 # 突破数をレポートする。
 #
 # [脆弱性修正 2026-10 §BM] 以前の実装は、1件でも突破があった場合の失敗判定を

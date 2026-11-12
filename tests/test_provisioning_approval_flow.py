@@ -380,7 +380,7 @@ def test_cli_check_rotation_exit_codes(tmp_path):
     で起動し、MATCH=0・ROTATION=2・NOT_FOUND=1という終了コードの契約が壊れていない
     ことを、モックではなく実機のプロセス起動で確認する。
 
-    `PLEROMA_DIR = Path(__file__).parent.parent`(スクリプト自身の位置から相対的に
+    `REPO_ROOT = Path(__file__).parent.parent`(スクリプト自身の位置から相対的に
     runtime_audit_gatekeeper.py・runtime_guard/provisioning_pending.jsonを探す設計)
     を利用し、一時ディレクトリにtools/・runtime_guard/の同じ配置を複製することで、
     実リポジトリの現在の状態(本物のpending.json・本物の信頼されている鍵)を

@@ -4,7 +4,7 @@ tests/test_learned_rules_enforcement.py
 runtime_guard/__init__.py の回帰テスト。DEFECTS.md §AG 参照。
 
 背景: 本フレームワークには2つの「学習」ワークフローがあった:
-  1. adversarial_training/local_only_selfplay_gate.py(旧名local_arena/selfplay.py、Lucifer vs Sefer自己対戦)が発見した新たな
+  1. adversarial_training/local_only_selfplay_gate.py(旧名local_arena/selfplay.py、RedTeamAI vs RuntimeGuard自己対戦)が発見した新たな
      脱走経路を、人間が tools/promote_ledger_seal.py で承認し
      runtime_guard/pending_rule_ledger.json に反映する。
   2. shield_rule_sync.py(外部LLM脅威インテリジェンス)が提案した危険な
@@ -21,7 +21,7 @@ runtime_guard/__init__.py の回帰テスト。DEFECTS.md §AG 参照。
 patch を行う副作用の強いモジュールであり、importlib.reload()すると
 os.writeの多重ラップによる無限再帰(実機で確認済み)等、意図しない
 破壊的な副作用を引き起こす。そのため本テストではモジュールの再読み込みを
-一切行わず、runtime_guard._RAZIEL_LEDGER_PATH / runtime_guard._SHIELD_RULES_PATH と、
+一切行わず、runtime_guard._PENDING_RULE_LEDGER_PATH / runtime_guard._SHIELD_RULES_PATH と、
 対応するmtimeキャッシュ辞書をmonkeypatchで直接差し替えることで、
 ファイルパスだけを安全に切り替える。
 """
@@ -37,7 +37,7 @@ import runtime_guard  # noqa: E402
 
 
 def _point_threat_intel_ledger_at(monkeypatch, path: Path):
-    monkeypatch.setattr(runtime_guard, "_RAZIEL_LEDGER_PATH", path)
+    monkeypatch.setattr(runtime_guard, "_PENDING_RULE_LEDGER_PATH", path)
     monkeypatch.setattr(runtime_guard, "_dynamic_banned_events_cache", {"mtime": None, "events": frozenset()})
 
 

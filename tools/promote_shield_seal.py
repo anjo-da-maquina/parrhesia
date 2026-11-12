@@ -20,9 +20,9 @@ import argparse
 import json
 from pathlib import Path
 
-PLEROMA_DIR = Path(__file__).parent.parent
-RULES_PATH = PLEROMA_DIR / "shield_rules.json"
-PENDING_RULES_PATH = PLEROMA_DIR / "runtime_guard" / "shield_rules_pending.json"
+REPO_ROOT = Path(__file__).parent.parent
+RULES_PATH = REPO_ROOT / "shield_rules.json"
+PENDING_RULES_PATH = REPO_ROOT / "runtime_guard" / "shield_rules_pending.json"
 
 
 def _load_json(path, default):

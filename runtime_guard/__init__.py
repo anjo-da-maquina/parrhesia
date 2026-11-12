@@ -198,7 +198,7 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
 # adversarial_training/selfplay_engine_core.py(旧名local_arena/selfplay_core.py) / checks/_common.py と同一の正規表現。
 VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$")
 
-# [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`、Lucifer vs Sefer自己対戦)が
+# [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`local_arena/selfplay.py`、RedTeamAI vs RuntimeGuard自己対戦)が
 # 発見し、`tools/promote_ledger_seal.py`で人間が明示的に承認した新たな禁止
 # イベント(`runtime_guard/pending_rule_ledger.json`の`banned_events`)は、これまで
 # `_runtime_audit_hook`から一切読み込まれておらず、承認してもシステム
@@ -222,19 +222,19 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 # 使い、audit hookの頻繁な呼び出しごとに毎回ファイルを読み直すことによる
 # 性能劣化を避けつつ、人間の承認がプロセス再起動不要で即座に反映されるよう
 # にする。
-_RAZIEL_LEDGER_PATH = Path("runtime_guard/pending_rule_ledger.json")
+_PENDING_RULE_LEDGER_PATH = Path("runtime_guard/pending_rule_ledger.json")
 _dynamic_banned_events_cache = {"mtime": None, "events": frozenset()}
 
 
 def _load_dynamic_banned_events() -> frozenset:
     try:
-        mtime = _RAZIEL_LEDGER_PATH.stat().st_mtime
+        mtime = _PENDING_RULE_LEDGER_PATH.stat().st_mtime
     except OSError:
         return frozenset()
     if _dynamic_banned_events_cache["mtime"] == mtime:
         return _dynamic_banned_events_cache["events"]
     try:
-        with open(_RAZIEL_LEDGER_PATH, "r", encoding="utf-8") as f:
+        with open(_PENDING_RULE_LEDGER_PATH, "r", encoding="utf-8") as f:
             ledger = json.load(f)
         events = frozenset(
             e for e in ledger.get("banned_events", [])
@@ -448,7 +448,7 @@ def _runtime_audit_hook(event: str, args: tuple):
 
 def _trigger_violation(event: str, args: tuple, message: str):
     _log_violation_to_chain(event, {"args": args, "message": message})
-    raise LossOfAtaraxia(f"[Sefer] Tripwire: {message}")
+    raise LossOfAtaraxia(f"[RuntimeGuard] Tripwire: {message}")
 
 @dataclass
 class Finding:

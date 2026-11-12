@@ -52,7 +52,7 @@ jobs:
       # ここに直接ハードコードしており、requirements.txtとの間でズレが発生
       # していた(実機で発見: requests がテストスイートの一部で必要になった
       # 際、ここへの追記が漏れ、local_arena/selfplay.py の `import requests`
-      # が原因で創造主ゲートのテストが ModuleNotFoundError でクラッシュして
+      # が原因で開発者本人ゲートのテストが ModuleNotFoundError でクラッシュして
       # いた)。requirements.txt を単一の正として読み込むことで、このズレを
       # 構造的に防ぐ。
       #

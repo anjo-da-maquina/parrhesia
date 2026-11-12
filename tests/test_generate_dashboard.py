@@ -24,8 +24,8 @@ def _write_jsonl(path: Path, lines):
 
 
 def test_dashboard_renders_summary_cards_from_real_looking_data(tmp_path: Path):
-    akashic_path = tmp_path / "akashic_records.json"
-    _write_json(akashic_path, [
+    history_path = tmp_path / "selfplay_history.json"
+    _write_json(history_path, [
         {"generation": 1, "status": "Breached", "qa_score": 10, "timestamp": "t1", "qa_hint": "h1"},
         {"generation": 2, "status": "Failed", "qa_score": 5, "timestamp": "t2", "qa_hint": "h2"},
     ])
@@ -47,7 +47,7 @@ def test_dashboard_renders_summary_cards_from_real_looking_data(tmp_path: Path):
     ])
 
     html = build_dashboard(
-        akashic_path=akashic_path,
+        history_path=history_path,
         audit_chain_path=audit_chain_path,
         ledger_path=ledger_path,
         pending_paths={"テスト用キュー": pending_path},
@@ -67,14 +67,14 @@ def test_dashboard_displays_the_average_qa_score_it_computes(tmp_path: Path):
     なら平均は7.5のはずで、これがHTML中のどこかに実際に出力されることを
     固定する(修正前のコードに対して本テストが失敗することをgit stashで
     確認済み)。"""
-    akashic_path = tmp_path / "akashic_records.json"
-    _write_json(akashic_path, [
+    history_path = tmp_path / "selfplay_history.json"
+    _write_json(history_path, [
         {"generation": 1, "status": "Breached", "qa_score": 10, "timestamp": "t1", "qa_hint": "h1"},
         {"generation": 2, "status": "Failed", "qa_score": 5, "timestamp": "t2", "qa_hint": "h2"},
     ])
 
     html = build_dashboard(
-        akashic_path=akashic_path,
+        history_path=history_path,
         audit_chain_path=tmp_path / "does_not_exist.jsonl",
         ledger_path=tmp_path / "does_not_exist2.json",
         pending_paths={"空キュー": tmp_path / "does_not_exist3.json"},
@@ -86,7 +86,7 @@ def test_dashboard_displays_the_average_qa_score_it_computes(tmp_path: Path):
 def test_dashboard_handles_missing_files_gracefully(tmp_path: Path):
     """すべてのデータファイルが存在しない(初回実行等)場合でも例外を出さずに生成できる"""
     html = build_dashboard(
-        akashic_path=tmp_path / "does_not_exist.json",
+        history_path=tmp_path / "does_not_exist.json",
         audit_chain_path=tmp_path / "does_not_exist.jsonl",
         ledger_path=tmp_path / "does_not_exist2.json",
         pending_paths={"空キュー": tmp_path / "does_not_exist3.json"},

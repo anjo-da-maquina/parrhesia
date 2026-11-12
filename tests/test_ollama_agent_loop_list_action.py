@@ -51,7 +51,7 @@ try:
     result = executor._execute_safe_action(action_req)
     print("UNBLOCKED:" + str(result))
 except SeferLossOfAtaraxia as e:
-    print("BLOCKED_BY_SEFER:" + str(e))
+    print("BLOCKED_BY_RUNTIME_GUARD:" + str(e))
 """
     return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
 
@@ -89,4 +89,4 @@ def test_list_outside_workspace_via_traversal_is_blocked_by_sandbox(tmp_path: Pa
     outside_target = str(tmp_path / ".." )
     action_req = json.dumps({"action": "list", "target": outside_target})
     res = _run_execute_safe_action(action_req, str(tmp_path))
-    assert "BLOCKED_BY_SEFER:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
+    assert "BLOCKED_BY_RUNTIME_GUARD:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"

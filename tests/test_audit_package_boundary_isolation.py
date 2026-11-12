@@ -3,14 +3,14 @@ tests/test_audit_package_boundary_isolation.py
 =====================================
 [新設 2026-11] checks/audit_package_boundary_isolation.py の単体テスト。
 
-本天使(「メタトロンの経典印章」)は、「ライセンス証明書機構
+本天使(「メタトロンの公開配布物印章」)は、「ライセンス証明書機構
 (runtime_audit_gatekeeper)・Local Arenaの公開配布(pip配布されるruntime_guardパッケージ)
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
 `MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
 
 `.github/workflows/regression_checks_ci.yml`の§BC由来のコメントが
 明記する通り、実際のsdistビルドによる内容検査(`tools/
-build_public_scripture.py`・`tests/test_public_scripture_isolation.py`)
+build_public_release.py`・`tests/test_public_release_isolation.py`)
 は別の仕組みであり、本天使自身の静的検証ロジック(より早期・軽量な層)
 を直接検証するテストは、天使群のテストカバレッジの棚卸しの過程で、
 一件も存在しないことが判明した。本天使はサプライチェーン境界(配布

@@ -19,7 +19,7 @@ git config core.hooksPath hooks
 
 ## ⚔️ 闘争と進化（アリーナ運用）
 闘技場を起動し、ルシファー（攻撃AI・堕天使）とメタトロン（防衛・QA）を3戦戦わせる。
-闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`local_arena/akashic_records.json`)に記録され、次回起動時に自動浄化される。
+闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`local_arena/selfplay_history.json`)に記録され、次回起動時に自動浄化される。
 メタトロンが提案する新しい禁止ルールは、直接は反映されず `runtime_guard/proposed_rule_queue.json`
 に人間承認待ちとしてキューイングされる。
 
@@ -57,7 +57,7 @@ python src/verdict.py <対象ファイル>
 ```
 
 ## 🛡 絶対防壁の健全性証明（テストスイート）
-Sefer（天界の防壁）のすべての機能が正常に稼働しているかを確認する。ALL GREEN (PASSED) であることを証明する。
+RuntimeGuard（実行時監査）のすべての機能が正常に稼働しているかを確認する。ALL GREEN (PASSED) であることを証明する。
 ```
 python -B -m pytest -p no:cacheprovider --assert=plain tests/ -v
 ```
@@ -71,7 +71,7 @@ python checks/guard_precommit_secret_leak.py
 ```
 
 ## 📊 防衛ダッシュボードの生成
-Selfplay Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`local_arena/akashic_records.json`)、AuditHookが実際に
+Selfplay Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`local_arena/selfplay_history.json`)、AuditHookが実際に
 遮断したイベントの監査ログ(`runtime_guard/audit_chain.jsonl`)、現在の禁止イベント
 一覧、各種人間承認待ちキューの件数を、1枚の自己完結したHTMLにまとめて
 可視化する。外部ライブラリ・CDNへの依存なし(オフラインで閲覧可能)。
@@ -160,12 +160,12 @@ python tools/promote_provisioning_seal.py --reject  "<client_id>"
 `--approve`実行後、更新された`ataraxia_certificate.json`と`runtime_audit_gatekeeper.py`
 （公開鍵が反映される）の両方をコミットすること。
 
-## 📦 経典（公開配布物）のビルドと検査
-pip配布用の`runtime_guard`単体パッケージ（経典）を実際にビルドし、ライセンス証明書機構
+## 📦 公開配布物（公開配布物）のビルドと検査
+pip配布用の`runtime_guard`単体パッケージ（公開配布物）を実際にビルドし、ライセンス証明書機構
 （ゲートキーパー）やadversarial_training（闘技場、旧名Local Arena）が一切混入していないことを検査する。
 公開配布（PyPI等へのアップロード）の前に必ず実行すること。
 ```
-python tools/build_public_scripture.py
+python tools/build_public_release.py
 ```
 ✅ 検査合格と表示された場合のみ、`dist/runtime_guard-*.tar.gz` を公開配布してよい。
 

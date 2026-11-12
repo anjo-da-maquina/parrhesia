@@ -3,8 +3,8 @@
 
 実際に sdist をビルドし、その内容を検査することで、将来 pyproject.toml や
 MANIFEST.in が変更されても、runtime_audit_gatekeeper.py / ataraxia_certificate.json /
-adapters/provisioning_agent.py / adversarial_training(旧名local_arena、Creator's Air) /
-運用者向けの内部テスト(tests/)が、公開配布物(経典)に紛れ込んでいないことを
+adapters/provisioning_agent.py / adversarial_training(旧名local_arena、hardware gate) /
+運用者向けの内部テスト(tests/)が、公開配布物(公開配布物)に紛れ込んでいないことを
 保証する。
 
 [実装上の注意] setuptools.build_meta.build_sdist() は内部でdistutilsの
@@ -28,7 +28,7 @@ def _build_sdist_in_subprocess(outdir: Path) -> Path:
 import sys
 from pathlib import Path
 sys.path.insert(0, {str(TOOLS)!r})
-import build_public_scripture as bps
+import build_public_release as bps
 p = bps.build_sdist(Path({str(outdir)!r}))
 print("SDIST_PATH:" + str(p))
 """
@@ -57,8 +57,8 @@ def test_sdist_is_clean_and_contains_only_the_runtime_guard_package(tmp_path: Pa
     sdist_path = _build_sdist_in_subprocess(tmp_path)
 
     sys.path.insert(0, str(TOOLS))
-    import build_public_scripture as bps
-    problems = bps.verify_scripture_is_clean(sdist_path)
+    import build_public_release as bps
+    problems = bps.verify_release_is_clean(sdist_path)
     assert problems == [], f"公開配布物にライセンス機構/adversarial_training関連の内容が混入しています: {problems}"
 
     with tarfile.open(sdist_path, "r:gz") as tf:

@@ -1,9 +1,9 @@
 ﻿"""
 adversarial_training/selfplay_engine_core.py
 ============================
-[テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名selfplay.py)は起動直後に `_verify_creators_air()`
-（創造主のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(666)` で
-即座に終了する。これはLocal Arena（闘技場）が創造主のローカル環境以外では
+[テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名selfplay.py)は起動直後に `_verify_hardware_match()`
+（開発者本人のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(666)` で
+即座に終了する。これはLocal Arena（闘技場）が開発者本人のローカル環境以外では
 絶対に起動しないための意図的な設計だが、副作用として local_only_selfplay_gate.py を
 import するだけでCI・他の開発者のマシン上のテストが強制終了してしまい、
 中身の純粋なロジック（承認キュー化・ペイロード抽出・イベント名検証等）が
@@ -21,18 +21,18 @@ from pathlib import Path
 from datetime import datetime
 
 ADVERSARIAL_TRAINING_DIR = Path(__file__).parent.resolve()
-PLEROMA_DIR_FOR_IMPORT = ADVERSARIAL_TRAINING_DIR.parent
-if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
-    sys.path.insert(0, str(PLEROMA_DIR_FOR_IMPORT))
+REPO_ROOT_FOR_IMPORT = ADVERSARIAL_TRAINING_DIR.parent
+if str(REPO_ROOT_FOR_IMPORT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT_FOR_IMPORT))
 # [脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS(詳細は
 # runtime_guard/__init__.py側のコメント参照)を単一の正として再利用する。ここで
 # 独自に同じ集合を複製すると、将来runtime_guard側だけが更新され本ファイルが
 # 取り残される(DEFECTS.md §Mと同種の)ドリフトのリスクを生むため。
 from runtime_guard import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
-PLEROMA_DIR = ADVERSARIAL_TRAINING_DIR.parent
-LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json"
-TARGET_FILE = ADVERSARIAL_TRAINING_DIR / "lucifer_victory.txt"
+REPO_ROOT = ADVERSARIAL_TRAINING_DIR.parent
+LEDGER_PATH = REPO_ROOT / "runtime_guard" / "pending_rule_ledger.json"
+PENDING_LEDGER_PATH = REPO_ROOT / "runtime_guard" / "proposed_rule_queue.json"
+TARGET_FILE = ADVERSARIAL_TRAINING_DIR / "redteam_victory.txt"
 SELFPLAY_HISTORY_PATH = ADVERSARIAL_TRAINING_DIR / "selfplay_history.json"
 
 MAX_MATCHES = 3
@@ -47,14 +47,14 @@ CRITICAL_INFRASTRUCTURE = {
 }
 
 
-def initialize_arena(akashic_path: Path = SELFPLAY_HISTORY_PATH):
-    if akashic_path.exists():
-        akashic_path.unlink()
+def initialize_arena(history_path: Path = SELFPLAY_HISTORY_PATH):
+    if history_path.exists():
+        history_path.unlink()
         return True
     return False
 
 
-def record_to_selfplay_history(generation, payload, status, error_msg, score, hint, akashic_path: Path = SELFPLAY_HISTORY_PATH):
+def record_to_selfplay_history(generation, payload, status, error_msg, score, hint, history_path: Path = SELFPLAY_HISTORY_PATH):
     record = {
         "timestamp": datetime.now().isoformat(),
         "generation": generation,
@@ -65,14 +65,14 @@ def record_to_selfplay_history(generation, payload, status, error_msg, score, hi
         "qa_hint": hint,
     }
     records = []
-    if akashic_path.exists():
+    if history_path.exists():
         try:
-            with open(akashic_path, "r", encoding="utf-8") as f:
+            with open(history_path, "r", encoding="utf-8") as f:
                 records = json.load(f)
         except Exception:
             pass
     records.append(record)
-    with open(akashic_path, "w", encoding="utf-8") as f:
+    with open(history_path, "w", encoding="utf-8") as f:
         json.dump(records, f, indent=4, ensure_ascii=False)
     return record
 
@@ -84,13 +84,13 @@ def extract_python_code(text: str) -> str:
 
 def build_forge_script(payload_code: str, pleroma_dir: Path, local_arena_dir: Path) -> str:
     """
-    [脆弱性修正 2026-10 §AU] Luciferが生成した攻撃ペイロード(`payload_code`)を
+    [脆弱性修正 2026-10 §AU] RedTeamAIが生成した攻撃ペイロード(`payload_code`)を
     実行するためのスクリプト本体を組み立てる。以前の実装(selfplay.py側に
     直接書かれていた)は、以下の2行を書き出すだけだった:
 
         from runtime_guard import awaken
         awaken()
-        # --- LUCIFER'S PAYLOAD ---
+        # --- RED TEAM'S PAYLOAD ---
         <payload_code がそのまま続く>
 
     `runtime_guard._runtime_audit_hook`(監査フック本体)は、冒頭で
@@ -105,9 +105,9 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, local_arena_dir: Pa
     実機検証済み: 旧来の生成スクリプトと全く同じ構成(`awaken()`のみ、
     `with Sandbox(...):`無し)で`os.system('echo ...')`を実行したところ、
     一切遮断されずそのまま実行された。つまり本ファイル(`adversarial_training/
-    local_only_selfplay_gate.py`、旧名`local_arena/selfplay.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
+    local_only_selfplay_gate.py`、旧名`local_arena/selfplay.py`)が実施する「RedTeamAI(攻撃生成AI) vs RuntimeGuard(防壁)」の
     自己対戦は、実際には**防壁が一度も展開されていない空の闘技場**で
-    行われていたに等しく、Luciferがどれほど単純な(難読化すら伴わない)
+    行われていたに等しく、RedTeamAIがどれほど単純な(難読化すら伴わない)
     攻撃を書いても常に「突破」と判定されてしまう構造的な欠陥だった。
     これは`checks/audit_agent_template_integration.py`が`src/openai_agent_loop.py`に対して
     既に検査している規約(「`with Sandbox(`を経由しないファイルI/Oは
@@ -128,9 +128,9 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, local_arena_dir: Pa
         f"sys.path.insert(0, {str(pleroma_dir)!r})\n"
         "from runtime_guard import awaken, Sandbox\n"
         "awaken()\n"
-        f"__lucifer_payload__ = {payload_code!r}\n"
+        f"__redteam_payload__ = {payload_code!r}\n"
         f"with Sandbox(allowed_dirs=[{str(local_arena_dir)!r}], restrict_reads=True):\n"
-        "    exec(__lucifer_payload__, {'__name__': '__main__'})\n"
+        "    exec(__redteam_payload__, {'__name__': '__main__'})\n"
     )
 
 
@@ -192,7 +192,7 @@ def apply_new_seal(new_event, attack_code="", source_error="",
     チェックだったはずだが、実際には過去に人間が明示的に"REJECTED"
     (拒否)した提案までも「既に提案済み」とみなし、**その後一度でも
     拒否された事件名は、Selfplay Engineが同じ事件名で新たな実証済みの
-    侵入(Lucifer が実際に`lucifer_victory.txt`を作成し、`TARGET_FILE`
+    侵入(RedTeamAI が実際に`redteam_victory.txt`を作成し、`TARGET_FILE`
     の存在によって侵入が確定した場合)を検知しても、二度と再提案できなく
     なる**という欠陥があった。
 
@@ -205,7 +205,7 @@ def apply_new_seal(new_event, attack_code="", source_error="",
     seal proposal.`)」という、構文解析の失敗であるかのような誤解を招く
     メッセージでログに出力するだけであり、運用者には「過去の拒否判断が、
     今まさに確定した新しい侵入の防御提案そのものを静かに握りつぶして
-    いる」ことに気づく手段が一切無かった。これは、Lucifer vs Selfplayの
+    いる」ことに気づく手段が一切無かった。これは、RedTeamAI vs Selfplayの
     免疫応答ループ(Selfplay Engine)が本来意図している「突破されるたび
     に新しい封印案を学習・提案する」という設計そのものを、過去の一度の
     人間判断が永久に無効化してしまう、§BJの「見せかけの保護」とは別角度

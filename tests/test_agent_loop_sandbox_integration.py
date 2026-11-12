@@ -57,7 +57,7 @@ try:
     result = executor._execute_safe_action(action_req)
     print("UNBLOCKED:" + str(result))
 except SeferLossOfAtaraxia as e:
-    print("BLOCKED_BY_SEFER:" + str(e))
+    print("BLOCKED_BY_RUNTIME_GUARD:" + str(e))
 """
     return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
 
@@ -81,7 +81,7 @@ def test_write_outside_workspace_via_traversal_is_blocked_by_sandbox(tmp_path: P
     outside_target = str(tmp_path / ".." / "escaped_canary.txt")
     action_req = json.dumps({"action": "write", "target": outside_target, "content": "pwned"})
     res = _run_execute_safe_action(action_req, str(tmp_path))
-    assert "BLOCKED_BY_SEFER:" in res.stdout, f"CRITICAL: Sandboxによる遮断が機能していません。stdout={res.stdout} stderr={res.stderr}"
+    assert "BLOCKED_BY_RUNTIME_GUARD:" in res.stdout, f"CRITICAL: Sandboxによる遮断が機能していません。stdout={res.stdout} stderr={res.stderr}"
     canary = tmp_path.parent / "escaped_canary.txt"
     assert not canary.exists(), "CRITICAL: ワークスペース外への書き込みが実際に成功してしまいました。"
 
@@ -98,7 +98,7 @@ def test_absolute_path_target_is_blocked_by_secure_resolve_not_just_sandbox(tmp_
     「_execute_safe_actionもsecure_resolve()で検証する」という前提は
     嘘だった(宣言と実態の不一致)。
 
-    本テストは、絶対パスでの脱走が、Sandboxの監査フック(`[Sefer]
+    本テストは、絶対パスでの脱走が、Sandboxの監査フック(`[RuntimeGuard]
     Tripwire: ...`)ではなく、secure_resolve()自身(`[絶対防壁: 空間隔離]`)
     によって、より早い段階でブロックされることを確認する――つまり
     secure_resolve()が実際に呼ばれていることの直接的な証拠である。
@@ -107,7 +107,7 @@ def test_absolute_path_target_is_blocked_by_secure_resolve_not_just_sandbox(tmp_
     outside_absolute = str(tmp_path.parent / "absolute_escape_canary.txt")
     action_req = json.dumps({"action": "write", "target": outside_absolute, "content": "pwned"})
     res = _run_execute_safe_action(action_req, str(tmp_path))
-    assert "BLOCKED_BY_SEFER:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
+    assert "BLOCKED_BY_RUNTIME_GUARD:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
     assert "絶対防壁: 空間隔離" in res.stdout, (
         "secure_resolve()ではなく、別の層(Sandboxの監査フック等)が先に"
         f"ブロックしている可能性がある。stdout={res.stdout}"
@@ -125,7 +125,7 @@ def test_read_outside_workspace_is_blocked_when_restrict_reads_enabled(tmp_path:
     try:
         action_req = json.dumps({"action": "read", "target": str(secret)})
         res = _run_execute_safe_action(action_req, str(tmp_path))
-        assert "BLOCKED_BY_SEFER:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
+        assert "BLOCKED_BY_RUNTIME_GUARD:" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
         assert "TOP SECRET" not in res.stdout
     finally:
         secret.unlink(missing_ok=True)

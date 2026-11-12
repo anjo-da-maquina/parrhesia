@@ -170,7 +170,7 @@ Phase 0。安城さんの優先度決定により最後に着手)。
 
 CLIエントリーポイント: `parrhesia/cli.py`(`python -m parrhesia.cli audit
 <target> [--max-commits N]`)。`pyproject.toml`の`[project.scripts]`への
-登録は見送った(本リポジトリのパッケージ名自体が`runtime_guard`(旧名`sefer`、
+登録は見送った(本リポジトリのパッケージ名自体が`runtime_guard`(旧名`runtime_guard`、
 docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §1参照)であり、別の
 配布物の設定を同じ`pyproject.toml`に混在させることの影響範囲が未調査
 なため — 同提案書で指摘したPyPI配布名

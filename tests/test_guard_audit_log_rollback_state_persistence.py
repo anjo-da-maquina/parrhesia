@@ -5,14 +5,14 @@ checks/guard_audit_log_rollback.py の回帰テスト。DEFECTS.md §AN 参照�
 
 背景: guard_audit_log_rollback.py の改ざん・ロールバック検知ロジック自体は
 以前から正しかったが、その前提となる「前回実行時のチェックポイント」
-(runtime_guard/.angel_state/guard_audit_log_rollback.json)が、CIワークフロー上で
-一度も永続化されていなかった(.angel_state/は.gitignore対象であり、かつ
+(runtime_guard/.runtime_state/guard_audit_log_rollback.json)が、CIワークフロー上で
+一度も永続化されていなかった(.runtime_state/は.gitignore対象であり、かつ
 ワークフローにactions/cache等の永続化手段が一件も存在しなかった)。その
 結果、CI上では`load_state()`が常にNoneを返し、ロールバック検知の本体
 (`if checkpoint:`分岐)が一度も実行されないまま、常にPASSを報告していた。
 
 本テストは2つの観点を固定する:
-  1. ワークフローYAMLに、`.angel_state`を対象とするactions/cacheステップが
+  1. ワークフローYAMLに、`.runtime_state`を対象とするactions/cacheステップが
      実際に追加され、かつそれがguard_audit_log_rollback.pyの実行ステップよりも
      前に配置されていること(配線の回帰防止)。
   2. guard_audit_log_rollback.py自身の検知ロジックが、チェックポイントが実際に
@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT / "runtime_guard"))
 
 
 def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
-    """[脆弱性修正の核心] ワークフローに.angel_stateを対象とするキャッシュ
+    """[脆弱性修正の核心] ワークフローに.runtime_stateを対象とするキャッシュ
     ステップが存在し、かつguard_audit_log_rollback.pyの実行ステップより前に
     配置されていなければならない。配置が逆だと、復元が実行後になり
     意味をなさない。"""
@@ -54,13 +54,13 @@ def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
     for i, step in enumerate(steps):
         uses = step.get("uses", "")
         run = step.get("run", "")
-        if uses.startswith("actions/cache@") and ".angel_state" in str(step.get("with", {}).get("path", "")):
+        if uses.startswith("actions/cache@") and ".runtime_state" in str(step.get("with", {}).get("path", "")):
             cache_step_index = i
         if "guard_audit_log_rollback.py" in run:
             anchor_step_index = i
 
     assert cache_step_index is not None, (
-        ".angel_state を対象とする actions/cache ステップがワークフローに見つかりません。"
+        ".runtime_state を対象とする actions/cache ステップがワークフローに見つかりません。"
         "CIの使い捨てランナー上では、チェックポイントが永続化されず"
         "ロールバック検知が機能しません。"
     )
@@ -73,7 +73,7 @@ def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
 
 def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     """[脆弱性修正 2026-10 §BF/核心] §ANで追加したactions/cacheは
-    runtime_guard/.angel_state(チェックポイント)のみを対象としており、原因は
+    runtime_guard/.runtime_state(チェックポイント)のみを対象としており、原因は
     2段階重なっていた。
 
     (1) チェックポイントのハッシュの計算に使われた署名鍵
@@ -99,7 +99,7 @@ def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     cache_steps = [
         s for s in steps
         if str(s.get("uses", "")).startswith("actions/cache@")
-        and ".angel_state" in str(s.get("with", {}).get("path", ""))
+        and ".runtime_state" in str(s.get("with", {}).get("path", ""))
     ]
     assert len(cache_steps) == 1
     cache_path = str(cache_steps[0]["with"]["path"])
@@ -132,7 +132,7 @@ def test_cache_key_uses_run_id_so_checkpoint_actually_updates_each_run():
     cache_steps = [
         s for s in steps
         if str(s.get("uses", "")).startswith("actions/cache@")
-        and ".angel_state" in str(s.get("with", {}).get("path", ""))
+        and ".runtime_state" in str(s.get("with", {}).get("path", ""))
     ]
     assert len(cache_steps) == 1
     key = cache_steps[0]["with"]["key"]
@@ -153,7 +153,7 @@ def anchor_env(tmp_path, monkeypatch):
 
     (tmp_path / "runtime_guard").mkdir()
     log_path = tmp_path / "runtime_guard" / "audit_chain.jsonl"
-    state_dir = tmp_path / ".angel_state"
+    state_dir = tmp_path / ".runtime_state"
     state_dir.mkdir()
 
     monkeypatch.setattr(mod, "ROOT", tmp_path)
@@ -258,7 +258,7 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
     ロジックでも「鍵+チェーン本体+チェックポイントを一緒にキャッシュして
     持続させれば、使い捨てランナーを模した複数回の独立したプロセス実行でも
     誤検知しない」ことを直接固定する。audit_chain.jsonl・.audit_signing_key・
-    .angel_stateの3つをキャッシュ対象と同じ扱いで次の"実行"に引き継ぐ場合、
+    .runtime_stateの3つをキャッシュ対象と同じ扱いで次の"実行"に引き継ぐ場合、
     何度実行しても誤って"巻き戻し・改ざんの疑い"を報告してはならない。"""
     import importlib
     import _common as common_mod
@@ -266,7 +266,7 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
     def simulate_one_ci_run(run_dir: Path):
         """1回分の"CI実行"(フレッシュなPythonプロセスを模してモジュールを
         明示的にROOTへ向け直す)。runtime_guard/audit_chain.jsonl・
-        runtime_guard/.audit_signing_key・runtime_guard/.angel_state のいずれも、呼び出し元が
+        runtime_guard/.audit_signing_key・runtime_guard/.runtime_state のいずれも、呼び出し元が
         前回の内容をrun_dir配下に事前コピーしておけば、それがそのまま
         "キャッシュから復元された状態"に相当する。"""
         run_dir.mkdir(parents=True, exist_ok=True)
@@ -278,8 +278,8 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
         chain.record("test_event_a", {"x": 1})
         chain.record("test_event_b", {"x": 2})
 
-        monkeypatch.setattr(common_mod, "STATE_DIR", run_dir / "runtime_guard" / ".angel_state")
-        (run_dir / "runtime_guard" / ".angel_state").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setattr(common_mod, "STATE_DIR", run_dir / "runtime_guard" / ".runtime_state")
+        (run_dir / "runtime_guard" / ".runtime_state").mkdir(parents=True, exist_ok=True)
 
         import guard_audit_log_rollback as anchor_mod
         importlib.reload(anchor_mod)
@@ -293,7 +293,7 @@ def test_three_simulated_ci_runs_with_the_fixed_cache_set_never_false_positive(t
         ディレクトリへそのままコピーする。"""
         dst.mkdir(parents=True, exist_ok=True)
         (dst / "runtime_guard").mkdir(exist_ok=True)
-        shutil.copytree(src / "runtime_guard" / ".angel_state", dst / "runtime_guard" / ".angel_state")
+        shutil.copytree(src / "runtime_guard" / ".runtime_state", dst / "runtime_guard" / ".runtime_state")
         shutil.copy(src / "runtime_guard" / ".audit_signing_key", dst / "runtime_guard" / ".audit_signing_key")
         shutil.copy(src / "runtime_guard" / "audit_chain.jsonl", dst / "runtime_guard" / "audit_chain.jsonl")
 

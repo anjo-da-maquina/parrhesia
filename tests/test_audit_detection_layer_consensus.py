@@ -5,7 +5,7 @@ tests/test_audit_detection_layer_consensus.py
 
 本天使(「セラフィムの合意」)は、危険なコード片に対する判定が、単一の
 検査レイヤー(静的AST解析のみ、または動的監査フックのみ)だけに依存して
-いないか――すなわち、ScanSource(静的)とSefer.Sandbox(動的)という独立した
+いないか――すなわち、ScanSource(静的)とRuntimeGuard.Sandbox(動的)という独立した
 2つのレイヤーが、実際に合意して初めて「危険」と判定する多層防御の構造に
 なっているか――を検証する。
 
@@ -25,7 +25,7 @@ import audit_detection_layer_consensus as sc
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、静的解析(ScanSource)・動的
-    監査フック(Sefer.Sandbox)の両方が独立して危険コードを検知するため、
+    監査フック(RuntimeGuard.Sandbox)の両方が独立して危険コードを検知するため、
     本天使はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
@@ -37,7 +37,7 @@ def test_real_repository_passes():
 
 
 def test_fails_when_only_static_layer_agrees(monkeypatch):
-    """[核心] 動的監査フック(Sefer.Sandbox)が危険コードを検知しなく
+    """[核心] 動的監査フック(RuntimeGuard.Sandbox)が危険コードを検知しなく
     なった(=静的解析のみに実質的に依存する状態に退行した)場合、本天使が
     正しくFAIL(sys.exit(1))することを確認する。"""
     monkeypatch.setattr(sc, "scan_source_catches", lambda code: True)

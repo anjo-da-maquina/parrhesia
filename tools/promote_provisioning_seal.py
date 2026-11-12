@@ -23,10 +23,10 @@ import json
 import re
 from pathlib import Path
 
-PLEROMA_DIR = Path(__file__).parent.parent
-GATEKEEPER_PATH = PLEROMA_DIR / "runtime_audit_gatekeeper.py"
-CERT_PATH = PLEROMA_DIR / "ataraxia_certificate.json"
-PENDING_PATH = PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json"
+REPO_ROOT = Path(__file__).parent.parent
+GATEKEEPER_PATH = REPO_ROOT / "runtime_audit_gatekeeper.py"
+CERT_PATH = REPO_ROOT / "ataraxia_certificate.json"
+PENDING_PATH = REPO_ROOT / "runtime_guard" / "provisioning_pending.json"
 
 
 def _pubkey_fingerprint(pubkey_pem: str) -> str:

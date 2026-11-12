@@ -1,8 +1,8 @@
 ﻿"""
-[テスト追加 2026-10] Local Arenaの「創造主の呼吸」(MACアドレスゲート)が
+[テスト追加 2026-10] Local Arenaの「ハードウェアゲート」(MACアドレスゲート)が
 意図通り機能し続けていることを保証する回帰テスト。
 
-このゲートが弱体化・削除されると、Local Arena（闘技場）が創造主の
+このゲートが弱体化・削除されると、Local Arena（闘技場）が開発者本人の
 ローカル環境以外でも起動してしまう致命的な回帰となるため、
 CI上では必ず exit(666) で拒否されることを確認する。
 """
@@ -16,7 +16,7 @@ ADVERSARIAL_TRAINING_DIR = Path(__file__).resolve().parent.parent / "adversarial
 def test_local_only_selfplay_gate_exits_666_on_unmatched_hardware():
     """
     CI環境（およびこのリポジトリを手にした大半の第三者環境）では
-    uuid.getnode() が創造主のMACアドレスと一致しないため、
+    uuid.getnode() が開発者本人のMACアドレスと一致しないため、
     local_only_selfplay_gate.py(旧名selfplay.py)は import された瞬間に exit(666) するべきである。
     """
     script = f"""
@@ -28,10 +28,10 @@ import local_only_selfplay_gate
     # [注] POSIXのプロセス終了コードは8bit(0-255)に丸められるため、
     # sys.exit(666) の実際の終了コードは 666 % 256 = 154 になる。
     assert res.returncode == 666 % 256, (
-        f"CRITICAL: 創造主のMACアドレスゲートが機能していません。"
+        f"CRITICAL: 開発者本人のMACアドレスゲートが機能していません。"
         f"returncode={res.returncode}, stderr={res.stderr}"
     )
-    assert "THE AIR IS TOXIC" in res.stdout
+    assert "HARDWARE MISMATCH" in res.stdout
 
 
 def test_commander_hash_is_well_formed_sha256():

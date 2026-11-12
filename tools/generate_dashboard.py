@@ -5,7 +5,7 @@ Parrhesia(旧名Pleroma) 防衛ダッシュボード生成ツール
 生データファイルに分散しており、それぞれを個別に`cat`するしかなく、全体の
 傾向を一目で把握する手段が無かった:
 
-  - adversarial_training/selfplay_history.json(旧名local_arena/akashic_records.json) — Selfplay Engine(Lucifer vs Selfplay)の戦績
+  - adversarial_training/selfplay_history.json(旧名local_arena/selfplay_history.json) — Selfplay Engine(RedTeamAI vs Selfplay)の戦績
   - runtime_guard/audit_chain.jsonl          — AuditHookが実際に遮断したイベントの監査ログ
   - runtime_guard/pending_rule_ledger.json         — 現在有効な禁止イベント一覧
   - runtime_guard/proposed_rule_queue.json / shield_rules_pending.json /
@@ -28,16 +28,16 @@ import html as html_escape_mod
 from datetime import datetime
 from pathlib import Path
 
-PLEROMA_DIR = Path(__file__).parent.parent
-AKASHIC_RECORDS_PATH = PLEROMA_DIR / "adversarial_training" / "selfplay_history.json"
-AUDIT_CHAIN_PATH = PLEROMA_DIR / "runtime_guard" / "audit_chain.jsonl"
-RAZIEL_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
+REPO_ROOT = Path(__file__).parent.parent
+SELFPLAY_HISTORY_PATH = REPO_ROOT / "adversarial_training" / "selfplay_history.json"
+AUDIT_CHAIN_PATH = REPO_ROOT / "runtime_guard" / "audit_chain.jsonl"
+PENDING_RULE_LEDGER_PATH = REPO_ROOT / "runtime_guard" / "pending_rule_ledger.json"
 PENDING_PATHS = {
-    "Selfplay Engine (proposed_rule_queue.json)": PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json",
-    "外部脅威インテリジェンス (shield_rules_pending.json)": PLEROMA_DIR / "runtime_guard" / "shield_rules_pending.json",
-    "証明書発行 (provisioning_pending.json)": PLEROMA_DIR / "runtime_guard" / "provisioning_pending.json",
+    "Selfplay Engine (proposed_rule_queue.json)": REPO_ROOT / "runtime_guard" / "proposed_rule_queue.json",
+    "外部脅威インテリジェンス (shield_rules_pending.json)": REPO_ROOT / "runtime_guard" / "shield_rules_pending.json",
+    "証明書発行 (provisioning_pending.json)": REPO_ROOT / "runtime_guard" / "provisioning_pending.json",
 }
-OUTPUT_PATH = PLEROMA_DIR / "dashboard.html"
+OUTPUT_PATH = REPO_ROOT / "dashboard.html"
 
 
 def _load_json(path: Path, default):
@@ -93,9 +93,9 @@ def _bar_chart(labels_and_values, max_width=400, color="#58a6ff"):
 
 
 def build_dashboard(
-    akashic_path: Path = AKASHIC_RECORDS_PATH,
+    history_path: Path = SELFPLAY_HISTORY_PATH,
     audit_chain_path: Path = AUDIT_CHAIN_PATH,
-    ledger_path: Path = RAZIEL_LEDGER_PATH,
+    ledger_path: Path = PENDING_RULE_LEDGER_PATH,
     pending_paths: dict = None,
 ) -> str:
     """
@@ -106,7 +106,7 @@ def build_dashboard(
     if pending_paths is None:
         pending_paths = PENDING_PATHS
 
-    akashic = _load_json(akashic_path, [])
+    history = _load_json(history_path, [])
     audit_entries = _load_jsonl(audit_chain_path)
     ledger = _load_json(ledger_path, {"banned_events": []})
     banned_events = ledger.get("banned_events", [])
@@ -118,8 +118,8 @@ def build_dashboard(
         pending_counts[name] = len(open_items)
     total_pending = sum(pending_counts.values())
 
-    total_battles = len(akashic)
-    breached = len([r for r in akashic if r.get("status") == "Breached"])
+    total_battles = len(history)
+    breached = len([r for r in history if r.get("status") == "Breached"])
     defended = total_battles - breached
     breach_rate = (breached / total_battles * 100) if total_battles else 0.0
     # [脆弱性修正 2026-10 §BE] avg_qaはこれまで集計されるだけで、HTML出力の
@@ -127,7 +127,7 @@ def build_dashboard(
     # が返すHTML文字列には"平均QAスコア"という文言・数値のいずれも一度も
     # 出力されない。計算した値をどのカードにも反映しない不完全な実装だった
     # ため、他の集計値と同じ扱いで概要カードに追加した。
-    avg_qa = (sum(r.get("qa_score", 0) for r in akashic) / total_battles) if total_battles else 0.0
+    avg_qa = (sum(r.get("qa_score", 0) for r in history) / total_battles) if total_battles else 0.0
 
     event_counts = {}
     for e in audit_entries:
@@ -136,7 +136,7 @@ def build_dashboard(
     total_blocked = len(audit_entries)
 
     qa_trend_chart = _bar_chart(
-        [(f"第{r.get('generation')}世代", r.get("qa_score", 0)) for r in akashic[-15:]],
+        [(f"第{r.get('generation')}世代", r.get("qa_score", 0)) for r in history[-15:]],
         color="#d2a8ff",
     )
     event_chart = _bar_chart(
@@ -150,7 +150,7 @@ def build_dashboard(
         f"<td>{_esc(r.get('qa_score'))}</td>"
         f"<td>{_esc(r.get('timestamp'))}</td>"
         f"<td>{_esc(r.get('qa_hint', ''))}</td></tr>"
-        for r in reversed(akashic[-20:])
+        for r in reversed(history[-20:])
     ) or "<tr><td colspan='5' class='muted'>記録がありません。</td></tr>"
 
     banned_rows = "".join(f"<li><code>{_esc(ev)}</code></li>" for ev in banned_events) or "<li class='muted'>登録なし</li>"

@@ -169,7 +169,7 @@ def test_checker_base_exception_is_also_reported_as_a_failure(monkeypatch):
     from runtime_guard import LossOfAtaraxia
 
     def _boom_base_exception():
-        raise LossOfAtaraxia("[Sefer] Tripwire: simulated")
+        raise LossOfAtaraxia("[RuntimeGuard] Tripwire: simulated")
 
     monkeypatch.setattr(hsg, "CHECKS", [("base-exception-boom-checker", _boom_base_exception)])
     failures = hsg.run_battery()

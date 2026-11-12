@@ -24,9 +24,9 @@ import argparse
 import json
 from pathlib import Path
 
-PLEROMA_DIR = Path(__file__).parent.parent
-LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "pending_rule_ledger.json"
-PENDING_LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "proposed_rule_queue.json"
+REPO_ROOT = Path(__file__).parent.parent
+LEDGER_PATH = REPO_ROOT / "runtime_guard" / "pending_rule_ledger.json"
+PENDING_LEDGER_PATH = REPO_ROOT / "runtime_guard" / "proposed_rule_queue.json"
 
 
 def _load_json(path, default):

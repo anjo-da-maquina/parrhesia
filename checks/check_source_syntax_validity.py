@@ -21,7 +21,7 @@ def main():
         except SyntaxError as e:
             broken.append((p.relative_to(ROOT).as_posix(), str(e)))
     if broken:
-        report_fail(NAME, f"構文エラーのあるSeferモジュールを検知しました: {broken}")
+        report_fail(NAME, f"構文エラーのあるRuntimeGuardモジュールを検知しました: {broken}")
     report_pass(NAME, "runtime_guard/ 配下の全モジュールが構文的に正常であることを確認しました。")
 
 if __name__ == "__main__":

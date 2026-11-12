@@ -3,7 +3,7 @@ tests/test_guard_sandbox_shell_eval_bypass_chaos_gate.py
 =============================================
 [脆弱性修正 2026-10 §BM] checks/guard_sandbox_shell_eval_bypass.py の回帰テスト。
 
-以前の実装は、Seferへの難読化攻撃バッテリーが1件でも突破された場合の
+以前の実装は、RuntimeGuardへの難読化攻撃バッテリーが1件でも突破された場合の
 失敗判定を、`CHAOS_MODE`環境変数(ワークフローの`workflow_dispatch`入力
 `chaos_mode`、既定値false)に依存させていた。しかし`push`イベント
 (mainへのマージを実際にゲートしている唯一のトリガー)には

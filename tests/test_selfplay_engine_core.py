@@ -1,7 +1,7 @@
 ﻿"""
 [テスト追加 2026-10] adversarial_training/selfplay_engine_core.py(旧名local_arena/selfplay_core.py)の純粋ロジックに対する回帰テスト。
 
-local_only_selfplay_gate.py(旧名selfplay.py)本体はMACアドレスゲートにより創造主のローカル環境以外では
+local_only_selfplay_gate.py(旧名selfplay.py)本体はMACアドレスゲートにより開発者本人のローカル環境以外では
 起動しないため、ゲートに依存しない selfplay_engine_core.py を直接テストする。
 """
 import json
@@ -206,18 +206,18 @@ def test_apply_new_seal_still_rejects_duplicate_still_open_pending_regardless_of
 
 
 def test_record_to_selfplay_history_and_initialize_arena(tmp_path: Path):
-    akashic_path = tmp_path / "selfplay_history.json"
-    core.record_to_selfplay_history(1, " payload ", "Failed", "err", 3, "hint", akashic_path=akashic_path)
-    records = json.loads(akashic_path.read_text(encoding="utf-8"))
+    history_path = tmp_path / "selfplay_history.json"
+    core.record_to_selfplay_history(1, " payload ", "Failed", "err", 3, "hint", history_path=history_path)
+    records = json.loads(history_path.read_text(encoding="utf-8"))
     assert len(records) == 1
     assert records[0]["payload"] == "payload"  # strip()されていること
     assert records[0]["generation"] == 1
 
-    purged = core.initialize_arena(akashic_path=akashic_path)
+    purged = core.initialize_arena(history_path=history_path)
     assert purged is True
-    assert not akashic_path.exists()
+    assert not history_path.exists()
 
-    purged_again = core.initialize_arena(akashic_path=akashic_path)
+    purged_again = core.initialize_arena(history_path=history_path)
     assert purged_again is False
 
 
@@ -251,7 +251,7 @@ def test_build_forge_script_still_allows_legitimate_write_within_local_arena_dir
     allowed_dirs(闘技場ディレクトリ)内であれば引き続き成功すること。
     §AUの修正がSandboxを正しく機能させつつ、過剰検知で全てを
     遮断してしまってもいないことを固定する。"""
-    payload = "with open('lucifer_victory.txt', 'w', encoding='utf-8') as f:\n    f.write('pwned')\n"
+    payload = "with open('redteam_victory.txt', 'w', encoding='utf-8') as f:\n    f.write('pwned')\n"
 
     script = core.build_forge_script(payload, PLEROMA_ROOT, tmp_path)
     script_path = tmp_path / "temp_mutation.py"
@@ -261,7 +261,7 @@ def test_build_forge_script_still_allows_legitimate_write_within_local_arena_dir
         [sys.executable, str(script_path)], cwd=str(tmp_path), capture_output=True, text=True,
     )
     assert result.returncode == 0, f"正規の書き込みが誤って遮断された: {result.stderr}"
-    assert (tmp_path / "lucifer_victory.txt").exists()
+    assert (tmp_path / "redteam_victory.txt").exists()
 
 
 def test_build_forge_script_escapes_payload_safely(tmp_path):

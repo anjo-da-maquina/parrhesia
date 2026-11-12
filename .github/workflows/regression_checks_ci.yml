@@ -38,11 +38,11 @@ jobs:
 
       - name: 2.5. 検査状態キャッシュ (Check State Cache - 実行間の検査状態を永続化)
         # [脆弱性修正 2026-10 §AN] checks/guard_audit_log_rollback.py・
-        # checks/hook_test_suite_hash_log.py は sefer/.angel_state/ 配下に
+        # checks/hook_test_suite_hash_log.py は runtime_guard/.runtime_state/ 配下に
         # 「前回実行時のチェックポイント」を保存し、次回実行時にそれと比較する
         # ことで監査証跡のロールバック・改ざんを検知する設計になっている。
         # しかし本ワークフローには actions/cache (または他の永続化手段)が
-        # 一度も存在せず、.angel_state/ は .gitignore 対象でもあるため、
+        # 一度も存在せず、.runtime_state/ は .gitignore 対象でもあるため、
         # GitHub Actionsの使い捨てランナー上ではチェックアウト直後は毎回
         # 必ず空になっていた。結果として guard_audit_log_rollback.py の
         # `if checkpoint:` 分岐(改ざん検知の本体)はCI上で一度も実行された
@@ -65,23 +65,23 @@ jobs:
         #
         # [残存する限界] actions/cache にも7日間アクセスが無いと自動失効する
         # 等の制約があり、恒久不変の外部監査サービスの代替にはならない
-        # (sefer/audit_chain.py の鍵管理と同種の、誠実に明記すべき限界)。
+        # (runtime_guard/audit_chain.py の鍵管理と同種の、誠実に明記すべき限界)。
         # それでも「CI上では構造的に一度も発火しない」状態から
         # 「通常の実行頻度では実際に機能する」状態への改善である。
         #
         # [脆弱性修正 2026-10 §BF] 上記の§AN修正自体に、新たな誤検知バグが
         # あった。原因は2段階ある。
         #
-        # (1) sefer/.angel_state(チェックポイント)はキャッシュされる
+        # (1) runtime_guard/.runtime_state(チェックポイント)はキャッシュされる
         # ようになったが、そのチェックポイントのハッシュの計算に使われた
-        # 署名鍵(sefer/audit_chain.pyのSignedAuditChainが使う
-        # sefer/.audit_signing_key)は、このキャッシュ対象パスに含まれて
-        # いなかった。この鍵は.angel_stateと兄弟ディレクトリの
-        # sefer/直下にあり、無ければ実行ごとにos.urandom(32)で新規生成
+        # 署名鍵(runtime_guard/audit_chain.pyのSignedAuditChainが使う
+        # runtime_guard/.audit_signing_key)は、このキャッシュ対象パスに含まれて
+        # いなかった。この鍵は.runtime_stateと兄弟ディレクトリの
+        # runtime_guard/直下にあり、無ければ実行ごとにos.urandom(32)で新規生成
         # される。
         #
         # (2) 鍵をキャッシュに追加しても、これだけではまだ不十分だった
-        # (実機検証で発覚)。sefer/audit_chain.jsonl自体もキャッシュされて
+        # (実機検証で発覚)。runtime_guard/audit_chain.jsonl自体もキャッシュされて
         # おらず、使い捨てランナー上では実行ごとに空のチェーンから作り直さ
         # れる。しかも各エントリのハッシュ計算対象には`timestamp`
         # (record()呼び出し時の実時刻)が含まれるため、鍵が同一であっても、
@@ -93,7 +93,7 @@ jobs:
         # 本質的には、この「証跡のブロックチェーン刻印」機構が意味を持つ
         # ためには、監査証跡そのものが実行を跨いで継続する単一の台帳で
         # なければならない(名前が示す「ブロックチェーン」の実態)。
-        # そのため sefer/audit_chain.jsonl 自体もキャッシュ対象に加え、
+        # そのため runtime_guard/audit_chain.jsonl 自体もキャッシュ対象に加え、
         # 鍵・チェーン本体・チェックポイントの3つを常に同じキャッシュ世代
         # でセットに保つようにした。実機検証: 一時ディレクトリで3回分の
         # CI実行を模倣するスクリプトで、(1)のみの修正では2回目以降も
@@ -110,7 +110,7 @@ jobs:
         #
         # [残存する限界] actions/cache にも7日間アクセスが無いと自動失効する
         # 等の制約があり、恒久不変の外部監査サービスの代替にはならない
-        # (sefer/audit_chain.py の鍵管理と同種の、誠実に明記すべき限界)。
+        # (runtime_guard/audit_chain.py の鍵管理と同種の、誠実に明記すべき限界)。
         # それでも「CI上では構造的に一度も発火しない」状態から
         # 「通常の実行頻度では実際に機能する」状態への改善である。また、
         # audit_chain.jsonlが実行を跨いで無期限に成長し続ける点は、本来の
@@ -119,7 +119,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            runtime_guard/.angel_state
+            runtime_guard/.runtime_state
             runtime_guard/.audit_signing_key
             runtime_guard/audit_chain.jsonl
           key: angel-state-${{ github.run_id }}
@@ -217,14 +217,14 @@ jobs:
         # [脆弱性修正 2026-10 §BC] このステップは以前、CIワークフローに一度も
         # 追加されていなかった。checks/audit_package_boundary_isolation.pyというスクリプト
         # 自体は実在し、「ライセンス証明書機構(maquina_gatekeeper)の公開配布
-        # からの分離」をpyproject.toml・MANIFEST.in・sefer/*.pyの静的import解析
+        # からの分離」をpyproject.toml・MANIFEST.in・runtime_guard/*.pyの静的import解析
         # という3点で検証する正しいロジックを持っていたが、どのワークフロー
         # ファイルのrun:ステップからも一度も呼び出されておらず、COMMANDS.md・
         # README等にも一切言及が無く、DEFECTS.mdの解説文の中だけに存在する
         # 「配線されていない天使」だった(実機検証: `grep -rl
         # audit_package_boundary_isolation`でDEFECTS.md以外に一件もヒットしないことを
-        # 確認した)。実際のsdistビルドによる内容検査(tools/build_public_scripture.py・
-        # tests/test_public_scripture_isolation.py)は別途pytest経由でCI
+        # 確認した)。実際のsdistビルドによる内容検査(tools/build_public_release.py・
+        # tests/test_public_release_isolation.py)は別途pytest経由でCI
         # (.github/workflows/core_ci.yml)に組み込まれているため配布物
         # そのものの安全性は守られていたが、本スクリプトが担う「設定ファイル
         # 自体が将来静かに後退していないか」という、より早期・軽量な静的検証
@@ -331,7 +331,7 @@ jobs:
         if: success()
         run: python checks/check_equivalent_syntax_bypass.py
       - name: 22.80. 監査証跡の切り詰め消去検知 (Audit Log Truncation Audit)
-        # [新設 2026-10 §BX] sefer/audit_chain.pyのSignedAuditChain、
+        # [新設 2026-10 §BX] runtime_guard/audit_chain.pyのSignedAuditChain、
         # maquina_gatekeeper.pyのZKAuditTrailはいずれも、鍵付きHMAC-SHA256
         # による改ざん耐性を謳っていたが、「ログファイル自体を鍵の知識
         # なしに空へ切り詰める」というもっと単純な攻撃には無力だった
@@ -362,7 +362,7 @@ jobs:
         if: success()
         run: python checks/guard_network_exfiltration.py
       - name: 22.83. mmapによるfd事前オープン迂回検知 (mmap Write Bypass Audit)
-        # [新設 2026-10 §CB] sefer/__init__.pyの_runtime_audit_hook
+        # [新設 2026-10 §CB] runtime_guard/__init__.pyの_runtime_audit_hook
         # ("ミカエルの絶対防衛")は、"mmap.__new__"監査イベントを一度も
         # 検査していなかった。既存の「fd事前オープン対策」はos.write系
         # (write/pwrite/writev/pwritev)の4系統のみをラップしており、
@@ -383,14 +383,14 @@ jobs:
         # forbidden集合に含めていたが、同じ目的を達成できるos.fork()は
         # 専用の別のaudit event"os.fork"を発火させるため、これらの
         # いずれにも一致せず封鎖中でも完全に素通りしていた(別個に独立
-        # して存在するsefer/__init__.pyの_HARD_DENY_EVENTSは既に
+        # して存在するruntime_guard/__init__.pyの_HARD_DENY_EVENTSは既に
         # "os.fork"/"os.forkpty"を含んでいたが、本フックには反映されて
         # いなかった、という§CAと同種の非対称性)。forbidden集合に
         # "os.fork"・"os.forkpty"を追加した修正を、継続的に再検証する。
         if: success()
         run: python checks/guard_process_spawn.py
       - name: 22.85. カーネル直接転送迂回検知 (Kernel Transfer Bypass Audit)
-        # [新設 2026-10 §CD] sefer/__init__.pyのfd事前オープンバイパス
+        # [新設 2026-10 §CD] runtime_guard/__init__.pyのfd事前オープンバイパス
         # 対策(os.write/os.pwrite/os.writev/os.pwritev の4系統のみを
         # ラップ)は、§CBでmmap.__new__イベントを検査対象に加えた直後、
         # 「カーネル側でfdからfdへ直接データを転送する別の経路はないか」
@@ -428,7 +428,7 @@ jobs:
         #
         # [正直な自己訂正の記録] 調査の初期段階では「ctypes.pythonapi
         # へのシンボル解決はいかなる場合も監査イベントを一切発生させ
-        # ない」という誤った前提のもとで、sefer/__init__.py側も同じ
+        # ない」という誤った前提のもとで、runtime_guard/__init__.py側も同じ
         # 脆弱性を持つと疑い、両ファイルのctypes.pythonapiクラスを
         # 動的に差し替える大がかりな修正を一度実装した。しかし
         # maquina_gatekeeper側でより広い攻撃(新規ctypes.CDLL(None))を
@@ -436,13 +436,13 @@ jobs:
         # 気づき、イベント捕捉のリセット位置をシンボル解決『直前』に
         # 絞り込んで再検証したところ、シンボル解決自体は実際には
         # "ctypes.dlsym"という本物のイベントを発生させていることが
-        # 判明した。sefer/__init__.pyの既存の未変更コードで直接確認した
+        # 判明した。runtime_guard/__init__.pyの既存の未変更コードで直接確認した
         # ところ、このイベントは同ファイルの名前空間ごとのデフォルト
         # 拒否(`event.startswith("ctypes.")`)によって既に正しく遮断
         # されていた。これを受け、両ファイルへの大がかりな修正は全て
         # 取り消し(git checkout --)、maquina_gatekeeper.py側の
         # forbidden集合に"ctypes.dlopen"・"ctypes.dlsym"を追加するだけ
-        # の、より単純かつ十分に一般的な修正に改めた。sefer側は
+        # の、より単純かつ十分に一般的な修正に改めた。runtime_guard側は
         # (個々のイベント名列挙ではなく名前空間ごとの広いdefault-deny
         # 方式を採用しているため)この欠陥の対象ではなく、一切の変更を
         # 加えていない。この非対称性は§CAの教訓と同種のものである。
@@ -457,7 +457,7 @@ jobs:
         run: python checks/guard_ctypes_dlsym_bypass.py
       - name: 22.87. コンテナのLinuxケーパビリティ・特権昇格の恒久的剥奪 (Container Capability Stripping Audit)
         # [新設 2026-10 §CF] §CD・§CEで繰り返し正直に記録してきた通り、
-        # Python層のaudit hook(sefer/maquina_gatekeeper)には構造的な
+        # Python層のaudit hook(runtime_guard/maquina_gatekeeper)には構造的な
         # 限界がある――Sandboxに入る『前』に確保済みのfdや関数ポインタ
         # を使った操作は、以後いかなる新たな監査イベントも発生させずに
         # 素通りする。これは「城内に関所を増やす」方式そのものの限界で
@@ -548,7 +548,7 @@ jobs:
         # 起動後に`.send()`で実際のデータを送出する完全な攻撃チェーンが、
         # 無条件に成功し受信側に実際にデータが届くことを確認した。
         #
-        # `sefer/__init__.py`に`_guarded_socket_send`/
+        # `runtime_guard/__init__.py`に`_guarded_socket_send`/
         # `_guarded_socket_sendall`を新設し、`getpeername()`で接続先
         # ホストを解決して`allowed_hosts`と照合する選別的な許可(§CNの
         # os.sendfileとは異なり、無条件拒否ではなく既存の
