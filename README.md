@@ -111,6 +111,8 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 
 AI生成コードの監査を固定価格で請け負うQAエンジニアとして対応可能です。サービス内容・価格帯・提案文の雛形は[`docs/OUTREACH.md`](./docs/OUTREACH.md)、具体的な実施例は[`docs/CASE_STUDY.md`](./docs/CASE_STUDY.md)を参照してください。
 
+評価者の方は、このプロジェクト全体とAIエージェントの作業プロセスをまとめた[`docs/REVIEWER_OVERVIEW.md`](./docs/REVIEWER_OVERVIEW.md)から読み始めることをお勧めします。
+
 ## 構成
 
 - **`parrhesia/`** — 上記の監査・検出ツールキット本体: `parrhesia/diff_fraud.py`(パターン検出器)、`parrhesia/audit.py` + `parrhesia/cli.py`(読み取り専用の第三者リポジトリ監査)、`parrhesia/touchstone/`(LLMが作り話・権威への迎合・確信度の誤較正をしないかの小さなベンチマーク)、`parrhesia/verify/`(他モデル・人間レビューへのエスカレーション機構)。

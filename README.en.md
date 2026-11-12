@@ -117,6 +117,8 @@ python -m parrhesia.cli audit /path/to/some/other/git/repo
 
 I'm a QA engineer available for fixed-price audits of AI-generated code — see [`docs/OUTREACH.md`](./docs/OUTREACH.md) for the service description, pricing structure, and proposal templates, and [`docs/CASE_STUDY.md`](./docs/CASE_STUDY.md) for a worked example end-to-end.
 
+**Reviewers**: start with [`docs/REVIEWER_OVERVIEW.en.md`](./docs/REVIEWER_OVERVIEW.en.md) for a combined summary of the project and the AI agent's own working process on it.
+
 ## Structure
 
 - **`parrhesia/`** — the audit/detection toolkit described above: `parrhesia/diff_fraud.py` (pattern detectors), `parrhesia/audit.py` + `parrhesia/cli.py` (read-only third-party repo auditing), `parrhesia/touchstone/` (a small benchmark of prompts + graders for testing whether an LLM fabricates, flatters authority, or miscalibrates confidence), `parrhesia/verify/` (cross-model and human-review escalation primitives).
