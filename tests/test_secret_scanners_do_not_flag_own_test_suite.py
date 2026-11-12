@@ -13,7 +13,7 @@
 自身がこれらのテストファイルを「本物の漏洩」と誤検知し続けていた。
 
 実機で確認した通り、これは2026-10-10 23:29のマージ以降、
-`.github/workflows/anjo_da_maquina_protocol.yml`(Angels CI)を継続的に
+`.github/workflows/regression_checks_ci.yml`(Angels CI)を継続的に
 失敗させ続けていた、現在進行中の実害のある不具合だった(GitHub Actionsの
 実行履歴で確認済み)。本テストは、このクラスの不具合全体(個別のテスト
 ファイル名ではなく「実リポジトリに対して両スキャナを実際に実行した結果が

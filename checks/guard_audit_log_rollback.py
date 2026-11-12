@@ -4,7 +4,7 @@ checks/guard_audit_log_rollback.py
 [脆弱性修正 2026-10 §AN] 本スクリプトの検知ロジック(下記main関数)自体は
 元から正しいが、その前提となる「前回実行時のチェックポイント」
 (runtime_guard/.angel_state/guard_audit_log_rollback.json、checks/_common.pyのload_state/
-save_state経由)が、CIワークフロー(.github/workflows/anjo_da_maquina_protocol.yml)
+save_state経由)が、CIワークフロー(.github/workflows/regression_checks_ci.yml)
 上で一度も永続化されていなかった。`.angel_state/`は`.gitignore`対象であり、
 かつ本ワークフローにはactions/cache等の永続化手段が一件も存在しなかったため、
 GitHub Actionsの使い捨てランナーでは毎回チェックアウト直後に空の状態から

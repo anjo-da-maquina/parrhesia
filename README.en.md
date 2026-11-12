@@ -1,7 +1,7 @@
 # Parrhesia (formerly Pleroma) — a QA engineer's audit toolkit for AI-generated code
 
 [![Sanctuary CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml)
-[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
+[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (DEFECTS.md, Japanese)](./DEFECTS.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./docs/BOUNDARY.md)

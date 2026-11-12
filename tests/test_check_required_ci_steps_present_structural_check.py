@@ -11,7 +11,7 @@ checks/check_required_ci_steps_present.py の回帰テスト。DEFECTS.md §AO �
 
 本テストは、(1) 実行コマンドが実在しないのにコメント文に名前が残っている
 だけの偽ワークフローは FAIL として検知されること、(2) 正常な実ワークフロー
-(実際のanjo_da_maquina_protocol.yml)は PASS すること、(3) 実際に必須ステップ
+(実際のregression_checks_ci.yml)は PASS すること、(3) 実際に必須ステップ
 の run: を削除した場合は FAIL することを固定する。
 """
 import sys
@@ -31,7 +31,7 @@ def guard_env(tmp_path, monkeypatch):
     def _write_workflow(yaml_text: str):
         wf_dir = tmp_path / ".github" / "workflows"
         wf_dir.mkdir(parents=True, exist_ok=True)
-        (wf_dir / "anjo_da_maquina_protocol.yml").write_text(yaml_text, encoding="utf-8")
+        (wf_dir / "regression_checks_ci.yml").write_text(yaml_text, encoding="utf-8")
 
     return mod, _write_workflow
 
@@ -43,7 +43,7 @@ def test_comment_only_mention_is_not_enough_run_step_must_actually_exist(guard_e
     mod, write_workflow = guard_env
     write_workflow("""
 jobs:
-  angelic-audit:
+  regression-checks-audit:
     steps:
       - name: dummy step
         # 以前はここで guard_sandbox_core_attack_battery.py / guard_precommit_secret_leak.py / audit_ledger_schema.py を実行していた
@@ -78,7 +78,7 @@ def test_actual_removal_of_required_run_step_is_detected(guard_env):
     mod, write_workflow = guard_env
     write_workflow("""
 jobs:
-  angelic-audit:
+  regression-checks-audit:
     steps:
       - name: michael
         run: python checks/guard_sandbox_core_attack_battery.py
@@ -95,7 +95,7 @@ def test_all_three_required_steps_present_passes(guard_env):
     mod, write_workflow = guard_env
     write_workflow("""
 jobs:
-  angelic-audit:
+  regression-checks-audit:
     steps:
       - name: michael
         run: python checks/guard_sandbox_core_attack_battery.py

@@ -624,7 +624,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*発見\*\*: `checks/_common.py`のdocstringには、§刷新前の`checks/*.py`の大半(33ファイル中28ファイル)が`print('... initialized. Zero-Trust audit passed.')`のみの中身のないプレースホルダーだったという記録が残っている。この記録を踏まえ、`checks/`以外のCI実行対象である`adapters/`配下も同じ観点で確認したところ、`excel_to_yaml_parser.py`と`external_qa_wrapper.py`の2ファイルが、全く同じ2行のプレースホルダー(`import os, sys` / `print(f'... Zero-Trust audit passed.')`)のまま放置されていることが分かった。
 
-たとえるなら、\*\*「検品ラインに『検品済み』のスタンプだけが置かれていて、実際には製品を一度も検品していない」\*\*状態である。`.github/workflows/anjo_da_maquina_protocol.yml`を確認すると、この2つは実際にCIのステップ「3.8. 外部要件の抽出 (Excel to YAML Parser)」「18. 外部QAツールの実行 (External QA Adapter)」として組み込まれており、他の26個の天使ステップと並んで、あたかも実質的な検査が行われ合格したかのように毎回報告していた。しかし実際には、Excelファイルを一度も読んでおらず、外部のQAツールを一度も実行していない。
+たとえるなら、\*\*「検品ラインに『検品済み』のスタンプだけが置かれていて、実際には製品を一度も検品していない」\*\*状態である。`.github/workflows/regression_checks_ci.yml`を確認すると、この2つは実際にCIのステップ「3.8. 外部要件の抽出 (Excel to YAML Parser)」「18. 外部QAツールの実行 (External QA Adapter)」として組み込まれており、他の26個の天使ステップと並んで、あたかも実質的な検査が行われ合格したかのように毎回報告していた。しかし実際には、Excelファイルを一度も読んでおらず、外部のQAツールを一度も実行していない。
 
 さらに強い状況証拠として、CIの「3. 供物の準備 (Install Dependencies)」ステップでは`openpyxl`(Excel読み込み)と`playwright`(ブラウザ自動化。かつ`playwright install chromium --with-deps`で実際にヘッドレスブラウザまでインストールしている)が明示的にインストールされているにもかかわらず、リポジトリ内のどのスクリプトもこの2つのライブラリを一度も使用していなかった(`grep -rl playwright`・`grep -rl openpyxl`いずれもゼロ件、本修正前)。インストールされているのに誰も使っていない依存関係は、「実装するはずだったが実装されなかった機能」が存在することの明確な痕跡である。
 
@@ -700,7 +700,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*原因\*\*: ワークフロー整合性ガードという「ステップの削除」を検知する専用の役割を持つ検査でありながら、実装がYAMLを構造的に解析せず、生テキストへの部分文字列検索という弱い手法を使っていた。本セッションで繰り返し発見している「名前だけの検査」パターンが、今回はCIワークフロー定義ファイルという、これまで検査対象にしてこなかった領域にも存在していた一例である。
 
-\*\*対応\*\*: `yaml.safe_load`でワークフローを構造的に解析し、`jobs.angelic-audit.steps`の各ステップの`run:`フィールドの中に、実際に必須ファイル名を実行するコマンドが存在するかを検証するように修正した。コメントや無関係な文字列は`run:`フィールドの外にあるため、この方式では一致しない。
+\*\*対応\*\*: `yaml.safe_load`でワークフローを構造的に解析し、`jobs.regression-checks-audit.steps`の各ステップの`run:`フィールドの中に、実際に必須ファイル名を実行するコマンドが存在するかを検証するように修正した。コメントや無関係な文字列は`run:`フィールドの外にあるため、この方式では一致しない。
 
 \*\*検証\*\*: `tests/test\_alpha\_omega\_guard\_structural\_check.py`を新設し、(1) 実行コマンドが存在せずコメントのみの偽装ワークフローがFAILすること、(2) 実リポジトリの実ワークフローがPASSすること、(3) 必須ステップのうち1つを実際に削除した偽装ワークフローがFAILすること、(4) 必須3ステップが揃っていればPASSすることの4件を固定した。`mini\_pytest.py`再実行で`PASS=144`(§AN時点の140から新規4件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。
 
@@ -710,15 +710,15 @@ chain.record("AI_ACTION", {...})
 
 \*\*発見\*\*: 本セッション中に自分で追加したテストファイル群(`tests/test_adapters_excel_to_yaml_parser.py`・`tests/test_adapters_external_qa_wrapper.py`・§ANの`tests/test_sandalphon_anchor_state_persistence.py`)が、`yaml`(PyYAML)・`openpyxl`・`playwright`を必要とするにもかかわらず、`requirements.txt`にはこの3パッケージが一件も列挙されていなかった。
 
-これは単なる見落としではない。本リポジトリには`.github/workflows/sanctuary_ci.yml`(`pytest tests/`を実際に実行する唯一のCIジョブ)と`.github/workflows/anjo_da_maquina_protocol.yml`(`checks/*.py`等を個別に実行する別のジョブで、独自に`pip install networkx pyyaml playwright mcp pandas openpyxl pytest`を直接ハードコードしており、`pytest tests/`は一度も実行しない)という、\*\*互いに依存関係を共有しない2本の独立したワークフロー\*\*が存在する。さらに決定的なのは、`sanctuary_ci.yml`自身の既存のコメントに、ほぼ同一の過去の事故(`requests`パッケージの追記漏れで`tartarus/armageddon.py`のテストがCIでクラッシュした件)と、その教訓("requirements.txtを単一の正として読み込むことで、このズレを構造的に防ぐ")が\*\*既に本セッション以前の時点で明記されていた\*\*という点である。つまり私は、自分(または過去の修正者)が既に文書化していた「二重管理の危険性」という教訓を、まさにその教訓が書かれているファイルの隣で、再び踏んでしまった。
+これは単なる見落としではない。本リポジトリには`.github/workflows/sanctuary_ci.yml`(`pytest tests/`を実際に実行する唯一のCIジョブ)と`.github/workflows/regression_checks_ci.yml`(`checks/*.py`等を個別に実行する別のジョブで、独自に`pip install networkx pyyaml playwright mcp pandas openpyxl pytest`を直接ハードコードしており、`pytest tests/`は一度も実行しない)という、\*\*互いに依存関係を共有しない2本の独立したワークフロー\*\*が存在する。さらに決定的なのは、`sanctuary_ci.yml`自身の既存のコメントに、ほぼ同一の過去の事故(`requests`パッケージの追記漏れで`tartarus/armageddon.py`のテストがCIでクラッシュした件)と、その教訓("requirements.txtを単一の正として読み込むことで、このズレを構造的に防ぐ")が\*\*既に本セッション以前の時点で明記されていた\*\*という点である。つまり私は、自分(または過去の修正者)が既に文書化していた「二重管理の危険性」という教訓を、まさにその教訓が書かれているファイルの隣で、再び踏んでしまった。
 
-このサンドボックス環境には`PyYAML`・`openpyxl`・`playwright`がたまたまプリインストールされていた(`anjo_da_maquina_protocol.yml`側の依存セットに近い構成だったため)ため、これらのテストはローカルでは何の問題もなく成功し続け、発覚しなかった。`sanctuary_ci.yml`の実際の最小インストール環境(`requirements.txt`のみ)でこれらのテストを実行したことは、本修正に取り組むまで一度もなかった。
+このサンドボックス環境には`PyYAML`・`openpyxl`・`playwright`がたまたまプリインストールされていた(`regression_checks_ci.yml`側の依存セットに近い構成だったため)ため、これらのテストはローカルでは何の問題もなく成功し続け、発覚しなかった。`sanctuary_ci.yml`の実際の最小インストール環境(`requirements.txt`のみ)でこれらのテストを実行したことは、本修正に取り組むまで一度もなかった。
 
 \*\*実機検証\*\*: 疑いを確認するため、`sys.meta_path`に独自の`MetaPathFinder`を挿入し、`yaml`・`openpyxl`・`playwright`のimportを強制的に`ModuleNotFoundError`でブロックする(`sanctuary_ci.yml`の最小依存環境を模擬する)スクリプトを作成し、その状態でテストスイート全体を再実行した。結果、通常は`FAIL=0`・`ERROR=2`(既知の無関係なもののみ)で安定していたところが、`FAIL=7`・`ERROR=3`に悪化することを確認した。理論上の懸念ではなく、実際に壊れることを自分の手で再現した。
 
 \*\*たとえ話\*\*: これは、ある職場で「作業員Aが、出庫記録(`requirements.txt`)を通さずに工具箱(別のワークフローのプリインストール済み環境)から勝手に工具を借りて使い、翌日その工具が無いことで現場が止まった」という事故が過去にあり、その反省文が壁に貼られている。その反省文には「今後は全員、出庫記録に無い工具を現場に持ち込んではならない」と書かれている。その壁の前で、\*\*反省文を書いた本人(あるいはそれを読んだはずの私)\*\*が、新しい作業(§AN・§AOの新規テスト)のために、また同じように工具箱から直接工具を借りて使い、出庫記録への記入を忘れた、という状況である。工具箱(このサンドボックス)には運良く工具が揃っていたので、その場では誰も困らなかった。しかし本来の現場(`sanctuary_ci.yml`の最小環境)に持っていけば、同じ事故がもう一度起きるところだった。
 
-\*\*原因\*\*: 新しいテストを書く際、「このサンドボックスで`mini_pytest.py`が通るか」だけを検証の基準にしてしまい、「このテストが実際のCI(`sanctuary_ci.yml`)の最小インストール環境でも動くか」という、本来最も重要な問いを一度も立てなかった。`anjo_da_maquina_protocol.yml`側で既にこれらのパッケージがインストールされていたことも、サンドボックスの構成がそれに近かったことも、問題を覆い隠す方向にしか働かなかった。
+\*\*原因\*\*: 新しいテストを書く際、「このサンドボックスで`mini_pytest.py`が通るか」だけを検証の基準にしてしまい、「このテストが実際のCI(`sanctuary_ci.yml`)の最小インストール環境でも動くか」という、本来最も重要な問いを一度も立てなかった。`regression_checks_ci.yml`側で既にこれらのパッケージがインストールされていたことも、サンドボックスの構成がそれに近かったことも、問題を覆い隠す方向にしか働かなかった。
 
 \*\*対応\*\*:
 1. `requirements.txt`に`PyYAML==6.0.3`・`openpyxl==3.1.5`・`playwright==1.56.0`を追記した(バージョンはこのサンドボックスに実際にインストールされているものに合わせた)。
@@ -737,7 +737,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*たとえ話\*\*: これは、ジムの入館証に「1日3回まで」と書かれたスタンプカードがあるのに、実際には店員がそのカードを一切保管せず、来店者が帰ってまた戻ってくる(=スクリプトの再実行)たびに、新しい白紙のスタンプカードを渡していた、という状態である。「1日3回まで」というルール自体は正しく印字されているのに、それを本当に1日単位で数える仕組みがどこにも存在しなかった。手動で何度もスクリプトを再実行すれば、何回でもAPIを呼び出せてしまう。
 
-\*\*原因\*\*: `EconomicDefenseLimiter`を実装した際、単一の実行セッション内でのクールダウン(`time.sleep`によるレート制限)と、複数の実行をまたいだ「日次予算」の強制とを区別せず、後者も前者と同じ「インスタンス変数のカウンタ」で済ませてしまった。本スクリプトはCIからは一度も呼ばれない(`anjo_da_maquina_protocol.yml`・`sanctuary_ci.yml`いずれにも参照が存在しないことを確認済み)、人間が手動で単発実行する運用ツールであるため見過ごされやすかったが、「経済的ダメージの防止」という防壁の存在目的そのものに対する欠陥である点では軽視できない。
+\*\*原因\*\*: `EconomicDefenseLimiter`を実装した際、単一の実行セッション内でのクールダウン(`time.sleep`によるレート制限)と、複数の実行をまたいだ「日次予算」の強制とを区別せず、後者も前者と同じ「インスタンス変数のカウンタ」で済ませてしまった。本スクリプトはCIからは一度も呼ばれない(`regression_checks_ci.yml`・`sanctuary_ci.yml`いずれにも参照が存在しないことを確認済み)、人間が手動で単発実行する運用ツールであるため見過ごされやすかったが、「経済的ダメージの防止」という防壁の存在目的そのものに対する欠陥である点では軽視できない。
 
 \*\*対応\*\*: カウントを`sefer/.angel_state/oracle_feed_quota.json`(UTC日付をキーとする)に永続化するように変更した。プロセスを再起動しても、同一UTC日内であれば既に消費した回数が引き継がれ、上限に達すれば確実に`SystemExit`で遮断される。日付が変われば(UTC日が進めば)カウントは0から再開する。
 
@@ -761,7 +761,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*発見\*\*: `maquina_gatekeeper.py`の`get_machine_id()`(証明書を発行対象の実機に縛る「ハードウェア指紋」の入力元)を精査したところ、`platform.system() == "Windows"`の分岐しか存在せず、Linux・macOSではこの関数が無条件に`"UNKNOWN_MACHINE_ID"`という\*\*固定文字列\*\*を返すことが分かった。実機検証済み: 本サンドボックス(Linux/x86_64)で直接呼び出し、ホストの識別情報を一切含まない定数的な指紋が算出されることを確認した。
 
-これが特に重大なのは、本リポジトリのCIワークフロー(`anjo_da_maquina_protocol.yml`)が`ubuntu-latest`(Linux)で動いていることである。つまり、`enforce_maquina_seal`が行っている「この証明書は本当にこのマシン用に発行されたものか」(`get_absolute_hardware_fingerprint() != cert['payload']['hardware_fingerprint']`)という検証が、実運用上最も頻繁に通る環境(Linux CI)において、「同一アーキテクチャ・同一OSなら誰でも同じ指紋になる」という、個体識別としては機能していない状態に縮退していた。
+これが特に重大なのは、本リポジトリのCIワークフロー(`regression_checks_ci.yml`)が`ubuntu-latest`(Linux)で動いていることである。つまり、`enforce_maquina_seal`が行っている「この証明書は本当にこのマシン用に発行されたものか」(`get_absolute_hardware_fingerprint() != cert['payload']['hardware_fingerprint']`)という検証が、実運用上最も頻繁に通る環境(Linux CI)において、「同一アーキテクチャ・同一OSなら誰でも同じ指紋になる」という、個体識別としては機能していない状態に縮退していた。
 
 \*\*たとえ話\*\*: これは、会員証に「本人確認用の指紋」を印字する仕組みのはずなのに、実装を見ると「Windowsユーザーだけは本当に指紋を読み取るが、Mac・Linuxユーザーは指紋リーダーに手をかざさせるふりをして、実際には全員に同じダミーの指紋画像("UNKNOWN_MACHINE_ID")を印字していた」という状態である。会員証の仕組み自体(写真と指紋を照合する)は正しいのに、Mac・Linux利用者の指紋だけは最初から誰のものでも同じ画像になっていたため、他人の会員証を物理的に持ち出せば(同じOS・同じCPUアーキテクチャの別マシンに同じ証明書ファイルを置くだけで)、本人確認そのものを素通りできてしまう。
 
@@ -934,17 +934,17 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*たとえ話\*\*: これは、警備会社が「カメラAの映像を監視する担当者」「カメラBの映像を監視する担当者」をきちんと配置し、それぞれの担当者は仕事をきちんとできる訓練を受けているにもかかわらず、実際にはカメラA・Bそのものの電源ケーブルが一度もコンセントに差されておらず、映像が一度もモニターに表示されていなかった、という状態である。見張り役(ロジック)は優秀でも、見張り台(CIワークフロー)に一度も立たせていなければ、何も見張っていない。
 
-\*\*原因\*\*: この4本は、いずれも過去の特定の脆弱性修正(ライセンス証明書機構の分離、openai_agent_loopテンプレートの修正、Dockerサンドボックス強制化、angelic_shield/kamael_judgmentの再構築)の「再発防止用の回帰検査」として、修正そのものと一緒に新設されたものと見られる。しかし修正コミットの中で、スクリプト本体の作成とDEFECTS.mdへの記述は行われたものの、`.github/workflows/anjo_da_maquina_protocol.yml`への`run:`ステップの追加が漏れていた。本セッションでこれまで発見してきた「ロジックは正しいが実行環境側の前提が整っていない」系の欠陥(§AH・§AN)とは異なり、今回は実行環境の前提の問題ではなく、CIワークフロー自体にステップとして存在しないという、より根本的な配線漏れだった。
+\*\*原因\*\*: この4本は、いずれも過去の特定の脆弱性修正(ライセンス証明書機構の分離、openai_agent_loopテンプレートの修正、Dockerサンドボックス強制化、angelic_shield/kamael_judgmentの再構築)の「再発防止用の回帰検査」として、修正そのものと一緒に新設されたものと見られる。しかし修正コミットの中で、スクリプト本体の作成とDEFECTS.mdへの記述は行われたものの、`.github/workflows/regression_checks_ci.yml`への`run:`ステップの追加が漏れていた。本セッションでこれまで発見してきた「ロジックは正しいが実行環境側の前提が整っていない」系の欠陥(§AH・§AN)とは異なり、今回は実行環境の前提の問題ではなく、CIワークフロー自体にステップとして存在しないという、より根本的な配線漏れだった。
 
-\*\*対応\*\*: 4本すべてを`.github/workflows/anjo_da_maquina_protocol.yml`に追加した。既存の番号付け規則に合わせ、`zadkiel_shield_decree.py`はステップ8(Zadkiel)の直後に8.5として、`raguel_template.py`はステップ12(Raguel)の直後に12.5として、`metatron_scripture_seal.py`はステップ14(Sariel)の直後に14.5として、`sandalphon_decree.py`はステップ20(Sandalphon)の直後に20.5として、それぞれ主題的に関連する既存ステップのそばに配置した。追加前に4本とも実際に単独実行して`PASS`することを確認してから配線した(配線した瞬間にCIを壊さないための確認)。
+\*\*対応\*\*: 4本すべてを`.github/workflows/regression_checks_ci.yml`に追加した。既存の番号付け規則に合わせ、`zadkiel_shield_decree.py`はステップ8(Zadkiel)の直後に8.5として、`raguel_template.py`はステップ12(Raguel)の直後に12.5として、`metatron_scripture_seal.py`はステップ14(Sariel)の直後に14.5として、`sandalphon_decree.py`はステップ20(Sandalphon)の直後に20.5として、それぞれ主題的に関連する既存ステップのそばに配置した。追加前に4本とも実際に単独実行して`PASS`することを確認してから配線した(配線した瞬間にCIを壊さないための確認)。
 
 さらに、この種の配線漏れが将来別のスクリプトで再発しても機械的に検知できるよう、`tests/test_checks_scripts_wired_into_ci.py`を新設した。`checks/`配下の全`*.py`ファイル(`_common.py`を除く)が、`.github/workflows/`配下のいずれかのワークフローファイルの`run:`ステップから`yaml.safe_load`による構造的解析(§AOと同じ、コメント等への文字列残存だけでは一致しない方式)で実際に呼び出されていることを検証する。
 
 \*\*検証\*\*: `tests/test_checks_scripts_wired_into_ci.py`を新設し、2件追加した。(1) 汎用テストとして、全天使スクリプトがいずれかのワークフローから参照されていることを確認(修正前のワークフローに対して`git stash`で実行すると、本件の4ファイルに加えて今回追加した`metatron_scripture_seal.py`自身も含めた不一致を正しく検出することを確認済み)。(2) 具体例として、`metatron_scripture_seal.py`が名指しで配線されていることを確認。`mini_pytest.py`再実行で`PASS=183`(§BB時点の181から新規2件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。既存の`checks/alpha_omega_guard.py`(ワークフロー構造監査)・`tests/test_alpha_omega_guard_structural_check.py`も引き続き正常にPASSすることを確認し、ワークフローYAML自体が`yaml.safe_load`で問題なく解析できることも確認した。
 
-\### BD. `checks/_common.py`の`scan_for_leaked_secrets()`・`checks/firmament_enclave_tee.py`の`scan_for_hardcoded_sensitive_env_keys()` — 秘密情報漏洩検査自身が、自分自身を検証するテストフィクスチャを「本物の漏洩」と誤検知し、`anjo_da_maquina_protocol.yml`(Angels CI)を2026-10-10 23:29のマージ以降、継続的に失敗させ続けていた (2026-10)
+\### BD. `checks/_common.py`の`scan_for_leaked_secrets()`・`checks/firmament_enclave_tee.py`の`scan_for_hardcoded_sensitive_env_keys()` — 秘密情報漏洩検査自身が、自分自身を検証するテストフィクスチャを「本物の漏洩」と誤検知し、`regression_checks_ci.yml`(Angels CI)を2026-10-10 23:29のマージ以降、継続的に失敗させ続けていた (2026-10)
 
-\*\*発見\*\*: §BCをmainにマージした直後、「ローカルの`mini_pytest.py`シムだけでなく、実際のGitHub Actions上のCI状態も定期的に確認する」という本セッションの新しい自己点検習慣に従い、`gh run list --workflow=anjo_da_maquina_protocol.yml`を実行したところ、本ワークフロー(`sanctuary_ci.yml`とは別系統の、`checks/*.py`を個別のCIステップとして実行する「天使」プロトコル)が、2026-10-10 23:29:43Zのマージ以降、ユーザーからの提示を含む\*今回のセッションで行った§BA・§BB・§BCのマージも含めて\*、一度も成功しておらず、全て失敗していたことが判明した。これは本セッション開始以来、ローカルの`mini_pytest.py`の結果だけを見て「問題なし」と報告し続けていた期間と完全に重なっており、実CIの状態を一度も確認していなかったことによる重大な見落としだった。
+\*\*発見\*\*: §BCをmainにマージした直後、「ローカルの`mini_pytest.py`シムだけでなく、実際のGitHub Actions上のCI状態も定期的に確認する」という本セッションの新しい自己点検習慣に従い、`gh run list --workflow=regression_checks_ci.yml`を実行したところ、本ワークフロー(`sanctuary_ci.yml`とは別系統の、`checks/*.py`を個別のCIステップとして実行する「天使」プロトコル)が、2026-10-10 23:29:43Zのマージ以降、ユーザーからの提示を含む\*今回のセッションで行った§BA・§BB・§BCのマージも含めて\*、一度も成功しておらず、全て失敗していたことが判明した。これは本セッション開始以来、ローカルの`mini_pytest.py`の結果だけを見て「問題なし」と報告し続けていた期間と完全に重なっており、実CIの状態を一度も確認していなかったことによる重大な見落としだった。
 
 ワークフローYAMLを`yaml.safe_load`し、各`run:`ステップを`GITHUB_ACTIONS=true`環境で順に実行する簡易CIシミュレータをローカルに構築して原因を特定したところ、`checks/firmament_enclave_tee.py`(ステップ「天空の閨房」)で確実に停止していることが分かった。実際に単独実行すると、`tests/test_firmament_enclave_tee.py`自身を「`OPENAI_API_KEY`という機密環境変数名がハードコードされた漏洩の疑いがあるファイル」として4箇所誤検知し、`sys.exit(1)`していた。
 
@@ -962,7 +962,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 なお、この修正作業の過程で、`checks/_common.py`に説明コメントを書く際、誤って問題の偽AWSキー文字列そのものをコメント内に引用してしまい、それ自体が`gabriel_canary.py`の再実行で新たに誤検知される、という二次的な自己ミスが一度発生し、その場で修正した。さらに、\*\*この文書(DEFECTS.md)自身の本節の初稿でも、全く同じ誤り(偽AWSキー文字列の逐語的な引用)を再び犯し\*\*、`main`へのマージ後の実CI確認で`gabriel_canary.py`が今度は`DEFECTS.md`自身を漏洩として検知して失敗するという、二度目の自己ミスを引き起こした。これは実機のCI結果で発覚し、本節の記述を「パターンの説明」(AKIAで始まる形式、という記述)に書き直す追加修正でその場で対応した。小さいとは言えない繰り返しであり、「自らの首をしめた場合は正直に告白する」という方針に従い、両方をここに正直に記録する。
 
-\*\*検証\*\*: `tests/test_secret_scanners_do_not_flag_own_test_suite.py`を新設し、2件追加した。(1) `scan_for_leaked_secrets()`を`root`指定なし(=実リポジトリ全体)で呼んでも検知件数が0件であること。(2) `scan_for_hardcoded_sensitive_env_keys()`を同様に`root`/`self_path`指定なしで呼んでも検知件数が0件であること。`git stash`で修正前のコードに戻して実行すると、(1)は`tests/test_scan_for_leaked_secrets.py`の偽AWSキーを、(2)は`tests/test_firmament_enclave_tee.py`(および新設した本テストファイル自身のdocstring中の`"OPENAI_API_KEY"`という記述)を、それぞれ正しく誤検知として検出し失敗することを確認した。修正適用後は両方PASSすることを確認した。`mini_pytest.py`再実行で`PASS=185`(§BC時点の183から新規2件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。さらに、`.github/workflows/anjo_da_maquina_protocol.yml`全体(全ステップ、§BCで追加した4ステップを含む)をローカルシミュレータで再実行し、全ステップが`[OK]`になることを確認した。
+\*\*検証\*\*: `tests/test_secret_scanners_do_not_flag_own_test_suite.py`を新設し、2件追加した。(1) `scan_for_leaked_secrets()`を`root`指定なし(=実リポジトリ全体)で呼んでも検知件数が0件であること。(2) `scan_for_hardcoded_sensitive_env_keys()`を同様に`root`/`self_path`指定なしで呼んでも検知件数が0件であること。`git stash`で修正前のコードに戻して実行すると、(1)は`tests/test_scan_for_leaked_secrets.py`の偽AWSキーを、(2)は`tests/test_firmament_enclave_tee.py`(および新設した本テストファイル自身のdocstring中の`"OPENAI_API_KEY"`という記述)を、それぞれ正しく誤検知として検出し失敗することを確認した。修正適用後は両方PASSすることを確認した。`mini_pytest.py`再実行で`PASS=185`(§BC時点の183から新規2件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。さらに、`.github/workflows/regression_checks_ci.yml`全体(全ステップ、§BCで追加した4ステップを含む)をローカルシミュレータで再実行し、全ステップが`[OK]`になることを確認した。
 
 \*\*残存する限界\*\*: 本修正は、`tests/`ディレクトリ全体を本番スキャン対象から除外するものである。これは「`tests/`配下に本物の秘密情報が紛れ込んだ場合、この検査では検知できなくなる」という新たなトレードオフを意味する(ただし、テストコードに本物の秘密情報を直接書くこと自体がそもそも避けるべき運用であり、本件はテストフィクスチャとしての\*偽の\*鍵・キー名であって、この除外によって新たに守れなくなる本物の秘密は想定していない)。より厳密には、「本物らしく見えるが偽であることが明示されたテストフィクスチャ」と「本物の漏洩」を区別する専用のマーカー(例: 特定のコメントタグ)を導入する設計も考えられるが、本件の修正範囲では、既存の他の除外ディレクトリ(`dummy_secrets`等)と同様の、ディレクトリ単位の除外という既存パターンに合わせた。
 
@@ -980,9 +980,9 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*検証\*\*: `tests/test_generate_dashboard.py`に`test_dashboard_displays_the_average_qa_score_it_computes`を新設した。QAスコア10点・5点の2戦績(平均7.5)を与えた`build_dashboard()`の返り値に`"7.5"`という文字列が実際に含まれることを検証する。`git stash`で修正前のコードに戻すとこのテストが失敗し、修正後にPASSすることを確認した。`mini_pytest.py`再実行で`PASS=186`(§BD時点の185から新規1件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。既存の2件のテスト(概要カードの集計・ファイル欠損時の安全な動作)も引き続き正常にPASSすることを確認した。
 
-\### BF. `.github/workflows/anjo_da_maquina_protocol.yml`(§ANの`actions/cache`) — チェックポイントだけをキャッシュし、そのハッシュの根拠である署名鍵と監査証跡本体をキャッシュし忘れていたため、2回目以降の実行が構造的に毎回「改ざん検知」を誤報し続けていた (2026-10)
+\### BF. `.github/workflows/regression_checks_ci.yml`(§ANの`actions/cache`) — チェックポイントだけをキャッシュし、そのハッシュの根拠である署名鍵と監査証跡本体をキャッシュし忘れていたため、2回目以降の実行が構造的に毎回「改ざん検知」を誤報し続けていた (2026-10)
 
-\*\*発見\*\*: §BD・§BEを`main`にマージした直後、新しい習慣(`gh run list`での実CI確認)に従って`anjo_da_maquina_protocol.yml`を確認したところ、§BEのマージでは成功していたにもかかわらず、その次のマージ(本件を発見する直前の通常のマージ)で再び失敗していた。原因は`21.5. サンダルフォンの錨`ステップ(`checks/sandalphon_anchor.py`)で、ローカルで単体実行すると正常にPASSするにもかかわらず、実CI上でのみ失敗する、という§BDと同じ構造の問題だった。
+\*\*発見\*\*: §BD・§BEを`main`にマージした直後、新しい習慣(`gh run list`での実CI確認)に従って`regression_checks_ci.yml`を確認したところ、§BEのマージでは成功していたにもかかわらず、その次のマージ(本件を発見する直前の通常のマージ)で再び失敗していた。原因は`21.5. サンダルフォンの錨`ステップ(`checks/sandalphon_anchor.py`)で、ローカルで単体実行すると正常にPASSするにもかかわらず、実CI上でのみ失敗する、という§BDと同じ構造の問題だった。
 
 ワークフローYAMLを確認したところ、§AN(本セッションより前の修正)で追加された`actions/cache`ステップが、`sefer/.angel_state`(前回実行時のチェックポイント)のみをキャッシュしており、そのチェックポイントのハッシュの計算根拠である2つの要素をキャッシュし忘れていたことが分かった。実機ではなく、一時ディレクトリで複数回の「CI実行」を独立したPythonプロセスとして模倣する再現スクリプトを書いて、原因を段階的に特定した。
 
@@ -1100,7 +1100,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*原因\*\*: バージョン固定(サプライチェーンの「再現性」)と脆弱性の不在(サプライチェーンの「安全性」)は独立した要件であり、`ophanim_eye.py`が前者しか検査していないこと自体は設計ミスではなく、単に「後者を検査する天使がまだ存在しなかった」という守備範囲の欠落だった。
 
-\*\*対応\*\*: `checks/azazel_dependency_audit.py`を新設し、`.github/workflows/anjo_da_maquina_protocol.yml`に「7.5. アザゼルの禁断知識」としてophanim_eyeの直後に配線した。`pip-audit`が利用できない場合・JSON出力が解析できない場合は共にフェイルクローズドでFAILとする。検出したら`requests==2.33.1`へ固定版を更新して修正した(両CVEとも2.33.0で修正済み、2.33.1はその後のバグ修正版)。
+\*\*対応\*\*: `checks/azazel_dependency_audit.py`を新設し、`.github/workflows/regression_checks_ci.yml`に「7.5. アザゼルの禁断知識」としてophanim_eyeの直後に配線した。`pip-audit`が利用できない場合・JSON出力が解析できない場合は共にフェイルクローズドでFAILとする。検出したら`requests==2.33.1`へ固定版を更新して修正した(両CVEとも2.33.0で修正済み、2.33.1はその後のバグ修正版)。
 
 \*\*自白と謝罪(本件固有)\*\*: 実機CI検証の過程で、自分自身の作業ミスにより\*2件\*の回り道を発生させたことを正直に告白する。(1) 診断用にワークフローへ追加した一時的なデバッグ出力コード(`python3 -c "..."`の複数行文字列)が、YAMLのブロックスカラー(`run: |`)に必要なインデントを満たしておらず、ワークフローファイル自体が構文エラーとなり、ジョブが一つも生成されない「startup failure」を実機で発生させてしまった。(2) その修正後も、GitHub Actionsのrunステップが既定で`bash -eo pipefail`(set -e相当)であることを見落としており、1行目のpythonコマンドが非ゼロ終了した時点でスクリプト全体が即座に停止し、意図していた診断用アノテーション出力(`::error::AZAZEL_DEBUG ...`)が一度も実行されないまま空振りに終わった。いずれも実機でのみ発覚し、ローカルでの事前検証を怠っていた結果である。2回目の修正では、該当コマンドの前後を明示的に`set +e`/`set -e`で挟んだ上で、ローカルで同じシェルスクリプトのロジックをシミュレーションしてから再度プッシュし、3回目の実機検証で初めて意図した通りの診断情報(実際のCVE検出結果)を取得できた。いずれの回り道も、最終的にmainへマージされる本番のワークフロー・コード自体には影響していない(全て診断専用の一時的な変更であり、動作確認後に元のシンプルな形へ完全に戻した)が、無駄な実機CI実行を複数回発生させたことについては、事前のローカル検証をより徹底すべきであった。
 
@@ -1112,7 +1112,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*発見\*\*: §BLをmainにマージした後、「さらなる自己レビューと自己改善」の一環として、`tools/promote_ledger_seal.py`(§BK・§ATと同じ「古い重複提案の取り扱い」パターンに該当するか)を確認したところ、こちらは既に`_set_status()`が一致する全件を処理する安全な実装であることを確認し、変更不要と判断した。その延長で、既存の天使群のうち「検知はするが判定条件に環境変数が絡む」ものを一通り洗い出し、`checks/lucifer_rebellion.py`に着目した。
 
-本スクリプトは、`os.system`経由のコマンド実行・`shell=True`での`subprocess.Popen`・`eval`経由のコード実行という3件の基本的なサンドボックス脱出攻撃を`run_code_against_sefer()`で実際にSeferへ対して実行し、突破数を数える「カオスエンジニアリング」バッテリーである。しかし修正前の実装は、`if chaos_mode and bypasses:`という条件でのみ`report_fail`していた。`chaos_mode`は`CHAOS_MODE`環境変数(ワークフローの`workflow_dispatch`入力`chaos_mode`、既定値false)から読まれ、`.github/workflows/anjo_da_maquina_protocol.yml`を確認すると、この値は`${{ github.event.inputs.chaos_mode == 'true' && 'true' || 'false' }}`という式で設定されていた。`push`イベント(mainへの実際のマージを唯一ゲートしているトリガー)には`github.event.inputs`自体が存在しないため、この式は通常のpushでは常に`'false'`に評価される。つまり、人間がGitHub ActionsのUI/APIから`workflow_dispatch`を手動で起動し、`chaos_mode`チェックボックスを明示的にONにしない限り、`CHAOS_MODE`は常にfalseであり、3件の攻撃が全て突破されていても`report_info`で情報ログを出すだけで、CIは一度も失敗しない。
+本スクリプトは、`os.system`経由のコマンド実行・`shell=True`での`subprocess.Popen`・`eval`経由のコード実行という3件の基本的なサンドボックス脱出攻撃を`run_code_against_sefer()`で実際にSeferへ対して実行し、突破数を数える「カオスエンジニアリング」バッテリーである。しかし修正前の実装は、`if chaos_mode and bypasses:`という条件でのみ`report_fail`していた。`chaos_mode`は`CHAOS_MODE`環境変数(ワークフローの`workflow_dispatch`入力`chaos_mode`、既定値false)から読まれ、`.github/workflows/regression_checks_ci.yml`を確認すると、この値は`${{ github.event.inputs.chaos_mode == 'true' && 'true' || 'false' }}`という式で設定されていた。`push`イベント(mainへの実際のマージを唯一ゲートしているトリガー)には`github.event.inputs`自体が存在しないため、この式は通常のpushでは常に`'false'`に評価される。つまり、人間がGitHub ActionsのUI/APIから`workflow_dispatch`を手動で起動し、`chaos_mode`チェックボックスを明示的にONにしない限り、`CHAOS_MODE`は常にfalseであり、3件の攻撃が全て突破されていても`report_info`で情報ログを出すだけで、CIは一度も失敗しない。
 
 さらに調べたところ、`CHAOS_MODE`を実際に読んでいるPythonファイルはリポジトリ全体で`checks/lucifer_rebellion.py`の1件のみであるにもかかわらず、ワークフロー側では`shamir_seal.py`・`seraphim_consensus.py`・`cherubim_ebpf_guard.py`の3つのステップにも同じ`env: CHAOS_MODE: ...`が無意味に配線されており(これらのスクリプトは一度もこの環境変数を読まない)、本来の消費者が1つしかないにもかかわらず配線だけが4箇所に散らばっているという、整理されていない状態だった。
 
@@ -1154,7 +1154,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*対応\*\*: `checks/_common.py`に`report_inconclusive`(証拠不十分で判定不能)と`report_not_applicable`(検査対象自体が存在しない)を新設し、9ファイル全てで該当する`report_pass`呼び出しをこれらに置き換えた。あわせて`report_pass`/`report_fail`/新設2関数の全てに任意の`evidence`引き次を追加し、将来「なぜそう判定したか」の構造化データを添付できるようにした(既存呼び出しは`evidence=None`で後方互換)。
 
-\*\*実装中の自己訂正(自白)\*\*: 当初、設計段階のチャットでの相談時には、`report_inconclusive`/`report_not_applicable`をそれぞれ専用の終了コード(2・3)で`sys.exit()`する案を提示した。実装に着手し、実際に`python checks/heavenly_tablets_zkp.py`を実行して確認したところ、本当に終了コード3を返すことを確認した。ここで`.github/workflows/anjo_da_maquina_protocol.yml`の各天使ステップを再確認し、`continue-on-error`が一件も設定されておらず、単純な`run: python checks/x.py`のみであることに気づいた。GitHub Actionsは非ゼロ終了コードであれば1でも2でも3でも区別せずそのステップとジョブ全体を失敗(赤)にするため、この案のままマージすれば、「検査対象が無いだけの、本来は異常ではない状態」でCI全体を不必要に赤くする新たな欠陥を自ら作り込むことになっていた。マージ前に自分の設計ミスに気づいたため、ここで正直に告白し、`sys.exit()`を呼ばず標準出力のマーカーのみで区別する設計に訂正した。
+\*\*実装中の自己訂正(自白)\*\*: 当初、設計段階のチャットでの相談時には、`report_inconclusive`/`report_not_applicable`をそれぞれ専用の終了コード(2・3)で`sys.exit()`する案を提示した。実装に着手し、実際に`python checks/heavenly_tablets_zkp.py`を実行して確認したところ、本当に終了コード3を返すことを確認した。ここで`.github/workflows/regression_checks_ci.yml`の各天使ステップを再確認し、`continue-on-error`が一件も設定されておらず、単純な`run: python checks/x.py`のみであることに気づいた。GitHub Actionsは非ゼロ終了コードであれば1でも2でも3でも区別せずそのステップとジョブ全体を失敗(赤)にするため、この案のままマージすれば、「検査対象が無いだけの、本来は異常ではない状態」でCI全体を不必要に赤くする新たな欠陥を自ら作り込むことになっていた。マージ前に自分の設計ミスに気づいたため、ここで正直に告白し、`sys.exit()`を呼ばず標準出力のマーカーのみで区別する設計に訂正した。
 
 \*\*検証\*\*: `tests/test_check_common_four_state_verdicts.py`を新設した。(1) `report_inconclusive`/`report_not_applicable`が`SystemExit`を発生させず、`✅ PASS`とは異なる文字列を出力すること、(2) `report_fail`は引き続き`SystemExit(1)`を発生させること(回帰防止)、(3) `evidence`引き次を渡した場合その内容が出力されること、(4) `heavenly_tablets_zkp.py`・`uriel_nonce.py`について、検査対象が存在しない状態で実際に`main()`を呼び、出力に`NOT_APPLICABLE`が含まれ`✅ PASS`が含まれないことを実機で固定した。9ファイル全てを実際に個別実行し、意図通り`NOT_APPLICABLE`(終了コード0)を報告することを確認した。`pytest`をリポジトリ全体に対して再実行し(`rsa`・`yaml`は本サンドボックス既存の制約により疑似実装・システムパッケージ経由で用意)、`223 passed, 2 failed, 3 xfailed`であることを確認した。失敗した2件(`test_execute_safe_action_uses_sanctum_and_is_not_a_stub`の証明書期限切れ、`test_sdist_is_clean_and_contains_only_the_sefer_package`の`setuptools`未インストール)は、`git stash`で本修正を一時的に取り除いた状態でも同じく失敗することを確認し、本修正とは無関係なサンドボックス環境固有の既知の制約であることを確認した。本修正前は223件中216件のみが収集・実行可能な状態だったため、新規7件増加している。
 
@@ -1176,7 +1176,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*ラウンド2(実装中の自己レッドチーム・回避試行)\*\*: 修正後、自ら4種類の回避コードを作成し、本天使の検知能力を試した。(1) 複合条件式(`if flag and True:`)、(2) `os.environ["X"]`の添字アクセス形式、(3) 代入と条件分岐の順序が逆の形、(4) `os.getenv`を間接的にラップした関数呼び出し経由の形。結果、(1)(3)は当初から検知済み、(2)は検知漏れが見つかり即座に正規表現を拡張して対応した。(4)は検知できず、これは`tests/test_thrones_positive_path.py`に既知の限界として明示的に固定した(隠さず記録する)。
 
-\*\*検証\*\*: `tests/test_thrones_positive_path.py`(8件、検知能力・誤検知防止・既知の限界の固定)・`tests/test_shamir_seal_fail_path.py`(3件)・`tests/test_deadmans_switch_collar_protocol.py`(2件)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`に新天使をステップ22.6として配線し、`tests/test_checks_scripts_wired_into_ci.py`の配線漏れ検知テストが通ることを確認した。リポジトリ全体のpytestを再実行し、236 passed(§BO時点の223から13件増加)・既存の無関係な2件のサンドボックス固有の失敗のみであることを確認した。`checks/thrones_positive_path.py`を実機で直接実行し、現時点のリポジトリ全体(`ANJO_COLLAR_SEAL`・`GITHUB_ACTIONS`の2件)についてPASSすることを確認した。
+\*\*検証\*\*: `tests/test_thrones_positive_path.py`(8件、検知能力・誤検知防止・既知の限界の固定)・`tests/test_shamir_seal_fail_path.py`(3件)・`tests/test_deadmans_switch_collar_protocol.py`(2件)を新設。`.github/workflows/regression_checks_ci.yml`に新天使をステップ22.6として配線し、`tests/test_checks_scripts_wired_into_ci.py`の配線漏れ検知テストが通ることを確認した。リポジトリ全体のpytestを再実行し、236 passed(§BO時点の223から13件増加)・既存の無関係な2件のサンドボックス固有の失敗のみであることを確認した。`checks/thrones_positive_path.py`を実機で直接実行し、現時点のリポジトリ全体(`ANJO_COLLAR_SEAL`・`GITHUB_ACTIONS`の2件)についてPASSすることを確認した。
 
 \*\*残存する限界(正直に記す)\*\*: (1) 正規表現ベースのヒューリスティックであり、ラウンド2で確認した通り、間接呼び出し経由の迂回(§11.9フェーズFの一般形)は検知できない。(2) 「テストファイルが環境変数名と`assert`を両方含む」ことだけを根拠にしており、そのテストが本当に「有効側の分岐」を踏んでいるかまでは保証しない(名前が似ているだけの無関係なテストでも一致してしまう可能性がある)。(3) 今回発見した2件は、調査を始めてすぐに見つかった「低木の果実」であり、今後ラウンドを重ねるほど新規発見の頻度は下がっていくと予想される。これは本対応の不備ではなく、本文書中で利用者に説明した、反復的レッドチーム作業に内在する収穫減少の法則そのものである。
 
@@ -1212,7 +1212,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己レッドチーム(自分自身への攻撃)**: 完成後、自ら4種類のテストケースで検知能力を試した。(1) `import os as _os`のようなosの別名import経由の呼び出しは検知できない(正直な既知の限界として固定)。(2) `out = sys.stdout; out.flush()`のような変数経由のflushは正しく検知できた(属性名`flush`のみで判定しているため、変数名に依存しない)。(3) **最も重要な発見**: `if cond: flush(); os._exit(1) else: os._exit(1)`のような、if/elseの排他的分岐構造を持つコードに対して、本検査は行番号の前後関係のみで「flush済みか」を判定しているため、else分岐の`os._exit(1)`(本来flush漏れがある)を、if分岐にあるflushの行番号がそれより小さいという理由だけで誤って「flush済み」と判定してしまう(偽陰性)。これは制御フロー(分岐)を一切解析しない、単純な行番号ベースの判定ゆえの限界であり、`thrones_positive_path.py`の「間接呼び出し経由の回避」と同種の、構造的に正直に認めるべき限界である。真の分岐対応にはCFG(制御フローグラフ)レベルの解析が必要であり、現時点の対象(`src/deadmans_switch.py`・`src/starvation_protocol.py`はいずれもこの分岐パターンを持たない)に対して不釣り合いに高コストと判断し、個別対応ではなく`tests/test_barachiel_last_words.py`に既知の限界として明示的に固定した。(4) `import os as _os`も同様に既知の限界として固定した。
 
-**検証**: `tests/test_barachiel_last_words.py`(10件、検知能力・誤検知防止・既知の限界2件の固定・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.7として配線し、`tests/test_checks_scripts_wired_into_ci.py`で配線漏れが無いことを確認。リポジトリ全体のpytestを再実行し、246 passed(§BQ時点の236から10件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/barachiel_last_words.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した(§BQで修正した2関数が、この新天使の検査にも通ることの裏付け)。
+**検証**: `tests/test_barachiel_last_words.py`(10件、検知能力・誤検知防止・既知の限界2件の固定・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.7として配線し、`tests/test_checks_scripts_wired_into_ci.py`で配線漏れが無いことを確認。リポジトリ全体のpytestを再実行し、246 passed(§BQ時点の236から10件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/barachiel_last_words.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した(§BQで修正した2関数が、この新天使の検査にも通ることの裏付け)。
 
 **残存する限界(正直に記す)**: (1) 上記の通り、if/elseなどの分岐構造には対応していない(偽陰性の方向)。(2) `os`の別名importには対応していない。(3) `thrones_positive_path.py`と同様、本検査は「将来似た欠陥が追加されるのを防ぐ一般化された仕組み」であり、過去に実際に発見した2件を個別に再検査するものではない――もっとも、`test_real_repository_files_pass_after_the_sbq_fix`テストがその2件を含むリポジトリ全体に対する実行を回帰防止として固定している。
 
@@ -1234,7 +1234,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己訂正(自白)**: 完成直後、本天使自身をリポジトリ全体に対して実行する統合テスト(`test_file_with_no_except_reports_not_applicable`)を書いた際、`main()`内の当初の実装が`"except" not in text`という文字列部分一致でファイルの対象外判定をしていたため、テスト用のダミーファイルに書いた`'no except here'`という無関係な文字列リテラルの中の"except"という部分文字列に反応し、本来NOT_APPLICABLEになるべき場合にPASSを報告してしまうという、自己発見の誤りがあった。これは`thrones_positive_path.py`が自分自身のコメント内の例示コードを誤検知した時と全く同じ種類のミス(文字列部分一致による自己言及的な誤爆)であり、正直に認める。astで実際にtry/except構文の有無を判定する`_has_any_except_handler()`に置き換えて修正し、専用の回帰テストを追加した。
 
-**検証**: `tests/test_jerahmeel_fail_open_guard.py`(11件)・`tests/test_audit_hook_registration_fails_closed.py`(1件)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.75として配線し、配線漏れ検知テストが通ることを確認。リポジトリ全体のpytestを再実行し、258 passed(§BR時点の246から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/jerahmeel_fail_open_guard.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した。
+**検証**: `tests/test_jerahmeel_fail_open_guard.py`(11件)・`tests/test_audit_hook_registration_fails_closed.py`(1件)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.75として配線し、配線漏れ検知テストが通ることを確認。リポジトリ全体のpytestを再実行し、258 passed(§BR時点の246から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/jerahmeel_fail_open_guard.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した。
 
 **残存する限界(正直に記す)**: (1) 本体が`pass`一文のみの場合しか検知しない(`continue`・`...`・部分的なログ出力の亜種は検知範囲外)。(2) 近傍コメントの「存在」のみを見ており、その内容が本当にその握り潰しを正当化しているかの妥当性までは判定しない――コメントさえあれば(内容が的を外れていても)通過する、意図的な「判定ではなく開示の強制」という設計。(3) このため、悪意または不注意により「残存する限界」というマーカー文字列だけを機械的に貼り付けて本検査を回避することは原理的に可能であり、本天使は「レビュアーが読むべき場所を示す」ことまでしか保証しない。
 
@@ -1254,7 +1254,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実機適用で見つかった偽陽性と、その修正**: 新天使を実際にリポジトリ全体に適用したところ、`checks/sandalphon_decree.py`の`ROOT / "src" / "aegis_system.py"`のような、完全に固定されたリテラル文字列のみによる(外部入力が混入する余地が無い)パス結合まで、3件誤検知した。これは本物のバグ(右辺が外部入力由来の式)とは本質的に異なるため、`/`結合の右辺(最後の要素)が単純な文字列リテラルである場合は検知対象から除外するよう、検知ロジック自体を修正した。
 
-**検証**: `tests/test_hanael_path_join_guard.py`(8件、検知能力・誤検知防止・実機で発見した偽陽性除外の固定・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.76として配線。リポジトリ全体のpytestを再実行し、267 passed(§BS時点の258から9件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_hanael_path_join_guard.py`(8件、検知能力・誤検知防止・実機で発見した偽陽性除外の固定・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.76として配線。リポジトリ全体のpytestを再実行し、267 passed(§BS時点の258から9件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 検証関数の呼び出しを名前の部分一致(`secure_resolve`・`_assert_contained_within_workspace`)で判定しており、同じ役割を持つ独自の検証関数が別名で実装された場合は見逃す。(2) `/`演算子を使わない結合(`os.path.join`・f文字列結合等)は検知範囲外。(3) 変数の再代入・別名への代入を経由した追跡は行わない。(4) 検証関数の呼び出しを検知した場合、その時点で追跡中の全ての変数を一括して「検証済み」とみなしており、実際にその検証関数の引数がどの変数かまでは確認していない(偽陰性の方向の簡略化)。
 
@@ -1274,21 +1274,21 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己レッドチーム、7パターン**: (1)`if: false`(ブール値)→検知、(2)`if: success()`(通常の条件)→検知対象外、(3)`if: '${{ false }}'`(式構文で囲まれたfalse)→検知、(4)`if: 0`→検知、(5)`if: ''`(空文字列)→検知、(6)`uses:`のみで`run:`を持たないステップに`if: false`→検知対象外(意図的に狭い範囲として設計)、(7)`if: steps.foo.outcome == 'failure'`のような動的条件→検知対象外(正直な既知の限界として固定)。
 
-**検証**: `tests/test_ariel_vigilant_watch.py`(9件)・`tests/test_checks_scripts_wired_into_ci.py`への追加2件を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.77として配線。リポジトリ全体のpytestを再実行し、278 passed(§BT時点の267から11件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_ariel_vigilant_watch.py`(9件)・`tests/test_checks_scripts_wired_into_ci.py`への追加2件を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.77として配線。リポジトリ全体のpytestを再実行し、278 passed(§BT時点の267から11件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) GitHub Actionsの式は文脈依存の変数参照(`steps.x.outcome`等)を含むため、本検査は静的に判定可能な明白なリテラル(`false`・`0`・空文字列)のみを検知する。`steps.x.outcome == 'nonexistent_status'`のような、実行時には常に偽だが静的には判定できない巧妙な無効化は検知できない。(2) `uses:`ステップ(アクション呼び出し)自体の無効化は検査対象外。(3) ワークフローファイルの削除自体、あるいはジョブ全体の`if:`条件での無効化(個別ステップではなくジョブ単位)は、本天使の現在の実装では未確認であり、今後の一般化の対象として残る。
 
-### §BV: §11.9フェーズE着手。`requirements.txt`に未宣言のまま実際に`import`されていた4パッケージ、および`anjo_da_maquina_protocol.yml`自身がそれと無関係にハードコードしていた依存リストの乖離(§APの教訓への再発)を発見・修正し、一般化検知する新天使(`checks/orifiel_supply_chain_guard.py`)を追加
+### §BV: §11.9フェーズE着手。`requirements.txt`に未宣言のまま実際に`import`されていた4パッケージ、および`regression_checks_ci.yml`自身がそれと無関係にハードコードしていた依存リストの乖離(§APの教訓への再発)を発見・修正し、一般化検知する新天使(`checks/orifiel_supply_chain_guard.py`)を追加
 
 **発見**: §BUに続き、§11.9ロードマップのフェーズE(未宣言の依存関係・サプライチェーン注入の検知)に着手するにあたり、実在する具体例を探した。リポジトリ全体を`grep`で調査したところ、以下2種類の「宣言と実態の食い違い」を発見した。
 
 一つ目は、`src/ollama_agent_loop.py`等が無条件に`import ollama`を行っていたにもかかわらず、`requirements.txt`には`ollama`が一度も宣言されていなかったこと(`src/openai_agent_loop.py`・`src/secure_oracle_feed.py`の`openai`・`google.generativeai`は`try/except`で保護されていたが、これらも同様に未宣言だった。また`tools/build_public_scripture.py`が実行時に必要とする`setuptools`も未宣言だった)。
 
-二つ目は、`.github/workflows/anjo_da_maquina_protocol.yml`の依存インストール手順が、`requirements.txt`とは無関係に`pip install networkx pyyaml playwright mcp pandas openpyxl pytest`という独自のハードコードされたリストを使っていたこと。リポジトリ全体を検索したところ、このうち`networkx`・`mcp`・`pandas`は**一箇所もimportされておらず**、完全に不要かつバージョン無指定(サプライチェーン上の無用な攻撃面)のままインストールされ続けていた。さらに重大なのは、`.github/workflows/sanctuary_ci.yml`自身のコメント(§AP)が既に「2本のワークフローが依存関係を共有せずに乖離すると、修正が片方にしか反映されない事故が起きる」と明記していた教訓に、まさに`anjo_da_maquina_protocol.yml`のこの箇所自身が違反し続けていたことである――これは既に文書化されていたにもかかわらず、一度も直されていなかった既知の教訓の再発である。
+二つ目は、`.github/workflows/regression_checks_ci.yml`の依存インストール手順が、`requirements.txt`とは無関係に`pip install networkx pyyaml playwright mcp pandas openpyxl pytest`という独自のハードコードされたリストを使っていたこと。リポジトリ全体を検索したところ、このうち`networkx`・`mcp`・`pandas`は**一箇所もimportされておらず**、完全に不要かつバージョン無指定(サプライチェーン上の無用な攻撃面)のままインストールされ続けていた。さらに重大なのは、`.github/workflows/sanctuary_ci.yml`自身のコメント(§AP)が既に「2本のワークフローが依存関係を共有せずに乖離すると、修正が片方にしか反映されない事故が起きる」と明記していた教訓に、まさに`regression_checks_ci.yml`のこの箇所自身が違反し続けていたことである――これは既に文書化されていたにもかかわらず、一度も直されていなかった既知の教訓の再発である。
 
 **たとえ話**: 食材庫の「正式な買い物リスト」(`requirements.txt`)には書かれていない食材を、台所(本番コード)が実際には毎日使っていた――棚を見れば使われていることは分かるのに、買い物リストだけを見ている人には「この店はこの食材を一切扱っていない」ように見える。さらに、別の調理担当(Angelsワークフロー)は、その正式な買い物リストを見もせず、自分だけの古いメモで「とりあえずこれを全部買ってこい」と指示していた。そのメモの中には、もう誰も使っていない食材(`networkx`・`mcp`・`pandas`)まで含まれていたが、誰も気づかず毎回買い続けていた。そして、食材庫の壁には既に「買い物リストを別々に管理すると、片方だけ更新されて事故が起きる」という貼り紙(§APの教訓)が貼られていたのに、その貼り紙の真下で、まさにその事故が静かに起き続けていた。
 
-**対応**: WebSearch・WebFetchで実在するPyPI上の最新の安定版バージョンを一つずつ確認した上で(`ollama==0.6.3`・`openai==3.35.1`・`google-generativeai==0.8.6`・`setuptools==84.0.0`、いずれも捏造せず実在のリリース情報源で裏付け済み)、`requirements.txt`に4パッケージを追加した。`.github/workflows/anjo_da_maquina_protocol.yml`の依存インストール手順を、`pip install -r requirements.txt`のみに置き換え、`requirements.txt`を唯一の正とする方針(`sanctuary_ci.yml`が既に採用している方式)に統一した。
+**対応**: WebSearch・WebFetchで実在するPyPI上の最新の安定版バージョンを一つずつ確認した上で(`ollama==0.6.3`・`openai==3.35.1`・`google-generativeai==0.8.6`・`setuptools==84.0.0`、いずれも捏造せず実在のリリース情報源で裏付け済み)、`requirements.txt`に4パッケージを追加した。`.github/workflows/regression_checks_ci.yml`の依存インストール手順を、`pip install -r requirements.txt`のみに置き換え、`requirements.txt`を唯一の正とする方針(`sanctuary_ci.yml`が既に採用している方式)に統一した。
 
 **一般化**: この具体例(「実際のimportとrequirements.txtの宣言の不一致」「CIワークフローの独自ハードコードされたpip installとrequirements.txtの乖離」)を一般化する新天使`checks/orifiel_supply_chain_guard.py`を作成した。(1) `angels`・`src`・`adapters`・`anjo_interceptor`・`sefer`・`tools`・`maquina_gatekeeper.py`を対象に、`ast.parse()`で全importを静的に収集し、標準ライブラリ(`sys.stdlib_module_names`)・リポジトリ内のローカルモジュールを除外した上で、残りがすべて`requirements.txt`に(既知のパッケージ名対応表経由で)宣言されているかを検査する。(2) `.github/workflows/*.yml`の各ステップの`run:`ブロックをYAMLとして解析し、`pip install`/`pip3 install`で`requirements.txt`経由ではなく直接指定されたパッケージが無いかを検査する。
 
@@ -1296,7 +1296,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 また、`pip install --quiet pip-audit`(`checks/azazel_dependency_audit.py`が実行時に自己インストールする、本物の正当なコード)を本検知の対象文字列抽出関数(`_extract_divergent_pip_packages`)に単体で渡すと`['pip-audit']`を抽出してしまうことを確認したが、これは偽陽性ではなく**意図的なスコープ境界**である――本天使の`find_divergent_workflow_installs()`は`.github/workflows/*.yml`のYAMLパース結果の`run:`文字列のみを走査し、Pythonソースファイルの内容は一切走査しないため、`azazel_dependency_audit.py`内部のこの文字列が実際に本天使へ渡ることは無い。この境界を`tests/test_orifiel_supply_chain_guard.py`内に明示的なテストとして固定した。
 
-**検証**: `tests/test_orifiel_supply_chain_guard.py`(20件、import走査の正確性・カンマ区切り偽陰性の修正固定・docstring偽陽性の修正固定・相対import除外・パッケージ名対応表・ローカルモジュール除外・pip install乖離検出・pip3対応・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.78として配線。リポジトリ全体のpytestを再実行し、298 passed(§BU時点の278から20件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_orifiel_supply_chain_guard.py`(20件、import走査の正確性・カンマ区切り偽陰性の修正固定・docstring偽陽性の修正固定・相対import除外・パッケージ名対応表・ローカルモジュール除外・pip install乖離検出・pip3対応・NOT_APPLICABLE分岐・実リポジトリでのPASS確認)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.78として配線。リポジトリ全体のpytestを再実行し、298 passed(§BU時点の278から20件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) importの走査は静的解析であり、`importlib.import_module(動的な文字列)`のような動的importは検知できない。(2) パッケージ名とimport名が異なる場合、既知の対応表(`_IMPORT_TO_PACKAGE_ALIASES`、現時点では`yaml`→`pyyaml`・`google`→`google-generativeai`の2件のみ)で変換するが、この表に載っていない未知のパッケージについては誤って「未宣言」と判定する可能性がある(偽陽性の方向)。(3) ワークフローのrun:ステップ内の`pip install`/`pip3 install`のみを検査しており、Pythonスクリプト内部からの`subprocess`経由の動的な`pip install`(例: `checks/azazel_dependency_audit.py`が実行時にpip-auditを自己インストールする箇所)は、本天使のスコープ外として意図的に切り出している――これは静的なrequirements.txt宣言と対比すべき「宣言された依存」ではなく、実行時にのみ発生する別種のサプライチェーン上の関心事であり、今後の新たなフェーズとして一般化する余地が残る。(4) `tests/`ディレクトリ自体はimport走査の対象外としている(本番コードのみを対象とする、他の天使と同じスコープ上の判断)ため、テストファイルだけが依存する未宣言パッケージ(現時点では存在しない)は検知範囲外。
 
@@ -1316,7 +1316,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己レッドチーム**: 本天使を実装する前に、`git stash`で今回の2つの修正(`intent_checker.py`・`ast_scanner.py`)だけを一時的に取り消し、本天使が実際に「遮断されなかった」として正しく検知・FAILすることを確認した上で、修正を復元して再度PASSすることを確認した――検知器自身が、何もせずに常にPASSし続ける「名ばかりの監視」になっていないことを、実際に欠陥のあるコードを食わせて確認する、本件で繰り返し重視してきた手順を踏んだ。
 
-**検証**: `tests/test_intent_checker_dotted_import_evasion.py`(6件)・`tests/test_ast_scanner_qualified_calls.py`への追加2件・`tests/test_remiel_equivalence_battery.py`(4件、修正の回帰検知・検査関数自体の例外の安全側処理の固定を含む)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.79として配線。リポジトリ全体のpytestを再実行し、310 passed(§BV時点の298から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_intent_checker_dotted_import_evasion.py`(6件)・`tests/test_ast_scanner_qualified_calls.py`への追加2件・`tests/test_remiel_equivalence_battery.py`(4件、修正の回帰検知・検査関数自体の例外の安全側処理の固定を含む)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.79として配線。リポジトリ全体のpytestを再実行し、310 passed(§BV時点の298から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) `MUST_BLOCK_PAYLOADS`は、今回実際に発見し修正した具体的な回避手法を記録した固定リストであり、将来の未知の等価構文(Unicode正規化による識別子のなりすまし、f-stringのフォーマット式経由の動的名前解決等)を自動的には発見できない――あくまで「既知の回帰を二度と許さない」ための回帰連戦である。(2) `importlib.import_module("os").remove(...)`のような二重の間接化(import自体をimportlib経由にし、かつ呼び出し関数名を既知のforbidden_calls/banned_functionsに含まれない名前にする)は、`anjo_interceptor/intent_checker.py`・`src/ast_scanner.py`いずれも依然として検知できないことを実機で確認した(`sefer.inquisition()`のみ、`importlib`自体がforbidden_modulesに含まれているため、この経路でも検知できる)。これは`src/ast_scanner.py`自身が既に文書化しているdenylist方式そのものの構造的限界であり、今回は新たなバグとして修正対象に含めず、`tests/test_remiel_equivalence_battery.py`には明示的な既知の限界としては固定せず、本GRIMOIREにのみ正直に記録する(本天使のMUST_BLOCK_PAYLOADSに含めれば常にFAILし続けてしまうため)。
 
@@ -1338,7 +1338,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己レッドチーム**: `git stash`で今回の2つの修正(`sefer/audit_chain.py`・`maquina_gatekeeper.py`)だけを一時的に取り消し、本天使が実際に「検知されなかった」として両方正しくFAILすることを確認した上で、修正を復元して再度PASSすることを確認した。
 
-**検証**: `tests/test_audit_chain.py`への追加3件・`tests/test_zk_audit_trail_chain_integrity.py`への追加2件・`tests/test_haniel_truncation_guard.py`(6件)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.80として配線。リポジトリ全体のpytestを再実行し、321 passed(§BW時点の310から11件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_audit_chain.py`への追加3件・`tests/test_zk_audit_trail_chain_integrity.py`への追加2件・`tests/test_haniel_truncation_guard.py`(6件)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.80として配線。リポジトリ全体のpytestを再実行し、321 passed(§BW時点の310から11件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 水位標ファイル自体も、ログファイル・鍵ファイルと同じディレクトリ・同じファイルシステム権限で保護される前提である。攻撃者が水位標ファイルとログファイルの両方を同時に削除・改ざんできる(例: ディレクトリ全体への書き込み権限を持つ)場合、この修正の範囲外である――これは本フレームワーク全体が前提とする脅威モデル(sefer.Sanctum配下にサンドボックス化された、allowed_dirs外のファイルには手が届かない未信頼AIコード)に依存する、各クラスが既に明記している限界と同種である。(2) 本天使が検証するのは「ログファイルを鍵なしで切り詰める」という既知の具体的な攻撃のみであり、将来新たに追加される別の改ざん検知機構(現時点では未知)には自動的には及ばない。
 
@@ -1380,7 +1380,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己レッドチーム**: `git stash`で`tartarus/armageddon_core.py`の修正だけを一時的に取り消し、本天使が実際に「再提案が永久に受理されなかった」として正しくFAILすることを確認した上で、修正を復元して再度PASSすることを確認した(`checks/orifiel_supply_chain_guard.py`の修正についても、同様に`git stash`での自己レッドチームを別途行った)。
 
-**検証**: `tests/test_armageddon_core.py`への追加2件(再提案の受理・開いている重複の防止の継続確認)・`tests/test_promote_ledger_seal.py`(新設、4件、過去の拒否回数の警告表示・初回提案への誤警告防止・後方互換性・提案無しの場合)・`tests/test_phanuel_rejection_memory_guard.py`(新設、6件)・`tests/test_orifiel_supply_chain_guard.py`への追加1件(§BVの盲点の回帰防止)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.81として配線。リポジトリ全体のpytestを再実行し、337 passed(§BY時点の324から13件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_armageddon_core.py`への追加2件(再提案の受理・開いている重複の防止の継続確認)・`tests/test_promote_ledger_seal.py`(新設、4件、過去の拒否回数の警告表示・初回提案への誤警告防止・後方互換性・提案無しの場合)・`tests/test_phanuel_rejection_memory_guard.py`(新設、6件)・`tests/test_orifiel_supply_chain_guard.py`への追加1件(§BVの盲点の回帰防止)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.81として配線。リポジトリ全体のpytestを再実行し、337 passed(§BY時点の324から13件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) `prior_rejection_count`による警告表示は、審査者が過去の拒否理由そのもの(拒否した人間が何を考えてREJECTEDとしたか)までは記録・表示していない――単に「何回拒否されたか」という回数のみであり、拒否の理由そのものを遡って確認する手段は、本修正の範囲には含まれていない。(2) `_is_local_module_name()`への`tartarus/`追加は、現時点で発見された唯一の盲点を塞いだものであり、将来`angels`・`src`等のスキャン対象ディレクトリ以外の場所に、同様の「`sys.path.insert()`してトップレベル名でimportする」ローカルモジュールが新設された場合、同じ種類の偽陽性が再発する可能性が構造的に残っている――これはPythonの`sys.path`操作を伴う動的なモジュール解決全般に対する静的解析の限界であり、本天使のスコープを超える。
 
@@ -1406,7 +1406,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **命名についての事前確認**: §BZでの命名衝突(Sandalphon)の反省を踏まえ、新天使の命名前に`ls checks/`で既存の天使名との重複を確認した上で、未使用の大天使名「イェグディエル(勤勉・精励を司る天使)」を選んだ――実際に`azrael_exfiltration_guard.py`という名で一度書いた後、コミット前の確認で`azrael_scythe_slashing.py`との重複に気づき、公開前に自分で改名した。
 
-**検証**: `tests/test_thread_safety_maquina_seal.py`への追加2件(封鎖中のUDP sendto遮断・非封鎖時の誤検知防止)・`tests/test_jegudiel_exfiltration_guard.py`(新設、6件)を新設。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.82として配線。リポジトリ全体のpytestを再実行し、345 passed(§BZ時点の337から8件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_thread_safety_maquina_seal.py`への追加2件(封鎖中のUDP sendto遮断・非封鎖時の誤検知防止)・`tests/test_jegudiel_exfiltration_guard.py`(新設、6件)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.82として配線。リポジトリ全体のpytestを再実行し、345 passed(§BZ時点の337から8件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 本天使が検証するのは「UDPの`socket.sendto()`による接続不要の送信」という既知の具体的な経路のみであり、将来Pythonが新たに追加する別のネットワークAPI、あるいは`socket.sendmsg()`等の本天使が明示的に検査していない他の送信経路(現時点でこのPythonバージョンでは専用のaudit eventを持たないことを実機で確認済みだが、将来のPythonバージョンで追加される可能性は排除できない)には自動的には及ばない。(2) `ultimate_audit_hook`自体は本リポジトリ全体のゼロトラストアーキテクチャの一層(defense in depth)に過ぎず、唯一の防衛線ではない――Docker等によるOSレベルのネットワーク隔離(`--network none`)が一次防衛線であることは、`cassiels_veil`関連の既存のGRIMOIRE記述(§L等)が既に明記している前提と同じであり、本修正はその追加の一層を補強したに過ぎない。
 
@@ -1436,7 +1436,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **実装中に自分で発見・即時訂正した誤り(標準指示§準拠、二重の自己発見)**: (1) 新天使の検査関数`_check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked()`を最初に書いた際、mmapで書き込んだ11バイト分のみを検証するつもりで`if content != b"legit write":`という誤った等価比較を書いてしまい、ファイル全体の内容(書き込んでいない後続バイトも含む`b"legit write inside jail!!!!"`)と一致せず、修正が正しく動作しているにもかかわらず天使がFAILを報告するという、天使自身の実装ミスによる偽陽性を引き起こした。実際に天使を実行して失敗を確認した際、`sefer/__init__.py`側ではなく検査関数側の比較ロジックの誤りであると特定し、`content.startswith(b"legit write")`への修正で解消した。(2) マージ前の必須手順であるリポジトリ全体pytest実行を行ったところ、§CAと全く同種の事象が再発した――`tests/test_jerahmeel_fail_open_guard.py::test_real_repository_files_pass_after_the_sbs_fix`が、新天使`checks/sealtiel_mmap_guard.py`内の2箇所の`except LossOfAtaraxia: pass`(69行目・100行目、いずれも「遮断が正しく発生したことを確認してから後続のファイル内容検証へ進む」という成功パスの一部)に、イェラミエルの沈黙の番人(§BS)が要求する「正直な自己開示」マーカーを含むコメントが付いていないことを正しく検知した。これは既存天使側の欠陥ではなく、私自身が本リポジトリの既存の作法(無言の`except: pass`には必ず理由説明コメントを付ける)に従わずに書いてしまった、単純な書き方の誤りである。正直に告白し、両箇所に「[正直な注記] これは本検査が期待する『正常に遮断された』という成功パスであり、フェイルオープンではない」という趣旨のコメントを追加して解消した。いずれも軽微な誤りではあるが、標準指示が求める「自己修正・改善の結果、自らの首を絞めた場合は正直に告白し謝罪する」原則に従い、ここに隠さず記録する。
 
-**検証**: `tests/test_michael_mmap_fd_bypass_guard.py`(新設、4件: `access=`方式の遮断・`prot=`/`flags=`方式の遮断・匿名mmapの誤検知防止・`allowed_dirs`内mmap書き込みの誤検知防止)、`tests/test_sealtiel_mmap_guard.py`(新設、8件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.83として配線。リポジトリ全体のpytestを再実行し、357 passed(§CA時点の345から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_michael_mmap_fd_bypass_guard.py`(新設、4件: `access=`方式の遮断・`prot=`/`flags=`方式の遮断・匿名mmapの誤検知防止・`allowed_dirs`内mmap書き込みの誤検知防止)、`tests/test_sealtiel_mmap_guard.py`(新設、8件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.83として配線。リポジトリ全体のpytestを再実行し、357 passed(§CA時点の345から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 本修正は`"mmap.__new__"`というPython本体の正式なaudit eventに依存しているため、CPython以外の実装や、将来このイベントの発火条件が変更された場合には影響を受ける可能性がある(現行のCPython 3.13で実機検証済み)。(2) 本修正はfdを`/proc/self/fd`経由で解決する(`_resolve_fd_path`の既存の制約と同一)ため、Linux限定のベストエフォート策であり、恒久対策としてはOSレベルのサンドボックス併用が強く推奨される、という既存のコメント(459行目周辺)の前提をそのまま継承している。(3) 本修正は意図的に「宣言上は読み取り専用のmmapであっても、allowed_dirs外のファイルには一律遮断する」という安全側の設計を採っており、access値を正確に判定する代替手段(例: mmap構築後に実際のメモリ保護属性をOSから問い合わせる等)は検討していない――accessフィールドの偽装が可能である以上、これ以上に正確な判定を試みることが新たな回避経路を生む可能性があると判断したための、意図的な設計上の妥協である。(4) `mmap.mmap()`で確保した領域に対し、後から`mmap.mprotect()`等でメモリ保護属性を動的に変更する手口(今回は未検証)については、別の実機検証が必要であり、今回の修正の対象には含まれていない。
 
@@ -1462,7 +1462,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **実装中に自分で発見・即時訂正した誤り(標準指示§準拠、三度目の自己発見)**: マージ前の必須手順であるリポジトリ全体pytest実行を行ったところ、またも既存の天使が新たな失敗を検知した――今回は`tests/test_barachiel_last_words.py::test_real_repository_files_pass_after_the_sbq_fix`が、新天使`checks/zerachiel_process_spawn_guard.py`内の2箇所の`os._exit(0)`(子プロセスを即座に終了させる箇所)の直前に`flush()`呼び出しが無いことを正しく検知した。これは§BQ/§BRで既に発見・修正済みの構造(`os._exit()`は標準出力バッファのflushを一切行わないため、直前の重要な記録が消失しうる)と全く同じパターンであり、私自身が本リポジトリの既存の作法(自壊直前には明示的にflushする)に従わずに書いてしまった、単純な書き方の誤りである。正直に告白し、両箇所に`sys.stdout.flush()`を追加して解消した。標準指示が求める「自己修正・改善の結果、自らの首を絞めた場合は正直に告白し謝罪する」原則に従い、ここに隠さず記録する――本セッションでは§CA・§CBに続き三度目の、同種の「既存の天使による自己チェックの網に、自分の新しいコードが正しく引っかかった」事例であり、この一貫した引っかかりそのものが、既存の天使群が実際に機能し続けていることの裏付けでもある。
 
-**検証**: `tests/test_thread_safety_maquina_seal.py`への追加2件(封鎖中のos.fork遮断・非封鎖時の誤検知防止)・`tests/test_zerachiel_process_spawn_guard.py`(新設、6件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.84として配線。リポジトリ全体のpytestを再実行し、365 passed(§CB時点の357から8件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_thread_safety_maquina_seal.py`への追加2件(封鎖中のos.fork遮断・非封鎖時の誤検知防止)・`tests/test_zerachiel_process_spawn_guard.py`(新設、6件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.84として配線。リポジトリ全体のpytestを再実行し、365 passed(§CB時点の357から8件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: `ultimate_audit_hook`自体は本リポジトリ全体のゼロトラストアーキテクチャの一層(defense in depth)に過ぎず、唯一の防衛線ではない――Docker等によるOSレベルのプロセス・ネットワーク隔離が一次防衛線であることは、`cassiels_veil`関連の既存のGRIMOIRE記述が既に明記している前提と同じである。
 
@@ -1496,7 +1496,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **実装中に自分で発見・訂正した誤り(正直な自己開示)**: 修正の検証用スクリプトで`importlib.reload(sefer)`を不用意に呼んだところ、`os.write`が既に`_guarded_os_write`へ差し替わった後の状態を新たに`_ORIG_OS_WRITE`として再キャプチャしてしまい、`_guarded_os_write`が自分自身を無限に呼び出す`RecursionError`を引き起こした。これは本番コード(`sefer/__init__.py`)側の欠陥ではなく、検証スクリプト側が不必要な`reload`を行ったことによる、検証手順自体の書き方の誤りである。原因を特定した上で`reload`を取り除いた新しいプロセスで再検証し、問題なく動作することを確認した。影響は検証スクリプトのみに留まり、コミット対象のコードには一切含まれていない。
 
-**検証**: `tests/test_michael_sendfile_copyrange_fd_bypass_guard.py`(新設、4件: `sendfile`の遮断・`copy_file_range`の遮断・両者それぞれのallowed_dirs内誤検知防止)、`tests/test_sachiel_kernel_transfer_guard.py`(新設、8件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.85として配線。リポジトリ全体のpytestを再実行し、379 passed(§CC時点の367から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_michael_sendfile_copyrange_fd_bypass_guard.py`(新設、4件: `sendfile`の遮断・`copy_file_range`の遮断・両者それぞれのallowed_dirs内誤検知防止)、`tests/test_sachiel_kernel_transfer_guard.py`(新設、8件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.85として配線。リポジトリ全体のpytestを再実行し、379 passed(§CC時点の367から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 本修正はLinux上の`os.sendfile`/`os.copy_file_range`の存在に依存するベストエフォート策であり、これらの関数が存在しないプラットフォームでは(`getattr(os, ..., None)`による存在確認の上で)単にラップが行われないだけであり、他プラットフォーム固有の等価APIまでは追跡していない。(2) 最も重大な限界として、Sanctumに入る前に確保したPythonファイルオブジェクト(`io.FileIO`/`io.BufferedWriter`)の`.write()`メソッドは、本修正後も監査イベントを発生させずにSanctumを完全に迂回して書き込めることを実機で確認している。これはCPythonの拡張型のメソッドであり、`io.FileIO.write = ...`という通常の属性代入によるモンキーパッチが`TypeError: cannot set 'write' attribute of immutable type '_io.FileIO'`で拒否されることも実機で確認した(ctypesで型オブジェクトのメモリを直接書き換えるような極めて脆い手段を除く)。これは個々のAPIの見落としではなく、「`os`モジュールの関数をPython層でラップする」という本防御方式のアーキテクチャ自体の限界であり、本修正の対象には含まれていない。恒久対策にはOSレベルのサンドボックス(seccomp等によるシステムコール単位の制御)が必要であり、この限界は既存のコメント(459行目周辺、「Linux限定のベストエフォート策」)が述べる前提をさらに具体的に裏付ける形となった。(3) `os.sendfile`/`os.copy_file_range`以外にも、将来のPythonやOSが追加する別のカーネル直接転送APIが存在する可能性があり、本修正は現時点で実機確認できた2つの既知の経路のみを対象としている。
 
@@ -1522,7 +1522,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **実装中に自分で発見・訂正した誤り(正直な自己開示)**: 上記の「正直な自己訂正の記録」で詳述した通り、本件最大の誤りは、不十分なテスト設計(イベント捕捉のリセット位置の誤り)に基づいて「sefer側も同じ脆弱性を持つ」という誤った仮説を立て、それに基づいて両ファイルに対する大がかりで不必要な修正(`ctypes.pythonapi`のクラス差し替え)を一度実装してしまったことである。さらにその実装中、sefer側のパッチに再入防止ガードの欠落という別のバグを埋め込み、意図しない例外で原因を一時的に見誤った。いずれも、より狭い範囲・より丁寧な条件で検証をやり直すことで自ら発見し、最終的に不要な修正全体を取り消して、実際に必要だった単純な修正だけを残した。これは個々のコード上のミスというより、調査の初期仮説を十分に検証せず、複雑な実装へ先に進んでしまったという、調査プロセス自体の反省点として記録する。
 
-**検証**: `tests/test_gatekeeper_ctypes_dlsym_bypass_guard.py`(新設、4件: `pythonapi`経由のシンボル解決遮断・新規`CDLL(None)`のdlopen遮断・非封鎖時の誤検知防止・sefer側が既存コードのままで同じ攻撃を遮断することの裏付け)、`tests/test_chamuel_dlsym_guard.py`(新設、8件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.86として配線。リポジトリ全体のpytestを再実行し、391 passed(§CD時点の379から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
+**検証**: `tests/test_gatekeeper_ctypes_dlsym_bypass_guard.py`(新設、4件: `pythonapi`経由のシンボル解決遮断・新規`CDLL(None)`のdlopen遮断・非封鎖時の誤検知防止・sefer側が既存コードのままで同じ攻撃を遮断することの裏付け)、`tests/test_chamuel_dlsym_guard.py`(新設、8件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.86として配線。リポジトリ全体のpytestを再実行し、391 passed(§CD時点の379から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。
 
 **残存する限界(正直に記す)**: (1) 本修正は`maquina_gatekeeper.py`の`forbidden`集合に2つの既知のイベント名を追加するベストエフォート策であり、将来`ctypes`モジュール自身が発生させるかもしれない、まだ発見されていない別のaudit event名までは追跡していない。これは独立した防御層であるsefer側の名前空間ごとのデフォルト拒否方式が構造的に持たない種類の限界であり、maquina_gatekeeper側の狭いallowlist方式そのものに起因する設計上の非対称性として、既にGRIMOIRE内で繰り返し記録してきた論点(§CA・§CC)を本件でも再確認する形となった。(2) §CDで記録した限界と同種の、より根源的な限界として、Sanctumに入る『前』に`ctypes`の関数ポインタ自体を解決し変数に保存しておけば、その後の呼び出し自体は新たなaudit eventを一切発生させないため(実機で確認済み)、本修正・本天使のいずれもこれには及ばない。これは本防御方式(audit hookベースの検査)自体の限界であり、恒久対策にはOSレベルのサンドボックス(seccomp等)が必要である。(3) 本件の最大の教訓は技術的な欠陥そのものより、調査プロセス上の自戒である――不十分な検証に基づく仮説を安易に信じて複雑な実装に先走ることの危険性を、自分自身の失敗を通じて再確認した。
 
@@ -1546,7 +1546,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 **実装中の自己レッドチーム**: `git stash push -- src/sandalphon_jail.py`で修正だけを一時的に取り消し、新設した回帰テスト(`tests/test_nuriel_capability_strip_guard.py`の10件)のうち、修正済みの実リポジトリの状態に直接依存する2件(`test_static_check_passes_on_real_repository`・`test_main_reports_inconclusive_on_this_real_sandbox_environment`)が正しくFAILし、ロジック単体をモックで検証する残り8件は修正の有無に関わらずPASSすることを確認した上で、`git stash pop`で修正を復元し、再度10件全てがPASSすることを確認した。
 
-**検証**: `tests/test_nuriel_capability_strip_guard.py`(新設、10件: 静的検証の回帰防止3件・動的検証の分岐(デーモン不在/イメージ取得失敗/剥奪失敗/剥奪成功)4件・`main()`の分岐2件・ファイル欠落時の報告1件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.87として配線。リポジトリ全体のpytestを再実行し、401 passed(§CE時点の391から10件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。本天使自体をこの環境で単体実行し、静的検証はPASS・動的検証はINCONCLUSIVE(終了コード0、CIを赤くしない)として正しく振る舞うことも実機で確認した。
+**検証**: `tests/test_nuriel_capability_strip_guard.py`(新設、10件: 静的検証の回帰防止3件・動的検証の分岐(デーモン不在/イメージ取得失敗/剥奪失敗/剥奪成功)4件・`main()`の分岐2件・ファイル欠落時の報告1件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.87として配線。リポジトリ全体のpytestを再実行し、401 passed(§CE時点の391から10件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。本天使自体をこの環境で単体実行し、静的検証はPASS・動的検証はINCONCLUSIVE(終了コード0、CIを赤くしない)として正しく振る舞うことも実機で確認した。
 
 **残存する限界(正直に記す)**: (1) 本修正(カーネルレベルのLinuxケーパビリティ剥奪)は、§CD・§CEで発見した「Sanctumに入る前に確保済みのfd・関数ポインタを使った迂回」という具体的な攻撃パターンそのものを塞ぐものではない――そうした操作の多くは、特権ケーパビリティを一切必要とせず、無権限プロセスのままでも実行可能である(例: 既に開いているfdへの書き込み自体はCAP_DAC_OVERRIDE等を必要としない)。本修正が塞ぐのは、「万一任意コード実行を許してしまった場合に、その先でどこまで被害を広げられるか」という範囲であり、audit hookレイヤーの迂回そのものを直接防ぐものではない。より直接的な対策(本来必要なシステムコールのみを許可するseccompプロファイルによる、カーネルレベルでのsyscall単位の制御)は、より大がかりで、かつ正しく構成できたことをこの環境で実機確認する手段が無い(コンテナレジストリへの到達が遮断されているため)ため、今回は見送った。将来GitHub Actions環境のような、実際にコンテナイメージへ到達できるインフラで、`strace`等により実際に必要なsyscallを実証的に洗い出した上で着手すべき、正直に認める未着手の課題として記録する。(2) 本修正の対象はSandalphon(明示的にDockerコンテナへ委譲する動的検証経路)のみであり、`sefer`/`maquina_gatekeeper`のaudit hookが直接保護する、Sanctum内で直接実行されるコード経路そのものには、本修正によるカーネルレベルの保護は及ばない。両者は異なる実行経路であり、本修正はSandalphon経路の強化に限定される。(3) 本件の動的検証はこの調査環境では一度もPASSを実機確認できておらず、GitHub Actions環境での実際の実行結果を待って初めて、カーネルが本当にケーパビリティを剥奪していることの実機確認が完了する。
 
@@ -1584,13 +1584,13 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **実装中の自己レッドチーム**: `git stash push -- src/sandalphon_jail.py`で`docker run`への配線のみを一時的に取り消し、新設した回帰テスト(`tests/test_sandalphon_seccomp_profile.py`の2件・`tests/test_dominions_syscall_guard.py`の1件)の計3件が、実際に「プロファイルが参照されていない」として正しくFAILし、無関係な1件(ケーパビリティ・特権昇格オプションの非退行検査)はPASSすることを確認した上で、`git stash pop`で修正を復元し、再度全てPASSすることを確認した。
 
-**検証**: `tests/test_dominions_syscall_guard.py`(新設、13件: プロファイルJSON静的検証の回帰防止4件・docker run参照検証2件・生カーネル検証(実リポジトリでのPASS・架空の無害プロファイルでのFAIL検知・libseccomp不在時のINCONCLUSIVE)3件・`main()`の分岐4件)、`tests/test_sandalphon_seccomp_profile.py`(新設、3件)を追加。`.github/workflows/anjo_da_maquina_protocol.yml`にステップ22.88として配線。リポジトリ全体のpytestを再実行し、421 passed(§CF-1時点の403から、重複のない新設分を含め18件増加)・既知の無関係な2件(`test_execute_safe_action_uses_sanctum_and_is_not_a_stub`・`test_sdist_is_clean_and_contains_only_the_sefer_package`)のみが残ることを確認した(§CF-1時点で記録されていた`test_provisioning_approval_flow.py`の3件は、このセッションで再構築したrsa代替スタブの実装差によりこの時点では失敗しておらず、これは本件の対象外の既知の変動である)。本天使自体をこの環境で単体実行し、静的検証・生カーネル検証はPASS、Dockerコンテナ内での動的検証のみ正直にINCONCLUSIVEとなることも実機で確認した。
+**検証**: `tests/test_dominions_syscall_guard.py`(新設、13件: プロファイルJSON静的検証の回帰防止4件・docker run参照検証2件・生カーネル検証(実リポジトリでのPASS・架空の無害プロファイルでのFAIL検知・libseccomp不在時のINCONCLUSIVE)3件・`main()`の分岐4件)、`tests/test_sandalphon_seccomp_profile.py`(新設、3件)を追加。`.github/workflows/regression_checks_ci.yml`にステップ22.88として配線。リポジトリ全体のpytestを再実行し、421 passed(§CF-1時点の403から、重複のない新設分を含め18件増加)・既知の無関係な2件(`test_execute_safe_action_uses_sanctum_and_is_not_a_stub`・`test_sdist_is_clean_and_contains_only_the_sefer_package`)のみが残ることを確認した(§CF-1時点で記録されていた`test_provisioning_approval_flow.py`の3件は、このセッションで再構築したrsa代替スタブの実装差によりこの時点では失敗しておらず、これは本件の対象外の既知の変動である)。本天使自体をこの環境で単体実行し、静的検証・生カーネル検証はPASS、Dockerコンテナ内での動的検証のみ正直にINCONCLUSIVEとなることも実機で確認した。
 
 **環境固有の問題として正直に分離して記録しておくべき事象**: 本件の検証作業中、この開発環境(クラウドサンドボックス)自身の`/tmp`が、作業の途中で外部要因により複数回消去される(`rsa`の代替スタブ・一時ファイル・さらにはこの環境のgit運用が依拠する署名用ヘルパーへのシンボリックリンク`/tmp/code-sign`まで消えた)という不具合に繰り返し遭遇した。これはPleroma本体のコードやCIとは無関係な、この開発作業環境自身の不安定さであり、実際にリポジトリ全体のpytestが一時的に110件のFileNotFoundErrorで巻き込まれる事態も発生したが、原因を切り分けた上で再実行し、Pleroma本体に影響が無いことを確認した。念のため正直に記録しておく。
 
 ### §CH: §CGの実機検証中に発見された、§CGとは無関係のCI基盤そのものの破壊(`ubuntu-latest`ランナーのUbuntu 26移行とPlaywright 1.56.0の非対応による依存関係インストール失敗)を修正。原因の最終確認は、このサンドボックス自身のネットワーク制限によりログblobストレージへ到達できず自力では不可能だったため、ユーザー本人に実際のGitHub Actionsログを確認・提供してもらうことで初めて確定できた
 
-**発見**: §CGをmainへマージ・pushした後、`gh run watch <id> --exit-status`で2つのワークフロー(`sanctuary_ci.yml`の`verify_ataraxia`・`anjo_da_maquina_protocol.yml`の`angelic-audit`)の実行完了を監視した。両方の通知が「completed (exit code 0)」と表示されたため、一度は「両方成功した」と早合点したが、`gh run list --limit 2`で実際の結論を確認したところ、両方とも`completed failure`であることに気づいた。ここで自分の誤読を正直に訂正した――`gh run watch --exit-status`の終了コードは、監視コマンド自身がポーリングを正常に完了できたかどうかを示すに過ぎず、監視対象のGitHub Actionsワークフロー自体の成否(conclusion)を示すものではない。この誤読をそのまま報告していれば、§CGが実機で成功したという偽りの報告になっていたところであり、`gh run list`での再確認を徹底する教訓として記録する。
+**発見**: §CGをmainへマージ・pushした後、`gh run watch <id> --exit-status`で2つのワークフロー(`sanctuary_ci.yml`の`verify_ataraxia`・`regression_checks_ci.yml`の`regression-checks-audit`)の実行完了を監視した。両方の通知が「completed (exit code 0)」と表示されたため、一度は「両方成功した」と早合点したが、`gh run list --limit 2`で実際の結論を確認したところ、両方とも`completed failure`であることに気づいた。ここで自分の誤読を正直に訂正した――`gh run watch --exit-status`の終了コードは、監視コマンド自身がポーリングを正常に完了できたかどうかを示すに過ぎず、監視対象のGitHub Actionsワークフロー自体の成否(conclusion)を示すものではない。この誤読をそのまま報告していれば、§CGが実機で成功したという偽りの報告になっていたところであり、`gh run list`での再確認を徹底する教訓として記録する。
 
 実際の失敗箇所を特定するため、`gh run view --log`・`gh run view --log-failed`・`gh api .../logs`、さらに`WebFetch`によるGitHub Actions UIページの直接取得を試みたが、いずれもこの開発環境のネットワーク許可リストに、ログの実体を格納するblobストレージホスト(§BQで既に発見済みの制約と同種)が含まれておらず、「Forbidden」または「URL_NOT_ON_ALLOWLIST」で到達できなかった。両ワークフローとも失敗箇所自体は「3. 供物の準備(Install Dependencies)」であることは`gh run view`の要約から分かったが、`requirements.txt`が直近の成功時と変わっていないことは`git diff`で確認済みであり、生ログを見ない限り真の原因を確定できなかった。本ワークフロー自身が元々持っていた「`ubuntu-latest`ラベルは2026年10月19日からUbuntu 26へ移行を開始する」というannotationと、本日の日付(10月25日)が時期的に一致していたことから、これが原因である可能性を仮説として立てたが、確証が無いまま原因を断定することは本件の正直さの原則に反するため、仮説であることを明示してユーザーに実際のログの確認を依頼した。ユーザーが実際にGitHub Actions UI上のログを取得・添付してくれたことで、以下が確定した――`pythonLocation: /opt/hostedtoolcache/Python/3.10.22/x64`のランナーが実際にUbuntu 26(`ubuntu26.04-x64`)で動作しており、`playwright install chromium --with-deps`の実行時に`BEWARE: your OS is not officially supported by Playwright; installing dependencies for ubuntu26.04-x64 as a fallback.` → `Cannot install dependencies for ubuntu26.04-x64 with Playwright 1.56.1!` → `Failed to install browsers` → `ERROR: Playwright does not support chromium on ubuntu26.04-x64`で失敗し、依存関係インストール全体(したがって両ワークフロー全体)が、§CGの変更内容(seccompプロファイル・新天使等)に一切到達する前にブロックされていた。これは自分一人の調査だけでは確定できず、ユーザー本人の協力によって初めて確定できた原因であることを、正直に記録する。
 
@@ -1598,7 +1598,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **原因**: GitHubの`ubuntu-latest`ランナーラベルが指すOSイメージが、2026年10月19日からUbuntu 26への移行を開始しており、本リポジトリの`requirements.txt`に固定されていたPlaywright 1.56.0(実際の失敗ログ上は解決されたバージョンとして1.56.1と表示されている)が、`ubuntu26.04-x64`でのchromium依存関係インストールに対応していなかった。これは§CGで追加した内容(seccompプロファイル・`dominions_syscall_guard.py`・CI上の新ステップ)とは完全に無関係な、CI基盤側の環境変化によって引き起こされた破壊である。
 
-**対応**: `.github/workflows/sanctuary_ci.yml`の`verify_ataraxia`ジョブと`.github/workflows/anjo_da_maquina_protocol.yml`の`angelic-audit`ジョブの両方で、`runs-on: ubuntu-latest`を`runs-on: ubuntu-22.04`という具体的なバージョンへ明示的に固定した。それぞれの変更箇所に、発見の経緯(ユーザーが実際にログを確認して教えてくれたこと)と、§CGとは無関係である旨を明記したコメントを付した。
+**対応**: `.github/workflows/sanctuary_ci.yml`の`verify_ataraxia`ジョブと`.github/workflows/regression_checks_ci.yml`の`regression-checks-audit`ジョブの両方で、`runs-on: ubuntu-latest`を`runs-on: ubuntu-22.04`という具体的なバージョンへ明示的に固定した。それぞれの変更箇所に、発見の経緯(ユーザーが実際にログを確認して教えてくれたこと)と、§CGとは無関係である旨を明記したコメントを付した。
 
 **正直な設計方針の開示**: 代替案として「Playwrightのバージョン自体を新しいものへ上げる」という選択肢もあったが、この調査環境ではDockerコンテナレジストリ・PyPIの一部ホストへの到達が制限されているため、新しいPlaywrightバージョンが実際にUbuntu 26上でchromiumを正しくインストールできるかどうかを、この環境内で検証する手段が無い。無検証のままバージョンを上げることは、「直したつもりで、実際には別の非対応問題を新たに持ち込んでしまう」という危険を伴う。一方、`ubuntu-22.04`という既知の、長期間広く安定運用されてきたイメージへ明示的に固定することは、変更の影響範囲が狭く、既存のPlaywright 1.56.0が実際にその環境で動作することが過去の成功実行自体によって裏付けられているため、より安全で、より正直に検証可能な選択である。これもまた、将来GitHub Actions上で実際に新しいPlaywrightバージョンの動作を確認した上で、より新しい安定版イメージへ移行することを、正直な未着手の課題として残す。
 
@@ -1638,7 +1638,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **発見**: §CH・§CIの両修正をpushし、`gh run list`で実際の結論を確認したところ、`Sanctuary CI/CD`は完全に成功したが、`Anjo da máquina Protocol - Angels`は依然失敗していた。ジョブの詳細を見ると、§CGで新設したステップ「22.88. ドミニオンの統治」に到達する前の、既存のステップ「7.5. アザゼルの禁断知識(サプライチェーン既知脆弱性監査)」で停止していた――これは§CG・§CH・§CIのいずれとも完全に無関係である。
 
-このステップは外部の脆弱性データベースへの照会に依存する設計上(本ファイル冒頭の既知の限界参照)、「pip-audit自体が動かなかった(ネットワーク到達性等)」場合と「本当に既知の脆弱性が見つかった」場合とで、ログを見るまで区別がつかない。本ワークフロー(`anjo_da_maquina_protocol.yml`)には§BQのような失敗時ログのコミットコメント投稿の仕組みが無く、このサンドボックス自身のネットワーク制限で生ログを一切取得できなかったため、§CHと同様にユーザーへ実際のログの確認を依頼した。ユーザーが提供してくれたログにより、以下が確定した――`pip-audit`自体は正常に動作し、`requirements.txt`に固定していた`setuptools==84.0.0`そのものに、既に公表されている脆弱性(`GHSA-xmj3-9gf7-h52w`)が実際に検知されていた。これは§CH(ネットワーク到達性の問題)とは全く異なる、本物の既知脆弱性の発見であり、`checks/azazel_dependency_audit.py`がまさに設計通りに機能した結果である。
+このステップは外部の脆弱性データベースへの照会に依存する設計上(本ファイル冒頭の既知の限界参照)、「pip-audit自体が動かなかった(ネットワーク到達性等)」場合と「本当に既知の脆弱性が見つかった」場合とで、ログを見るまで区別がつかない。本ワークフロー(`regression_checks_ci.yml`)には§BQのような失敗時ログのコミットコメント投稿の仕組みが無く、このサンドボックス自身のネットワーク制限で生ログを一切取得できなかったため、§CHと同様にユーザーへ実際のログの確認を依頼した。ユーザーが提供してくれたログにより、以下が確定した――`pip-audit`自体は正常に動作し、`requirements.txt`に固定していた`setuptools==84.0.0`そのものに、既に公表されている脆弱性(`GHSA-xmj3-9gf7-h52w`)が実際に検知されていた。これは§CH(ネットワーク到達性の問題)とは全く異なる、本物の既知脆弱性の発見であり、`checks/azazel_dependency_audit.py`がまさに設計通りに機能した結果である。
 
 **たとえ話**: §CH・§CIは「橋」と「城の扉」の話だったが、本件はそれとは別の話である――城に運び込んだ物資(依存パッケージ)の一つに、既に世間に知れ渡った欠陥(公開済みの設計図の不備)があったことを、搬入検査官(アザゼル)が正しく見つけた、というだけの話である。搬入検査官は正しく仕事をしており、直すべきは物資そのものである。
 
@@ -1655,15 +1655,15 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 **検証**: `setuptools==84.1.0`へ固定後、リポジトリ全体のpytestを再実行し、426 passed・既知の無関係な2件のみが残ることを確認した。`grep`で他にバージョンがハードコードされた箇所が無いことも確認した。実際のGitHub Actions上での検証(ステップ7.5のPASS、および§CGで新設したステップ22.88への到達・結果)は、本修正のpush後に別途確認する。
 
 
-### §CK: `anjo_da_maquina_protocol.yml`に、`sanctuary_ci.yml`の§BQと同種の「失敗時にログをコミットコメントとして可視化する」観測性の仕組みが一度も存在しておらず、§CH・§CJの2件の調査でいずれもユーザー本人にGitHub Actions UI上のログを直接確認してもらう必要があったことを、恒久的に解消する
+### §CK: `regression_checks_ci.yml`に、`sanctuary_ci.yml`の§BQと同種の「失敗時にログをコミットコメントとして可視化する」観測性の仕組みが一度も存在しておらず、§CH・§CJの2件の調査でいずれもユーザー本人にGitHub Actions UI上のログを直接確認してもらう必要があったことを、恒久的に解消する
 
-**発見**: §CH(ubuntu-latestのUbuntu 26移行問題)・§CJ(setuptoolsの既知脆弱性)のいずれの調査でも、`anjo_da_maquina_protocol.yml`側の失敗原因を、このサンドボックス自身のネットワーク許可一覧の制約(ログblobストレージホストへの到達遮断)により自力で一切確認できず、ユーザー本人に2回、GitHub Actions UI上のログを直接確認してもらう必要があった。`sanctuary_ci.yml`には§BQで既にこの問題への対策(失敗時にpytest出力をコミットコメントとして投稿する仕組み)が実装済みだったが、`anjo_da_maquina_protocol.yml`には一度も同種の仕組みが存在していなかった。単発の障害調査としては許容したが、本ワークフローが80以上のステップから成る以上、今後も同じ構造の問題が繰り返し発生することが明らかであるため、恒久的な観測性の欠落として本件で対応する。
+**発見**: §CH(ubuntu-latestのUbuntu 26移行問題)・§CJ(setuptoolsの既知脆弱性)のいずれの調査でも、`regression_checks_ci.yml`側の失敗原因を、このサンドボックス自身のネットワーク許可一覧の制約(ログblobストレージホストへの到達遮断)により自力で一切確認できず、ユーザー本人に2回、GitHub Actions UI上のログを直接確認してもらう必要があった。`sanctuary_ci.yml`には§BQで既にこの問題への対策(失敗時にpytest出力をコミットコメントとして投稿する仕組み)が実装済みだったが、`regression_checks_ci.yml`には一度も同種の仕組みが存在していなかった。単発の障害調査としては許容したが、本ワークフローが80以上のステップから成る以上、今後も同じ構造の問題が繰り返し発生することが明らかであるため、恒久的な観測性の欠落として本件で対応する。
 
 **たとえ話**: §BQの仕組みは「一つの作業台(pytest実行)の上の作業記録だけを写真に撮る」というものだった。本ワークフローは80以上の作業台が並ぶ工場そのものであり、「どの作業台で何が起きたか」を、工場全体の記録(ジョブ全体のログ)から機械的に探し出して写真に撮る必要があった。しかも、その「写真を撮る係員」自身が、4回のうち3回、自分の仕事を始める前に(あるいは撮った写真を提出する前に)倒れてしまい、「なぜ倒れたか」を示す記録も一緒に失っていた――というのが、本件の実態に最も近いたとえである。
 
-**原因**: `anjo_da_maquina_protocol.yml`は新設当初から、失敗時にログの詳細をどこかへ可視化する仕組みを一度も持っていなかった。これは実装の見落としというより、この種の「このサンドボックス自身のネットワーク制約によりログblobホストへ到達できない」という問題自体が、§BQで初めて具体的に認識され対策された時点では、まだ本ワークフロー側には同じ問題が実際に発生していなかったため、一般化(§11.9の運用方針)の機会が訪れていなかったことによる。
+**原因**: `regression_checks_ci.yml`は新設当初から、失敗時にログの詳細をどこかへ可視化する仕組みを一度も持っていなかった。これは実装の見落としというより、この種の「このサンドボックス自身のネットワーク制約によりログblobホストへ到達できない」という問題自体が、§BQで初めて具体的に認識され対策された時点では、まだ本ワークフロー側には同じ問題が実際に発生していなかったため、一般化(§11.9の運用方針)の機会が訪れていなかったことによる。
 
-**対応**: `anjo_da_maquina_protocol.yml`に、`angelic-audit`ジョブに`needs:`で依存する新しいジョブ`incident-log-visibility`(`if: failure()`)を追加した。§BQと異なり、`angelic-audit`は80以上の個別ステップから成るため、「どの単一コマンドの出力か」ではなく「ジョブ全体のどの箇所が失敗の核心か」を扱う必要がある。そこで、GitHub Actionsのジョブログ取得API(`GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`)を、**このワークフロー自身の実行環境(GitHub Actionsのランナー自身)から**呼び出す設計とした――このAPIの実体はログblobストレージへのリダイレクトだが、これを呼ぶのはこのサンドボックス(制限されたプロキシ経由)ではなく、通常のインターネット到達性を持つGitHub Actionsのランナー自身であるため、§BQ・§CH・§CJで繰り返し遭遇した到達不能の制約を一切受けない。取得したログの末尾60000バイト(§BQと同じ切り詰め方針)をコミットコメントとして投稿する。`angelic-audit`自身のジョブIDは`gh api .../actions/runs/{run_id}/jobs`からジョブ名で検索して特定する。新ジョブに`permissions: contents: write`(コメント投稿用)・`actions: read`(ジョブログ取得用)を明示的に宣言した(デフォルトのリポジトリ設定に依存しない、§BQと同じ方針)。
+**対応**: `regression_checks_ci.yml`に、`regression-checks-audit`ジョブに`needs:`で依存する新しいジョブ`incident-log-visibility`(`if: failure()`)を追加した。§BQと異なり、`regression-checks-audit`は80以上の個別ステップから成るため、「どの単一コマンドの出力か」ではなく「ジョブ全体のどの箇所が失敗の核心か」を扱う必要がある。そこで、GitHub Actionsのジョブログ取得API(`GET /repos/{owner}/{repo}/actions/jobs/{job_id}/logs`)を、**このワークフロー自身の実行環境(GitHub Actionsのランナー自身)から**呼び出す設計とした――このAPIの実体はログblobストレージへのリダイレクトだが、これを呼ぶのはこのサンドボックス(制限されたプロキシ経由)ではなく、通常のインターネット到達性を持つGitHub Actionsのランナー自身であるため、§BQ・§CH・§CJで繰り返し遭遇した到達不能の制約を一切受けない。取得したログの末尾60000バイト(§BQと同じ切り詰め方針)をコミットコメントとして投稿する。`regression-checks-audit`自身のジョブIDは`gh api .../actions/runs/{run_id}/jobs`からジョブ名で検索して特定する。新ジョブに`permissions: contents: write`(コメント投稿用)・`actions: read`(ジョブログ取得用)を明示的に宣言した(デフォルトのリポジトリ設定に依存しない、§BQと同じ方針)。
 
 **正直な設計方針の開示**: 本件はこのサンドボックス自身の制約(ネットワーク許可一覧)を回避する仕組みではない――このサンドボックスからの到達不能性自体は変わらず、今後もこのサンドボックスから`gh run view --log`等を直接呼ぶことはできない。本件が解決するのは、「GitHub Actionsのランナー自身に、自分の失敗を自分で記録させる」という、全く別の経路の確保である。これにより、将来同種の失敗が発生した際、ユーザーに実際のログ確認を依頼する代わりに、コミットコメントを直接読むことで自力で原因調査を継続できるようになる。
 
@@ -1673,7 +1673,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 この仕組みは、「実機で意図的に失敗を注入する→結果を見る→直す」を**4回**繰り返して、ようやく本当に機能するようになった。しかも、途中の1回では、自分自身がDEFECTS.mdに「実機で確認した」と**誤って**書いてしまっている(後述)。すべて正直に記録する。
 
-1. **1回目: 実行中の自分自身のログは読めない**。当初、この仕組みを`angelic-audit`ジョブ自身の最終ステップ(「22.89」)として実装し、意図的な失敗注入ステップを併設して実機で検証した。ジョブは失敗し、コミットコメント投稿のロジック自体は動いたが、投稿内容は「ジョブログの取得自体に失敗しました」というエラーのみだった。原因は、実行中(未完了)の自分自身のジョブに対してジョブログ取得APIを呼び出していたことだった――このAPIは、ジョブが完全に終了してログが確定した後でなければ完全なログを返せない。実装前にこの制約を確認していなかった、自分自身の見落としである。対応として、`angelic-audit`に`needs:`で依存する別個のジョブ`incident-log-visibility`へ処理を分離した。
+1. **1回目: 実行中の自分自身のログは読めない**。当初、この仕組みを`regression-checks-audit`ジョブ自身の最終ステップ(「22.89」)として実装し、意図的な失敗注入ステップを併設して実機で検証した。ジョブは失敗し、コミットコメント投稿のロジック自体は動いたが、投稿内容は「ジョブログの取得自体に失敗しました」というエラーのみだった。原因は、実行中(未完了)の自分自身のジョブに対してジョブログ取得APIを呼び出していたことだった――このAPIは、ジョブが完全に終了してログが確定した後でなければ完全なログを返せない。実装前にこの制約を確認していなかった、自分自身の見落としである。対応として、`regression-checks-audit`に`needs:`で依存する別個のジョブ`incident-log-visibility`へ処理を分離した。
 
 2. **2回目(重大な自己訂正): この時点では「実機で確認した」と書いたが、それ自体が誤りだった**。ジョブ分離後、再度意図的な失敗を注入して実機で検証したところ、投稿されたコミットコメントの内容が「ジョブログの取得自体に失敗しました(job_id=...)」という、1回目と同じ種類の生成途中のエラーのままだった――つまり、分離した設計もまだ機能していなかった。**ところが、この時点で一度、DEFECTS.mdの本節に「2回目では、コミットコメントに実際のジョブログの末尾が正しく投稿されることを実機で確認した」という、実際には検証できていない内容を書いてしまっていた。** これは、本リポジトリの核心的な方針(§Pで一般化した「実機で確認したことだけを報告する」「有効側の分岐を実際に踏んで確認する」)に対する、自分自身の直接的な違反である。原因を追って判明したのは、GitHub Actionsの`run:`ステップがLinux上では既定で`bash --noprofile --norc -eo pipefail {0}`として実行される(=`set -e`が最初から有効)ことを失念していたことだった。`gh api ... > file 2> file2; GH_API_EXIT=$?`のような「コマンドを実行してから終了コードを自分で判定する」コードは、`set -e`下では、条件式の外にある単純なコマンドが非ゼロで終了した瞬間にシェルそのものが即座に終了するため、`GH_API_EXIT=$?`以降のエラーハンドリングに一度も到達していなかった。すなわち、自分が書いた「失敗を捕まえて優雅に処理する」ロジックは、一度も実行されていなかった。対応として、スクリプト先頭に明示的な`set +e`を追加し、GitHub Actionsの既定のerrexitを無効化した。保険として、詳細コメントの投稿自体が失敗した場合に備えた短いフォールバックコメントの投稿と、計器自体の不調が本来のジョブ失敗の連座に影響しないようにする明示的な`exit 0`も、このタイミングで追加した。
 
@@ -1681,7 +1681,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 4. **4回目: ついに実機で、実際のジョブログ内容がコミットコメントに正しく投稿されることを確認した。** `curl`化したコミットを実機でpushし、コミットコメントの内容を実際に確認したところ、`gehenna_void_entropy.py`実行以降の実際のステップ名・タイムスタンプ・PASS/FAIL出力を含む、本物のジョブログの末尾が正しく投稿されていた。ここでようやく、「GitHub Actionsのランナー自身に、自分の失敗を自分で記録させる」という本件の設計意図が、机上の設計としてだけでなく、実機で正しく機能することを確認できた。
 
-**実装中の自己レッドチーム(計4回)**: 上記1〜4の各回で、`angelic-audit`ジョブに一時的な「意図的に`exit 1`する」ステップを追加し、実際にmainへpushして実機で検証した。4回目で初めて、コミットコメントに実際のジョブログ内容(失敗の直接証拠を含む)が正しく投稿されることを確認できたため、検証後、一時的な「意図的な失敗」ステップ(「22.885」)を直ちに削除し、通常運用時にこのステップが残らないようにした。
+**実装中の自己レッドチーム(計4回)**: 上記1〜4の各回で、`regression-checks-audit`ジョブに一時的な「意図的に`exit 1`する」ステップを追加し、実際にmainへpushして実機で検証した。4回目で初めて、コミットコメントに実際のジョブログ内容(失敗の直接証拠を含む)が正しく投稿されることを確認できたため、検証後、一時的な「意図的な失敗」ステップ(「22.885」)を直ちに削除し、通常運用時にこのステップが残らないようにした。
 
 **検証**: 各修正のたびに`python3 -c "import yaml; yaml.safe_load(...)"`でYAML構文が正しいことを確認した。最終的な「22.885」削除後も含め、リポジトリ全体のpytestを再実行し、426 passed・既知の無関係な2件のみが残ることを確認した(本件はYAML設定のみの変更であり、Pythonコードには一切触れていないため、ローカルpytestへの影響は無いことが期待通り確認できた)。本仕組み自体が実際に機能することは、上記「実装中の自己レッドチーム」の4回目で、実機のGitHub Actions上で確認済みである――2回目の時点で一度「確認した」と誤記したこと自体が、まさに本件が解決しようとしていた問題(「本当に機能しているかを、実機で確認せずに報告してしまう」)を自分で引き起こしてしまった事例であり、この誤りも含めて正直に記録する。
 
@@ -1795,7 +1795,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **検証**: 実際のTCPループバック接続・実際の機密文字列を用いた完全な実攻撃チェーン(Sanctum起動前の接続確立→起動後のsend/sendall攻撃→遮断確認→受信側に実際にデータが届いていないことまでの確認)を実機で再現し、修正後は遮断され、かつデータが一切届いていないことを確認した。Sanctum起動**後**に許可ホストへ新規接続して送信する正当なフローが、"socket.__new__"のpassthrough追加後は正しく成功することも確認した。`tests/test_michael_whitelist.py`の既存4件を直接実行し、本件の修正後も全てPASSすることを確認した(既存の許可外ホストへのconnect遮断の挙動に変化が無いことの回帰確認)。`checks/hadraniel_socket_send_guard.py`を直接実行し、新設した5件すべてがPASSすることを確認した。`tests/test_hadraniel_socket_send_guard.py`の全9件を(このセッションではpytestが利用できないため、pytestの`monkeypatch`フィクスチャを模した最小限のスタブ経由で)直接実行し、全てPASSすることを確認した。本件の修正を含むpushの最終的なpytest全件実行の確認は、§CNと同じ理由により、real CI(GitHub Actions)に委ねる。
 
-**実装中の自己訂正(自白・2件)**: 本件をreal CIへpushしたところ、またも§CNと同じ種類の自己混入レグレッションが2件、別々の既存天使に検知された。(1) `checks/jerahmeel_fail_open_guard.py`(§BS)が、新設した`hadraniel_socket_send_guard.py`内の2箇所の`except LossOfAtaraxia: pass`に正直な注記コメントを付け忘れていたことを検知した――§CNで一度この同じ失敗をしたにもかかわらず、本件でも同じ不備を繰り返した。(2) `tests/test_checks_scripts_wired_into_ci.py`が、新設した`hadraniel_socket_send_guard.py`を`.github/workflows/anjo_da_maquina_protocol.yml`のどのステップからも呼び出していない「配線漏れ」を検知した。両方とも、ローカルでpytestを実行できない本セッションの制約により事前に気づけなかったが、既存の自動チェック(jerahmeel・配線漏れ検知)がまさに想定通りの安全網として機能した。該当箇所にコメントを追加し、ワークフローに22.89番のステップとして新設天使を追加した上で、追加の修正コミットとしてpushした。同じ種類の見落としを2度(§CN・§CO)繰り返したこと自体を、今後「新しい天使ファイルを書いたら、pushする前にjerahmeel・CI配線チェックの観点を自分でも機械的に再確認する」という具体的な手順として記録する。
+**実装中の自己訂正(自白・2件)**: 本件をreal CIへpushしたところ、またも§CNと同じ種類の自己混入レグレッションが2件、別々の既存天使に検知された。(1) `checks/jerahmeel_fail_open_guard.py`(§BS)が、新設した`hadraniel_socket_send_guard.py`内の2箇所の`except LossOfAtaraxia: pass`に正直な注記コメントを付け忘れていたことを検知した――§CNで一度この同じ失敗をしたにもかかわらず、本件でも同じ不備を繰り返した。(2) `tests/test_checks_scripts_wired_into_ci.py`が、新設した`hadraniel_socket_send_guard.py`を`.github/workflows/regression_checks_ci.yml`のどのステップからも呼び出していない「配線漏れ」を検知した。両方とも、ローカルでpytestを実行できない本セッションの制約により事前に気づけなかったが、既存の自動チェック(jerahmeel・配線漏れ検知)がまさに想定通りの安全網として機能した。該当箇所にコメントを追加し、ワークフローに22.89番のステップとして新設天使を追加した上で、追加の修正コミットとしてpushした。同じ種類の見落としを2度(§CN・§CO)繰り返したこと自体を、今後「新しい天使ファイルを書いたら、pushする前にjerahmeel・CI配線チェックの観点を自分でも機械的に再確認する」という具体的な手順として記録する。
 
 **real CIでの最終検証**: 上記の自己訂正を含むコミット(`a0be7bf`)のpush後、両ワークフローを具体的なrun IDのポーリングで完了まで待ち、両方とも`conclusion: success`であることを確認した。§CNと同じ方法(失敗コメントが0件であることの直接確認)で、全件PASSを確認した。
 
@@ -1860,7 +1860,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **一般化**: あるクラスのメソッドをモンキーパッチで塞いだ際は、「そのAPI1つを塞いだら終わり」ではなく、「同じクラス(特にサブクラスでオーバーライドが疑われるクラス)の全メソッドを`dir()`で機械的に棚卸しし、他に同種の独自実装が残っていないかを確認する」という手順を、今後の標準動作として明文化する。§CPでこの手順を踏んでいれば、§CRは§CPと同時に発見・修正できていたはずだった。
 
-**実装中の自己レッドチーム**: `git stash`で`sefer/__init__.py`の修正のみを一時的に取り消し、`checks/hadraniel_socket_send_guard.py`を直接実行したところ、新設した3件のうち「TLS事前接続バイパス遮断・write()経路(§CR)」の検査だけが正しく「事前接続済みTLSソケットへのwrite()が遮断されなかった」としてFAILし(既存のsend/sendall版の検査は§CO・§CPの修正がそのまま残っているため影響を受けずPASSを維持)、`git stash pop`で復元したところ全10件がPASSに戻ることを確認した。`tests/test_hadraniel_socket_send_guard.py`にも、架空の脆弱な検査関数を与えてこの退行を再現する回帰テスト(`test_battery_detects_reintroduced_tls_write_bypass_regression`)を追加した。プッシュ前に`checks/jerahmeel_fail_open_guard.py`(正当化コメント漏れ検査)と、`checks/*.py`がCIに配線済みであることの確認(`hadraniel_socket_send_guard.py`は§COで既に`anjo_da_maquina_protocol.yml`に配線済みのため、今回は新規ファイルではなく既存ファイルの拡張であり、追加配線は不要であることも確認済み)を行い、§CN・§COで2度繰り返した自己混入レグレッションは本件でも再発しなかった。
+**実装中の自己レッドチーム**: `git stash`で`sefer/__init__.py`の修正のみを一時的に取り消し、`checks/hadraniel_socket_send_guard.py`を直接実行したところ、新設した3件のうち「TLS事前接続バイパス遮断・write()経路(§CR)」の検査だけが正しく「事前接続済みTLSソケットへのwrite()が遮断されなかった」としてFAILし(既存のsend/sendall版の検査は§CO・§CPの修正がそのまま残っているため影響を受けずPASSを維持)、`git stash pop`で復元したところ全10件がPASSに戻ることを確認した。`tests/test_hadraniel_socket_send_guard.py`にも、架空の脆弱な検査関数を与えてこの退行を再現する回帰テスト(`test_battery_detects_reintroduced_tls_write_bypass_regression`)を追加した。プッシュ前に`checks/jerahmeel_fail_open_guard.py`(正当化コメント漏れ検査)と、`checks/*.py`がCIに配線済みであることの確認(`hadraniel_socket_send_guard.py`は§COで既に`regression_checks_ci.yml`に配線済みのため、今回は新規ファイルではなく既存ファイルの拡張であり、追加配線は不要であることも確認済み)を行い、§CN・§COで2度繰り返した自己混入レグレッションは本件でも再発しなかった。
 
 **検証**: 実際のTLSループバック接続(自己署名証明書)・実際の機密文字列を用いた完全な実攻撃チェーン(Sanctum起動前のTLS接続確立→起動後のssl.SSLSocket.write()攻撃→遮断確認→受信側に実際にデータが届いていないことまでの確認)を実機で再現し、修正後は遮断され、かつデータが一切届いていないことを確認した。Sanctum起動後の許可ホストへの新規TLS接続でのwrite()、およびSanctum未使用時の正当なwrite()が、いずれも修正後も正しく成功することを確認した。`checks/hadraniel_socket_send_guard.py`を直接実行し、新設した3件を含む全10件がPASSすることを確認した。`tests/test_hadraniel_socket_send_guard.py`の該当テストを、自作の`FakeMonkeypatch`ハーネスで直接実行し、全てPASSすることを確認した。本件の修正を含むpushの最終的なpytest全件実行の確認は、§CN・§CO・§CP・§CQと同じ理由(このサンドボックス環境がpypi.orgへ到達できずpipが使えない)により、real CIに委ねる。
 

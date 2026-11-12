@@ -71,7 +71,7 @@ def get_machine_id():
     識別としては実質的に機能していない状態だった。実機検証済み: 本
     サンドボックス(Linux/x86_64)でこの関数を直接呼び出すと、ホストの
     識別情報を一切含まない定数的な指紋が算出されることを確認した。CI
-    ワークフロー(`anjo_da_maquina_protocol.yml`)は`ubuntu-latest`上で
+    ワークフロー(`regression_checks_ci.yml`)は`ubuntu-latest`上で
     動くため、実運用上もっとも頻繁に通る環境がまさにこの欠陥の影響を
     受けていた。`enforce_maquina_seal`が`get_absolute_hardware_fingerprint()
     != cert['payload']['hardware_fingerprint']`で行っている「この証明書は

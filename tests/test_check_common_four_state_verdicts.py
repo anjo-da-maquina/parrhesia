@@ -14,7 +14,7 @@ check_certificate_expiry.py, guard_audit_log_replay.py)。これはCI上では�
 本テストは、(1) 新設した report_inconclusive / report_not_applicable が
 PASS/FAILとは明確に異なる文字列を出力すること、(2) 両関数が sys.exit() を
 呼ばず正常終了すること(実装中の自己訂正: 当初は専用の終了コードで
-sys.exit()する設計だったが、.github/workflows/anjo_da_maquina_protocol.yml
+sys.exit()する設計だったが、.github/workflows/regression_checks_ci.yml
 の各天使ステップにcontinue-on-errorが存在せず、非ゼロ終了コードはどれも
 CIジョブ全体を失敗させてしまうため、通常運用を壊さないよう無修正のまま
 sys.exit(1)するFAILとは区別して正常終了するよう設計変更した)、

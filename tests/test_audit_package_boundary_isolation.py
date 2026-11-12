@@ -8,7 +8,7 @@ tests/test_audit_package_boundary_isolation.py
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
 `MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
 
-`.github/workflows/anjo_da_maquina_protocol.yml`の§BC由来のコメントが
+`.github/workflows/regression_checks_ci.yml`の§BC由来のコメントが
 明記する通り、実際のsdistビルドによる内容検査(`tools/
 build_public_scripture.py`・`tests/test_public_scripture_isolation.py`)
 は別の仕組みであり、本天使自身の静的検証ロジック(より早期・軽量な層)

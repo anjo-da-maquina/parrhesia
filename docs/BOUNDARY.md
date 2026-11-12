@@ -17,7 +17,7 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 | **Sefer / Sanctum** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(DEFECTS.md §CD・§CE等) |
 | **Maquina Gatekeeper** | Pythonレベルでのプロセス起動・ネットワーク通信の遮断(`subprocess`・`os.fork`・`socket`系APIの監視) | 単体テスト |
 | **Sandalphon**(Docker隔離結界) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、DEFECTS.md §CF〜§CL) |
-| **Angels**(~50体のCIチェック) | 上記すべての層が「後退していないか」を、pushごとに自動で再検証 | `.github/workflows/anjo_da_maquina_protocol.yml`(GitHub Actions上で実行) |
+| **Angels**(~50体のCIチェック) | 上記すべての層が「後退していないか」を、pushごとに自動で再検証 | `.github/workflows/regression_checks_ci.yml`(GitHub Actions上で実行) |
 
 これらは単体で完結した機能ではなく、**AegisSystem(`src/aegis_system.py`)が1〜4層を統合し、既定で「Dockerによる動的検証を必ず経由させる」ゼロトラスト方針を強制する**ことで初めて、設計通りの保証になります。
 

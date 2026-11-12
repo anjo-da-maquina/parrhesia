@@ -18,7 +18,7 @@ checks/check_required_ci_steps_present.py
 検査」と同種の構造的な見せかけだった。
 
 本修正では、生のテキスト検索ではなく`yaml.safe_load`でワークフローを
-構造的に解析し、`jobs.angelic-audit.steps`の中に、実際に`run:`フィールド
+構造的に解析し、`jobs.regression-checks-audit.steps`の中に、実際に`run:`フィールド
 として`python checks/<必須ファイル名>`を実行するステップが存在するかを
 検証するようにした。コメントや無関係な文字列は`run:`フィールドの外に
 あるため、この方式では一致しない。
@@ -36,13 +36,13 @@ NAME = "check_required_ci_steps_present - 本スクリプトの目的は「CIワ
 # ワークフロー整合性ガード: CIワークフロー定義ファイル自体が存在し、
 # 必須ステップ（天使の呼び出し）が削除されていないかを検証する。
 REQUIRED_STEP_FILES = ["guard_sandbox_core_attack_battery.py", "guard_precommit_secret_leak.py", "audit_ledger_schema.py"]
-WORKFLOW_JOB_NAME = "angelic-audit"
+WORKFLOW_JOB_NAME = "regression-checks-audit"
 
 
 def main():
     import yaml
 
-    workflow_path = ROOT / ".github" / "workflows" / "anjo_da_maquina_protocol.yml"
+    workflow_path = ROOT / ".github" / "workflows" / "regression_checks_ci.yml"
     if not workflow_path.exists():
         report_fail(NAME, "CIワークフロー定義ファイルが見つかりません。")
 

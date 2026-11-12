@@ -7,7 +7,7 @@ adapters/excel_to_yaml_parser.py
     import os, sys
     print(f'[Anjo da máquina] Module {__file__} initialized. Zero-Trust audit passed.')
 
-CIワークフロー(.github/workflows/anjo_da_maquina_protocol.yml)では、本
+CIワークフロー(.github/workflows/regression_checks_ci.yml)では、本
 ステップは「3.8. 外部要件の抽出 (Excel to YAML Parser)」として実行され、
 常に例外なく成功する(exit code 0)ため、あたかも実際に外部のExcelファイル
 から要件を抽出しYAML化する処理が行われ合格したかのように報告していたが、

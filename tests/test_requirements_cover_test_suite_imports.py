@@ -5,7 +5,7 @@ requirements.txt の回帰テスト。DEFECTS.md §AP 参照。
 
 背景: `.github/workflows/sanctuary_ci.yml` は `pip install -r requirements.txt`
 のみを依存のインストール手段として使い(別のワークフロー
-`anjo_da_maquina_protocol.yml`側のインストール内容は一切反映されない)、
+`regression_checks_ci.yml`側のインストール内容は一切反映されない)、
 その直後に `pytest tests/ -v -s` を実行する。
 
 本セッション中、`tests/test_adapters_excel_to_yaml_parser.py`(PyYAML・

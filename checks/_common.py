@@ -46,7 +46,7 @@ def report_fail(name: str, message: str, evidence: dict = None):
 # [実装中の自己訂正] 当初、INCONCLUSIVE/NOT_APPLICABLEをそれぞれ専用の
 # 終了コード(2・3)でsys.exit()する設計にしていたが、実機で
 # checks/check_zkp_audit_export_status.pyを実行したところ、実際に終了コード3を
-# 返すことを確認した。.github/workflows/anjo_da_maquina_protocol.ymlの
+# 返すことを確認した。.github/workflows/regression_checks_ci.ymlの
 # 各天使ステップには continue-on-error が一切設定されておらず、単純な
 # `run: python checks/x.py` のみである。GitHub Actionsは非ゼロ終了コード
 # であれば1でも2でも3でも同じくそのステップ・ジョブ全体を失敗(赤)にする

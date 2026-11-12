@@ -33,7 +33,7 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).parent.parent
-WORKFLOW_PATH = ROOT / ".github" / "workflows" / "anjo_da_maquina_protocol.yml"
+WORKFLOW_PATH = ROOT / ".github" / "workflows" / "regression_checks_ci.yml"
 
 sys.path.insert(0, str(ROOT / "checks"))
 sys.path.insert(0, str(ROOT / "runtime_guard"))
@@ -47,7 +47,7 @@ def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = yaml.safe_load(f)
 
-    steps = workflow["jobs"]["angelic-audit"]["steps"]
+    steps = workflow["jobs"]["regression-checks-audit"]["steps"]
 
     cache_step_index = None
     anchor_step_index = None
@@ -95,7 +95,7 @@ def test_cache_also_persists_the_signing_key_and_the_chain_itself():
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = yaml.safe_load(f)
 
-    steps = workflow["jobs"]["angelic-audit"]["steps"]
+    steps = workflow["jobs"]["regression-checks-audit"]["steps"]
     cache_steps = [
         s for s in steps
         if str(s.get("uses", "")).startswith("actions/cache@")
@@ -128,7 +128,7 @@ def test_cache_key_uses_run_id_so_checkpoint_actually_updates_each_run():
     with open(WORKFLOW_PATH, "r", encoding="utf-8") as f:
         workflow = yaml.safe_load(f)
 
-    steps = workflow["jobs"]["angelic-audit"]["steps"]
+    steps = workflow["jobs"]["regression-checks-audit"]["steps"]
     cache_steps = [
         s for s in steps
         if str(s.get("uses", "")).startswith("actions/cache@")

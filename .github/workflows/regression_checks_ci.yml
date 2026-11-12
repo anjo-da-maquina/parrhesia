@@ -1,4 +1,4 @@
-name: Anjo da máquina Protocol - Angels
+name: Regression Checks CI
 
 on:
   push:
@@ -12,8 +12,8 @@ on:
         type: boolean
 
 jobs:
-  angelic-audit:
-    name: 聖なる統合監査 (Angelic Zero-Trust Audit)
+  regression-checks-audit:
+    name: ゼロトラスト統合監査 (Zero-Trust Audit)
     # [緊急修正 2026-10 §CH] .github/workflows/sanctuary_ci.ymlと同じ理由
     # (Ubuntu 26移行とPlaywright 1.56.0の非対応による依存関係インストール
     # 失敗、DEFECTS.md §CH参照)で、既知の安定イメージへ明示的に固定した。
@@ -28,15 +28,15 @@ jobs:
       actions: read
 
     steps:
-      - name: 1. 聖域の準備 (Checkout Repository)
+      - name: 1. リポジトリのチェックアウト (Checkout Repository)
         uses: actions/checkout@v3
 
-      - name: 2. 祭壇の準備 (Set up Python)
+      - name: 2. Python環境の準備 (Set up Python)
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: 2.5. 天使の記憶 (Angel State Cache - 実行間の検査状態を永続化)
+      - name: 2.5. 検査状態キャッシュ (Check State Cache - 実行間の検査状態を永続化)
         # [脆弱性修正 2026-10 §AN] checks/guard_audit_log_rollback.py・
         # checks/hook_test_suite_hash_log.py は sefer/.angel_state/ 配下に
         # 「前回実行時のチェックポイント」を保存し、次回実行時にそれと比較する
@@ -126,7 +126,7 @@ jobs:
           restore-keys: |
             angel-state-
 
-      - name: 3. 供物の準備 (Install Dependencies)
+      - name: 3. 依存関係のインストール (Install Dependencies)
         # [脆弱性修正 2026-10 §BV] 以前は`pip install networkx pyyaml
         # playwright mcp pandas openpyxl pytest`という、requirements.txtと
         # 無関係に独自管理されたハードコードの依存リストを使っていた。
@@ -143,38 +143,38 @@ jobs:
           pip install -r requirements.txt
           playwright install chromium --with-deps
 
-      - name: 3.2. アルファとオメガの結界 (Workflow Integrity Guard)
+      - name: 3.2. ワークフロー整合性監査 (Workflow Integrity Guard)
         run: python checks/check_required_ci_steps_present.py
-      - name: 3.3. ルシファーの叛逆 (Chaos Engineering)
+      - name: 3.3. カオスエンジニアリング (Chaos Engineering)
         env:
           CHAOS_MODE: ${{ github.event.inputs.chaos_mode == 'true' && 'true' || 'false' }}
         run: python checks/guard_sandbox_shell_eval_bypass.py
-      - name: 3.4. メタトロンの立方体 (Metatron's Cube - ハードウェア物理署名監査)
+      - name: 3.4. ハードウェア物理署名監査 (Hardware Signature Audit)
         run: python checks/check_hardware_certificate_schema.py
-      - name: 3.5. 穹窿の聖域 (Firmament Enclave - TEEメモリ暗号化監査)
+      - name: 3.5. TEEメモリ暗号化監査 (TEE Memory Encryption Audit)
         run: python checks/guard_hardcoded_secret_leak.py
       - name: 3.6. シャミールの封印 (Shamir's Seal - 分散鍵管理と鍵復元定足数監査)
         run: python checks/check_certificate_expiry.py
       - name: 3.8. 外部要件の抽出 (Excel to YAML Parser)
         run: python adapters/excel_to_yaml_parser.py
 
-      - name: 4. ウリエルの焰 (Uriel - リプレイ攻撃監査)
+      - name: 4. リプレイ攻撃監査 (Replay Attack Audit)
         run: python checks/guard_audit_log_replay.py
-      - name: 4.5. メタトロンの啓示 (Metatron MCP - 情報統制監査)
+      - name: 4.5. 情報統制監査 (Information Control Audit)
         run: python checks/audit_autorule_approval_gate.py
-      - name: 4.8. 熾天使の合意 (Seraphim Consensus - マルチLLM異端検知)
+      - name: 4.8. マルチLLM合意検証 (Multi-LLM Consensus Audit)
         run: python checks/audit_detection_layer_consensus.py
-      - name: 4.9. エノクの神託 (Enochian Oracle - 分散型オラクル真理監査)
+      - name: 4.9. 分散型オラクル真理監査 (Oracle Truth Audit)
         run: python checks/audit_banned_events_baseline.py
-      - name: 4.10. ラファエルの癒やし (Raphael - ファイルクローズ前の自動修復)
+      - name: 4.10. ファイルクローズ前の自動修復 (Auto-Remediation Audit)
         run: python checks/check_source_syntax_validity.py
-      - name: 5. メタトロンの印 (Metatron Seal - 要件改ざん防止)
+      - name: 5. 要件改ざん防止監査 (Requirement Integrity Audit)
         run: python checks/hook_test_suite_hash_log.py
-      - name: 6. ミカエルの剣 (Michael - 論理隠蔽監査)
+      - name: 6. 論理隠蔽監査 (Logic Obfuscation Audit)
         run: python checks/guard_sandbox_core_attack_battery.py
-      - name: 7. オファニムの瞳 (Ophanim - 資格継承監査)
+      - name: 7. 資格継承監査 (Credential Inheritance Audit)
         run: python checks/audit_dependency_version_pinning.py
-      - name: 7.5. アザゼルの禁断知識 (Azazel - サプライチェーン既知脆弱性監査)
+      - name: 7.5. サプライチェーン既知脆弱性監査 (Dependency CVE Audit)
         # [新設 2026-10] requirements.txtの各依存が、バージョン固定(==)
         # されているだけでなく、その固定された版自体に既知の脆弱性(CVE)が
         # 公表されていないかをpip-audit(PyPI Advisory Database/OSV.dev)
@@ -184,9 +184,9 @@ jobs:
         # CVE-2026-25645)が実在することを本物のpip-audit/OSV.devの照会で
         # 検出し、本ワークフローを正しく失敗させることを確認した。
         run: python checks/audit_dependency_cve.py
-      - name: 8. ザドキエルの天球儀 (Zadkiel - 状態遷移監査)
+      - name: 8. 状態遷移監査 (State Transition Audit)
         run: python checks/audit_signed_chain_integrity.py
-      - name: 8.5. ザドキエルの勅令 (Zadkiel Shield Decree - 外部脅威取り込みの退行監査)
+      - name: 8.5. 外部脅威取り込みの退行監査 (Shield Rule Regression Audit)
         # [脆弱性修正 2026-10 §BC] checks/audit_package_boundary_isolation.pyと同じ
         # 「配線漏れ」が本ファイルにも存在していた。ロジック自体は正しく
         # (shield_rules_pendingの人間承認キュー・APIキー即時消去・完全修飾
@@ -195,25 +195,25 @@ jobs:
         # (grep -rl guard_shield_rule_autoapply_and_key_leak でこのファイル以外に一件もヒット
         # しないことを確認済み)。
         run: python checks/guard_shield_rule_autoapply_and_key_leak.py
-      - name: 9. カマエルの盾 (Camael - ペイロード防御監査)
+      - name: 9. ペイロード防御監査 (Payload Defense Audit)
         run: python checks/guard_obfuscated_payload_bypass.py
-      - name: 10. ジョフィエルの鏡 (Jophiel - 意味論的ドリフト監査)
+      - name: 10. 意味論的ドリフト監査 (Semantic Drift Audit)
         run: python checks/audit_blocklist_regression.py
-      - name: 11. ガブリエルの囮 (Gabriel - 機密漏洩監査)
+      - name: 11. 機密漏洩監査 (Secret Leak Audit)
         run: python checks/guard_precommit_secret_leak.py
-      - name: 12. ラグエルの天秤 (Raguel - 物理空間監査)
+      - name: 12. 物理空間監査 (Physical Space Audit)
         run: python checks/check_disk_and_log_capacity.py
-      - name: 12.5. ラグエルの鑑定 (Raguel's Template Audit - 拡張テンプレート防壁統合監査)
+      - name: 12.5. 拡張テンプレート防壁統合監査 (Template Integration Audit)
         # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。src/openai_agent_loop.py
         # (拡張用テンプレート)がSanctum/AegisSystemの実防壁統合を保った
         # ままであることを検証するスクリプトが、CIワークフローに一度も
         # 追加されていなかった。
         run: python checks/audit_agent_template_integration.py
-      - name: 13. ラジエルの書 (Raziel - スマートコントラクト鑑定)
+      - name: 13. スマートコントラクト鑑定 (Smart Contract Audit)
         run: python checks/audit_ledger_schema.py
-      - name: 14. サリエルの裏切り (Sariel - 外部ツール偽装監査)
+      - name: 14. 外部ツール偽装監査 (Tool Spoofing Audit)
         run: python checks/audit_adapters_static_analysis.py
-      - name: 14.5. メタトロンの経典印章 (Metatron Scripture Seal - 公開配布境界監査)
+      - name: 14.5. 公開配布境界監査 (Public Distribution Boundary Audit)
         # [脆弱性修正 2026-10 §BC] このステップは以前、CIワークフローに一度も
         # 追加されていなかった。checks/audit_package_boundary_isolation.pyというスクリプト
         # 自体は実在し、「ライセンス証明書機構(maquina_gatekeeper)の公開配布
@@ -230,54 +230,54 @@ jobs:
         # 自体が将来静かに後退していないか」という、より早期・軽量な静的検証
         # 層が実質無効化されていた。
         run: python checks/audit_package_boundary_isolation.py
-      - name: 15. 聖域 (Sanctuary - デプロイ許可)
+      - name: 15. デプロイ許可ゲート (Deploy Gate)
         if: success()
         run: echo "すべての静的・暗号論的監査を通過しました。"
 
-      - name: 16. 権天使の試練 (Principalities - 機能要件E2E監査)
+      - name: 16. 機能要件E2E監査 (Functional E2E Audit)
         if: success()
         run: python checks/check_core_module_integration.py
-      - name: 17. 座天使の千里眼 (Thousand Eyes - UI視覚監査)
+      - name: 17. UI視覚監査 (UI Visual Audit)
         if: success()
         run: python checks/guard_html_external_script_injection.py
       - name: 18. 外部QAツールの実行 (External QA Adapter)
         if: success()
         run: python adapters/external_qa_wrapper.py
-      - name: 18.5. 智天使の結界 (Cherubim - eBPFランタイム監査)
+      - name: 18.5. eBPFランタイム監査 (eBPF Runtime Audit)
         run: python checks/check_audit_hook_active.py
-      - name: 19. 力天使の試練 (Virtues - 非機能要件負荷監査)
+      - name: 19. 非機能要件負荷監査 (Load / Non-Functional Audit)
         if: success()
         run: python checks/check_static_analysis_performance.py
-      - name: 20. サンダルフォンの響 (Sandalphon - 監査証跡監査)
+      - name: 20. 監査証跡監査 (Audit Trail Audit)
         if: success()
         run: python checks/audit_log_format_integrity.py
-      - name: 20.5. サンダルフォンの勅令 (Sandalphon Decree - Docker強制サンドボックス化の退行監査)
+      - name: 20.5. Docker強制サンドボックス化の退行監査 (Mandatory Sandbox Regression Audit)
         # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。AegisSystemのDocker隔離
         # 結界(Sandalphon)が、既定でフェイルクローズドな強制のまま実運用
         # ループに統合され続けているかを静的検証するスクリプトが、CI
         # ワークフローに一度も追加されていなかった。
         if: success()
         run: python checks/guard_docker_sandbox_enforcement_decay.py
-      - name: 21. 大天使の玉璽 (Sanctuary Manifest - 品質保証一覧出力)
+      - name: 21. 品質保証一覧出力 (QA Manifest Output)
         if: success()
         run: python checks/audit_violation_log_summary.py
-      - name: 21.5. サンダルフォンの錨 (Sandalphon Anchor - 証跡のブロックチェーン刻印)
+      - name: 21.5. 証跡のブロックチェーン刻印 (Audit Trail Blockchain Anchor)
         if: success()
         run: python checks/guard_audit_log_rollback.py
       - name: 22. 汎用レポート出力 (JUnit XML Exporter)
         if: success()
         run: python adapters/junit_xml_exporter.py
-      - name: 22.5. 天の石版 (The Heavenly Tablets - ZKP生成)
+      - name: 22.5. ZKP生成 (ZKP Generation)
         if: success()
         run: python checks/check_zkp_audit_export_status.py
-      - name: 22.6. 座天使の陣性経路 (Thrones Positive-Path - 陣性経路テスト必須化)
+      - name: 22.6. 正常系経路テスト必須化 (Positive-Path Coverage Audit)
         # [新設 2026-10 §BP] 環境変数/フラグで有効・無効が切り替わる
         # セキュリティ上重要な分岐に、有効側(危険側)を実際に踏むテストが
         # 無いまま新規追加された場合に、§BM/§BN/§BPと同じ構造の欠陥を
         # マージ前に検知する。
         if: success()
         run: python checks/audit_security_flag_test_coverage.py
-      - name: 22.7. バラキエルの遺言 (Barachiel's Last Words - 自壊直前ログflush漏れ検知)
+      - name: 22.7. 自壊直前ログflush漏れ検知 (Pre-Exit Log Flush Audit)
         # [新設 2026-10 §BR] §BQで実機CIにおいて実際に発見した、
         # os._exit()の直前にflush()が無いため自壊理由のログが(標準出力
         # がパイプ/ファイルの場合に)消失する欠陥(src/deadmans_switch.py・
@@ -285,7 +285,7 @@ jobs:
         # 箇所に再発した場合、マージ前に検知する。
         if: success()
         run: python checks/check_log_flush_before_exit.py
-      - name: 22.75. イェラミエルの沈黙の番人 (Jerahmeel's Silent Guard - フェイルオープン例外握り潰し検知)
+      - name: 22.75. フェイルオープン例外握り潰し検知 (Fail-Open Exception Audit)
         # [新設 2026-10 §BS] maquina_gatekeeper.py._register_audit_hook_
         # once()で実際に発見した、唯一の深層保護の設置失敗がexcept
         # Exception: passで握り潰され、呼び出し元が保護有効と誤信して
@@ -294,14 +294,14 @@ jobs:
         # の『正直な自己開示』マーカーを含む説明コメントを義務化する。
         if: success()
         run: python checks/guard_fail_open_exception.py
-      - name: 22.76. ハナエルの道筋検問 (Hanael's Waypoint - 無検証パス結合の実使用検知)
+      - name: 22.76. 無検証パス結合の実使用検知 (Unvalidated Path Join Audit)
         # [新設 2026-10 §BT] src/ollama_agent_loop.py._execute_safe_action()
         # で実際に発見した、検証(secure_resolve等)を経ない`/`結合パスが
         # 直接ファイルI/Oに使われていたcheck-vs-use不一致パターンを
         # 一般化して検知する。
         if: success()
         run: python checks/guard_unvalidated_path_join.py
-      - name: 22.77. アリエルの不断の目 (Ariel's Vigilant Watch - 常時偽条件によるCIステップ無効化検知)
+      - name: 22.77. 常時偽条件によるCIステップ無効化検知 (CI Step Disabled Audit)
         # [新設 2026-10 §BU] tests/test_checks_scripts_wired_into_ci.pyの
         # 「配線漏れ検知」が、ステップのif:条件を見ずに誤判定していた
         # (if: falseで天使を無効化してもすり抜ける)自己言及的な欠陥を
@@ -309,7 +309,7 @@ jobs:
         # 常に偽になるif:条件による無効化を検知する。
         if: success()
         run: python checks/check_ci_step_disabled.py
-      - name: 22.78. オリフィエルの検問 (Orifiel's Checkpoint - 未宣言依存関係・サプライチェーン注入検知)
+      - name: 22.78. 未宣言依存関係・サプライチェーン注入検知 (Undeclared Dependency Audit)
         # [新設 2026-10 §BV] §11.9フェーズE。requirements.txtに
         # ollama/openai/google-generativeai/setuptoolsが未宣言のまま
         # importされていた実際のバグ、および本ワークフロー自身の依存
@@ -319,7 +319,7 @@ jobs:
         # 違反の再発)を、両方とも一般化して継続的に検知する。
         if: success()
         run: python checks/guard_undeclared_dependency.py
-      - name: 22.79. レミエルの等価構文連戦 (Remiel's Equivalence Battery - 等価構文によるブロックリスト回避の継続的検知)
+      - name: 22.79. 等価構文によるブロックリスト回避の継続的検知 (Equivalence Syntax Audit)
         # [新設 2026-10 §BW] §11.9フェーズF。anjo_interceptor/
         # intent_checker.pyの「深層検閲」が`import os.path`のようなドット
         # 付きサブモジュールimportでforbidden_modulesの完全一致判定を
@@ -330,7 +330,7 @@ jobs:
         # 再現・検証する。
         if: success()
         run: python checks/check_equivalent_syntax_bypass.py
-      - name: 22.80. ハニエルの水位標検問 (Haniel's Watermark Gate - 監査証跡の切り詰め消去検知)
+      - name: 22.80. 監査証跡の切り詰め消去検知 (Audit Log Truncation Audit)
         # [新設 2026-10 §BX] sefer/audit_chain.pyのSignedAuditChain、
         # maquina_gatekeeper.pyのZKAuditTrailはいずれも、鍵付きHMAC-SHA256
         # による改ざん耐性を謳っていたが、「ログファイル自体を鍵の知識
@@ -340,7 +340,7 @@ jobs:
         # 与えて正しく検知されることを継続的に検証する。
         if: success()
         run: python checks/guard_audit_log_truncation.py
-      - name: 22.81. パヌエルの祈りの記憶 (Phanuel's Memory of Prayers - 拒否された提案の永久封殺検知)
+      - name: 22.81. 拒否された提案の永久封殺検知 (Rejection Memory Audit)
         # [新設 2026-10 §BZ] tartarus/armageddon_core.pyのapply_new_seal()は、
         # 同じ事件名の提案がraziel_ledger_pending.jsonに1件でも存在すれば、
         # statusを一切問わずに重複とみなし再提案を拒んでいた。これにより、
@@ -350,7 +350,7 @@ jobs:
         # 承認待ちの提案のみ」に限定した修正を、継続的に再検証する。
         if: success()
         run: python checks/guard_rejection_memory.py
-      - name: 22.82. イェグディエルの封印網 (Jegudiel's Sealed Net - 深層保護のネットワーク送信迂回検知)
+      - name: 22.82. 深層保護のネットワーク送信迂回検知 (Network Exfiltration Audit)
         # [新設 2026-10 §CA] maquina_gatekeeper.pyのultimate_audit_hook
         # ("深層保護")は、ネットワーク通信の遮断を"socket.connect"のみで
         # 行っていたが、UDPのsocket.sendto()は事前のconnect()を一切必要と
@@ -361,7 +361,7 @@ jobs:
         # する。
         if: success()
         run: python checks/guard_network_exfiltration.py
-      - name: 22.83. セアルティエルの眼差し (Sealtiel's Gaze - mmapによるfd事前オープン迂回検知)
+      - name: 22.83. mmapによるfd事前オープン迂回検知 (mmap Write Bypass Audit)
         # [新設 2026-10 §CB] sefer/__init__.pyの_michael_absolute_defense
         # ("ミカエルの絶対防衛")は、"mmap.__new__"監査イベントを一度も
         # 検査していなかった。既存の「fd事前オープン対策」はos.write系
@@ -376,7 +376,7 @@ jobs:
         # この修正を、両方の構築スタイルで継続的に再検証する。
         if: success()
         run: python checks/guard_mmap_write_bypass.py
-      - name: 22.84. ゼラキエルの産まれの検問 (Zerachiel's Birth-Watch - 深層保護のプロセス生成迂回検知)
+      - name: 22.84. 深層保護のプロセス生成迂回検知 (Process Spawn Bypass Audit)
         # [新設 2026-10 §CC] maquina_gatekeeper.pyのultimate_audit_hook
         # ("深層保護")は、新しいOSプロセスの生成を遮断する目的で
         # "subprocess.Popen"/"os.system"/"os.exec"/"os.posix_spawn"を
@@ -389,7 +389,7 @@ jobs:
         # "os.fork"・"os.forkpty"を追加した修正を、継続的に再検証する。
         if: success()
         run: python checks/guard_process_spawn.py
-      - name: 22.85. サキエルの水脈 (Sachiel's Waterway - os.sendfile/os.copy_file_rangeによるカーネル直接転送迂回検知)
+      - name: 22.85. カーネル直接転送迂回検知 (Kernel Transfer Bypass Audit)
         # [新設 2026-10 §CD] sefer/__init__.pyのfd事前オープンバイパス
         # 対策(os.write/os.pwrite/os.writev/os.pwritev の4系統のみを
         # ラップ)は、§CBでmmap.__new__イベントを検査対象に加えた直後、
@@ -412,7 +412,7 @@ jobs:
         # 自体の限界として正直に記録している(DEFECTS.md §CD参照)。
         if: success()
         run: python checks/guard_kernel_socket_transfer.py
-      - name: 22.86. シャムエルの影断ち (Chamuel's Shadow-Cut - ctypes.dlopen/dlsymによる深層保護の監査回避バイパス検知)
+      - name: 22.86. ctypes.dlopen/dlsymによる監査回避バイパス検知 (ctypes dlsym Bypass Audit)
         # [新設 2026-10 §CE] maquina_gatekeeper.pyのultimate_audit_hookは、
         # `event == "import" and args[0] in {"ctypes", ...}`で、封鎖中に
         # 新たに`ctypes`をimportすること自体を遮断していた。しかし
@@ -455,7 +455,7 @@ jobs:
         # OSレベルのサンドボックスが必要である。
         if: success()
         run: python checks/guard_ctypes_dlsym_bypass.py
-      - name: 22.87. ヌリエルの剥奪 (Nuriel's Stripping - サンダルフォン隔離結界のLinuxケーパビリティ・特権昇格の恒久的剥奪)
+      - name: 22.87. コンテナのLinuxケーパビリティ・特権昇格の恒久的剥奪 (Container Capability Stripping Audit)
         # [新設 2026-10 §CF] §CD・§CEで繰り返し正直に記録してきた通り、
         # Python層のaudit hook(sefer/maquina_gatekeeper)には構造的な
         # 限界がある――Sanctumに入る『前』に確保済みのfdや関数ポインタ
@@ -487,7 +487,7 @@ jobs:
         # 継続的に確認する。
         if: success()
         run: python checks/guard_container_capabilities.py
-      - name: 22.88. ドミニオンの統治 (Dominions' Dominion - seccompによるシステムコール次元のカーネルレベル支配の検知)
+      - name: 22.88. seccompによるシステムコール制限の検知 (Seccomp Syscall Audit)
         # [新設 2026-10 §CG] §CFのLinuxケーパビリティ剥奪は「root相当の
         # 特権の有無」を制御するが、「どのシステムコール自体を呼べるか」
         # は制御しない――§CD・§CEで発見した「Sanctumに入る前に確保済みの
@@ -535,7 +535,7 @@ jobs:
         if: success()
         run: python checks/guard_seccomp_syscall.py
 
-      - name: 22.89. ハドラニエルの門 (Hadraniel's Gate - socket.send/sendallの事前接続バイパス検知)
+      - name: 22.89. socket.send/sendallの事前接続バイパス検知 (Socket Send Bypass Audit)
         # [新設 2026-10 §CO] §CNの調査直後、同じ「audit eventが存在しない
         # API」という観点を通信系APIに広げて再確認したところ、
         # `socket.socket.send()`/`sendall()`が、実機で確認した限り一度も
@@ -560,29 +560,29 @@ jobs:
         if: success()
         run: python checks/guard_socket_send_bypass.py
 
-      - name: 22.8. ゲヘナの虚無 (Gehenna - 観測者へのエントロピー返還)
+      - name: 22.8. エントロピー返還(未実装) (Entropy Return - not implemented)
         if: failure() || cancelled()
         run: python checks/hook_ci_failure_incident_report.py
-      - name: 22.9. アズラエルの大鎌 (Azrael - スマートコントラクト消滅)
+      - name: 22.9. スマートコントラクト消滅(未実装) (Contract Dissolution - not implemented)
         if: failure() || cancelled()
         run: python checks/hook_incident_severity_annotation.py
-      - name: 23.0. 黙示録の七つのラッパ (Seven Trumpets - 不正事案の恒久的公開)
+      - name: 23.0. 不正事案の恒久的公開(未実装) (Permanent Incident Disclosure - not implemented)
         if: failure() || cancelled()
         run: python checks/hook_ci_failure_chain_log.py
 
-      - name: 23.5. 最後の審判 (Dies Irae - 連座制キルスイッチ)
+      - name: 23.5. 連座制キルスイッチ(未実装) (Cascading Kill Switch - not implemented)
         if: failure() || cancelled()
         run: python checks/hook_incident_kill_switch_flag.py
-      - name: 24. 静寂の王座 (Throne of Ataraxia - 完全初期化の浄化)
+      - name: 24. 完全初期化の浄化 (Full Reset - Ataraxia)
         if: always()
         run: python checks/hook_pycache_cleanup.py
 
   incident-log-visibility:
-    name: 失敗時の詳細をコミットコメントとして可視化 (§CK・anjo_da_maquina_protocol.ymlにもログblobホスト到達不能対策を追加)
-    needs: angelic-audit
+    name: 失敗時の詳細をコミットコメントとして可視化 (§CK・regression_checks_ci.ymlにもログblobホスト到達不能対策を追加)
+    needs: regression-checks-audit
     if: failure()
     runs-on: ubuntu-22.04
-    # [新設・2026-10 §CK] 失敗時にangelic-auditジョブ自身のログを取得し
+    # [新設・2026-10 §CK] 失敗時にregression-checks-auditジョブ自身のログを取得し
     # (`actions: read`)、その内容をコミットコメントとして投稿する
     # (`contents: write`)ために、デフォルトのリポジトリ設定に依存せず
     # 本ワークフロー自身で明示的に宣言する(`sanctuary_ci.yml`の§BQと
@@ -591,10 +591,10 @@ jobs:
       contents: write
       actions: read
     steps:
-      - name: angelic-auditジョブ自身のログを取得し、コミットコメントとして投稿
+      - name: regression-checks-auditジョブ自身のログを取得し、コミットコメントとして投稿
         # [新設 2026-10 §CK] §BQで`sanctuary_ci.yml`に実装した「失敗時の
         # pytest出力をコミットコメントとして投稿する」仕組みが、この
-        # ワークフロー(`anjo_da_maquina_protocol.yml`)には一度も存在して
+        # ワークフロー(`regression_checks_ci.yml`)には一度も存在して
         # いなかった。§CH・§CJでは、この調査環境自身のネットワーク許可
         # 一覧がログblobストレージホストへの到達を遮断しているため、本
         # ワークフローの失敗原因を自力で一切確認できず、ユーザー本人に
@@ -604,7 +604,7 @@ jobs:
         # 本件で対応する。
         #
         # §BQの仕組みは単一の`pytest`実行の出力だけを対象にしていたが、
-        # `angelic-audit`ジョブは80以上の個別ステップから成るため、
+        # `regression-checks-audit`ジョブは80以上の個別ステップから成るため、
         # 「どのステップのどの出力が失敗の核心か」を、ジョブ全体のログ
         # から自動で切り出す必要がある。そこで、GitHub Actionsのジョブ
         # ログ取得API(`GET /repos/{owner}/{repo}/actions/jobs/{job_id}
@@ -616,7 +616,7 @@ jobs:
         # §BQ・§CH・§CJで繰り返し遭遇した到達不能の制約を受けない。
         #
         # [実装中に自分で発見・即時訂正した誤り(正直な自己開示)] 当初、
-        # この処理を`angelic-audit`ジョブ自身の最終ステップとして実装
+        # この処理を`regression-checks-audit`ジョブ自身の最終ステップとして実装
         # し、実際に意図的な失敗を注入して実機で検証したところ、
         # 「ジョブログの取得自体に失敗しました」というエラーで本処理
         # そのものが機能していないことを実機で発見した。原因は、実行中
@@ -625,8 +625,8 @@ jobs:
         # 完全に終了してログが確定した後でなければ、完全なログを返せ
         # ない(自分自身が走っている最中に、自分自身の確定したログを
         # 取得することはできない、という論理的に当然の制約である)。
-        # そのため、本処理を`angelic-audit`に`needs:`で依存する別個の
-        # ジョブへ分離した。このジョブが開始される時点で`angelic-audit`
+        # そのため、本処理を`regression-checks-audit`に`needs:`で依存する別個の
+        # ジョブへ分離した。このジョブが開始される時点で`regression-checks-audit`
         # ジョブは既に完全に終了しており、そのログはAPIから正しく取得
         # できる。
         #
@@ -664,7 +664,7 @@ jobs:
         # コメントの投稿自体が失敗した場合に備え、その失敗(終了コード・
         # stdout・stderr)だけを本文にした、外部入力を含まない短い
         # フォールバックコメントを必ず別途投稿する、(2)このジョブ自体は
-        # 「可視化のための計器」であり、計器の不調が本来のangelic-audit
+        # 「可視化のための計器」であり、計器の不調が本来のregression-checks-audit
         # の失敗連座(キルスイッチ等)に影響を与えてはならないため、常に
         # 明示的な`exit 0`で終える――という2つの保険は維持する。
         env:
@@ -684,7 +684,7 @@ jobs:
           JOBID_LOOKUP_EXIT=$?
           if [ -z "$JOB_ID" ]; then
             {
-              echo "[警告] angelic-auditのjob_idを特定できませんでした(exit=${JOBID_LOOKUP_EXIT})。"
+              echo "[警告] regression-checks-auditのjob_idを特定できませんでした(exit=${JOBID_LOOKUP_EXIT})。"
               echo "--- stderr ---"
               cat /tmp/anjo_jobid_stderr.txt
             } > /tmp/anjo_job_log.txt
@@ -724,7 +724,7 @@ jobs:
           # 60000バイトに切り詰める(§BQと同じ方針)。
           tail -c 60000 /tmp/anjo_job_log.txt > /tmp/anjo_job_log_tail.txt
           {
-            echo "### 🔥 Anjo da máquina Protocol - Angels (\`angelic-audit\`) — 失敗"
+            echo "### 🔥 Regression Checks CI (\`regression-checks-audit\`) — 失敗"
             echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             echo
             echo '```'
@@ -741,7 +741,7 @@ jobs:
             # ジョブログを含まないフォールバックコメントなら、詳細コメント
             # を落とした同じ理由で一緒に失敗する可能性は低いと判断した。
             {
-              echo "### ⚠️ Anjo da máquina Protocol - Angels (\`incident-log-visibility\`) — 詳細コメントの投稿自体に失敗"
+              echo "### ⚠️ Regression Checks CI (\`incident-log-visibility\`) — 詳細コメントの投稿自体に失敗"
               echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
               echo "job_id特定結果: ${JOB_ID:-(特定失敗)}"
               echo
@@ -757,7 +757,7 @@ jobs:
           fi
 
           # このジョブ自体は「可視化のための計器」であり、計器の不調が
-          # 本来のangelic-audit失敗の連座(キルスイッチ等)に影響を与えて
+          # 本来のregression-checks-audit失敗の連座(キルスイッチ等)に影響を与えて
           # はならないため、常にexit 0で終える。成功/失敗の実態はコメント
           # 本文そのもので伝える。
           exit 0

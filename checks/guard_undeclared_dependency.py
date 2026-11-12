@@ -16,7 +16,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 #      いなかった(src/openai_agent_loop.py・src/secure_oracle_feed.pyの
 #      `openai`・`google.generativeai`は例外処理で保護されていたが、
 #      これらも同様に未宣言だった)。
-#   B. .github/workflows/anjo_da_maquina_protocol.ymlの依存インストール
+#   B. .github/workflows/regression_checks_ci.ymlの依存インストール
 #      ステップが、requirements.txtとは無関係に`pip install networkx
 #      pyyaml playwright mcp pandas openpyxl pytest`を直接ハードコード
 #      していた。このうちnetworkx・mcp・pandasはリポジトリ全体を検索

@@ -96,7 +96,7 @@
 - `src/metatron_orchestrator.py`
 - `src/aegis_system.py`
 - `src/cassiels_veil.py`
-- `.github/workflows/anjo_da_maquina_protocol.yml`
+- `.github/workflows/regression_checks_ci.yml`
 - `DEFECTS.md`
 - `tests/test_sandalphon_jail_mount_permissions.py`
 - `tests/test_guard_seccomp_syscall.py`
