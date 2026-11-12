@@ -24,7 +24,10 @@ if (-not (Test-Path $RenewScript)) {
 
 $TaskName = "Parrhesia-CertRenewal-Weekly"
 
-$RenewArg = '-NoProfile -ExecutionPolicy Bypass -File "' + $RenewScript + '" *>> "' + $LogFile + '"'
+# ログの記録は renew_certificate.ps1 自身が行うので、ここでは
+# 単純にそのスクリプトを呼び出すだけでよい(外側からの出力リダイレクト
+# は -File モードでは機能しないため、使わない)。
+$RenewArg = '-NoProfile -ExecutionPolicy Bypass -File "' + $RenewScript + '"'
 $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $RenewArg
 
 # 毎週月曜の午前9時に実行(パソコンがその時刻にスリープ中でも、

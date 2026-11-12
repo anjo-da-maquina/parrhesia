@@ -14,26 +14,44 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 $ClientId = "anjo-local-tester"
+$LogFile = Join-Path $RepoRoot "tools\renew_certificate.log"
 
-Write-Host "== 1/4: 必要な道具(rsaライブラリ)の確認 =="
-python -c "import rsa" 2>$null
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "rsaライブラリが見つかりません。インストールします..."
-    pip install rsa
+# 画面に出す内容を、呼び出し方(手動実行/タスクスケジューラ経由)に
+# 関わらず必ずこのファイルにも記録する。記録の仕組みをこのスクリプト
+# 自身に持たせることで、タスクスケジューラ側の呼び出し方に依存しない
+# ようにしている。
+try {
+    Start-Transcript -Path $LogFile -Append | Out-Null
+} catch {
+    Write-Host "警告: ログの記録開始に失敗しました($LogFile)。処理は続行します。"
 }
 
-Write-Host ""
-Write-Host "== 2/4: 新しい証明書の『提案』を作成 =="
-python adapters\provisioning_agent.py
+try {
+    Write-Host "===== 開始: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ====="
 
-Write-Host ""
-Write-Host "== 3/4: 提案内容の確認 =="
-python tools\promote_provisioning_seal.py --list
+    Write-Host "== 1/4: 必要な道具(rsaライブラリ)の確認 =="
+    python -c "import rsa" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "rsaライブラリが見つかりません。インストールします..."
+        pip install rsa
+    }
 
-Write-Host ""
-Write-Host "== 4/4: 承認して、新しい証明書を発行 =="
-python tools\promote_provisioning_seal.py --approve $ClientId
+    Write-Host ""
+    Write-Host "== 2/4: 新しい証明書の『提案』を作成 =="
+    python adapters\provisioning_agent.py
 
-Write-Host ""
-Write-Host "完了しました。ataraxia_certificate.json が新しく発行されています。"
-Write-Host "注意: 新しい証明書も発行から7日間しか有効ではありません(既定値)。"
+    Write-Host ""
+    Write-Host "== 3/4: 提案内容の確認 =="
+    python tools\promote_provisioning_seal.py --list
+
+    Write-Host ""
+    Write-Host "== 4/4: 承認して、新しい証明書を発行 =="
+    python tools\promote_provisioning_seal.py --approve $ClientId
+
+    Write-Host ""
+    Write-Host "完了しました。ataraxia_certificate.json が新しく発行されています。"
+    Write-Host "注意: 新しい証明書も発行から7日間しか有効ではありません(既定値)。"
+}
+finally {
+    try { Stop-Transcript | Out-Null } catch {}
+}
