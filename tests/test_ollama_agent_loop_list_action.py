@@ -7,7 +7,7 @@
 ループ」実装にのみ存在していた。同じAegisSystem/Sanctumをラップするループが
 2系統並行して存在することは、修正が片方にしか入らず他方が取り残されるリスク
 を生むため、唯一の実運用ループ(ollama_agent_loop.py)に一本化し、
-final_agent_loop.pyは削除した(GRIMOIRE.md §M参照)。本テストは、統合後も
+final_agent_loop.pyは削除した(DEFECTS.md §M参照)。本テストは、統合後も
 "list"がSanctumのワークスペース境界内で正しく動作することを固定する。
 
 test_agent_loop_sanctum_integration.pyと同じ手法(サブプロセス起動 +

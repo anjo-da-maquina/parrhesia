@@ -2,7 +2,7 @@
 tests/test_thread_safety_maquina_seal.py
 ==========================================
 runtime_audit_gatekeeper.py の`is_sanctuary_sealed()`/`set_sanctuary_sealed()`の
-回帰テスト。GRIMOIRE.md §AD 参照。
+回帰テスト。DEFECTS.md §AD 参照。
 
 背景: 封鎖ステータスが`threading.local()`(スレッドごとに独立)で管理されて
 いたため、`enforce_maquina_seal`デコレータによって「封鎖済み」のメイン
@@ -35,7 +35,7 @@ test_provisioning_approval_flow.py)が必要とする`newkeys`/`sign`等も
 `sorted(tests_dir.glob("test_*.py"))`で辞書順に読み込むため、本ファイルが
 先に読み込まれて`rsa`を(フェイクであれ)解決可能にしてしまうと、
 `test_openai_agent_loop_template.py`が期待している「本物の`rsa`が無い
-ことによる`ModuleNotFoundError`(既知の環境起因ERROR。GRIMOIRE.md §U参照)」
+ことによる`ModuleNotFoundError`(既知の環境起因ERROR。DEFECTS.md §U参照)」
 が、フェイクのRSA検証による本物の署名不一致エラー(`ValueError`)に変わって
 しまい、無関係なFAILを発生させてしまうことを確認済み。ファイル名の
 アルファベット順がこの副作用を避けるための前提条件になっている。
@@ -300,7 +300,7 @@ def test_os_forkpty_is_blocked_while_sealed():
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "this test spawns a fresh subprocess that imports runtime_audit_gatekeeper "
     "directly (no stub available there, unlike the rest of this file); not a "
-    "code defect, see GRIMOIRE.md known environment gaps (§DA)",
+    "code defect, see DEFECTS.md known environment gaps (§DA)",
 )
 def test_fork_then_exec_combo_is_unreachable_while_sealed():
     """
@@ -359,7 +359,7 @@ def test_fork_then_exec_combo_is_unreachable_while_sealed():
 
 
 def test_get_machine_id_is_not_a_constant_placeholder_on_linux():
-    """[脆弱性修正の核心] GRIMOIRE.md §AS参照。以前の実装はWindows以外の
+    """[脆弱性修正の核心] DEFECTS.md §AS参照。以前の実装はWindows以外の
     プラットフォーム(本サンドボックスのLinuxを含む)では、ホストの識別
     情報を一切含まない固定文字列"UNKNOWN_MACHINE_ID"を無条件に返していた。
     本テストは実環境(Linux)で実際に/etc/machine-id由来の値が返ることを

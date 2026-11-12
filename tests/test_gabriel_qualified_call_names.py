@@ -30,7 +30,7 @@ def test_bare_eval_still_critical_no_regression():
 def test_aliased_import_evasion_is_a_documented_known_limitation():
     """`import os as o; o.system(...)` は完全修飾名が"o.system"になり、
     forbidden_funcsの"os.system"とは一致しないため、critical検知を回避できる。
-    これは既知の限界であり、GRIMOIRE.mdに明記されている。本テストは、
+    これは既知の限界であり、DEFECTS.mdに明記されている。本テストは、
     将来この回避が『知らないうちに』塞がれた/塞がれていないことを
     検出するためのドキュメント的テストである（どちらの結果でも失敗しない）。
     """

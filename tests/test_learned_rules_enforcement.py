@@ -1,7 +1,7 @@
 """
 tests/test_learned_rules_enforcement.py
 ==========================================
-runtime_guard/__init__.py の回帰テスト。GRIMOIRE.md §AG 参照。
+runtime_guard/__init__.py の回帰テスト。DEFECTS.md §AG 参照。
 
 背景: 本フレームワークには2つの「学習」ワークフローがあった:
   1. adversarial_training/local_only_selfplay_gate.py(旧名tartarus/armageddon.py、Lucifer vs Sefer自己対戦)が発見した新たな

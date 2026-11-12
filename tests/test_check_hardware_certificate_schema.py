@@ -1,7 +1,7 @@
 """
 tests/test_check_hardware_certificate_schema.py
 =====================================
-[新設 2026-11] angels/check_hardware_certificate_schema.py の単体テスト。
+[新設 2026-11] checks/check_hardware_certificate_schema.py の単体テスト。
 
 本天使(「メタトロンの立方体」)は、ハードウェア証明書
 (`ataraxia_certificate.json`)の署名ペイロードに必須フィールド
@@ -17,7 +17,7 @@ I/Oを介さずに判定ロジックのみを検証する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_hardware_certificate_schema as mch
 
 VALID_CERT = {

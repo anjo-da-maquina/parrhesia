@@ -1,7 +1,7 @@
 """
 tests/test_guard_audit_log_replay.py
 =====================================
-[新設 2026-11] angels/guard_audit_log_replay.py の単体テスト。
+[新設 2026-11] checks/guard_audit_log_replay.py の単体テスト。
 
 本天使(「ウリエルの灯」)は、監査証跡ファイル(`runtime_guard/audit_chain.jsonl`)
 内に同一ハッシュ(=同一イベントの再生、リプレイ攻撃)が重複して記録
@@ -15,7 +15,7 @@ monkeypatchして検証する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_audit_log_replay as un
 
 

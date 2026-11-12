@@ -30,7 +30,7 @@ NAME = "guard_fail_open_exception - 例外握り潰し検知: 無言のexcept:pa
 # までは判定しない(コメントさえあれば通過する)。これは「判定」ではなく
 # 「開示の強制」が目的であるため、設計上の意図的な限界である。
 
-TARGET_DIRS = ["angels", "src", "adapters"]
+TARGET_DIRS = ["checks", "src", "adapters"]
 TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 JUSTIFICATION_MARKERS = (

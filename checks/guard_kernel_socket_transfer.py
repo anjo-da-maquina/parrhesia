@@ -451,7 +451,7 @@ def run_battery():
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
             # 機能せず、run_battery自体が未処理の例外で丸ごと落ちて
-            # しまう(angels/guard_socket_send_bypass.pyの新設時に
+            # しまう(checks/guard_socket_send_bypass.pyの新設時に
             # 実機で発見)。KeyboardInterrupt/SystemExit等も含め
             # 広く捕捉するが、本関数の唯一の責務は「1件の検査関数の
             # 呼び出し結果を安全に報告する」ことであり、ここで拾った

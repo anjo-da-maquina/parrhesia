@@ -1,7 +1,7 @@
 """
 tests/test_audit_log_format_integrity.py
 =====================================
-[新設 2026-11] angels/audit_log_format_integrity.py の単体テスト。
+[新設 2026-11] checks/audit_log_format_integrity.py の単体テスト。
 
 本天使(「サンダルフォンの響き」)は、監査証跡ファイル
 (`runtime_guard/audit_chain.jsonl`)自体の存在・可読性・各行がJSONLとして
@@ -15,7 +15,7 @@ monkeypatchして検証する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_log_format_integrity as se
 
 

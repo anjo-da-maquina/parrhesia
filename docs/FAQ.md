@@ -26,7 +26,7 @@ Yes — `python -m parrhesia.cli audit /path/to/some/other/git/repo` runs it rea
 **Is this audited by anyone other than you?**
 No. All verification described in this repo (detection rate, CI status, network-isolation proof) was performed by the same author/AI-agent pairing that wrote the code. Treat it as "verified by the people who built it," not outside certification — stated explicitly in the README's Limitations section.
 
-**Why is the project's own bug history public (GRIMOIRE.md)?**
+**Why is the project's own bug history public (DEFECTS.md)?**
 Because the standard this toolkit holds other code to — don't hide a gap behind a report of success — is the standard applied to this project's own development too. See [`docs/WHY.md`](./WHY.md).
 
 **Is this free to use?**

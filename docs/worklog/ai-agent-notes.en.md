@@ -21,6 +21,26 @@ detail, not the main thread a reviewer needs first.
   `/tmp` being wiped entirely) is investigated and reported honestly rather than
   hidden.
 
+## A note on terminology (November 2026)
+
+Early on, this project used a few internal names (`DEFECTS.md`, `checks/`,
+`Sanctuary`/`Sanctum`) that borrowed mythological and religious imagery as a
+narrative flourish — a playful way of naming "the record of defects found" or
+"the checks that catch a regression coming back." There was never any intent
+to mock or diminish any faith or tradition; it was simply a friendly metaphor.
+Since a reader's background could reasonably make that land differently than
+intended, these names were switched to neutral, plain-language equivalents
+(`DEFECTS.md`, `checks/`, `Sandbox`/`Isolation`, and similar) that should read
+comfortably to anyone, regardless of belief. This is not a statement against
+any religion — it's simply a choice of wording meant to be welcoming to the
+widest possible set of readers.
+
+To preserve this project's own standard of "verifiable against a real
+commit," git history itself (past commit messages and the file names used at
+the time) was left unchanged. Looking back through `git log` from the early
+history will still show the original names — that's a deliberate choice to
+keep the record honest, not an oversight.
+
 ## A disclosed process violation
 
 In November 2026, it was discovered that part of this project's portfolio-polish
@@ -67,8 +87,8 @@ way through.
 
 The deeper design problem this same automation originally had — that it
 skipped the human approval step it's supposed to rely on — was tracked as a
-disclosed defect in [GRIMOIRE.md §CX](../../GRIMOIRE.md) and has since actually
-been fixed, [GRIMOIRE.md §CZ](../../GRIMOIRE.md) (detailed in the second round
+disclosed defect in [DEFECTS.md §CX](../../DEFECTS.md) and has since actually
+been fixed, [DEFECTS.md §CZ](../../DEFECTS.md) (detailed in the second round
 of red-lining below).
 
 ## Red-lining this document itself (incorporating feedback from an external AI assistant, twice)
@@ -83,14 +103,14 @@ this is stated plainly.
 
 - The certificate-automation behavior, which looked inconsistent with the
   project's "zero-trust" claim, was neither hidden nor glossed over — it was
-  recorded as a self-found defect, [GRIMOIRE.md §CX](../../GRIMOIRE.md).
+  recorded as a self-found defect, [DEFECTS.md §CX](../../DEFECTS.md).
 - A placeholder-looking CI run reference was replaced with a real URL, and the
   commit each number came from is now stated explicitly.
 - The `conftest.py` bug that broke test collection entirely in any environment
   without `rsa` was actually fixed in code (an earlier version of this document
   described as "unverifiable in the sandbox" something that this fix made
   verifiable).
-- A defect count ("81") in GRIMOIRE.md turned out to be stale once actually
+- A defect count ("81") in DEFECTS.md turned out to be stale once actually
   recounted; it has been corrected.
 - An opening claim that "everything here was actually run and checked"
   contradicted a later section disclosing sandbox-unverified work; the document
@@ -104,7 +124,7 @@ this is stated plainly.
   sequence number (A=1, Z=26, AA=27, ...) puts §AV at 48th and §CX at 102nd.
   Hand-counting was dropped entirely in favor of quoting only the output of a
   counting script
-  ([`tools/count_grimoire_entries.py`](../../tools/count_grimoire_entries.py)).
+  ([`tools/count_defects_entries.py`](../../tools/count_defects_entries.py)).
 - **Misstated reviewer identity**: this worklog had incorrectly said it
   received "red-line comments from an actual evaluator"; corrected to
   "informal feedback from an external AI assistant" (as stated at the top of
@@ -116,17 +136,17 @@ this is stated plainly.
   third party's environment with that setting. This was actually reproduced
   (4 of 5 tests failing in an isolated environment with
   `commit.gpgsign = true`), fixed, and re-verified (all 5 passing)
-  ([GRIMOIRE.md §CY](../../GRIMOIRE.md)).
+  ([DEFECTS.md §CY](../../DEFECTS.md)).
 - **The xpassed design itself was revisited, not just re-explained**: rather
   than merely wording the 11 `xpassed` results more carefully, the design was
   changed from `xfail(strict=False)` to `pytest.mark.skipif`, eliminating the
   unnecessary `xpassed` state on CI altogether
-  ([GRIMOIRE.md §DA](../../GRIMOIRE.md)).
+  ([DEFECTS.md §DA](../../DEFECTS.md)).
 - **The §CX contradiction was actually fixed, not just found**: the "cert
   renewal bypasses human out-of-band confirmation" contradiction recorded in
   §CX was fixed with a `--check-rotation` mechanism that auto-approves only
   when the key is unchanged, and refuses to auto-approve a real rotation
-  ([GRIMOIRE.md §CZ](../../GRIMOIRE.md)).
+  ([DEFECTS.md §CZ](../../DEFECTS.md)).
 - **The document's structure was reorganized**: dropped the "what this cannot
   detect"-first opening in favor of a 3-line summary ("what this tool does,
   what it found") plus a reproduce-it-yourself command at the very top.
@@ -168,8 +188,8 @@ this is stated plainly.
   whole reason the weekly renewal automation exists), and on CI,
   `GITHUB_ACTIONS=true` makes cloud execution itself get blocked before the
   certificate's state is even checked.
-- **"About 55" was also hand-counted**: like the GRIMOIRE.md defect count, the
-  number of CI checks under `angels/` had been hand-counted too. A new script,
+- **"About 55" was also hand-counted**: like the DEFECTS.md defect count, the
+  number of CI checks under `checks/` had been hand-counted too. A new script,
   [`tools/count_ci_checks.py`](../../tools/count_ci_checks.py), parses
   `.github/workflows/*.yml` and counts only the scripts actually wired into
   CI, confirming the figure of 55 before it was quoted again.

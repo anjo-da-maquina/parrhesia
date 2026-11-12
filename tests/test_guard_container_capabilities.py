@@ -1,7 +1,7 @@
 """
 tests/test_guard_container_capabilities.py
 ============================================
-[新設 2026-10 §CF] angels/guard_container_capabilities.py の単体テスト。
+[新設 2026-10 §CF] checks/guard_container_capabilities.py の単体テスト。
 
 実際に発見した具体例: `src/docker_sandbox_executor.py`の`run_in_docker_sandbox()`が
 展開する隔離結界(Docker)は、ネットワーク完全遮断・読み取り専用・
@@ -21,7 +21,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import guard_container_capabilities as ncsg
 

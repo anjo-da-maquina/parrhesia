@@ -1,7 +1,7 @@
 """
 tests/test_check_source_syntax_validity.py
 =====================================
-[新設 2026-11] angels/check_source_syntax_validity.py の単体テスト。
+[新設 2026-11] checks/check_source_syntax_validity.py の単体テスト。
 
 本天使(「ラファエルの治癒」)は、`runtime_guard/*.py`の全モジュールが構文的に
 妥当(`ast.parse`でcompileできる)であることを検証する(自動修復監査:
@@ -16,7 +16,7 @@ tests/test_check_source_syntax_validity.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_source_syntax_validity as rr
 
 

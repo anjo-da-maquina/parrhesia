@@ -105,7 +105,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
     # を追加した直後、実際にGitHub Actions上でこの隔離結界を動的に検証
     # したところ、`prisoner`ユーザーが`/jail/target.py`を開けず
     # `PermissionError: [Errno 13] Permission denied`で失敗することを
-    # 実機で発見した(GRIMOIRE.md §CF追記参照)。これは正規の実行まで
+    # 実機で発見した(DEFECTS.md §CF追記参照)。これは正規の実行まで
     # 一律に失敗させてしまう、本修正自身が引き起こした退行である。
     # ケーパビリティに頼らず、通常のUNIXファイル権限だけで「全ユーザー
     # 読み取り可」にすることで、CAP_DAC_OVERRIDEを復活させずに解決する
@@ -152,7 +152,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
             # は、カーネルレベルでこれらのシステムコール自体を直接
             # 拒否する、ケーパビリティ剥奪とは独立したもう一枚の壁で
             # ある。プロファイルの設計方針・denylist各項目の根拠は
-            # 当該JSONファイル内のcommentフィールドとGRIMOIRE.md §CG
+            # 当該JSONファイル内のcommentフィールドとDEFECTS.md §CG
             # に詳述している。
             f"--security-opt=seccomp={_DOCKER_SANDBOX_SECCOMP_PROFILE}",
             "-v", f"{tmp_path}:/jail/target.py:ro",

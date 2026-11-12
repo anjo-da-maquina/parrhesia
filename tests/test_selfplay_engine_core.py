@@ -51,7 +51,7 @@ def test_validate_banned_event_rejects_structurally_unenforceable_events():
     サブドメインラベルに符号化して解決させるだけで、connect()を一切経由
     せずに攻撃者のDNSサーバーへ送出できる)を実機で確認したため、
     `runtime_guard._michael_absolute_defense`に専用のallowed_hosts検査を新設し、
-    `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外した(GRIMOIRE.md §CT参照)。
+    `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外した(DEFECTS.md §CT参照)。
     その結果、"socket.getaddrinfo"は"socket.connect"等と同じ「既に別の
     条件付きチェックで実際に保護されている」カテゴリに移ったため、本テスト
     の対象(見せかけの保護)からは外れる――`validate_banned_event`が
@@ -222,7 +222,7 @@ def test_record_to_selfplay_history_and_initialize_arena(tmp_path: Path):
 
 
 def test_build_forge_script_actually_blocks_hard_denied_event(tmp_path):
-    """[脆弱性修正の核心] GRIMOIRE.md §AU参照。以前は生成スクリプトが
+    """[脆弱性修正の核心] DEFECTS.md §AU参照。以前は生成スクリプトが
     `awaken()`のみを呼び`with Sanctum(...):`に入らなかったため、
     `os.system`のような単純な(難読化すら無い)攻撃すら遮断されず、
     闘技場が実質的に空の防壁と戦っていた。本テストは、実際に生成

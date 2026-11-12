@@ -1,7 +1,7 @@
 """
 tests/test_audit_adapters_static_analysis.py
 =====================================
-[新設 2026-11] angels/audit_adapters_static_analysis.py の単体テスト。
+[新設 2026-11] checks/audit_adapters_static_analysis.py の単体テスト。
 
 本天使(「サリエルの監視」)は、`adapters/`配下の外部ツール連携
 スクリプトが、禁止モジュールを直接importしていないかを
@@ -19,7 +19,7 @@ tests/test_audit_adapters_static_analysis.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import audit_adapters_static_analysis as sfa
 import runtime_guard

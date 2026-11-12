@@ -67,7 +67,7 @@ _PROFILE_PATH = ROOT / "src" / "docker_sandbox" / "seccomp-profile.json"
 # Linuxでは新規プロセスの生成自体(posix_spawnやos.exec系も内部で
 # これらのいずれかを経由する)がそもそも不可能であり、これが本来
 # 塞ぎたかった迂回経路であるため、execveの許可自体は実質的な後退
-# ではない。詳細はGRIMOIRE.md §CI参照。
+# ではない。詳細はDEFECTS.md §CI参照。
 _REQUIRED_CORE_DENYLIST = {
     "fork", "vfork", "clone", "clone3",
     "ptrace", "mount", "umount2", "chroot",
@@ -80,7 +80,7 @@ _REQUIRED_CORE_DENYLIST = {
     # denylist/allowlistのどちらにも一度も捕捉されない)。Docker 25.0・
     # containerdのRuntimeDefaultプロファイルが2024年に自身の既定
     # allowlistからこれらを除外したのと同じ理由で、本プロファイルの
-    # 核心的な拒否対象に含める。GRIMOIRE.md §CL参照。
+    # 核心的な拒否対象に含める。DEFECTS.md §CL参照。
     "io_uring_setup",
 }
 
@@ -122,7 +122,7 @@ def _check_profile_json_is_well_formed() -> tuple:
         return False, (
             f"execve/execveatがdenylistに再び含まれています(§CIで自己訂正した回帰の再発): {sorted(reintroduced)}。"
             f"これらを拒否すると、Docker/runcがコンテナのENTRYPOINTをexecveで起動する際に"
-            f"コンテナ自体が起動できなくなる(実機で確認済み、GRIMOIRE.md §CI参照)。"
+            f"コンテナ自体が起動できなくなる(実機で確認済み、DEFECTS.md §CI参照)。"
         )
 
     return True, "OK"
@@ -284,7 +284,7 @@ if __name__ == "__main__":
     main()
 """
 
-# [新設 2026-10 §CI] GRIMOIRE.md §CIで記録した自己発見の回帰
+# [新設 2026-10 §CI] DEFECTS.md §CIで記録した自己発見の回帰
 # (execveをdenylistに含めると、Docker/runcがコンテナのPID1へこの
 # フィルタをロードした直後にENTRYPOINTをexecveする際、コンテナが
 # 一度も起動できなくなっていた)を、二度と再発させないための直接
@@ -346,7 +346,7 @@ if __name__ == "__main__":
 
 
 def _check_execve_after_filter_load_still_works() -> tuple:
-    """GRIMOIRE.md §CIの回帰(execveをdenylistに含めるとコンテナ自体が
+    """DEFECTS.md §CIの回帰(execveをdenylistに含めるとコンテナ自体が
     起動できなくなる)が再発していないかを、Dockerを使わず直接確認する。
     `_check_raw_kernel_enforcement()`とは独立した検証である――そちらは
     「危険なシステムコールが遮断されているか」を見るが、本検査は逆に

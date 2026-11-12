@@ -1,11 +1,11 @@
 """
-tests/test_angel_common_four_state_verdicts.py
+tests/test_check_common_four_state_verdicts.py
 ================================================
-[脆弱性修正 2026-10 §BO] angels/_common.py の回帰テスト。
+[脆弱性修正 2026-10 §BO] checks/_common.py の回帰テスト。
 
-以前の angels/_common.py には report_pass / report_fail の2値しか無く、
+以前の checks/_common.py には report_pass / report_fail の2値しか無く、
 「検査対象が存在しない」(NOT_APPLICABLE) ケースを report_pass で代用して
-いた angels/*.py が9ファイル存在した(audit_dependency_cve.py,
+いた checks/*.py が9ファイル存在した(audit_dependency_cve.py,
 check_zkp_audit_export_status.py, check_hardware_certificate_schema.py, audit_autorule_approval_gate.py,
 guard_html_external_script_injection.py, audit_log_format_integrity.py, audit_adapters_static_analysis.py,
 check_certificate_expiry.py, guard_audit_log_replay.py)。これはCI上では「全て検査してPASSした」
@@ -27,7 +27,7 @@ import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import _common as common
 
 

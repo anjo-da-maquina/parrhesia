@@ -1,7 +1,7 @@
 """
 tests/test_guard_shield_rule_autoapply_and_key_leak.py
 =====================================
-[新設 2026-11] angels/guard_shield_rule_autoapply_and_key_leak.py の単体テスト。
+[新設 2026-11] checks/guard_shield_rule_autoapply_and_key_leak.py の単体テスト。
 
 本天使(「ザドキエルの勅令」)は、外部脅威インテリジェンス取り込み機構
 (src/angelic_shield.py・src/kamael_judgment.py)の再構築が、以下5点の
@@ -28,7 +28,7 @@ main()内で先頭から順に評価され、最初に満たさない条件の�
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_shield_rule_autoapply_and_key_leak as zsd
 
 VALID_SHIELD_TEXT = (

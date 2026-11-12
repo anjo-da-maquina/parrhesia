@@ -9,7 +9,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # したところ、`socket.socket.send()`/`sendall()`が、実機で確認した限り
 # **一度も**audit eventを発火しないことが判明した。
 #
-# `angels/guard_network_exfiltration.py`の§CA時点のコメントは、「TCP
+# `checks/guard_network_exfiltration.py`の§CA時点のコメントは、「TCP
 # 経由のsend/sendallは専用eventを持たないが、必ず事前のconnectを要する
 # (=forbidden集合で遮断済み)ため検査不要」と判断していたが、これは
 # 「Sanctum起動**前**に確保したfd・接続は、起動後も検査を素通りする」
@@ -50,7 +50,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # `requests`等の通常の経路は常にTLSを経由するため)。`runtime_guard/__init__.py`
 # に`_guarded_ssl_socket_send`/`_guarded_ssl_socket_sendall`を新設し、
 # §COの`_check_socket_send_allowed`をそのまま再利用して修正した
-# (GRIMOIRE.md §CP参照)。本天使に、TLS版の事前接続バイパス遮断・
+# (DEFECTS.md §CP参照)。本天使に、TLS版の事前接続バイパス遮断・
 # 許可ホストへの正当なTLS通信の誤検知防止検査を追加した。
 #
 # [新設 2026-10 §CR追記] §CPの修正を確認した直後、「`ssl.SSLSocket`で
@@ -66,7 +66,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # に実際にデータが届くことを確認した。`runtime_guard/__init__.py`に
 # `_guarded_ssl_socket_write`を新設し、§CO/§CPの
 # `_check_socket_send_allowed`をそのまま再利用して修正した
-# (GRIMOIRE.md §CR参照)。
+# (DEFECTS.md §CR参照)。
 #
 # なお、同じ棚卸しで`sendto`・`sendmsg`も`SSLSocket`で上書きされている
 # ことを確認したが、TLSハンドシェイク確立後は`sendto`は`ValueError`、
@@ -539,7 +539,7 @@ def run_battery():
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
             # 機能せず、run_battery自体が未処理の例外で丸ごと落ちて
-            # しまう(angels/guard_socket_send_bypass.pyの新設時に
+            # しまう(checks/guard_socket_send_bypass.pyの新設時に
             # 実機で発見)。KeyboardInterrupt/SystemExit等も含め
             # 広く捕捉するが、本関数の唯一の責務は「1件の検査関数の
             # 呼び出し結果を安全に報告する」ことであり、ここで拾った

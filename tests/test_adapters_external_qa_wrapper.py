@@ -1,7 +1,7 @@
 """
 tests/test_adapters_external_qa_wrapper.py
 =============================================
-adapters/external_qa_wrapper.py の回帰テスト。GRIMOIRE.md §AJ 参照。
+adapters/external_qa_wrapper.py の回帰テスト。DEFECTS.md §AJ 参照。
 
 背景: 本ファイルは以前
     import os, sys

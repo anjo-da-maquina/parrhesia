@@ -1,7 +1,7 @@
 """
 tests/test_check_disk_and_log_capacity.py
 =====================================
-[新設 2026-11] angels/check_disk_and_log_capacity.py の単体テスト。
+[新設 2026-11] checks/check_disk_and_log_capacity.py の単体テスト。
 
 本天使(「ラグエルの天秤」)は、(1)ディスク空き容量が危険域
 (50MB未満)でないこと、(2)監査証跡(`runtime_guard/audit_chain.jsonl`)の
@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from collections import namedtuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_disk_and_log_capacity as rs
 
 _DiskUsage = namedtuple("usage", ["total", "used", "free"])

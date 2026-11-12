@@ -9,7 +9,7 @@ parrhesia/_brand.py
 (例: parrhesia/_brand.py)に集約し、変更を1か所で済む設計にします。」
 
 改名の範囲は、README題名・配布名・コマンド名・報告書の表記に限る。
-天使(Gabriel・Michael等)の名前、GRIMOIRE.mdの歴史的記述、既存の
+天使(Gabriel・Michael等)の名前、DEFECTS.mdの歴史的記述、既存の
 §番号、`runtime_guard`パッケージ名(pip配布名)は変更しない。
 """
 

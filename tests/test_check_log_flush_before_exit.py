@@ -1,7 +1,7 @@
 """
 tests/test_check_log_flush_before_exit.py
 =====================================
-[新設 2026-10 §BR] angels/check_log_flush_before_exit.py の単体テスト。
+[新設 2026-10 §BR] checks/check_log_flush_before_exit.py の単体テスト。
 
 本天使は、§BQで実機CIにおいて実際に発見した「os._exit()の直前に
 flush()が無いため、自壊理由のログが(標準出力がパイプ/ファイルの場合に)
@@ -15,7 +15,7 @@ flush()が無いため、自壊理由のログが(標準出力がパイプ/フ�
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_log_flush_before_exit as blw
 
 
@@ -132,7 +132,7 @@ def test_file_with_no_exit_call_reports_not_applicable(monkeypatch, tmp_path, ca
     """検査対象のos._exit()呼び出しが一件も無いリポジトリ状態では、
     NOT_APPLICABLEを報告する(§BOで修正したPASS/NOT_APPLICABLE混同の
     再発防止)。"""
-    (tmp_path / "angels").mkdir()
+    (tmp_path / "checks").mkdir()
     (tmp_path / "src").mkdir()
     (tmp_path / "adapters").mkdir()
     (tmp_path / "src" / "clean.py").write_text("print('no exit here')\n", encoding="utf-8")

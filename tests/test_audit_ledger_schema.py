@@ -1,7 +1,7 @@
 """
 tests/test_audit_ledger_schema.py
 =====================================
-[新設 2026-11] angels/audit_ledger_schema.py の単体テスト。
+[新設 2026-11] checks/audit_ledger_schema.py の単体テスト。
 
 本天使(「ラジエルの書」)は、`runtime_guard/raziel_ledger.json`のスキーマと、
 禁止イベント名が妥当なPython audit event名の形式であること(LLM幻覚に
@@ -17,7 +17,7 @@ monkeypatchして各分岐を検証する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_ledger_schema as ra
 
 

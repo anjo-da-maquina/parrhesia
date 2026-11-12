@@ -1,7 +1,7 @@
 """
 tests/test_guard_fail_open_exception.py
 =========================================
-[新設 2026-10 §BS] angels/guard_fail_open_exception.py の単体テスト。
+[新設 2026-10 §BS] checks/guard_fail_open_exception.py の単体テスト。
 
 本天使は、runtime_audit_gatekeeper.pyの_register_audit_hook_once()で実際に
 発見した本物の脆弱性――本リポジトリ唯一の深層保護(sys.addaudithook)の
@@ -19,7 +19,7 @@ tests/test_guard_fail_open_exception.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_fail_open_exception as jfg
 
 
@@ -145,7 +145,7 @@ def test_file_with_no_except_reports_not_applicable(monkeypatch, tmp_path, capsy
     内容は意図的に文字列リテラル中に"except"という部分文字列を含めて
     いる(下のtest_does_not_false_positive_on_the_word_except_inside_a_
     string参照)。"""
-    (tmp_path / "angels").mkdir()
+    (tmp_path / "checks").mkdir()
     (tmp_path / "src").mkdir()
     (tmp_path / "adapters").mkdir()
     (tmp_path / "src" / "clean.py").write_text("print('no except here')\n", encoding="utf-8")
@@ -167,7 +167,7 @@ def test_does_not_false_positive_on_the_word_except_inside_a_string():
 
 def test_real_repository_files_pass_after_the_sbs_fix():
     """[実機の裏付け] §BSで実際に修正したruntime_audit_gatekeeper.py
-    ._register_audit_hook_once()・angels/audit_dependency_cve.pyを
+    ._register_audit_hook_once()・checks/audit_dependency_cve.pyを
     含む、現時点のリポジトリ全体に対して本天使を実行し、PASSすることを
     確認する(回帰防止)。"""
     import io

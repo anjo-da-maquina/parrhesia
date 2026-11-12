@@ -33,7 +33,7 @@ Gabrielの静的解析だけで実行を許可するのではなく、実際の�
 通りの構造が、`runtime_guard.inquisition()`自身(教材ではなく実運用コード)にも
 具体的に当てはまることを、本テストで実機検証として固定する。
 
-[未解決の残存リスク] `angels/audit_adapters_static_analysis.py`(CI上で`adapters/`
+[未解決の残存リスク] `checks/audit_adapters_static_analysis.py`(CI上で`adapters/`
 配下のスクリプトをGabrielの静的解析のみで検査する)は、この種のコードに
 対して動的実行を一切行わないため、本バイパスに対して無力である。ただし
 `adapters/`はAIが生成する未検証コードではなく保守者が書く内部ツールである
@@ -55,7 +55,7 @@ def test_gabriel_misses_sys_modules_subscript_bypass():
     findings = inquisition(_BYPASS_PAYLOAD)
     assert findings == [], (
         "この既知の限界が無くなった(Gabrielが検知できるようになった)場合は、"
-        "本テストを更新し、GRIMOIRE.md §AYの記述も合わせて見直すこと。"
+        "本テストを更新し、DEFECTS.md §AYの記述も合わせて見直すこと。"
         f" findings={findings}"
     )
 

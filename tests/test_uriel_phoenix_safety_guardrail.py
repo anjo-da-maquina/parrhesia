@@ -1,7 +1,7 @@
 """
 tests/test_uriel_phoenix_safety_guardrail.py
 ==============================================
-src/uriel_phoenix.UrielPhoenix の回帰テスト。GRIMOIRE.md §AI 参照。
+src/uriel_phoenix.UrielPhoenix の回帰テスト。DEFECTS.md §AI 参照。
 
 背景: UrielPhoenix.scorched_earth_and_rebirth()は`shutil.rmtree()`/
 `Path.unlink()`による不可逆な破壊的操作を行うが、`core_dir`/`talisman`を

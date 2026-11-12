@@ -23,7 +23,7 @@ except ModuleNotFoundError as e:
 # ローカルホストへの接続を試みたところ、結界展開中は`ConnectionRefusedError`
 # で遮断されることを確認した)。
 #
-# GRIMOIRE.md §Lは、全く同じ理由(CassielsVeilはローカルOllamaサーバーへの
+# DEFECTS.md §Lは、全く同じ理由(CassielsVeilはローカルOllamaサーバーへの
 # 通信まで一緒に遮断してしまうため)で、CassielsVeilを実運用パイプラインへは
 # 統合しない(教材として保持するのみ)と既に確定していた。本ファイルは後から
 # 新設された際、まさにその禁止されていた統合を自ら行ってしまっていた。

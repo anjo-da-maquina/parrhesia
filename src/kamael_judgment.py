@@ -14,7 +14,7 @@ src/kamael_judgment.py
      `os.system(...)` のような呼び出しのバレ属性名(`"system"`)しか
      取得できず、`shield_rules.json` の `blocked_functions` に
      `"os.system"` のような完全修飾名で登録されたルールには一致しなかった。
-     Gabrielの修正(GRIMOIRE.md §E)と同じ手法で、呼び出し式から完全修飾
+     Gabrielの修正(DEFECTS.md §E)と同じ手法で、呼び出し式から完全修飾
      ドット区切り名を復元し、バレ名・完全修飾名の両方を照合するように
      修正した。既知の限界(別名importでの回避)も同様に残る。
 
@@ -34,7 +34,7 @@ def _qualified_call_name(func_node) -> str:
     例: `os.system(...)` の `node.func` → "os.system"
         `a.b.c(...)` の `node.func` → "a.b.c"
     復元できない場合（単純な名前以外から始まる式など）は空文字を返す。
-    [runtime_guard.inquisition() の同種修正(GRIMOIRE.md §E)と同一のロジック]
+    [runtime_guard.inquisition() の同種修正(DEFECTS.md §E)と同一のロジック]
     """
     parts = []
     node = func_node

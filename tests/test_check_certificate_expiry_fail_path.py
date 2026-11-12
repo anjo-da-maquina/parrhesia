@@ -1,21 +1,21 @@
 """
 tests/test_check_certificate_expiry_fail_path.py
 =====================================
-[脆弱性修正 2026-10 §BP] angels/check_certificate_expiry.py の回帰テスト。
+[脆弱性修正 2026-10 §BP] checks/check_certificate_expiry.py の回帰テスト。
 
-angels/check_certificate_expiry.pyは、証明書の有効期限切れを「GitHub Actions等の
+checks/check_certificate_expiry.pyは、証明書の有効期限切れを「GitHub Actions等の
 未承認クラウド環境(IS_UNVERIFIED_CLOUD)では正常」「それ以外(ローカル等)
 では異常」として、異なる2つの分岐(report_pass / report_fail)に振り分ける
 設計である。これ自体は`test_sanctuary.py`のゼロトラスト思想と整合する
 正当な設計意図だが、本リポジトリには、この2分岐のうち
 「IS_UNVERIFIED_CLOUDがFalseの場合に、本当にreport_fail(CI失敗)が
 発火するか」を直接検証する専用テストが一件も存在していなかった
-(angels/check_certificate_expiry.pyを対象とするテストファイル自体が無かった)。
+(checks/check_certificate_expiry.pyを対象とするテストファイル自体が無かった)。
 
 これは§BM(CHAOS_MODE)・§BN(HMAC連鎖)と構造的に同じ「安全装置が本当に
 発火するかを誰も確認していない」というパターンの、未発見だった具体例
 である。§11.8/§11.9で設計した「陣性経路テスト必須化」の考え方を、
-angels/audit_security_flag_test_coverage.py という新天使を実装する前に、人間の
+checks/audit_security_flag_test_coverage.py という新天使を実装する前に、人間の
 依頼に基づく手動のレッドチーム作業(既存の全os.getenv/os.environ.get
 利用箇所を洗い出し、各分岐に対応するテストの有無を確認する)によって
 実際に発見した。
@@ -25,7 +25,7 @@ import sys
 from contextlib import redirect_stdout
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_certificate_expiry as ss
 
 

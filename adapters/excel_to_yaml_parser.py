@@ -11,9 +11,9 @@ CIワークフロー(.github/workflows/anjo_da_maquina_protocol.yml)では、本
 ステップは「3.8. 外部要件の抽出 (Excel to YAML Parser)」として実行され、
 常に例外なく成功する(exit code 0)ため、あたかも実際に外部のExcelファイル
 から要件を抽出しYAML化する処理が行われ合格したかのように報告していたが、
-実際には何も処理していなかった。これは`angels/*.py`が§刷新前に抱えていた
-のと全く同種の「名前だけの検査」である(angels/_common.pyのdocstring参照:
-「以前のangels/*.pyの大半(33ファイル中28ファイル)は...何も検査していな
+実際には何も処理していなかった。これは`checks/*.py`が§刷新前に抱えていた
+のと全く同種の「名前だけの検査」である(checks/_common.pyのdocstring参照:
+「以前のchecks/*.pyの大半(33ファイル中28ファイル)は...何も検査していな
 かった」)。本件は`adapters/`配下にも同種の問題が残っていたことを示す。
 
 さらに重要な手がかりとして、CIの「3. 供物の準備 (Install Dependencies)」
@@ -26,7 +26,7 @@ openpyxlを一切使用していなかった(インストールされている�
 した。リポジトリルートに`requirements.xlsx`(1行目をヘッダ行とする表形式の
 外部要件シート)がまだ存在しない現状(外部要件シートはまだ導入されていない)
 では、他の天使スクリプトと同じ「対象が存在しない場合は正直にスキップ報告
-する」パターン(例: angels/check_certificate_expiry.pyの証明書未発行時の扱い)に従い、
+する」パターン(例: checks/check_certificate_expiry.pyの証明書未発行時の扱い)に従い、
 検査対象なしとして正常終了する。`requirements.xlsx`が将来投入された場合は
 実際にパースし、`runtime_guard/external_requirements.yaml`へ出力する。
 """

@@ -20,7 +20,7 @@ docstring参照)、`adapters/`配下に残っていた「名前だけの検査�
 を含むリポジトリ内のどのスクリプトもPlaywrightを一切使用していなかった。
 
 本修正では、PlaywrightのヘッドレスChromiumで`architecture.html`
-(`angels/guard_html_external_script_injection.py`が構文・外部スクリプト混入を静的に検査
+(`checks/guard_html_external_script_injection.py`が構文・外部スクリプト混入を静的に検査
 している対象と同一ファイル)を実際にレンダリングし、以下を動的に検証する
 「本物の」外部QAチェックとして実装した:
   1. ページ読み込み中にJavaScriptの未捕捉例外(pageerror)が発生しないこと。

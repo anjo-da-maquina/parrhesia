@@ -1,5 +1,5 @@
 ﻿"""
-angels/check_required_ci_steps_present.py
+checks/check_required_ci_steps_present.py
 =============================
 [脆弱性修正 2026-10 §AO] 本スクリプトの目的は「CIワークフローから必須の
 天使ステップ(guard_sandbox_core_attack_battery.py等)が削除されていないか」を検知することだが、
@@ -19,7 +19,7 @@ angels/check_required_ci_steps_present.py
 
 本修正では、生のテキスト検索ではなく`yaml.safe_load`でワークフローを
 構造的に解析し、`jobs.angelic-audit.steps`の中に、実際に`run:`フィールド
-として`python angels/<必須ファイル名>`を実行するステップが存在するかを
+として`python checks/<必須ファイル名>`を実行するステップが存在するかを
 検証するようにした。コメントや無関係な文字列は`run:`フィールドの外に
 あるため、この方式では一致しない。
 """

@@ -1,7 +1,7 @@
 """
 tests/test_guard_ctypes_dlsym_bypass.py
 ====================================
-[新設 2026-10 §CE] angels/guard_ctypes_dlsym_bypass.py の単体テスト。
+[新設 2026-10 §CE] checks/guard_ctypes_dlsym_bypass.py の単体テスト。
 
 実際に発見した具体例: `runtime_audit_gatekeeper.py`の`forbidden`集合は
 封鎖中に新たに`ctypes`をimportすることだけを遮断していたが、
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_ctypes_dlsym_bypass as cdg
 
 # [設計修正 2026-11 §DA] このテストが呼ぶ cdg.run_battery() 等は、実際には
@@ -36,7 +36,7 @@ _RSA_UNAVAILABLE_SKIP = pytest.mark.skipif(
     importlib.util.find_spec("rsa") is None,
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "runtime_audit_gatekeeper.py imports it at module level inside the "
-    "subprocess this test spawns; not a code defect, see GRIMOIRE.md known "
+    "subprocess this test spawns; not a code defect, see DEFECTS.md known "
     "environment gaps (§DA)",
 )
 

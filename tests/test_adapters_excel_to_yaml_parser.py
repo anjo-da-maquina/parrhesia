@@ -1,7 +1,7 @@
 """
 tests/test_adapters_excel_to_yaml_parser.py
 =============================================
-adapters/excel_to_yaml_parser.py の回帰テスト。GRIMOIRE.md §AJ 参照。
+adapters/excel_to_yaml_parser.py の回帰テスト。DEFECTS.md §AJ 参照。
 
 背景: 本ファイルは以前
     import os, sys

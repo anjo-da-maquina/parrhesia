@@ -49,7 +49,7 @@ _RSA_UNAVAILABLE_SKIP = pytest.mark.skipif(
     importlib.util.find_spec("rsa") is None,
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "runtime_audit_gatekeeper.py imports it at module level inside the "
-    "subprocess this test spawns; not a code defect, see GRIMOIRE.md known "
+    "subprocess this test spawns; not a code defect, see DEFECTS.md known "
     "environment gaps (§DA)",
 )
 

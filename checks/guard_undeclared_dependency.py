@@ -44,14 +44,14 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 # 未知のパッケージについては誤って「未宣言」と判定する可能性がある
 # (偽陽性の方向)。(4) ワークフローのrun:ステップ内の`pip install`のみを
 # 検査しており、Pythonスクリプト内部からの`subprocess`経由の動的な
-# `pip install`(例: angels/audit_dependency_cve.pyが実行時に
+# `pip install`(例: checks/audit_dependency_cve.pyが実行時に
 # pip-auditを自己インストールする箇所)は検査対象外――これは静的な
 # requirements.txt宣言と対比すべき「宣言された依存」ではなく、実行時
 # にのみ発生する別種のサプライチェーン上の関心事であり、本天使の
 # スコープを超えるため、意図的に将来の課題として切り出す。
 
 TARGET_DIRS_FOR_IMPORT_SCAN = [
-    "angels", "src", "adapters", "anjo_interceptor", "runtime_guard", "tools",
+    "checks", "src", "adapters", "anjo_interceptor", "runtime_guard", "tools",
 ]
 TARGET_FILES_FOR_IMPORT_SCAN = ["runtime_audit_gatekeeper.py"]
 
@@ -98,10 +98,10 @@ def _is_local_module_name(name: str) -> bool:
     # モジュール(`sys.path.insert(0, ".../tartarus")`した上で`import
     # armageddon_core`のように、ディレクトリ名を介さずトップレベル名で
     # importする、本リポジトリの`tests/`で既に使われている確立済みの
-    # パターン)を、`angels/`配下のファイルが同じ流儀でimportすると、
+    # パターン)を、`checks/`配下のファイルが同じ流儀でimportすると、
     # 「requirements.txtに未宣言のサードパーティimport」という偽陽性で
     # 検知してしまう欠陥があった。実機で確認済み: 新設した
-    # `angels/guard_rejection_memory.py`(§BZ)がこの流儀で
+    # `checks/guard_rejection_memory.py`(§BZ)がこの流儀で
     # `armageddon_core`をimportしたところ、本天使自身がそれを誤検知し、
     # マージ前のリポジトリ全体pytest実行で初めて発覚した。`tartarus/`は
     # 他のローカルディレクトリ(angels・src・adapters等)と全く同じ
@@ -252,7 +252,7 @@ def main():
         detail = "; ".join(f"{f}:{j}:{s}({', '.join(pkgs)})" for f, j, s, pkgs in divergent_installs)
         problems.append(
             f"requirements.txtを経由しない、pip installの直接指定がCIワークフローに"
-            f"見つかりました(§BVのangels/*.py用ワークフローと同種の依存関係の乖離): {detail}"
+            f"見つかりました(§BVのchecks/*.py用ワークフローと同種の依存関係の乖離): {detail}"
         )
 
     if problems:

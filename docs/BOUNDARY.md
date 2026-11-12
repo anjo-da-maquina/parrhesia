@@ -2,7 +2,7 @@
 
 このドキュメントは、Parrhesiaを公開・配布するにあたって、「このプロジェクトが実際に保証していること」と「利用者自身の環境が整えなければ、その保証が成立しないこと」を、正直に線引きするためのものです。
 
-[GRIMOIRE.md](./GRIMOIRE.md)が「見つけた欠陥とその直し方」の記録であるのに対し、本ドキュメントは「直した上で、なお残る前提条件・適用範囲」を記録します。どちらも同じ誠実さの方針の延長です――本当に検証できたことだけを「保証」と呼び、検証できていない・構造的に担当できないことは、はっきり「担当外」と書きます。
+[DEFECTS.md](./DEFECTS.md)が「見つけた欠陥とその直し方」の記録であるのに対し、本ドキュメントは「直した上で、なお残る前提条件・適用範囲」を記録します。どちらも同じ誠実さの方針の延長です――本当に検証できたことだけを「保証」と呼び、検証できていない・構造的に担当できないことは、はっきり「担当外」と書きます。
 
 ## 1. 一言でいうと
 
@@ -14,9 +14,9 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 | --- | --- | --- |
 | **Gabriel**(`runtime_guard.inquisition`) | AIが生成したコード片の、既知の危険パターン(difficult patterns)を静的AST解析で事前検知 | 単体テスト |
 | **IntentInterceptor** | ディレクトリトラバーサル・ハニーポット的な意図検知 | 単体テスト |
-| **Sefer / Sanctum** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(GRIMOIRE.md §CD・§CE等) |
+| **Sefer / Sanctum** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(DEFECTS.md §CD・§CE等) |
 | **Maquina Gatekeeper** | Pythonレベルでのプロセス起動・ネットワーク通信の遮断(`subprocess`・`os.fork`・`socket`系APIの監視) | 単体テスト |
-| **Sandalphon**(Docker隔離結界) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、GRIMOIRE.md §CF〜§CL) |
+| **Sandalphon**(Docker隔離結界) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、DEFECTS.md §CF〜§CL) |
 | **Angels**(~50体のCIチェック) | 上記すべての層が「後退していないか」を、pushごとに自動で再検証 | `.github/workflows/anjo_da_maquina_protocol.yml`(GitHub Actions上で実行) |
 
 これらは単体で完結した機能ではなく、**AegisSystem(`src/aegis_system.py`)が1〜4層を統合し、既定で「Dockerによる動的検証を必ず経由させる」ゼロトラスト方針を強制する**ことで初めて、設計通りの保証になります。
@@ -40,9 +40,9 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 
 5. **Python層の防御(Sefer・Maquina Gatekeeper)は、あくまでPythonのAPI呼び出しを監視するものです。**
    `ctypes`等によるカーネルへの直接syscall呼び出しは、Python層の監視を素通りします(これがまさに§CD・§CE・§CFでSandalphon/seccompという**カーネルレベル**の層を別途追加した理由です)。したがって、**Sandalphon(Docker+seccomp)を無効化・迂回した状態でSefer/Gatekeeperだけに頼ることは、保証として成立しません。**
-   さらに、これは「迂回」とは別種の、より構造的な限界です――Sefer・Maquina Gatekeeperの大半は、CPythonの`sys.addaudithook`機構が発火する「監査イベント」を捕捉する設計ですが、**この機構自体が、Python標準ライブラリの全APIを網羅しているわけではありません。** 実際に`os.sendfile()`/`os.copy_file_range()`は、CPython 3.13時点で監査イベントを一度も発火しないことを実機で確認しています(GRIMOIRE.md §CD・§CN)。これらは、監視対象外であることが判明した具体的なAPIについては個別にモンキーパッチで塞いでいますが、**将来のPythonバージョンで追加される新しいAPI、またはまだ見つけていない既存のAPIが、同じく監査イベントを発火しない可能性は、構造的に排除できません。** 本プロジェクトが採用している対策は「1つ見つけたら、同じ構造の他の穴を体系的に探す」という継続的な方法論であり、「すべての穴が既に塞がれている」という完全性の証明ではありません。
+   さらに、これは「迂回」とは別種の、より構造的な限界です――Sefer・Maquina Gatekeeperの大半は、CPythonの`sys.addaudithook`機構が発火する「監査イベント」を捕捉する設計ですが、**この機構自体が、Python標準ライブラリの全APIを網羅しているわけではありません。** 実際に`os.sendfile()`/`os.copy_file_range()`は、CPython 3.13時点で監査イベントを一度も発火しないことを実機で確認しています(DEFECTS.md §CD・§CN)。これらは、監視対象外であることが判明した具体的なAPIについては個別にモンキーパッチで塞いでいますが、**将来のPythonバージョンで追加される新しいAPI、またはまだ見つけていない既存のAPIが、同じく監査イベントを発火しない可能性は、構造的に排除できません。** 本プロジェクトが採用している対策は「1つ見つけたら、同じ構造の他の穴を体系的に探す」という継続的な方法論であり、「すべての穴が既に塞がれている」という完全性の証明ではありません。
 
-   [正直な注記 2026-11、§CT・§CUで実際に塞いだ具体例] 「監査イベントを発火しないAPI」という上記の構造的限界の、もう一つの実例として、`socket.getaddrinfo()`(DNS名前解決そのもの)が、本プロジェクト新設当初から`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`(Sefer側)・`forbidden`集合(Gatekeeper側)のいずれにも含まれておらず、`connect()`を一切経由しない「DNS exfiltration」(機密データをサブドメインラベルに符号化してDNSクエリとして外部へ送出する古典的手法)が、封鎖中でも無条件に素通りしていたことを実機で発見・修正しました(GRIMOIRE.md §CT)。直後の棚卸しで、同じ経路を持つ旧API(`gethostbyname`/`gethostbyname_ex`/`gethostbyaddr`/`getnameinfo`)も同様に未対策だったことが判明し、これも修正しました(§CU)。
+   [正直な注記 2026-11、§CT・§CUで実際に塞いだ具体例] 「監査イベントを発火しないAPI」という上記の構造的限界の、もう一つの実例として、`socket.getaddrinfo()`(DNS名前解決そのもの)が、本プロジェクト新設当初から`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`(Sefer側)・`forbidden`集合(Gatekeeper側)のいずれにも含まれておらず、`connect()`を一切経由しない「DNS exfiltration」(機密データをサブドメインラベルに符号化してDNSクエリとして外部へ送出する古典的手法)が、封鎖中でも無条件に素通りしていたことを実機で発見・修正しました(DEFECTS.md §CT)。直後の棚卸しで、同じ経路を持つ旧API(`gethostbyname`/`gethostbyname_ex`/`gethostbyaddr`/`getnameinfo`)も同様に未対策だったことが判明し、これも修正しました(§CU)。
 
    この修正の直後、「DNS系APIの兄弟にあたる、他のsocket関連audit eventは本当に安全か」を実機で体系的に棚卸ししました。`socket.bind`・`socket.getservbyname`・`socket.getservbyport`・`socket.gethostname`は、いずれも専用のaudit eventを独自に発火することを確認しましたが、`getaddrinfo`系4件と異なり、**攻撃者が制御するデータを実際に外部のネットワークへ運ぶ経路にはなり得ない**と判断しました(`bind`は自分のローカルなポートを確保するだけで送信を伴わない。`getservbyname`/`getservbyport`は既定で`/etc/services`のローカル参照のみで外部通信を伴わない。`gethostname`は引数を取らず送出できるデータが無い)。同様に、`ctypes.string_at`/`ctypes.wstring_at`/`ctypes.create_string_buffer`/`ctypes.addressof`(いずれも専用のaudit eventを発火することを実機で確認)についても検討しましたが、これらは「プロセス自身が既にアクセスできるメモリを読む」API であり、Gatekeeper側の`ctypes.dlopen`/`ctypes.dlsym`監視が守ろうとしている対象(ネイティブコードの動的ロード・libc関数への直接到達による禁止API迂回)とは性質が異なる上に、Sefer側の名前空間ごとのdefault-deny(`event.startswith("ctypes.")`)によって、個別の列挙無しに最初から遮断されていることを実機で確認済みです(`Sanctum`配下で`ctypes.string_at()`を実行し、`[Sefer] Tripwire: Default-deny blocked unwhitelisted system event 'ctypes.string_at'.`で遮断されることを確認)。これらは「見つけたのに塞がずに残した穴」ではなく、「体系的に探した結果、今回は実際の穴ではないと判断した」という調査結果そのものを、誠実に記録しています。
 
@@ -67,7 +67,7 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 - **単一コンテナの境界を超えた領域。** 例えば、正規の権限を持つが過度に広い権限を持つMCPサーバーなど、「コンテナの外側で、かつ正規の経路」から来る脅威は、この隔離結界の設計対象外です。
 - **法令遵守・コンプライアンス上の保証。**
 - **第三者による正式な監査・認証。** 本プロジェクトは個人のQAエンジニアによる研究・検証プロジェクトであり、専門機関によるセキュリティ監査や認証を受けたものではありません。約50件の継続的自動チェックと、実機での自己レッドチームによる検証という方法で誠実さを積み重ねていますが、これは監査証明の代替ではありません。
-- **証明書の運用自動化における「人間による帯外確認」(2026-11、修正済み)。** `tools/renew_certificate.ps1`/`.sh`による週次自動更新は、当初`promote_provisioning_seal.py`が前提とする人間の確認手順を便宜上スキップして即時承認する設計になっていました([GRIMOIRE.md §CX](../GRIMOIRE.md)で発見・記録)。その後、「提案された鍵が現在の信頼の起点と同一か(=単なる期限延長)」を機械的に判定する`--check-rotation`を追加し、同一の場合のみ自動承認・異なる場合(本物の鍵のローテーション)は人間の帯外確認を必須のまま要求する設計に修正しました([GRIMOIRE.md §CZ](../GRIMOIRE.md))。本項目は「この種の自動化には、常にこの種の落とし穴がある」という一般的な注意点として引き続きここに残していますが、この具体的な欠陥自体は解消済みです。
+- **証明書の運用自動化における「人間による帯外確認」(2026-11、修正済み)。** `tools/renew_certificate.ps1`/`.sh`による週次自動更新は、当初`promote_provisioning_seal.py`が前提とする人間の確認手順を便宜上スキップして即時承認する設計になっていました([DEFECTS.md §CX](../DEFECTS.md)で発見・記録)。その後、「提案された鍵が現在の信頼の起点と同一か(=単なる期限延長)」を機械的に判定する`--check-rotation`を追加し、同一の場合のみ自動承認・異なる場合(本物の鍵のローテーション)は人間の帯外確認を必須のまま要求する設計に修正しました([DEFECTS.md §CZ](../DEFECTS.md))。本項目は「この種の自動化には、常にこの種の落とし穴がある」という一般的な注意点として引き続きここに残していますが、この具体的な欠陥自体は解消済みです。
 
   この修正の脅威モデルには、以下の2点の限界が残っています(隠さず明記します):
   - **「信頼済みの鍵」の保存場所そのものは、自動化から独立していません。** `--check-rotation`が比較対象とする「現在信頼されている鍵」は、`runtime_audit_gatekeeper.py`内の`MAQUINA_PUBLIC_KEY_PEM`を直接読み取ったものであり、これは`--approve`自身が書き込む先と同じファイルです。つまり本対策は「複数回の自動実行の間で鍵が勝手に変わらないこと」は保証しますが、そもそもの初回承認(最初にこのファイルへ書き込まれた鍵)が正当だったかどうかは、この対策の範囲外です。また、リポジトリへの書き込み権限を持つ攻撃者が`runtime_audit_gatekeeper.py`を直接改変すれば、`promote_provisioning_seal.py`の承認フロー自体を経由せずに信頼の起点を書き換えられるため、`--check-rotation`はそのような直接改変を防ぎません。
@@ -75,4 +75,4 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 
 ## 5. この境界線自体の正直な限界
 
-本ドキュメントも、GRIMOIRE.mdの他のすべての記録と同じ水準で扱います――すなわち、**ここに書いたことは、このセッションで実際に確認できた範囲の誠実な記述であり、将来さらに見直しが必要になる可能性があります。** 新しい迂回経路やホスト環境の前提の見落としが見つかった場合、GRIMOIRE.mdに記録した上で、本ドキュメントも更新します。
+本ドキュメントも、DEFECTS.mdの他のすべての記録と同じ水準で扱います――すなわち、**ここに書いたことは、このセッションで実際に確認できた範囲の誠実な記述であり、将来さらに見直しが必要になる可能性があります。** 新しい迂回経路やホスト環境の前提の見落としが見つかった場合、DEFECTS.mdに記録した上で、本ドキュメントも更新します。

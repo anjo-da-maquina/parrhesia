@@ -2,7 +2,7 @@
 tests/test_intent_interceptor_absolute_path_escape.py
 =========================================================
 anjo_interceptor/intent_checker.IntentInterceptor の回帰テスト。
-GRIMOIRE.md §AK 参照。
+DEFECTS.md §AK 参照。
 
 背景: evaluate_action()の"write"分岐は".."連鎖と保護ディレクトリ名のみを
 検査し、"read"分岐はハニーポット一致のみを検査していた。いずれも

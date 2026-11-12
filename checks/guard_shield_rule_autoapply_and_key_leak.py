@@ -13,7 +13,7 @@ NAME = "guard_shield_rule_autoapply_and_key_leak - 思考統制監査: src/angel
 #   C. GEMINI_API_KEY を os.environ.pop() で即時消去していること
 #      (os.environ.get() のままの読み取り専用アクセスに戻っていないか)。
 #   D. KamaelInquisitorが完全修飾名(例: "os.system")でも照合すること
-#      (runtime_guard.inquisition()と同一の修正、GRIMOIRE.md §E/§I参照)。
+#      (runtime_guard.inquisition()と同一の修正、DEFECTS.md §E/§I参照)。
 
 
 def main():

@@ -1,7 +1,7 @@
 """
 tests/test_audit_package_boundary_isolation.py
 =====================================
-[新設 2026-11] angels/audit_package_boundary_isolation.py の単体テスト。
+[新設 2026-11] checks/audit_package_boundary_isolation.py の単体テスト。
 
 本天使(「メタトロンの経典印章」)は、「ライセンス証明書機構
 (runtime_audit_gatekeeper)・Tartarusの公開配布(pip配布されるruntime_guardパッケージ)
@@ -24,7 +24,7 @@ build_public_scripture.py`・`tests/test_public_scripture_isolation.py`)
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_package_boundary_isolation as mss
 
 VALID_PYPROJECT = (

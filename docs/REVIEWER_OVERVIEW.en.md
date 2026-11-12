@@ -44,32 +44,32 @@ labeled as such.
 
 | Term in this repo | Plain meaning |
 | --- | --- |
-| **angels/** | CI check scripts: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. The number actually wired into CI is verified by a script, not counted by hand: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py) (55 as of this writing). |
-| **GRIMOIRE.md** | The raw record of every defect found (sequentially numbered §A–§DA). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
+| **checks/** | CI check scripts: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. The number actually wired into CI is verified by a script, not counted by hand: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py) (55 as of this writing). |
+| **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DA). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
 | **Sanctuary / Sanctum** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
-| **§A–§DA** | Sequential (alphabetic) IDs for individual defect write-ups in GRIMOIRE.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_grimoire_entries.py`](../tools/count_grimoire_entries.py). |
+| **§A–§DA** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
 
 ## 2. A known self-inconsistency, found and actually fixed
 
 This toolkit claims "zero trust," yet the helper script that renews its own
 certificate weekly (`tools/renew_certificate.ps1`/`.sh`) originally replaced a
 step that is supposed to require human, out-of-band confirmation with
-automatic approval ([GRIMOIRE.md §CX](../GRIMOIRE.md), self-found and recorded).
+automatic approval ([DEFECTS.md §CX](../DEFECTS.md), self-found and recorded).
 
 `tools/promote_provisioning_seal.py` was then given a `--check-rotation` flag
 that mechanically checks whether the proposed key is identical to the
 currently-trusted key (a simple renewal) or different (an actual trust-root
 rotation). The renewal scripts now auto-approve only on the former, and refuse
 to auto-approve on the latter, requiring a human to confirm the fingerprint
-out-of-band and approve manually ([GRIMOIRE.md §CZ](../GRIMOIRE.md), 4 new
+out-of-band and approve manually ([DEFECTS.md §CZ](../DEFECTS.md), 4 new
 regression tests). Two limitations of this fix itself (the trusted key's
 storage isn't independent of the automation; a stopped run notifies passively,
 not actively) are stated as a threat model in [docs/BOUNDARY.md](./BOUNDARY.md).
 
 ## 3. How it keeps finding defects
 
-CI checks under `angels/` mechanically re-check that every previously-found
-defect stays fixed. GRIMOIRE.md actually contains **105 entries (§A–§DA, no
+CI checks under `checks/` mechanically re-check that every previously-found
+defect stays fixed. DEFECTS.md actually contains **105 entries (§A–§DA, no
 gaps or duplicates)**, counted by a script that parses the headings
 programmatically (DEVLOG.md's narrative version still says 81 and has not been
 updated since).
@@ -88,11 +88,11 @@ Those 105 fall into three broad patterns:
 
 | Entry | What was wrong | Reproduction (actually run) | Fix commit |
 | --- | --- | --- | --- |
-| [§AV](../GRIMOIRE.md) — the most surprising find | A nested sandbox's permission scope, meant to only *narrow*, instead *widened* to the entire filesystem. | Opened a child sandbox with `allowed_dirs=["/"]` inside a parent restricted to a jail dir and wrote to `/tmp/` → the write succeeded with no exception (confirmed jailbreak). | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
-| [§AR](../GRIMOIRE.md) | A judgment message said "execution is impossible," but the CLI's exit code was always `0` (success). | Ran the CLI on a violating file → the screen shows a rejection, but `echo $?` is always 0. | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
-| [§CT](../GRIMOIRE.md) | `socket.getaddrinfo()` (DNS resolution) bypassed both independent defense layers entirely, since it never calls `connect()`. | Called `getaddrinfo()` on a disallowed hostname → nothing blocked it. After the fix, both layers were confirmed to block it. | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
+| [§AV](../DEFECTS.md) — the most surprising find | A nested sandbox's permission scope, meant to only *narrow*, instead *widened* to the entire filesystem. | Opened a child sandbox with `allowed_dirs=["/"]` inside a parent restricted to a jail dir and wrote to `/tmp/` → the write succeeded with no exception (confirmed jailbreak). | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
+| [§AR](../DEFECTS.md) | A judgment message said "execution is impossible," but the CLI's exit code was always `0` (success). | Ran the CLI on a violating file → the screen shows a rejection, but `echo $?` is always 0. | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
+| [§CT](../DEFECTS.md) | `socket.getaddrinfo()` (DNS resolution) bypassed both independent defense layers entirely, since it never calls `connect()`. | Called `getaddrinfo()` on a disallowed hostname → nothing blocked it. After the fix, both layers were confirmed to block it. | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
 
-The full record is [GRIMOIRE.md](../GRIMOIRE.md); a narrative version is
+The full record is [DEFECTS.md](../DEFECTS.md); a narrative version is
 [DEVLOG.md](../DEVLOG.md).
 
 ## 4. Current state of the test suite (measured, with sources)
@@ -110,7 +110,7 @@ Tests depending on the `rsa` key-generation library previously used
 unpredictable runtime failure, these were switched to `pytest.mark.skipif`:
 environments with `rsa` (CI) now show ordinary `passed`, and environments
 without it (the development sandbox) show `skipped` with an explicit reason
-([GRIMOIRE.md §DA](../GRIMOIRE.md)).
+([DEFECTS.md §DA](../DEFECTS.md)).
 
 The remaining `2 xfailed` are unrelated to `rsa` — one each in
 `test_orchestrator.py`/`test_sandbox.py`, long-standing `strict=True` xfails
@@ -136,8 +136,8 @@ this very overview are recorded in detail in a separate file:
 | --- | --- |
 | [README.en.md](../README.en.md) / [README.md](../README.md) | Overview, usage, threat model, design principles |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | Reproducible demo, including the honest record of its first run scoring 2/5, not 5/5 |
-| [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see GRIMOIRE.md for the current count) |
-| [GRIMOIRE.md](../GRIMOIRE.md) | §A–§DA, 105 entries, the raw, most detailed record |
+| [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see DEFECTS.md for the current count) |
+| [DEFECTS.md](../DEFECTS.md) | §A–§DA, 105 entries, the raw, most detailed record |
 | [docs/FAQ.md](./FAQ.md) | Differentiation, limitations, and other Q&A |
 | [docs/WHY.md](./WHY.md) | The design rationale for auditing rather than trusting AI agents |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do |

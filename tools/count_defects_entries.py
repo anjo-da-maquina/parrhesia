@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GRIMOIRE.md の欠陥記録(§A, §B, ..., §Z, §AA, ..., §CX)を見出しから
+"""DEFECTS.md の欠陥記録(§A, §B, ..., §Z, §AA, ..., §CX)を見出しから
 自動集計し、正しいアルファベット式の通し番号と対応させる。
 
 これまで「§AVは32番目」のように手で数えて記述していた箇所が、実際の
@@ -13,7 +13,7 @@
 import re
 import sys
 
-PATH = "GRIMOIRE.md"
+PATH = "DEFECTS.md"
 
 
 def letters_to_index(letters: str) -> int:

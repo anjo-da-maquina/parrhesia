@@ -1,7 +1,7 @@
 """
 tests/test_check_zkp_audit_export_status.py
 =====================================
-[新設 2026-11] angels/check_zkp_audit_export_status.py の単体テスト。
+[新設 2026-11] checks/check_zkp_audit_export_status.py の単体テスト。
 
 本天使(「天の石板」)は、`adapters/junit_xml_exporter.py`が
 `zk_audit_trail.json`をJUnit XMLへ正しく変換し、HMAC連鎖の改ざんが
@@ -26,7 +26,7 @@ monkeypatchし、trail_pathの存在有無も制御する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import check_zkp_audit_export_status as htz
 import adapters.junit_xml_exporter as jxe

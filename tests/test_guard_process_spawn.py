@@ -1,7 +1,7 @@
 """
 tests/test_guard_process_spawn.py
 ===============================================
-[新設 2026-10 §CC] angels/guard_process_spawn.py の単体テスト。
+[新設 2026-10 §CC] checks/guard_process_spawn.py の単体テスト。
 
 実際に発見した具体例: `runtime_audit_gatekeeper.py`の`ultimate_audit_hook`
 ("深層保護")は、新しいOSプロセスの生成を遮断する目的で
@@ -16,7 +16,7 @@ PASSすることを確認済み)を回帰テストとして固定する。
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_process_spawn as zpg
 
 

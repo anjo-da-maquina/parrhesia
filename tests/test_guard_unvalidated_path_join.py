@@ -1,7 +1,7 @@
 """
 tests/test_guard_unvalidated_path_join.py
 =======================================
-[新設 2026-10 §BT] angels/guard_unvalidated_path_join.py の単体テスト。
+[新設 2026-10 §BT] checks/guard_unvalidated_path_join.py の単体テスト。
 
 本天使は、src/ollama_agent_loop.pyの_execute_safe_action()で実際に
 発見した本物の脆弱性――`target = self.workspace_root / action_req.get
@@ -11,13 +11,13 @@ check-vs-useの不一致パターンを、一般化して検知する。
 
 本テストは、(1) 基本的な検知能力、(2) 誤検知防止、(3) 実装中にレッド
 チームとして自分自身をリポジトリ全体に対して実行して発見した、本物の
-偽陽性(angels/guard_docker_sandbox_enforcement_decay.pyの完全固定リテラルパス3件)への対応を
+偽陽性(checks/guard_docker_sandbox_enforcement_decay.pyの完全固定リテラルパス3件)への対応を
 固定する。
 """
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_unvalidated_path_join as hpg
 
 
@@ -71,7 +71,7 @@ def test_known_false_positive_fixed_literal_trailing_segment_is_excluded():
     """[実装中の自己レッドチームで発見・即時修正の固定] 当初の実装は、
     `ROOT / "src" / "aegis_system.py"`のように、`/`結合の右辺(最後の
     要素)が完全な固定文字列リテラルである場合まで誤検知していた
-    (angels/guard_docker_sandbox_enforcement_decay.pyで実際に3件の偽陽性を確認)。外部入力が
+    (checks/guard_docker_sandbox_enforcement_decay.pyで実際に3件の偽陽性を確認)。外部入力が
     混入する余地のない、完全に固定されたパスは検知対象から除外する。"""
     text = (
         "def f():\n"
@@ -107,7 +107,7 @@ def test_join_without_any_io_use_is_not_flagged():
 def test_file_with_no_slash_join_reports_not_applicable(monkeypatch, tmp_path, capsys):
     """`/`によるパス結合が一件も無いリポジトリ状態ではNOT_APPLICABLEを
     報告する(§BOで修正したPASS/NOT_APPLICABLE混同の再発防止)。"""
-    (tmp_path / "angels").mkdir()
+    (tmp_path / "checks").mkdir()
     (tmp_path / "src").mkdir()
     (tmp_path / "adapters").mkdir()
     (tmp_path / "anjo_interceptor").mkdir()
@@ -121,7 +121,7 @@ def test_file_with_no_slash_join_reports_not_applicable(monkeypatch, tmp_path, c
 def test_real_repository_files_pass_after_the_sbt_fix():
     """[実機の裏付け] §BTで実際に修正したsrc/ollama_agent_loop.py
     ._execute_safe_action()を含む、現時点のリポジトリ全体に対して本天使を
-    実行し、PASSすることを確認する(angels/guard_docker_sandbox_enforcement_decay.pyの偽陽性
+    実行し、PASSすることを確認する(checks/guard_docker_sandbox_enforcement_decay.pyの偽陽性
     除外も含む回帰防止)。"""
     import io
     from contextlib import redirect_stdout

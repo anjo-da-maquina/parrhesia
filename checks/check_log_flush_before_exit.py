@@ -15,7 +15,7 @@ NAME = "check_log_flush_before_exit - 静的解析監査: 関数本体最後の�
 # 本天使は、この具体的な2件を直接検査するのではなく(それは既存の個別
 # テストの役割)、同じ構造を持つ"まだ見つかっていない"新しい箇所が今後
 # 追加された際に、マージ前に機械的に検知するための一般化された検査で
-# ある(GRIMOIRE.md §BQ「残存する限界」・§11.9運用ルール参照)。
+# ある(DEFECTS.md §BQ「残存する限界」・§11.9運用ルール参照)。
 #
 # [正直な注記: 本検査の限界] astによる静的解析のため、thrones_positive_
 # path.pyの正規表現ヒューリスティックよりは堅牢だが、それでも以下は
@@ -28,7 +28,7 @@ NAME = "check_log_flush_before_exit - 静的解析監査: 関数本体最後の�
 # 制御フロー(if/elseの分岐違いなど)までは解析しない)、(3) `os`が別名
 # でimportされている場合(`import os as _os`等)。
 
-TARGET_DIRS = ["angels", "src", "adapters"]
+TARGET_DIRS = ["checks", "src", "adapters"]
 TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 

@@ -23,7 +23,7 @@ importなどをプロセス全体で遮断する`sys.addaudithook`ベースの�
 """
 import pytest
 
-pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see DEFECTS.md known environment gaps")
 import runtime_audit_gatekeeper as mg
 
 

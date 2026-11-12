@@ -46,7 +46,7 @@ def scan_for_hardcoded_sensitive_env_keys(root: Path = None, self_path: Path = N
     os.getenv/os.environを伴わない文脈で含んでいたため、CI上で本検査
     自身がこのテストファイルを「漏洩」と誤検知し続けていた(実機検証済み:
     GitHub ActionsのCI実行履歴で、本ワークフローが継続的に失敗していた
-    ことを確認した。`angels/_common.py`のEXCLUDED_SECRET_SCAN_DIRSに
+    ことを確認した。`checks/_common.py`のEXCLUDED_SECRET_SCAN_DIRSに
     "tests"を追加した§BDの修正と同根の問題)。既存のテストはいずれも
     `root=tmp_path`を明示的に渡す一時ディレクトリ方式で検証しているため、
     実リポジトリの"tests"を除外しても、検証能力には一切影響しない。

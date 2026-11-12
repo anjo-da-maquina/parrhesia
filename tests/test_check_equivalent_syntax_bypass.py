@@ -1,7 +1,7 @@
 """
 tests/test_check_equivalent_syntax_bypass.py
 ===========================================
-[新設 2026-10 §BW] angels/check_equivalent_syntax_bypass.py の単体テスト。
+[新設 2026-10 §BW] checks/check_equivalent_syntax_bypass.py の単体テスト。
 
 §11.9フェーズF(ブロックリスト回避・等価構文迂回の一般化)。実際に
 `anjo_interceptor/intent_checker.py`で発見・修正した`import os.path`
@@ -13,7 +13,7 @@ CognitiveScanner)に対して継続的に再現・検証する天使の、自己
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_equivalent_syntax_bypass as reb
 
 

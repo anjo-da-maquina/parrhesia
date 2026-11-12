@@ -1,7 +1,7 @@
 """
 tests/test_audit_detection_layer_consensus.py
 =====================================
-[新設 2026-11] angels/audit_detection_layer_consensus.py の単体テスト。
+[新設 2026-11] checks/audit_detection_layer_consensus.py の単体テスト。
 
 本天使(「セラフィムの合意」)は、危険なコード片に対する判定が、単一の
 検査レイヤー(静的AST解析のみ、または動的監査フックのみ)だけに依存して
@@ -19,7 +19,7 @@ tests/test_audit_detection_layer_consensus.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_detection_layer_consensus as sc
 
 

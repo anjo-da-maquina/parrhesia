@@ -12,10 +12,10 @@ except ModuleNotFoundError:
 
 # [脆弱性修正 2026-10 §BG] src/adversarial_evolution.py の §BB と全く同じバグが
 # 本ファイルの defend_and_execute() にも存在した。詳細は execute_payload_under_
-# sanctum() の呼び出し箇所のコメント、および GRIMOIRE.md §BG を参照。
+# sanctum() の呼び出し箇所のコメント、および DEFECTS.md §BG を参照。
 # §BBで新設したexecute_payload_under_sanctum()を再利用する(futility_guard.py
 # と同じ「同じロジックを2箇所にコピーすると、片方にのみ修正が入り他方が
-# 取り残されるリスク(GRIMOIRE.md §M)」を避けるパターン)。
+# 取り残されるリスク(DEFECTS.md §M)」を避けるパターン)。
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)

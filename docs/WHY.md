@@ -28,4 +28,4 @@ The target of this audit is, by definition, someone else's (or an agent's) commi
 
 ## Why the project's own mistakes stay in the history
 
-The repeated pattern across the 81 logged findings in [`GRIMOIRE.md`](../GRIMOIRE.md) is the same one this toolkit looks for in others: a defense that looks closed but has a gap, or a report of success that wasn't actually checked. Recording those findings honestly, including the three on this toolkit's own first demo run, is the same standard applied to this project's own code that the project applies to the code it audits.
+The repeated pattern across the 81 logged findings in [`DEFECTS.md`](../DEFECTS.md) is the same one this toolkit looks for in others: a defense that looks closed but has a gap, or a report of success that wasn't actually checked. Recording those findings honestly, including the three on this toolkit's own first demo run, is the same standard applied to this project's own code that the project applies to the code it audits.

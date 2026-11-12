@@ -1,7 +1,7 @@
 """
 tests/test_guard_precommit_secret_leak.py
 =====================================
-[新設 2026-11] angels/guard_precommit_secret_leak.py の単体テスト。
+[新設 2026-11] checks/guard_precommit_secret_leak.py の単体テスト。
 
 本天使(「ガブリエルの機密漏洩カナリア」)は、(1)`hooks/pre-commit`が
 `tools/pre_commit_secret_scan.py`を実際に呼び出す配線を保っていること
@@ -21,7 +21,7 @@ tests/test_guard_precommit_secret_leak.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_precommit_secret_leak as gc
 
 VALID_HOOK_TEXT = "#!/bin/sh\npython3 tools/pre_commit_secret_scan.py\n"

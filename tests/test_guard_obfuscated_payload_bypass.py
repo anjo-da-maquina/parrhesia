@@ -1,7 +1,7 @@
 """
 tests/test_guard_obfuscated_payload_bypass.py
 =====================================
-[新設 2026-11] angels/guard_obfuscated_payload_bypass.py の単体テスト。
+[新設 2026-11] checks/guard_obfuscated_payload_bypass.py の単体テスト。
 
 本天使(「カマエルの盾」)は、難読化された攻撃パターン(OBFUSCATED_ATTACKS)
 が、Gabriel(静的解析: `inquisition_catches`)かMichael(動的実行:
@@ -24,7 +24,7 @@ tests/test_guard_obfuscated_payload_bypass.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_obfuscated_payload_bypass as cs
 
 

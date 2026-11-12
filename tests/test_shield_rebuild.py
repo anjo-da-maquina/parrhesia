@@ -3,7 +3,7 @@ tests/test_shield_rebuild.py
 ==============================
 src/angelic_shield.py / src/kamael_judgment.py の再構築(2026-10)を検証する
 回帰テスト。詳細な経緯は両モジュールのdocstring、および
-angels/guard_shield_rule_autoapply_and_key_leak.py 参照。
+checks/guard_shield_rule_autoapply_and_key_leak.py 参照。
 
 確認する点:
   1. ZadkielDominion.propose_knowledge() が、LLM生出力を即時に
@@ -78,7 +78,7 @@ def test_promote_shield_seal_approval_flow(tmp_path, monkeypatch):
 
 
 def test_promote_shield_seal_approves_latest_proposal_not_stale_one(tmp_path, monkeypatch):
-    """[脆弱性修正の核心] GRIMOIRE.md §AT参照。同じvulnerability_nameで
+    """[脆弱性修正の核心] DEFECTS.md §AT参照。同じvulnerability_nameで
     2回目の提案を承認した場合、1回目の(既に承認済みの)古い提案のデータ
     ではなく、まさに今回承認した2回目の提案のデータがshield_rules.json
     に適用されなければならない。以前の実装は`next()`で最初に見つかった
@@ -145,7 +145,7 @@ def test_kamael_inquisitor_bare_name_still_works_no_regression():
 
 
 def test_execute_judgment_returns_false_on_violation_not_just_a_print(tmp_path, monkeypatch):
-    """[脆弱性修正の核心] GRIMOIRE.md §AR参照。execute_judgment()は違反検知時に
+    """[脆弱性修正の核心] DEFECTS.md §AR参照。execute_judgment()は違反検知時に
     「実行不可能・破棄する」という強いメッセージを表示するだけで、以前は
     戻り値も終了コードも常に正常(True相当)だった。呼び出し元が終了コードで
     合否判定しようとしても、違反があっても後続処理が実行されてしまう構造的な

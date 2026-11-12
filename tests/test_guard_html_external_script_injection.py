@@ -1,5 +1,5 @@
 """
-[脆弱性修正 2026-10 BA] angels/guard_html_external_script_injection.py の回帰テスト。
+[脆弱性修正 2026-10 BA] checks/guard_html_external_script_injection.py の回帰テスト。
 
 このスクリプトは architecture.html に外部スクリプト読み込み(サプライチェーン
 リスク)が紛れ込んでいないかをCI上で検査する。
@@ -16,7 +16,7 @@ src="//evil-cdn.example.com/malicious.js" のようなプロトコル相対URL
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 from guard_html_external_script_injection import find_external_scripts
 
 

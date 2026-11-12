@@ -1,7 +1,7 @@
 """
 tests/test_guard_docker_sandbox_enforcement_decay.py
 =====================================
-[新設 2026-11] angels/guard_docker_sandbox_enforcement_decay.py の単体テスト。
+[新設 2026-11] checks/guard_docker_sandbox_enforcement_decay.py の単体テスト。
 
 本天使(「サンダルフォンの勅令」)は、「Docker/OSレベルの強制サンド
 ボックス化」が、静的検閲のみの張りぼてに戻されていないかを、
@@ -20,7 +20,7 @@ tests/test_guard_docker_sandbox_enforcement_decay.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_docker_sandbox_enforcement_decay as sdc
 
 VALID_AEGIS_TEXT = (

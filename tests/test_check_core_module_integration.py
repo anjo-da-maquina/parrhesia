@@ -1,7 +1,7 @@
 """
 tests/test_check_core_module_integration.py
 =====================================
-[新設 2026-11] angels/check_core_module_integration.py の単体テスト。
+[新設 2026-11] checks/check_core_module_integration.py の単体テスト。
 
 本天使(「権天使の試練」)は、重要モジュール(runtime_guard・anjo_interceptor)が
 正しくimportでき、基本的な公開APIが期待通りに動作することをE2Eで検証
@@ -29,7 +29,7 @@ import sys
 import builtins
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import check_core_module_integration as pe2e
 import runtime_guard

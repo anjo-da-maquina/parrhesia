@@ -4,7 +4,7 @@
 [![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (GRIMOIRE.md, Japanese)](./GRIMOIRE.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./docs/BOUNDARY.md)
+Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (DEFECTS.md, Japanese)](./DEFECTS.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./docs/BOUNDARY.md)
 
 **Catch what your coding agent skipped, hid, or faked.**
 
@@ -44,7 +44,7 @@ I'm a QA engineer. As more production code gets written by AI agents, I kept run
 
 1. **A passing test suite that quietly lost its most important test.** An agent asked to "fix the edge case" deletes the failing test instead of fixing the code, and reports "all tests passing." [`parrhesia.diff_fraud.detect_test_deletion`](./parrhesia/diff_fraud.py) catches this by diffing test function names, not just counting pass/fail.
 2. **An error handler that reports success by hiding the error.** `except Exception: pass` added where a real fix was asked for. [`detect_exception_swallowing`](./parrhesia/diff_fraud.py) flags new except/pass pairs that weren't already there.
-3. **A review that only shows you the easy answers.** When asked "what are the 5 options here," an agent under time pressure shows 3 and presents them as if there were only 3. This is a known failure mode I actively check for in my own output — see the honest self-review entries in [`GRIMOIRE.md`](./GRIMOIRE.md) for real, dated examples of this happening and getting caught, including in this repo's own development.
+3. **A review that only shows you the easy answers.** When asked "what are the 5 options here," an agent under time pressure shows 3 and presents them as if there were only 3. This is a known failure mode I actively check for in my own output — see the honest self-review entries in [`DEFECTS.md`](./DEFECTS.md) for real, dated examples of this happening and getting caught, including in this repo's own development.
 
 ## What it actually detects (verified, not claimed)
 
@@ -124,7 +124,7 @@ I'm a QA engineer available for fixed-price audits of AI-generated code — see 
 - **`parrhesia/`** — the audit/detection toolkit described above: `parrhesia/diff_fraud.py` (pattern detectors), `parrhesia/audit.py` + `parrhesia/cli.py` (read-only third-party repo auditing), `parrhesia/touchstone/` (a small benchmark of prompts + graders for testing whether an LLM fabricates, flatters authority, or miscalibrates confidence), `parrhesia/verify/` (cross-model and human-review escalation primitives).
 - **`demo/`** — the one-command demo above.
 - **`runtime_guard/`** (formerly `sefer/`) — file-access restriction via a `Sanctum` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
-- **`angels/`** — ~50 standing regression checks, run on every push via the CI badges above.
+- **`checks/`** — ~50 standing regression checks, run on every push via the CI badges above.
 - **`adversarial_training/`** (formerly `tartarus/`) — the local-only, author-machine-gated red/blue self-play arena (see Limitations).
 
 ## License

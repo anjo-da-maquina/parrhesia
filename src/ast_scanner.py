@@ -1,7 +1,7 @@
 ﻿"""
 src/ast_scanner.py
 ===================
-[統合判断確定 2026-10] 本モジュールはGRIMOIRE.md §Jで「未統合スタンドアロン
+[統合判断確定 2026-10] 本モジュールはDEFECTS.md §Jで「未統合スタンドアロン
 デモ」として検知漏れバグのみ修正され、`src/aegis_system.py`(AI生成コードの
 実運用審査パイプライン)へ組み込むかどうかの判断は保留されたまま残っていた
 (どこからもimportされず、`tests/test_ast_scanner_qualified_calls.py`で
@@ -23,7 +23,7 @@ src/ast_scanner.py
 
   したがって、実運用パイプラインへの組み込みは行わず、§Lの`cassiels_veil.py`
   と同じ扱い(「代替の設計思想を示す教材」として、テストで固定された状態の
-  まま保持)とする。これにより、GRIMOIRE.md §Jで保留されていた統合判断を
+  まま保持)とする。これにより、DEFECTS.md §Jで保留されていた統合判断を
   本コメント追記をもって確定する。
 
 [2026-10 修正] `src/kamael_judgment.py` の `KamaelInquisitor` および

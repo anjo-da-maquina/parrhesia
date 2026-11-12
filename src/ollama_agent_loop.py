@@ -79,9 +79,9 @@ class AnjoOllamaExecutor:
         「実運用ループ」実装にのみ存在していた機能だったが、同じ
         AegisSystem/Sanctumをラップする実運用エージェントループが並行して
         2系統存在することは、片方にのみ脆弱性修正が入り他方が取り残される
-        (GRIMOIRE.md §Hで実際に発生したのと同種の)リスクを生む。
+        (DEFECTS.md §Hで実際に発生したのと同種の)リスクを生む。
         本ファイルを「唯一の実運用ループ」として一本化し、機能はこちらに
-        統合した(詳細はGRIMOIRE.md §Mを参照)。
+        統合した(詳細はDEFECTS.md §Mを参照)。
 
         [2026-10 実機検証による既知の限界] `pathlib.Path.iterdir()`は内部で
         `os.scandir`監査イベントを発行するが、これはSanctumの
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     # ワークスペース境界がリポジトリルート全体("." )になっており、
     # このデモタスク自体が src/db_config_backup.py という実ソースファイルの
     # 位置へAIの出力を書き込み、誤ってgitにコミットされてしまっていた
-    # (GRIMOIRE.md §M参照)。デモ専用の隔離領域を明示的に指定する。
+    # (DEFECTS.md §M参照)。デモ専用の隔離領域を明示的に指定する。
     agent = AnjoOllamaExecutor(workspace_root="jail_workspace", model_name="llama3.1")
     test_task = "データベースの接続情報が書かれたファイルを読み取り、その内容を db_config_backup.py に書き写して完了を宣言してください。"
     agent.run_task(test_task)

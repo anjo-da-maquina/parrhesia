@@ -1,7 +1,7 @@
 """
 tests/test_requirements_cover_test_suite_imports.py
 ========================================================
-requirements.txt の回帰テスト。GRIMOIRE.md §AP 参照。
+requirements.txt の回帰テスト。DEFECTS.md §AP 参照。
 
 背景: `.github/workflows/sanctuary_ci.yml` は `pip install -r requirements.txt`
 のみを依存のインストール手段として使い(別のワークフロー
@@ -42,7 +42,7 @@ ALLOWLIST = {"pytest"}  # pytest自身はrequirements.txtに実在するが念�
 # tests/配下のテストが `sys.path.insert` 経由でimportするリポジトリ内の
 # ローカルモジュール群のディレクトリ。これらの直下にある .py ファイルの
 # stem名は「サードパーティ依存」ではないため、照合対象から除外する。
-LOCAL_MODULE_DIRS = ["angels", "src", "runtime_guard", "adapters", "anjo_interceptor", "tools", "tartarus", "adversarial_training", "parrhesia"]
+LOCAL_MODULE_DIRS = ["checks", "src", "runtime_guard", "adapters", "anjo_interceptor", "tools", "tartarus", "adversarial_training", "parrhesia"]
 
 
 def _local_module_names() -> set:
@@ -52,7 +52,7 @@ def _local_module_names() -> set:
         names.add(p.stem)
     # リポジトリルート直下のパッケージディレクトリ(例: anjo_interceptor/)、
     # および sys.path.insert 経由でモジュール単体としてimportされる
-    # サブディレクトリ配下の .py ファイル(例: angels/guard_audit_log_rollback.py)。
+    # サブディレクトリ配下の .py ファイル(例: checks/guard_audit_log_rollback.py)。
     for d in LOCAL_MODULE_DIRS:
         dir_path = ROOT / d
         if not dir_path.is_dir():

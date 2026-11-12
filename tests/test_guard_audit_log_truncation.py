@@ -1,7 +1,7 @@
 """
 tests/test_guard_audit_log_truncation.py
 ========================================
-[新設 2026-10 §BX] angels/guard_audit_log_truncation.py の単体テスト。
+[新設 2026-10 §BX] checks/guard_audit_log_truncation.py の単体テスト。
 
 実際に発見した具体例: `runtime_guard/audit_chain.py`のSignedAuditChain、
 `runtime_audit_gatekeeper.py`のZKAuditTrailはいずれも、鍵付きHMAC-SHA256
@@ -14,7 +14,7 @@ tests/test_guard_audit_log_truncation.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_audit_log_truncation as htg
 
 

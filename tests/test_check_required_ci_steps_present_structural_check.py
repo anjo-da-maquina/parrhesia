@@ -1,7 +1,7 @@
 """
 tests/test_check_required_ci_steps_present_structural_check.py
 ====================================================
-angels/check_required_ci_steps_present.py の回帰テスト。GRIMOIRE.md §AO 参照。
+checks/check_required_ci_steps_present.py の回帰テスト。DEFECTS.md §AO 参照。
 
 背景: 旧実装はCIワークフローYAMLの生のテキスト全体に対して必須ファイル名の
 文字列検索を行うだけで、必須ステップの`run:`そのものが削除されていても、
@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT / "angels"))
+sys.path.insert(0, str(ROOT / "checks"))
 
 
 @pytest.fixture
@@ -81,9 +81,9 @@ jobs:
   angelic-audit:
     steps:
       - name: michael
-        run: python angels/guard_sandbox_core_attack_battery.py
+        run: python checks/guard_sandbox_core_attack_battery.py
       - name: gabriel
-        run: python angels/guard_precommit_secret_leak.py
+        run: python checks/guard_precommit_secret_leak.py
 """)
     with pytest.raises(SystemExit) as exc_info:
         mod.main()
@@ -98,11 +98,11 @@ jobs:
   angelic-audit:
     steps:
       - name: michael
-        run: python angels/guard_sandbox_core_attack_battery.py
+        run: python checks/guard_sandbox_core_attack_battery.py
       - name: gabriel
-        run: python angels/guard_precommit_secret_leak.py
+        run: python checks/guard_precommit_secret_leak.py
       - name: raziel
-        run: python angels/audit_ledger_schema.py
+        run: python checks/audit_ledger_schema.py
 """)
     import io
     import contextlib

@@ -1,7 +1,7 @@
 """
 tests/test_audit_signed_chain_integrity.py
 =====================================
-[新設 2026-11] angels/audit_signed_chain_integrity.py の単体テスト。
+[新設 2026-11] checks/audit_signed_chain_integrity.py の単体テスト。
 
 本天使(「ザドキエルの天球儀」)は、署名付き監査チェーン
 (`runtime_guard/audit_chain.jsonl`)のハッシュ連鎖が改ざんされていないことを、
@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_signed_chain_integrity as za
 from runtime_guard.audit_chain import SignedAuditChain
 

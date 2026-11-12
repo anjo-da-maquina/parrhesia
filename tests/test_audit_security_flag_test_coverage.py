@@ -1,7 +1,7 @@
 """
 tests/test_audit_security_flag_test_coverage.py
 =====================================
-[新設 2026-10 §BP] angels/audit_security_flag_test_coverage.py の単体テスト。
+[新設 2026-10 §BP] checks/audit_security_flag_test_coverage.py の単体テスト。
 
 本天使は、§BM(CHAOS_MODE)・§BN(HMAC連鎖)・§BP(check_certificate_expiry.py・
 deadmans_switch.py)で実際に見つかった「環境変数ゲート付きの重要分岐に、
@@ -15,7 +15,7 @@ deadmans_switch.py)で実際に見つかった「環境変数ゲート付きの�
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_security_flag_test_coverage as tpp
 
 

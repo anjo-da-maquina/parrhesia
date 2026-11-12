@@ -1,16 +1,16 @@
 ﻿"""
-angels/guard_audit_log_rollback.py
+checks/guard_audit_log_rollback.py
 =============================
 [脆弱性修正 2026-10 §AN] 本スクリプトの検知ロジック(下記main関数)自体は
 元から正しいが、その前提となる「前回実行時のチェックポイント」
-(runtime_guard/.angel_state/guard_audit_log_rollback.json、angels/_common.pyのload_state/
+(runtime_guard/.angel_state/guard_audit_log_rollback.json、checks/_common.pyのload_state/
 save_state経由)が、CIワークフロー(.github/workflows/anjo_da_maquina_protocol.yml)
 上で一度も永続化されていなかった。`.angel_state/`は`.gitignore`対象であり、
 かつ本ワークフローにはactions/cache等の永続化手段が一件も存在しなかったため、
 GitHub Actionsの使い捨てランナーでは毎回チェックアウト直後に空の状態から
 始まり、`load_state("guard_audit_log_rollback")`は常にNoneを返し、下記`main()`の
 `if checkpoint:`分岐(ロールバック・改ざん検知の本体)がCI上で一度も実行
-されたことがなかった。GRIMOIRE.md §AH(ZKAuditTrailの死んだ検知ロジック)
+されたことがなかった。DEFECTS.md §AH(ZKAuditTrailの死んだ検知ロジック)
 と同種の「ロジックは正しいが、実行環境側の前提が整っていない」構造的な
 見せかけだった。ワークフロー側にactions/cacheを追加して修正した
 (詳細は同ワークフローファイルの該当ステップのコメント参照)。

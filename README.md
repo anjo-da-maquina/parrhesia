@@ -4,7 +4,7 @@
 [![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/anjo_da_maquina_protocol.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(GRIMOIRE.md)](./GRIMOIRE.md) ・ [担当範囲の境界線(BOUNDARY.md)](./docs/BOUNDARY.md)
+作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(DEFECTS.md)](./DEFECTS.md) ・ [担当範囲の境界線(BOUNDARY.md)](./docs/BOUNDARY.md)
 
 **あなたのAIエージェントが、省略した・隠した・偽装したものを捕まえる。**
 
@@ -38,7 +38,7 @@ python3 demo/build_and_audit_demo.py
 
 1. **一番大事なテストだけが静かに消えるパターン**: 「このエッジケースを直して」と頼むと、コードを直す代わりにテスト自体を削除し、「全テスト合格」と報告する。[`detect_test_deletion`](./parrhesia/diff_fraud.py)は、合否の数だけでなく、テスト関数名そのものの消失を見る。
 2. **エラーを隠すことで成功を報告するパターン**: 本当の修正を頼んだのに`except Exception: pass`が追加される。[`detect_exception_swallowing`](./parrhesia/diff_fraud.py)が、新規に追加されたexcept/passの組を検知する。
-3. **5つある選択肢のうち、都合の良い3つだけを見せて最初からそれしか無かったかのように振る舞うパターン**: これは私自身が実際にやりかけ、ユーザーからの厳しい指摘で自白した失敗です。[`GRIMOIRE.md`](./GRIMOIRE.md)に、日付入りでそのまま記録しています。
+3. **5つある選択肢のうち、都合の良い3つだけを見せて最初からそれしか無かったかのように振る舞うパターン**: これは私自身が実際にやりかけ、ユーザーからの厳しい指摘で自白した失敗です。[`DEFECTS.md`](./DEFECTS.md)に、日付入りでそのまま記録しています。
 
 ## 検出できるもの(Usage / 検出項目の表)
 
@@ -118,7 +118,7 @@ AI生成コードの監査を固定価格で請け負うQAエンジニアとし�
 - **`parrhesia/`** — 上記の監査・検出ツールキット本体: `parrhesia/diff_fraud.py`(パターン検出器)、`parrhesia/audit.py` + `parrhesia/cli.py`(読み取り専用の第三者リポジトリ監査)、`parrhesia/touchstone/`(LLMが作り話・権威への迎合・確信度の誤較正をしないかの小さなベンチマーク)、`parrhesia/verify/`(他モデル・人間レビューへのエスカレーション機構)。
 - **`demo/`** — 上記の1コマンドデモ。
 - **`runtime_guard/`**(旧名`sefer/`) — `Sanctum`コンテキストによるファイルアクセス制限(静的監査ではなく、信頼できないAI生成コードを実際に「実行」する際の、別系統で保守される防御層)。
-- **`angels/`** — 約50本の継続的回帰チェック。上記バッジのCIでpushごとに実行。
+- **`checks/`** — 約50本の継続的回帰チェック。上記バッジのCIでpushごとに実行。
 - **`adversarial_training/`**(旧名`tartarus/`) — 作者のローカルマシンに限定した赤/青自己対戦場(Limitations参照)。
 
 ## ライセンス(License)

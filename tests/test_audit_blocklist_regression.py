@@ -1,7 +1,7 @@
 """
 tests/test_audit_blocklist_regression.py
 =====================================
-[新設 2026-11] angels/audit_blocklist_regression.py の単体テスト。
+[新設 2026-11] checks/audit_blocklist_regression.py の単体テスト。
 
 本天使(「ジョフィエルの灯」)は、`runtime_guard.inquisition()`の禁止モジュール/
 関数リストが、既知のベースライン(`BASELINE_FORBIDDEN_MODULES`・
@@ -18,7 +18,7 @@ tests/test_audit_blocklist_regression.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_blocklist_regression as js
 import inspect as inspect_module
 

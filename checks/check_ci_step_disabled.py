@@ -6,14 +6,14 @@ from _common import report_pass, report_fail, report_not_applicable, ROOT
 NAME = "check_ci_step_disabled - `continue-on-error:`の値が(リテラルとして)真を表すかどうかを判定 する。"
 
 # [新設 2026-10 §BU] §11.9フェーズD(監査システム自身への自己言及的な
-# 攻撃の一般化)。tests/test_angels_scripts_wired_into_ci.pyの既存の
-# 「配線漏れ検知」は、ステップの`run:`文字列に"angels/<ファイル名>.py"が
+# 攻撃の一般化)。tests/test_checks_scripts_wired_into_ci.pyの既存の
+# 「配線漏れ検知」は、ステップの`run:`文字列に"checks/<ファイル名>.py"が
 # 含まれているかだけを見ており、そのステップの`if:`条件を一切見ていな
 # かった。実際に検証したところ、天使のステップに`if: false`を1行追加
 # するだけで、当該の天使はCI上で実質的に無効化されるにもかかわらず、
 # 既存のテストは「配線済み」と誤判定し続けることを確認した。
-# tests/test_angels_scripts_wired_into_ci.pyはこの特定の盲点を修正した
-# が、本天使はこれを一般化し、angels/*.pyに限らず、全ワークフローの
+# tests/test_checks_scripts_wired_into_ci.pyはこの特定の盲点を修正した
+# が、本天使はこれを一般化し、checks/*.pyに限らず、全ワークフローの
 # 「実行コマンドを持つ全てのステップ」に対して、常に偽になる`if:`条件
 # (CIを静かに無効化する最も単純な手段)が付与されていないかを、リポジトリ
 # 全体に対して継続的に検査する。
@@ -226,7 +226,7 @@ def main():
             messages.append(
                 f"常に偽になるif:条件(false・0・空文字列)によって実質的に無効化"
                 f"されているCIステップが見つかりました(§BUのtests/"
-                f"test_angels_scripts_wired_into_ci.pyと同種の自己言及的な"
+                f"test_checks_scripts_wired_into_ci.pyと同種の自己言及的な"
                 f"無効化パターン): {detail}"
             )
             evidence["disabled_steps"] = disabled

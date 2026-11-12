@@ -1,7 +1,7 @@
 """
 tests/test_guard_undeclared_dependency.py
 =========================================
-[新設 2026-10 §BV] angels/guard_undeclared_dependency.py の単体テスト。
+[新設 2026-10 §BV] checks/guard_undeclared_dependency.py の単体テスト。
 
 §11.9フェーズE(未宣言の依存関係・サプライチェーン注入の検知)。
 requirements.txtに宣言されていないサードパーティimport、および
@@ -12,7 +12,7 @@ CIワークフローがrequirements.txtを経由しない独自のpip installを
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_undeclared_dependency as og
 
 
@@ -131,9 +131,9 @@ def test_find_undeclared_imports_skips_tartarus_local_modules(tmp_path, monkeypa
     [脆弱性修正の回帰テスト・核心 §BZ] `tartarus/`配下のローカルモジュール
     (例: `armageddon_core.py`)を、`sys.path.insert()`した上でディレクトリ名
     を介さずトップレベル名でimportする(本リポジトリの`tests/`で既に
-    使われている確立済みのパターン)場合、`angels/`配下の新しいファイルが
+    使われている確立済みのパターン)場合、`checks/`配下の新しいファイルが
     同じ流儀でimportしても、サードパーティ未宣言として誤検知しては
-    ならない。実機で確認済み: 新設した`angels/sandalphon_rejection_memory_
+    ならない。実機で確認済み: 新設した`checks/sandalphon_rejection_memory_
     guard.py`(§BZ)がこの流儀で`armageddon_core`をimportしたところ、
     修正前の本天使自身がそれを誤検知し、マージ前のリポジトリ全体pytest
     実行で初めて発覚した。
@@ -143,12 +143,12 @@ def test_find_undeclared_imports_skips_tartarus_local_modules(tmp_path, monkeypa
     tartarus_dir.mkdir()
     (tartarus_dir / "armageddon_core.py").write_text("X = 1\n")
 
-    angels_dir = root / "angels"
+    angels_dir = root / "checks"
     angels_dir.mkdir()
     (angels_dir / "some_angel.py").write_text("import armageddon_core\n")
 
     monkeypatch.setattr(og, "ROOT", root)
-    monkeypatch.setattr(og, "TARGET_DIRS_FOR_IMPORT_SCAN", ["angels"])
+    monkeypatch.setattr(og, "TARGET_DIRS_FOR_IMPORT_SCAN", ["checks"])
     monkeypatch.setattr(og, "TARGET_FILES_FOR_IMPORT_SCAN", [])
     monkeypatch.setattr(og, "_LOCAL_TOP_LEVEL_DIRS", set())
     undeclared = og.find_undeclared_imports(declared_packages=set())
@@ -188,7 +188,7 @@ def test_extract_divergent_pip_packages_handles_pip3():
 
 def test_extract_divergent_pip_packages_on_unrelated_runtime_call_is_a_known_scope_boundary():
     """[正直な注記: 意図的なスコープ境界(偽陽性ではない)]
-    `angels/audit_dependency_cve.py`内部の実行時`subprocess`経由の
+    `checks/audit_dependency_cve.py`内部の実行時`subprocess`経由の
     `pip install --quiet pip-audit`相当の文字列は、本関数単体に渡せば
     'pip-audit'を抽出してしまう。しかし、find_divergent_workflow_installs()
     は.github/workflows/*.ymlのrun:ブロックのみを走査し、Pythonソース

@@ -35,7 +35,7 @@ def export_zkp_to_junit(json_path="zk_audit_trail.json", xml_path="zk_audit_repo
     一切検証せずに常に「全件成功」のJUnitレポートを生成していた。
     CI/CDダッシュボードはこのXMLの内容だけを見るため、根底の監査ログが
     壊れていてもダッシュボード上は常に緑色になる、という見せかけの
-    保護だった(GRIMOIRE.md §BN参照)。本修正では、
+    保護だった(DEFECTS.md §BN参照)。本修正では、
     runtime_audit_gatekeeper.ZKAuditTrailが備える鍵付きHMAC連鎖検証
     (_verify_full_chain、通常はverify_and_record呼び出し時に毎回実行
     されているものと同一のロジック)を、エクスポート時にも実際に呼び出し、

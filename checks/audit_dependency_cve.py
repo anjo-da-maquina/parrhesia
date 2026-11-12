@@ -1,9 +1,9 @@
 """
-angels/audit_dependency_cve.py
+checks/audit_dependency_cve.py
 ====================================
 [新設 2026-10] 「サプライチェーン依存の既知脆弱性(CVE)監査」
 
-`angels/audit_dependency_version_pinning.py`は`requirements.txt`の全依存がバージョン固定(==)
+`checks/audit_dependency_version_pinning.py`は`requirements.txt`の全依存がバージョン固定(==)
 されているかのみを検証する。しかし、バージョンが固定されていても、その
 固定された版自体に既知の脆弱性が公表されている可能性は一切検査していない。
 本スクリプトは、固定された依存の版そのものを、公開されている脆弱性

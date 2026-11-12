@@ -2,8 +2,8 @@
 [脆弱性修正 2026-10 §BD] 「秘密情報漏洩スキャナが、自分自身のテストスイート
 を誤検知する」バグの回帰テスト。
 
-`angels/guard_precommit_secret_leak.py`(実体は`angels/_common.py`の
-`scan_for_leaked_secrets()`)と`angels/guard_hardcoded_secret_leak.py`
+`checks/guard_precommit_secret_leak.py`(実体は`checks/_common.py`の
+`scan_for_leaked_secrets()`)と`checks/guard_hardcoded_secret_leak.py`
 (`scan_for_hardcoded_sensitive_env_keys()`)は、いずれもリポジトリ全体を
 実際にスキャンして、本物の秘密情報が紛れ込んでいないかを検証するCI必須
 ステップである。しかし、これらを検証する`tests/test_scan_for_leaked_secrets.py`・
@@ -24,14 +24,14 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "angels"))
+sys.path.insert(0, str(REPO_ROOT / "checks"))
 
 from _common import scan_for_leaked_secrets  # noqa: E402
 from guard_hardcoded_secret_leak import scan_for_hardcoded_sensitive_env_keys  # noqa: E402
 
 
 def test_scan_for_leaked_secrets_finds_nothing_in_the_real_repository():
-    """[修正の核心] angels/guard_precommit_secret_leak.pyが実際に使う
+    """[修正の核心] checks/guard_precommit_secret_leak.pyが実際に使う
     scan_for_leaked_secrets()を、rootを指定せず(=実リポジトリ全体に対して)
     呼び出しても、何も検知してはならない。テストフィクスチャ自身が
     誤検知される場合、ここで失敗する。"""
@@ -43,7 +43,7 @@ def test_scan_for_leaked_secrets_finds_nothing_in_the_real_repository():
 
 
 def test_scan_for_hardcoded_sensitive_env_keys_finds_nothing_in_the_real_repository():
-    """[修正の核心] angels/guard_hardcoded_secret_leak.pyが実際に使う
+    """[修正の核心] checks/guard_hardcoded_secret_leak.pyが実際に使う
     scan_for_hardcoded_sensitive_env_keys()を、root/self_pathを指定せず
     (=実リポジトリ全体に対して)呼び出しても、何も検知してはならない。"""
     hits = scan_for_hardcoded_sensitive_env_keys()

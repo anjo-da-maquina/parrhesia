@@ -1,7 +1,7 @@
 """
 tests/test_guard_sandbox_shell_eval_bypass_chaos_gate.py
 =============================================
-[脆弱性修正 2026-10 §BM] angels/guard_sandbox_shell_eval_bypass.py の回帰テスト。
+[脆弱性修正 2026-10 §BM] checks/guard_sandbox_shell_eval_bypass.py の回帰テスト。
 
 以前の実装は、Seferへの難読化攻撃バッテリーが1件でも突破された場合の
 失敗判定を、`CHAOS_MODE`環境変数(ワークフローの`workflow_dispatch`入力
@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ANGELS_DIR = REPO_ROOT / "angels"
+ANGELS_DIR = REPO_ROOT / "checks"
 
 
 def _run_with_stubbed_runtime_guard(stub_script: str, env_extra=None) -> subprocess.CompletedProcess:

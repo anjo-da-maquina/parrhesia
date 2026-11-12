@@ -19,7 +19,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # 回避)と同じ構造の欠陥――禁止したい意図(外部への通信・データ送信)は
 # 同じなのに、別のAPIを使うだけで素通りしてしまう――だが、本件は
 # AST静的解析ではなく`sys.addaudithook`ベースのランタイム監査フックが
-# 対象であるため、`angels/check_equivalent_syntax_bypass.py`の対象には
+# 対象であるため、`checks/check_equivalent_syntax_bypass.py`の対象には
 # 含まれていなかった。本天使は、個々のイベント名の列挙を解析するのでは
 # なく、実際に`ultimate_audit_hook`を登録し、封鎖状態で既知のネットワーク
 # 送信手段(UDPの`socket.sendto()`)を実際に発火させて、正しく遮断される
@@ -47,7 +47,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # する。独立した別の防御層である`runtime_guard/__init__.py`の
 # `_michael_absolute_defense`も、同じ理由で"socket.getaddrinfo"を
 # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外し、専用のallowed_hosts検査
-# を新設する同種の修正を別途行った(GRIMOIRE.md §CT参照)。
+# を新設する同種の修正を別途行った(DEFECTS.md §CT参照)。
 #
 # [新設 2026-11 §CU] §CTの直後、「DNS名前解決APIはgetaddrinfoだけか」を
 # 実機で棚卸ししたところ、`socket.gethostbyname()`/`gethostbyname_ex()`
@@ -341,7 +341,7 @@ def run_battery():
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
             # 機能せず、run_battery自体が未処理の例外で丸ごと落ちて
-            # しまう(angels/guard_socket_send_bypass.pyの新設時に
+            # しまう(checks/guard_socket_send_bypass.pyの新設時に
             # 実機で発見)。KeyboardInterrupt/SystemExit等も含め
             # 広く捕捉するが、本関数の唯一の責務は「1件の検査関数の
             # 呼び出し結果を安全に報告する」ことであり、ここで拾った

@@ -1,7 +1,7 @@
 """
 tests/test_check_static_analysis_performance.py
 =====================================
-[新設 2026-11] angels/check_static_analysis_performance.py の単体テスト。
+[新設 2026-11] checks/check_static_analysis_performance.py の単体テスト。
 
 本天使(「力天使の試練」)は、`runtime_guard.inquisition()`の静的解析が、大きめ
 の入力(5000行相当)に対しても`MAX_SECONDS`秒以内に完了することを
@@ -17,7 +17,7 @@ FAIL分岐を再現するために、実際に5秒以上かかる処理を発生
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_static_analysis_performance as vl
 
 

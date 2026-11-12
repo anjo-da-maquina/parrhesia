@@ -7,7 +7,7 @@ CassielsVeil.activate_seal()(socket.socketをプロセスグローバルにブ�
 正規の「防御側AIによる脅威学習」通信までが、自分自身が展開した通信遮断結界に
 よって毎サイクル確実にブロックされていた。
 
-GRIMOIRE.md §Lは、全く同じ理由(CassielsVeilはローカルOllamaサーバーへの
+DEFECTS.md §Lは、全く同じ理由(CassielsVeilはローカルOllamaサーバーへの
 通信まで一緒に遮断してしまうため)で、CassielsVeilを実運用パイプラインへは
 統合しない(教材として保持するのみ)と既に確定していた。しかし本ファイルが
 後から新設された際、まさにその禁止されていた統合を自ら行ってしまっていた。

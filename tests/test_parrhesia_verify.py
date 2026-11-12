@@ -210,7 +210,7 @@ def test_odditiy_flag_rejects_non_suspicious_signal_severity():
 # ------------------------------------------------------------------
 
 def test_check_specificity_detects_all_three_markers():
-    report = "angels/foo.py:42 でテストが失敗(FAILED)した。出力:\n```\nAssertionError\n```"
+    report = "checks/foo.py:42 でテストが失敗(FAILED)した。出力:\n```\nAssertionError\n```"
     result = check_specificity(report)
     assert result.has_line_number is True
     assert result.has_actual_output is True

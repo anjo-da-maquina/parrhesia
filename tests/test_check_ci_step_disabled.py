@@ -1,12 +1,12 @@
 """
 tests/test_check_ci_step_disabled.py
 =====================================
-[新設 2026-10 §BU] angels/check_ci_step_disabled.py の単体テスト。
+[新設 2026-10 §BU] checks/check_ci_step_disabled.py の単体テスト。
 
-本天使は、tests/test_angels_scripts_wired_into_ci.pyで実際に発見・修正
+本天使は、tests/test_checks_scripts_wired_into_ci.pyで実際に発見・修正
 した自己言及的な欠陥――CIワークフロー上のステップに`if: false`を追加
 するだけで、天使を実質的に無効化できるにもかかわらず、既存の「配線
-漏れ検知」テストはそれを見逃していた――を一般化し、angels/*.pyに限らず
+漏れ検知」テストはそれを見逃していた――を一般化し、checks/*.pyに限らず
 全てのCIステップに対して継続的に検査する。
 
 本テストは、実装中に自分自身へ行ったレッドチーム(7パターン)の結果を
@@ -15,7 +15,7 @@ tests/test_check_ci_step_disabled.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_ci_step_disabled as avw
 
 
@@ -28,7 +28,7 @@ def test_detects_literal_boolean_false():
         "    steps:\n"
         "      - name: sabotaged\n"
         "        if: false\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == [("j", "sabotaged")]
 
@@ -41,7 +41,7 @@ def test_does_not_flag_normal_success_condition():
         "    steps:\n"
         "      - name: normal\n"
         "        if: success()\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == []
 
@@ -55,7 +55,7 @@ def test_detects_quoted_expression_form_of_false():
         "    steps:\n"
         "      - name: quoted-false\n"
         "        if: \"${{ false }}\"\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == [("j", "quoted-false")]
 
@@ -68,7 +68,7 @@ def test_detects_numeric_zero():
         "    steps:\n"
         "      - name: zero\n"
         "        if: 0\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == [("j", "zero")]
 
@@ -81,7 +81,7 @@ def test_detects_empty_string_condition():
         "    steps:\n"
         "      - name: empty-string-if\n"
         "        if: ''\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == [("j", "empty-string-if")]
 
@@ -112,7 +112,7 @@ def test_known_limitation_dynamic_condition_is_not_evaluated():
         "    steps:\n"
         "      - name: cond-on-prior-step\n"
         "        if: steps.foo.outcome == 'failure'\n"
-        "        run: python angels/x.py\n"
+        "        run: python checks/x.py\n"
     )
     assert avw.find_disabled_steps(text) == []
 

@@ -1,6 +1,6 @@
 ﻿"""
 [テスト追加 2026-10] runtime_guard/audit_chain.py (SignedAuditChain) の回帰テスト。
-GRIMOIRE.md §AE 参照。
+DEFECTS.md §AE 参照。
 
 背景: 以前のSignedAuditChainは"Signed"(署名付き)と名乗りながら、実際には
 秘密鍵を使わない単純なSHA-256ハッシュ連鎖に過ぎなかった。これはファイルへの

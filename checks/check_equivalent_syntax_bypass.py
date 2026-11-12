@@ -105,7 +105,7 @@ def run_battery():
             except BaseException as e:
                 # [脆弱性修正 2026-10 §CO追記] runtime_guard.LossOfAtaraxia等、
                 # BaseExceptionを直接継承する例外は`except Exception`
-                # では捕捉されない(angels/guard_socket_send_bypass.py
+                # では捕捉されない(checks/guard_socket_send_bypass.py
                 # の新設時に実機で発見、同種の修正を本ファイルにも適用)。
                 failures.append((checker_name, payload_name, f"検査関数自体が例外を発生: {type(e).__name__}: {e}"))
                 continue

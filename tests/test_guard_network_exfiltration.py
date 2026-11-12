@@ -1,7 +1,7 @@
 """
 tests/test_guard_network_exfiltration.py
 ============================================
-[新設 2026-10 §CA] angels/guard_network_exfiltration.py の単体テスト。
+[新設 2026-10 §CA] checks/guard_network_exfiltration.py の単体テスト。
 
 実際に発見した具体例: `runtime_audit_gatekeeper.py`の`ultimate_audit_hook`
 ("深層保護")は、ネットワーク通信の遮断を"socket.connect"のみで行って
@@ -15,7 +15,7 @@ tests/test_guard_network_exfiltration.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_network_exfiltration as jeg
 
 

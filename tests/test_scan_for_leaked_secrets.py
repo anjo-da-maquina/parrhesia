@@ -1,18 +1,18 @@
 """
-[テスト追加 2026-10] angels/_common.py の scan_for_leaked_secrets() の回帰テスト。
+[テスト追加 2026-10] checks/_common.py の scan_for_leaked_secrets() の回帰テスト。
 
 背景: 除外ディレクトリ判定が rel.startswith(ex) という文字列の前方一致
 のみで行われていたため、除外対象(例: "dummy_secrets")と前方一致するだけの
 別ディレクトリ(例: "dummy_secrets_backup")も、本当のシークレット漏洩の
 有無を一切スキャンせずに除外してしまう欠陥があった
 (src/workspace_manager.py の WorkspaceJail で見つかったのと同種のバイパス。
-GRIMOIRE.md §AA / §AB参照)。
+DEFECTS.md §AA / §AB参照)。
 """
 import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "angels"))
+sys.path.insert(0, str(REPO_ROOT / "checks"))
 
 from _common import scan_for_leaked_secrets  # noqa: E402
 

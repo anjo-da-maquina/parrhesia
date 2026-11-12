@@ -1,7 +1,7 @@
 """
 tests/test_audit_dependency_cve.py
 ========================================
-angels/audit_dependency_cve.py の回帰テスト。
+checks/audit_dependency_cve.py の回帰テスト。
 
 本物の pip-audit / PyPI Advisory Database への実際のネットワーク到達性
 には依存しない(このテスト自体を含むサンドボックス環境がネットワーク
@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ANGELS_DIR = REPO_ROOT / "angels"
+ANGELS_DIR = REPO_ROOT / "checks"
 
 
 def _run_with_stubbed_subprocess(stub_script: str) -> subprocess.CompletedProcess:

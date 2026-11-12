@@ -54,7 +54,7 @@ def _run_scan_in_repo(repo_dir: Path):
     script = f"""
 import sys
 sys.path.insert(0, {str(TOOLS)!r})
-sys.path.insert(0, {str(REPO_ROOT / "angels")!r})
+sys.path.insert(0, {str(REPO_ROOT / "checks")!r})
 import pre_commit_secret_scan as m
 m._REPO_ROOT = __import__("pathlib").Path({str(repo_dir)!r})
 hits = m.scan_staged_changes()
@@ -107,7 +107,7 @@ def test_staged_private_key_pem_is_blocked():
 
 
 def test_tests_directory_fixture_is_not_blocked_but_same_content_elsewhere_still_is():
-    """[脆弱性修正 2026-10 §BH/核心] `angels/_common.py`の
+    """[脆弱性修正 2026-10 §BH/核心] `checks/_common.py`の
     `EXCLUDED_SECRET_SCAN_DIRS`には§BDで"tests"が追加され、
     `scan_for_leaked_secrets()`(guard_precommit_secret_leak.pyの実体)は`tests/`配下の
     回帰テストフィクスチャ(本物らしい偽の秘密情報)を自己検知しないよう

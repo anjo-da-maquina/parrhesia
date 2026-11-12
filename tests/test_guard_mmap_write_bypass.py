@@ -1,7 +1,7 @@
 """
 tests/test_guard_mmap_write_bypass.py
 ====================================
-[新設 2026-10 §CB] angels/guard_mmap_write_bypass.py の単体テスト。
+[新設 2026-10 §CB] checks/guard_mmap_write_bypass.py の単体テスト。
 
 実際に発見した具体例: `runtime_guard/__init__.py`の`_michael_absolute_defense`は
 "mmap.__new__"監査イベントを一度も検査していなかったため、Sanctumに
@@ -17,7 +17,7 @@ tests/test_guard_mmap_write_bypass.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_mmap_write_bypass as smg
 
 

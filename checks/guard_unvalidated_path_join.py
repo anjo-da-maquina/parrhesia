@@ -33,7 +33,7 @@ NAME = "guard_unvalidated_path_join - 静的解析監査: 関数内で未検証�
 # (`os.path.join`・f文字列結合等)は検知範囲外。(3) 変数の再代入や
 # 別名への代入を経由した場合の追跡は行わない(単純な単一変数の追跡のみ)。
 
-TARGET_DIRS = ["angels", "src", "adapters", "anjo_interceptor"]
+TARGET_DIRS = ["checks", "src", "adapters", "anjo_interceptor"]
 TARGET_FILES = ["runtime_audit_gatekeeper.py"]
 
 SANITIZER_NAME_MARKERS = ("secure_resolve", "_assert_contained_within_workspace")
@@ -94,7 +94,7 @@ def _is_naive_path_join_assign(node):
     [実装中の自己レッドチームで発見・即時修正] 当初は右辺の形を一切
     問わなかったため、`ROOT / "src" / "aegis_system.py"`のような、
     完全に固定されたリテラル文字列のみによる(攻撃者が制御できる要素が
-    一切無い)パス結合まで誤検知していた(angels/guard_docker_sandbox_enforcement_decay.pyで
+    一切無い)パス結合まで誤検知していた(checks/guard_docker_sandbox_enforcement_decay.pyで
     実際に3件の偽陽性を確認)。これは本物のバグ(src/ollama_agent_loop.py
     の`self.workspace_root / action_req.get("target")`、右辺が外部入力
     由来の式)とは本質的に異なる。右辺(結合の最後の要素)が単純な文字列

@@ -3,7 +3,7 @@ tests/test_openai_agent_loop_template.py
 ==========================================
 src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検証する
 回帰テスト。詳細な経緯は src/openai_agent_loop.py モジュールdocstring、
-および angels/audit_agent_template_integration.py 参照。
+および checks/audit_agent_template_integration.py 参照。
 
 確認する点:
   1. モジュールのimport自体が、'openai' パッケージの有無に関わらず
@@ -26,7 +26,7 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see DEFECTS.md known environment gaps")
 from runtime_audit_gatekeeper import LossOfAtaraxia
 import openai_agent_loop
 

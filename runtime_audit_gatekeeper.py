@@ -215,7 +215,7 @@ def _register_audit_hook_once():
         # よるOSErrorでのみ失敗すること(=本フックが何も遮断していない
         # こと)を確認した。独立した別の防御層である`runtime_guard/__init__.py`の
         # `_michael_absolute_defense`も、同じ理由でこれまで
-        # "socket.getaddrinfo"を無条件に通過させていた(GRIMOIRE.md §CT、
+        # "socket.getaddrinfo"を無条件に通過させていた(DEFECTS.md §CT、
         # 本ファイルの修正はそちらとは独立した同種の修正)。本ファイルは
         # allowed_hosts方式を持たないブラント(接続先を問わず一律遮断)な
         # 設計のため、`socket.connect`等と同じ扱いで"socket.getaddrinfo"
@@ -271,7 +271,7 @@ def _register_audit_hook_once():
 def _load_or_create_zk_signing_key(key_path: Path) -> bytes:
     """[脆弱性修正 2026-10] ZKAuditTrailのハッシュ連鎖に鍵付けするための
     ローカル専用秘密鍵。初回自動生成・0600権限で作成する
-    (runtime_guard/audit_chain.pyのSignedAuditChainと同一パターン。GRIMOIRE §AE参照)。"""
+    (runtime_guard/audit_chain.pyのSignedAuditChainと同一パターン。DEFECTS §AE参照)。"""
     key_path = Path(key_path)
     key_path.parent.mkdir(parents=True, exist_ok=True)
     if key_path.exists():
@@ -334,7 +334,7 @@ class ZKAuditTrail:
     SHA-256であり、ファイルへの書き込み権限を持つ攻撃者なら、任意のブロック
     (侵入記録等)を削除した上でチェーン全体を先頭から秘密鍵なしに再計算し
     直すだけで、検知を一切受けずに改ざんできた(runtime_guard/audit_chain.pyの
-    SignedAuditChainと同種のバグ。GRIMOIRE §AE参照)。
+    SignedAuditChainと同種のバグ。DEFECTS §AE参照)。
 
     欠陥2(検証自体が実質的に死んでいた): 旧実装の改ざん検知は、プロセス
     起動時に"0000...0"へ初期化される**モジュールグローバル変数**
@@ -448,7 +448,7 @@ class ZKAuditTrail:
             "current_hash": current_hash,
             "zk_proof": (
                 "これは真のゼロ知識証明ではなく、ローカル秘密鍵(.zk_audit_signing_key)で"
-                "鍵付けしたHMAC-SHA256ハッシュ連鎖です(GRIMOIRE §AH参照)。"
+                "鍵付けしたHMAC-SHA256ハッシュ連鎖です(DEFECTS §AH参照)。"
             ),
         }
         trail.append(new_block)

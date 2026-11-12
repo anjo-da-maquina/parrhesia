@@ -19,7 +19,7 @@ NAME = "guard_audit_log_truncation - runtime_guard.audit_chain.SignedAuditChain�
 # (件数, 最終ハッシュ)」を記憶する水位標(watermark)ファイルを導入し、
 # 両者を修正した。
 #
-# [一般化の方針] `angels/check_equivalent_syntax_bypass.py`(§BW)と同じ設計
+# [一般化の方針] `checks/check_equivalent_syntax_bypass.py`(§BW)と同じ設計
 # 思想――個々の実装の書き方を解析するのではなく、実際にリポジトリに
 # 存在する改ざん検知機構を直接呼び出し、既知の攻撃(ここでは「ログ全体
 # を鍵なしで切り詰める」)を実際に与えて、正しく検知されることを継続的
@@ -110,7 +110,7 @@ def run_battery():
             # 捕捉されず、検査関数が想定外にそれを発生させた場合、
             # 本来「安全側に倒して失敗として報告する」はずの設計が
             # 機能せず、run_battery自体が未処理の例外で丸ごと落ちて
-            # しまう(angels/guard_socket_send_bypass.pyの新設時に
+            # しまう(checks/guard_socket_send_bypass.pyの新設時に
             # 実機で発見)。KeyboardInterrupt/SystemExit等も含め
             # 広く捕捉するが、本関数の唯一の責務は「1件の検査関数の
             # 呼び出し結果を安全に報告する」ことであり、ここで拾った

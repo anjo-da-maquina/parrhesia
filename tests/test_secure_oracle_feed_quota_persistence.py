@@ -2,7 +2,7 @@
 tests/test_secure_oracle_feed_quota_persistence.py
 ======================================================
 src/secure_oracle_feed.py の EconomicDefenseLimiter の回帰テスト。
-GRIMOIRE.md §AQ 参照。
+DEFECTS.md §AQ 参照。
 
 背景: 旧実装は「1日あたりのAPIリクエスト上限(max_daily_requests)」を
 名乗っていたが、カウントをインスタンスのメモリ上の変数としてのみ保持

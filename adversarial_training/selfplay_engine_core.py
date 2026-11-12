@@ -27,7 +27,7 @@ if str(PLEROMA_DIR_FOR_IMPORT) not in sys.path:
 # [脆弱性修正 2026-10 §BJ] runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS(詳細は
 # runtime_guard/__init__.py側のコメント参照)を単一の正として再利用する。ここで
 # 独自に同じ集合を複製すると、将来runtime_guard側だけが更新され本ファイルが
-# 取り残される(GRIMOIRE.md §Mと同種の)ドリフトのリスクを生むため。
+# 取り残される(DEFECTS.md §Mと同種の)ドリフトのリスクを生むため。
 from runtime_guard import ALWAYS_PASSTHROUGH_AUDIT_EVENTS
 PLEROMA_DIR = ADVERSARIAL_TRAINING_DIR.parent
 LEDGER_PATH = PLEROMA_DIR / "runtime_guard" / "raziel_ledger.json"
@@ -109,7 +109,7 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
     自己対戦は、実際には**防壁が一度も展開されていない空の闘技場**で
     行われていたに等しく、Luciferがどれほど単純な(難読化すら伴わない)
     攻撃を書いても常に「突破」と判定されてしまう構造的な欠陥だった。
-    これは`angels/audit_agent_template_integration.py`が`src/openai_agent_loop.py`に対して
+    これは`checks/audit_agent_template_integration.py`が`src/openai_agent_loop.py`に対して
     既に検査している規約(「`with Sanctum(`を経由しないファイルI/Oは
     実防壁が外れている」)と全く同じ種類の欠陥が、検査対象側ではなく
     検査する側(Armageddon自身)に存在していたことになる。
@@ -159,7 +159,7 @@ def validate_banned_event(banned_event: str):
     有効と判定し、人間が`tools/promote_ledger_seal.py --approve
     socket.getaddrinfo`で承認して`raziel_ledger.json`に反映した後も、
     実際に`socket.getaddrinfo`を呼び出すと何の例外も発生せず素通りする
-    ことを確認した(GRIMOIRE.md §BJ参照)。
+    ことを確認した(DEFECTS.md §BJ参照)。
     """
     banned_event = (banned_event or "").strip("'`\" \n")
 

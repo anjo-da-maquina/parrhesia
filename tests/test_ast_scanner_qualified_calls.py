@@ -84,7 +84,7 @@ def test_known_limitation_importlib_indirect_load_is_documented_not_fixed():
     result = verify_intent("import importlib\nm = importlib.import_module('o' + 's')")
     assert "承認" in result, (
         "importlib経由の間接ロードが検知されるようになったなら、このテストと"
-        "GRIMOIRE.md §Jの既知の限界の記述を更新すること"
+        "DEFECTS.md §Jの既知の限界の記述を更新すること"
     )
 
 

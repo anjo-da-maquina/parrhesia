@@ -7,8 +7,8 @@
 対し実際に存在する"JAIL_WORKSPACE"という完全に別のディレクトリ)への
 書き込み・破壊的操作が、Michaelの絶対防壁(sys.addaudithook)をすり抜けて
 許可されてしまう脆弱性があった(src/workspace_manager.py の WorkspaceJail、
-angels/_common.py の scan_for_leaked_secrets() で見つかったのと同種の
-「前方一致/緩い一致による境界判定の誤り」バイパス。GRIMOIRE.md §AA / §AB
+checks/_common.py の scan_for_leaked_secrets() で見つかったのと同種の
+「前方一致/緩い一致による境界判定の誤り」バイパス。DEFECTS.md §AA / §AB
 参照)。大文字小文字を厳密に区別するよう修正し、本テストで固定する。
 """
 import sys

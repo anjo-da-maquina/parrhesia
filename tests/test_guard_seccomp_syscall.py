@@ -1,7 +1,7 @@
 """
 tests/test_guard_seccomp_syscall.py
 ======================================
-[新設 2026-10 §CG] angels/guard_seccomp_syscall.py の単体テスト。
+[新設 2026-10 §CG] checks/guard_seccomp_syscall.py の単体テスト。
 
 実際に発見した具体例: §CFで導入したLinuxケーパビリティの剥奪は
 「root相当の特権の有無」を制御するが、「どのシステムコール自体を
@@ -17,7 +17,7 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_seccomp_syscall as dsg
 
 
@@ -91,7 +91,7 @@ def test_profile_json_check_detects_execve_reintroduced_into_denylist(tmp_path, 
     """[核心・§CIの回帰防止] §CIで自己発見・自己訂正した退行(execveを
     denylistに含めると、Docker/runcがコンテナのPID1へこのフィルタを
     ロードした直後にENTRYPOINTをexecveする際、コンテナ自体が一度も
-    起動できなくなっていた、GRIMOIRE.md §CI参照)が、将来再びdenylist
+    起動できなくなっていた、DEFECTS.md §CI参照)が、将来再びdenylist
     へexecveが追加された場合に正しく検知されることを確認する。"""
     bad = tmp_path / "bad.json"
     reintroduced = sorted(dsg._REQUIRED_CORE_DENYLIST | {"execve", "execveat"})
@@ -111,7 +111,7 @@ def test_profile_json_check_detects_io_uring_denylist_regression(tmp_path, monke
     syscall監視そのものを構造的に迂回しうる経路(リングバッファへの
     I/O提出は、対応するsyscall自体を呼ばない)であり、Docker 25.0が
     自身の既定allowlistからこれらを除外したのと同じ理由で、本件を
-    §CGの核心的な拒否対象群と同様に扱う。GRIMOIRE.md §CL参照。"""
+    §CGの核心的な拒否対象群と同様に扱う。DEFECTS.md §CL参照。"""
     bad = tmp_path / "bad.json"
     weakened = sorted(dsg._REQUIRED_CORE_DENYLIST - {"io_uring_setup"})
     bad.write_text(json.dumps({

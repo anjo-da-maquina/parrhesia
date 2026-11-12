@@ -21,7 +21,7 @@ def _log_violation_to_chain(event: str, details: dict):
     # 直接持っていたが、これは秘密鍵を用いない単純なハッシュ連鎖に過ぎず、
     # ファイルへの書き込み権限を持つ攻撃者が改ざんを検知されずに行えて
     # しまう脆弱性があった(runtime_guard/audit_chain.py のSignedAuditChainクラスの
-    # docstring、GRIMOIRE.md §AE参照)。また、本関数とSignedAuditChainとで
+    # docstring、DEFECTS.md §AE参照)。また、本関数とSignedAuditChainとで
     # 同じフォーマットのハッシュ連鎖ロジックが二重実装されており、片方だけ
     # 修正すると両者が食い違って`verify_integrity()`が壊れるリスクもあった。
     # 唯一の実装であるSignedAuditChain(鍵付きHMAC-SHA256版)に委譲するよう
@@ -164,18 +164,18 @@ _HARD_DENY_EVENTS = {
 # 到達する前に必ずこの時点で無条件に許可されて`return`するため、*絶対に*
 # 禁止できない。元々この2つの集合はそれぞれの検査ブロック内にリテラルの
 # `{...}`として個別に書かれていたため、一方だけ変更して他方が取り残される
-# ドリフトのリスクがあった(GRIMOIRE.md §Mと同種)ため、ここに統合した上で
+# ドリフトのリスクがあった(DEFECTS.md §Mと同種)ため、ここに統合した上で
 # 各検査ブロックから参照する。
 #
 # `adversarial_training/selfplay_engine_core.py`(旧名`tartarus/armageddon_core.py`)の`validate_banned_event()`は、この集合を
 # 用いて「台帳に追加しても構造的に絶対に効果が無い」イベント名の承認提案を
-# 事前に拒否する(詳細はGRIMOIRE.md §BJ参照)。
+# 事前に拒否する(詳細はDEFECTS.md §BJ参照)。
 ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
     "os.stat", "os.listdir", "os.getcwd", "os.path",
     # [脆弱性修正 2026-11 §CT] "socket.getaddrinfo"は以前ここに含まれて
     # いたが、DNS解決そのものがデータ持ち出し経路になり得ることを実機で
     # 確認したため除外し、専用のallowed_hosts検査を新設した
-    # (`_michael_absolute_defense`の「1.5」参照、GRIMOIRE.md §CT参照)。
+    # (`_michael_absolute_defense`の「1.5」参照、DEFECTS.md §CT参照)。
     "socket.socket", "socket.__init__",
     # [脆弱性修正 2026-10 §CO追記] "socket.socket"/"socket.__init__"は、
     # このコメントが書かれた時点で想定していたイベント名だったと見られるが、
@@ -195,7 +195,7 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
 })
 
 # Pythonの audit event 名として妥当な形式のみ許可（例: "os.system", "subprocess.Popen"）。
-# adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py) / angels/_common.py と同一の正規表現。
+# adversarial_training/selfplay_engine_core.py(旧名tartarus/armageddon_core.py) / checks/_common.py と同一の正規表現。
 VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$")
 
 # [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`、Lucifer vs Sefer自己対戦)が
@@ -203,7 +203,7 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 # イベント(`runtime_guard/raziel_ledger.json`の`banned_events`)は、これまで
 # `_michael_absolute_defense`から一切読み込まれておらず、承認してもシステム
 # の実際の防御には何ら反映されない「学習したつもりになっているだけ」の状態
-# だった(`angels/audit_ledger_schema.py`はファイルのスキーマ検証のみで、実際に
+# だった(`checks/audit_ledger_schema.py`はファイルのスキーマ検証のみで、実際に
 # 読み込まれ enforce されているかは検証していなかった)。
 #
 # [設計上の制約・安全性の確認] 本番の`runtime_guard/raziel_ledger.json`には既定で
@@ -467,7 +467,7 @@ def _load_dynamic_shield_rules() -> tuple:
     外部脅威インテリジェンス(`shield_rules.json`の`blocked_modules`/
     `blocked_functions`)は、これまでGabriel(`inquisition()`)から一切
     読み込まれておらず、承認してもシステムの実際の検閲には何ら反映されない
-    「学習したつもりになっているだけ」の状態だった(`angels/guard_shield_rule_autoapply_and_key_leak.py`
+    「学習したつもりになっているだけ」の状態だった(`checks/guard_shield_rule_autoapply_and_key_leak.py`
     は承認ワークフロー自体の構造検証のみで、実際にenforceされているかは
     検証していなかった。`runtime_guard/raziel_ledger.json`がMichael側から一切
     読まれていなかった件と同種の欠陥。本ファイル内の対になる修正も参照)。
@@ -755,7 +755,7 @@ def _guarded_os_copy_file_range(src, dst, count, offset_src=None, offset_dst=Non
 # `socket.sendmsg`は、いずれも別個の、ちゃんと存在するeventである――
 # `send`/`sendall`はそれらとは違い、そもそもイベント自体が無い)。
 #
-# `angels/guard_network_exfiltration.py`の§CA時点のコメントは、
+# `checks/guard_network_exfiltration.py`の§CA時点のコメントは、
 # 「TCP経由のsend/sendallは専用eventを持たないが、必ず事前のconnectを
 # 要する(=forbidden集合で遮断済み)ため検査不要」と判断していた。しかし
 # これは、§CN・§CD等で繰り返し発見している「Sanctum起動**前**に確保した

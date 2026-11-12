@@ -3,7 +3,7 @@ tests/test_deadmans_switch_collar_protocol.py
 ================================================
 [脆弱性修正 2026-10 §BP] src/deadmans_switch.py の回帰テスト。
 
-angels/audit_security_flag_test_coverage.py(新設、§BP)による機械的な洗い出しで、
+checks/audit_security_flag_test_coverage.py(新設、§BP)による機械的な洗い出しで、
 `src/deadmans_switch.py`のCollarProtocol.verify_collar()が、環境変数
 ANJO_COLLAR_SEALによって「正常稼働を継続する」か「os._exit(1)で即時
 自壊する」かが切り替わる、セキュリティ上最も重要な分岐(ミュトス級AIの

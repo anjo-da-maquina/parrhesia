@@ -2,7 +2,7 @@
 tests/test_provisioning_approval_flow.py
 ==========================================
 adapters/provisioning_agent.py の再構築(2026-10)を検証する回帰テスト。
-詳細な経緯は同モジュールのdocstring、および GRIMOIRE.md §O 参照。
+詳細な経緯は同モジュールのdocstring、および DEFECTS.md §O 参照。
 
 確認する点:
   1. provision_sanctuary() が、runtime_audit_gatekeeper.py の
@@ -335,7 +335,7 @@ def test_check_rotation_reports_match_when_proposed_key_equals_current(tmp_path,
 def test_check_rotation_reports_rotation_when_proposed_key_differs_from_current(tmp_path, monkeypatch):
     """[欠陥修正 2026-11 §CX/§CZ] 鍵が異なる(本物のローテーション)場合は
     "ROTATION"を返し、無人の自動化がここを自動承認してはならないことを示す。
-    これが、GRIMOIRE.md §CXで発見した『自動化が人間の帯外確認を無効化していた』
+    これが、DEFECTS.md §CXで発見した『自動化が人間の帯外確認を無効化していた』
     欠陥に対する、実際の技術的な修正の核心部分である。"""
     import promote_provisioning_seal as pps
 

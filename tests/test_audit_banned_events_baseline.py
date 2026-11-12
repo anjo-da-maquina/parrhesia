@@ -1,7 +1,7 @@
 """
 tests/test_audit_banned_events_baseline.py
 =====================================
-[新設 2026-11] angels/audit_banned_events_baseline.py の単体テスト。
+[新設 2026-11] checks/audit_banned_events_baseline.py の単体テスト。
 
 本天使(「エノク語の神託」)は、分散型オラクル台帳(`runtime_guard/raziel_ledger.json`)
 のベースライン禁止イベント(`os.system`・`subprocess.Popen`・`os.remove`)
@@ -17,7 +17,7 @@ monkeypatchして、実際のファイルI/Oを介さずに判定ロジックの
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_banned_events_baseline as eo
 
 

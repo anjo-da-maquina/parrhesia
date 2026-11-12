@@ -1,14 +1,14 @@
 """
 tests/test_audit_dependency_version_pinning.py
 =====================================
-[新設 2026-11] angels/audit_dependency_version_pinning.py の単体テスト。
+[新設 2026-11] checks/audit_dependency_version_pinning.py の単体テスト。
 
 本天使(「オファニムの眼」)は、`requirements.txt`の全依存パッケージが
 バージョン固定(`==`)されているかを検証する(サプライチェーン攻撃対策
 の基本)。天使群のテストカバレッジの棚卸しの過程で、専用テストが
 一件も存在しないことが判明した(`tests/test_guard_html_external_script_injection.py`
-は別の天使`angels/guard_html_external_script_injection.py`向けのテストであり、本天使
-`angels/audit_dependency_version_pinning.py`は対象外だった)。
+は別の天使`checks/guard_html_external_script_injection.py`向けのテストであり、本天使
+`checks/audit_dependency_version_pinning.py`は対象外だった)。
 
 `main()`は`ROOT / "requirements.txt"`という固定パスを直接読むため、
 `audit_dependency_version_pinning.ROOT`を一時ディレクトリへmonkeypatchして検証する。
@@ -16,7 +16,7 @@ tests/test_audit_dependency_version_pinning.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import audit_dependency_version_pinning as oe
 
 

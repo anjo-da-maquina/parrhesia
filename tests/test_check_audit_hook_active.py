@@ -1,7 +1,7 @@
 """
 tests/test_check_audit_hook_active.py
 =====================================
-[新設 2026-11] angels/check_audit_hook_active.py の単体テスト。
+[新設 2026-11] checks/check_audit_hook_active.py の単体テスト。
 
 本天使(「ケルビムの境界」)は、`sys.addaudithook`によるMichael's Sword
 (_michael_absolute_defense)が実際に登録・機能していることを、カナリア
@@ -23,7 +23,7 @@ tests/test_check_audit_hook_active.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import check_audit_hook_active as ceg
 
 

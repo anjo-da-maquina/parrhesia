@@ -38,30 +38,30 @@ python3 demo/build_and_audit_demo.py
 
 | このリポジトリでの呼び方 | 平易に言うと |
 | --- | --- |
-| **angels/**(天使) | CIチェックスクリプト群。「過去に見つけた欠陥が再発していないか」を、push毎に機械的に再検証する。現在実際にCIへ配線されている本数は、手集計ではなくスクリプトで確認している: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py)(本稿執筆時点で55本)。 |
-| **GRIMOIRE.md** | 見つけた欠陥すべての生の記録(§A〜§DAの通し番号)。1件ごとに発見経緯・原因・修正・検証方法を書いた、エンジニアリング日誌。 |
+| **checks/** | CIチェックスクリプト群。「過去に見つけた欠陥が再発していないか」を、push毎に機械的に再検証する。現在実際にCIへ配線されている本数は、手集計ではなくスクリプトで確認している: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py)(本稿執筆時点で55本)。 |
+| **DEFECTS.md** | 見つけた欠陥すべての生の記録(§A〜§DAの通し番号)。1件ごとに発見経緯・原因・修正・検証方法を書いた、エンジニアリング日誌。 |
 | **Sanctuary / Sanctum** | AI生成コードを実行する際の、ファイルアクセス制限・ネットワーク遮断などの隔離機構(サンドボックス)の社内呼称。 |
-| **§A〜§DA** | GRIMOIRE.md内の個別の欠陥記録につけた通し番号(アルファベット式、A=1・Z=26・AA=27...)。手集計ではなく[`tools/count_grimoire_entries.py`](../tools/count_grimoire_entries.py)で自動検証している。 |
+| **§A〜§DA** | DEFECTS.md内の個別の欠陥記録につけた通し番号(アルファベット式、A=1・Z=26・AA=27...)。手集計ではなく[`tools/count_defects_entries.py`](../tools/count_defects_entries.py)で自動検証している。 |
 
 ## 2. 自己矛盾を見つけ、実際に修正した実例
 
 このツールキットは「ゼロトラスト」を掲げていますが、証明書を毎週自動更新する補助
 スクリプト(`tools/renew_certificate.ps1`/`.sh`)が、本来人間が帯外(別経路)で確認して
 から承認するはずの手順を、当初は自動承認にすり替えてしまっていました
-([GRIMOIRE.md §CX](../GRIMOIRE.md)で自己発見・記録)。
+([DEFECTS.md §CX](../DEFECTS.md)で自己発見・記録)。
 
 その後、`tools/promote_provisioning_seal.py`に`--check-rotation`(提案された鍵が
 現在信頼されている鍵と同一か=単なる期限延長かを機械的に判定する機能)を新設し、
 同一の場合のみ自動承認・異なる場合(本物の鍵の入れ替え)は自動承認を停止して人間の
-帯外確認を必須のまま要求する設計に、実際に直しました([GRIMOIRE.md §CZ](../GRIMOIRE.md)、
+帯外確認を必須のまま要求する設計に、実際に直しました([DEFECTS.md §CZ](../DEFECTS.md)、
 回帰テスト4件を追加)。この修正自体が持つ2つの限界(信頼済みの鍵の保存場所が自動化と
 独立していないこと、停止時の通知が受動的であること)は[docs/BOUNDARY.md](./BOUNDARY.md)
 に脅威モデルとして明記しています。
 
 ## 3. どうやって欠陥を見つけ続けているか
 
-`angels/`以下のCIチェックが、過去に見つかった欠陥の再発を機械的に検知し続ける仕組みに
-なっています。GRIMOIRE.mdの記録は、見出しを自動集計するスクリプトで確認した結果、
+`checks/`以下のCIチェックが、過去に見つかった欠陥の再発を機械的に検知し続ける仕組みに
+なっています。DEFECTS.mdの記録は、見出しを自動集計するスクリプトで確認した結果、
 本稿執筆時点で**105件(§A〜§DA、欠番・重複なし)**です(DEVLOG.mdの読み物版は81件時点
 のまま更新されていません)。
 
@@ -78,11 +78,11 @@ python3 demo/build_and_audit_demo.py
 
 | 記録 | 何が起きていたか | 再現手順(実機検証済み) | 修正コミット |
 | --- | --- | --- | --- |
-| [§AV](../GRIMOIRE.md) — 最も驚いた発見 | ネストしたサンドボックスの許可範囲が、絞るはずの操作で逆に**ファイルシステム全体まで広がる**バグ。 | 親Sanctum内で子Sanctumを`allowed_dirs=["/"]`で開き、`/tmp/`への書き込みを試行 → 例外無しで書き込みが成功(脱獄確認)。 | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
-| [§AR](../GRIMOIRE.md) | 判決文言は「実行は不可能です」と表示しながら、CLIの終了コードは常に`0`(成功)。 | `python src/kamael_judgment.py <違反ファイル>`を実行 → 画面は拒否を表示するが`echo $?`は常に0。 | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
-| [§CT](../GRIMOIRE.md) | `socket.getaddrinfo()`(DNS名前解決)が、`connect()`を経由しないため2つの独立した防御層のどちらからも素通り。 | 許可ホスト以外のホスト名で`getaddrinfo()`を呼ぶ → 遮断されず素通り(=何も遮断していない証拠)。修正後は両層で遮断されることを確認。 | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
+| [§AV](../DEFECTS.md) — 最も驚いた発見 | ネストしたサンドボックスの許可範囲が、絞るはずの操作で逆に**ファイルシステム全体まで広がる**バグ。 | 親Sanctum内で子Sanctumを`allowed_dirs=["/"]`で開き、`/tmp/`への書き込みを試行 → 例外無しで書き込みが成功(脱獄確認)。 | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
+| [§AR](../DEFECTS.md) | 判決文言は「実行は不可能です」と表示しながら、CLIの終了コードは常に`0`(成功)。 | `python src/kamael_judgment.py <違反ファイル>`を実行 → 画面は拒否を表示するが`echo $?`は常に0。 | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
+| [§CT](../DEFECTS.md) | `socket.getaddrinfo()`(DNS名前解決)が、`connect()`を経由しないため2つの独立した防御層のどちらからも素通り。 | 許可ホスト以外のホスト名で`getaddrinfo()`を呼ぶ → 遮断されず素通り(=何も遮断していない証拠)。修正後は両層で遮断されることを確認。 | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
 
-全件の詳細は [GRIMOIRE.md](../GRIMOIRE.md)、読み物として整理したものは [DEVLOG.md](../DEVLOG.md) にあります。
+全件の詳細は [DEFECTS.md](../DEFECTS.md)、読み物として整理したものは [DEVLOG.md](../DEVLOG.md) にあります。
 
 ## 4. 現在のテストスイートの状態(実測・引用元つき)
 
@@ -97,7 +97,7 @@ run:     Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/action
 環境でも失敗を許容する)という設計でしたが、「rsaの有無は実行前から分かっている
 前提条件であり、偶発的な失敗ではない」という指摘を踏まえ`pytest.mark.skipif`に
 変更しました。これにより、`rsa`がある環境(CI等)では通常の`passed`に、無い環境
-(開発用サンドボックス等)では理由明記の`skipped`になります([GRIMOIRE.md §DA](../GRIMOIRE.md))。
+(開発用サンドボックス等)では理由明記の`skipped`になります([DEFECTS.md §DA](../DEFECTS.md))。
 
 残る`2 xfailed`はrsaとは無関係です: `test_orchestrator.py`/`test_sandbox.py`の
 各1件で、該当APIがまだ実装されていないことによる、古くからの`strict=True`指定の
@@ -121,8 +121,8 @@ xfailです。(開発用サンドボックス内では、証明書の意図的�
 | --- | --- |
 | [README.md](../README.md) / [README.en.md](../README.en.md) | プロジェクト概要・使い方・脅威モデル・設計方針 |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | 実際に動くデモの再現手順と結果(初回は2/5だった失敗の記録も含む) |
-| [DEVLOG.md](../DEVLOG.md) | 81件時点の欠陥発見を読み物として再構成したもの(最新件数はGRIMOIRE.md参照) |
-| [GRIMOIRE.md](../GRIMOIRE.md) | §A〜§DA、105件の生の記録(最も詳細) |
+| [DEVLOG.md](../DEVLOG.md) | 81件時点の欠陥発見を読み物として再構成したもの(最新件数はDEFECTS.md参照) |
+| [DEFECTS.md](../DEFECTS.md) | §A〜§DA、105件の生の記録(最も詳細) |
 | [docs/FAQ.md](./FAQ.md) | 差別化・制限事項などへのQ&A |
 | [docs/WHY.md](./WHY.md) | なぜAIエージェントを信頼せず監査するのか、という設計思想 |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | このプロジェクトが「できること/できないこと」の境界線 |

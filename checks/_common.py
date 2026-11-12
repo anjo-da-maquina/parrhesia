@@ -1,9 +1,9 @@
 ﻿"""
-angels/_common.py
+checks/_common.py
 ==================
 各「天使」スクリプトが共有する検査ヘルパー群。
 
-[刷新 2026-10] 以前の angels/*.py の大半（33ファイル中28ファイル）は
+[刷新 2026-10] 以前の checks/*.py の大半（33ファイル中28ファイル）は
 `print('... initialized. Zero-Trust audit passed.')` のみを実行する
 中身のないプレースホルダーであり、CI上では常に成功するため、実際には
 何も検査していなかった。本モジュールと各天使スクリプトの刷新により、
@@ -40,15 +40,15 @@ def report_fail(name: str, message: str, evidence: dict = None):
 # [新設 2026-10 §BO] PASS/FAIL の2値だけでは「検査対象が存在しない」
 # (NOT_APPLICABLE) や「検査自体は行ったが証拠不十分で判定できない」
 # (INCONCLUSIVE) という状態を、PASSとして誤報告する構造的欠陥があった
-# (GRIMOIRE.md §BO参照。実際に9ファイルがこの誤用を行っていたことを
+# (DEFECTS.md §BO参照。実際に9ファイルがこの誤用を行っていたことを
 # 確認済み)。
 #
 # [実装中の自己訂正] 当初、INCONCLUSIVE/NOT_APPLICABLEをそれぞれ専用の
 # 終了コード(2・3)でsys.exit()する設計にしていたが、実機で
-# angels/check_zkp_audit_export_status.pyを実行したところ、実際に終了コード3を
+# checks/check_zkp_audit_export_status.pyを実行したところ、実際に終了コード3を
 # 返すことを確認した。.github/workflows/anjo_da_maquina_protocol.ymlの
 # 各天使ステップには continue-on-error が一切設定されておらず、単純な
-# `run: python angels/x.py` のみである。GitHub Actionsは非ゼロ終了コード
+# `run: python checks/x.py` のみである。GitHub Actionsは非ゼロ終了コード
 # であれば1でも2でも3でも同じくそのステップ・ジョブ全体を失敗(赤)にする
 # ため、この設計のままでは「検査対象が無いだけの、本来は異常ではない
 # 状態」が、FAILと見分けがつかずCIを赤くしてしまう。これはPASSへの誤用
@@ -146,7 +146,7 @@ SECRET_PATTERNS = [
 # 回帰テスト自身が、意図的に「本物らしい偽のAWSアクセスキー」(AKIAで始まる
 # 文字列)をテストフィクスチャとしてモジュールレベルの文字列に持つ
 # (tests/test_scan_for_leaked_secrets.py)
-# ことが原因で、本番のCIステップ(angels/guard_precommit_secret_leak.py)がリポジトリ
+# ことが原因で、本番のCIステップ(checks/guard_precommit_secret_leak.py)がリポジトリ
 # 全体をスキャンする際に、このテストフィクスチャ自身を「本物の漏洩」と
 # 誤検知し続けていた(実機検証済み: 2026-10-10 23:29のマージ以降、この
 # ワークフロー全体が継続的に失敗していたことをGitHub Actionsの実行履歴で
@@ -178,7 +178,7 @@ def scan_for_leaked_secrets(root: Path = None):
         # "dummy_secrets_backup/real_leaked_key.txt" が "dummy_secrets" と
         # 前方一致してしまう)も、本当のシークレット漏洩の有無を一切スキャン
         # せずに除外してしまう欠陥があった(src/workspace_manager.pyの
-        # WorkspaceJailで見つかったのと同種のバイパス。GRIMOIRE.md §AA参照)。
+        # WorkspaceJailで見つかったのと同種のバイパス。DEFECTS.md §AA参照)。
         # 完全一致、またはそのディレクトリ配下(区切り文字付き)であることを
         # 要求するよう修正した。
         if any(rel == ex or rel.startswith(ex + "/") for ex in EXCLUDED_SECRET_SCAN_DIRS):

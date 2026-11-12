@@ -9,7 +9,7 @@ NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼�
 # る――Sanctumに入る『前』に確保済みのfdや関数ポインタを使った操作は、
 # 以後いかなる新たな監査イベントも発生させずに素通りする。これは「城内
 # に関所を増やす」方式そのものの限界であり、恒久対策には「城を囲む外壁」
-# すなわちOSレベル(カーネルレベル)の強制が必要であると、GRIMOIRE.mdに
+# すなわちOSレベル(カーネルレベル)の強制が必要であると、DEFECTS.mdに
 # 繰り返し記してきた。
 #
 # 本件は、ユーザーからその恒久対策に実際に着手するよう依頼を受けて行った
@@ -110,7 +110,7 @@ def _check_dynamic_capability_is_actually_dropped():
     # [自己発見・緊急修正 2026-10 §CF-1] src/docker_sandbox_executor.py側と同じ
     # 理由(CAP_DAC_OVERRIDE剥奪後、既定モード0600のままでは`prisoner`
     # ユーザーがこのファイルを開けずPermission deniedになる)で、ここも
-    # 同様にchmodする。GRIMOIRE.md §CF追記参照。
+    # 同様にchmodする。DEFECTS.md §CF追記参照。
     os.chmod(tmp_path, 0o644)
     try:
         run_cmd = [

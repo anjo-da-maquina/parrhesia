@@ -1,7 +1,7 @@
 """
 tests/test_zk_audit_trail_chain_integrity.py
 ==============================================
-runtime_audit_gatekeeper.py の ZKAuditTrail の回帰テスト。GRIMOIRE.md §AH 参照。
+runtime_audit_gatekeeper.py の ZKAuditTrail の回帰テスト。DEFECTS.md §AH 参照。
 
 背景: ZKAuditTrail.verify_and_record() には二つの欠陥が重なっていた。
   1. "current_hash" が秘密鍵を使わない単純なSHA-256に過ぎず、ファイルへの
@@ -42,7 +42,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # sys.modulesに入っていれば、このimportorskipは素通りする。入っていない
 # 状態でこのファイル単体を実行した場合(本物のrsaも無い場合)は、収集
 # エラーではなくスキップとして報告されるようにする。
-pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see DEFECTS.md known environment gaps")
 
 import runtime_audit_gatekeeper as mg  # noqa: E402
 

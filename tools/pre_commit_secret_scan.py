@@ -3,8 +3,8 @@ tools/pre_commit_secret_scan.py
 ==================================
 [新設 2026-10] 「pre-commitでのシークレットスキャン」
 
-これまで秘密情報の漏洩検知は angels/guard_precommit_secret_leak.py のみが担っており、
-これはCIまたは `python angels/guard_precommit_secret_leak.py` を手動実行した時にしか
+これまで秘密情報の漏洩検知は checks/guard_precommit_secret_leak.py のみが担っており、
+これはCIまたは `python checks/guard_precommit_secret_leak.py` を手動実行した時にしか
 走らなかった。つまり、秘密情報を含むコミットは一旦git履歴に刻まれてから
 初めて検知される（コミット済み＝漏洩が既に発生した後の事後検知）。
 
@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_ANGELS_DIR = _REPO_ROOT / "angels"
+_ANGELS_DIR = _REPO_ROOT / "checks"
 if str(_ANGELS_DIR) not in sys.path:
     sys.path.insert(0, str(_ANGELS_DIR))
 
@@ -34,7 +34,7 @@ if str(_ANGELS_DIR) not in sys.path:
 #
 # [脆弱性修正 2026-10 §BH] このコメントが懸念していた「CIとpre-commitの
 # ズレ」が、SECRET_PATTERNSとは別の場所で実際に発生していた。§BDで
-# `angels/_common.py`の`EXCLUDED_SECRET_SCAN_DIRS`に"tests"を追加し、
+# `checks/_common.py`の`EXCLUDED_SECRET_SCAN_DIRS`に"tests"を追加し、
 # `scan_for_leaked_secrets()`(guard_precommit_secret_leak.pyの実体)がtests/配下の
 # テストフィクスチャ(本物らしい偽の秘密情報)を自己検知しないよう修正した。
 # しかし本ファイルはSECRET_PATTERNSのみを再利用し、EXCLUDED_SECRET_SCAN_DIRS
@@ -48,7 +48,7 @@ from _common import SECRET_PATTERNS, EXCLUDED_SECRET_SCAN_DIRS  # noqa: E402
 
 
 def _is_excluded(rel_path: str) -> bool:
-    """`angels/_common.py`の`scan_for_leaked_secrets()`と同一の判定基準
+    """`checks/_common.py`の`scan_for_leaked_secrets()`と同一の判定基準
     (完全一致、またはそのディレクトリ配下であること)を用いる。"""
     return any(rel_path == ex or rel_path.startswith(ex + "/") for ex in EXCLUDED_SECRET_SCAN_DIRS)
 

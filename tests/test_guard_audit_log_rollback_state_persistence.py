@@ -1,7 +1,7 @@
 """
 tests/test_guard_audit_log_rollback_state_persistence.py
 =====================================================
-angels/guard_audit_log_rollback.py の回帰テスト。GRIMOIRE.md §AN 参照。
+checks/guard_audit_log_rollback.py の回帰テスト。DEFECTS.md §AN 参照。
 
 背景: guard_audit_log_rollback.py の改ざん・ロールバック検知ロジック自体は
 以前から正しかったが、その前提となる「前回実行時のチェックポイント」
@@ -35,7 +35,7 @@ import yaml
 ROOT = Path(__file__).parent.parent
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "anjo_da_maquina_protocol.yml"
 
-sys.path.insert(0, str(ROOT / "angels"))
+sys.path.insert(0, str(ROOT / "checks"))
 sys.path.insert(0, str(ROOT / "runtime_guard"))
 
 

@@ -1,7 +1,7 @@
 """
 tests/test_guard_sandbox_core_attack_battery.py
 =====================================
-[新設 2026-11] angels/guard_sandbox_core_attack_battery.py の単体テスト。
+[新設 2026-11] checks/guard_sandbox_core_attack_battery.py の単体テスト。
 
 本天使(「ミカエルの剣」)は、`ATTACKS`に列挙された既知の攻撃パターン
 (プロセス起動・無許可書き込み・破壊的なファイル削除)が、実際に
@@ -15,7 +15,7 @@ tests/test_guard_sandbox_core_attack_battery.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_sandbox_core_attack_battery as ms
 
 

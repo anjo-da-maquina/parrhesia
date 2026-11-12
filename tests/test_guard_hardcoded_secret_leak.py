@@ -1,5 +1,5 @@
 """
-[脆弱性修正 2026-10 §AZ] angels/guard_hardcoded_secret_leak.py の回帰テスト。
+[脆弱性修正 2026-10 §AZ] checks/guard_hardcoded_secret_leak.py の回帰テスト。
 
 このスクリプトは、センシティブな環境変数名(例: "OPENAI_API_KEY")が、
 os.getenv/os.environ経由で安全に読み取られる文脈ではなく、ハードコード
@@ -16,7 +16,7 @@ getenv呼び出しが同じファイル内の本物の漏洩を隠してしま�
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 from guard_hardcoded_secret_leak import scan_for_hardcoded_sensitive_env_keys
 
 
