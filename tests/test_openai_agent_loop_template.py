@@ -51,11 +51,21 @@ def test_no_dead_fallback_import_in_source():
 
 
 @pytest.mark.xfail(
+    # [設計修正 2026-11 §DA] このxfailが実際に成立するのは「GITHUB_ACTIONS以外の
+    # ローカル環境で、期限切れのataraxia_certificate.jsonをrsaで再発行できない」
+    # 場合だけである。CI(GITHUB_ACTIONS=true)では、この関数は常に
+    # `pytest.raises(LossOfAtaraxia)`が成立する別分岐を通るため、rsa/証明書の
+    # 状態に関わらず常に正常終了し、無条件xfailのままでは毎回CIで不要な
+    # "XPASS"を発生させてしまっていた(実機CIで確認済み)。`condition=`で
+    # 「GITHUB_ACTIONS以外」に限定することで、CIでは素直にpassedになる。
+    condition=os.getenv("GITHUB_ACTIONS") != "true",
     reason="ataraxia_certificate.json's valid_until has genuinely expired "
     "(2026-10-12) in this sandbox, and issuing a freshly-signed replacement "
     "requires the rsa package, which is unavailable here (PyPI unreachable) "
     "— same root constraint as the rsa-ImportError failures, surfacing "
-    "differently; not a code defect in this test or in LossOfAtaraxia itself",
+    "differently; not a code defect in this test or in LossOfAtaraxia itself "
+    "(§DA: condition scoped to non-CI runs only, since the CI branch always "
+    "passes regardless of rsa/cert state)",
     strict=False,
 )
 def test_execute_safe_action_uses_sanctum_and_is_not_a_stub(tmp_path):
