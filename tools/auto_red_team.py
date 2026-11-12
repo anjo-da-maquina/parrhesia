@@ -1,7 +1,7 @@
 import base64
 import binascii
 import traceback
-from runtime_guard import inquisition, awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import inquisition, awaken, Sandbox, LossOfAtaraxia
 
 # 防壁を起動
 awaken()
@@ -62,13 +62,13 @@ for mod_str in obfuscate_string("os"):
                     # 第二防壁：ミカエルの動的フックを突破できるか？
                     # （ガブリエルを騙せた場合のみ、ここが実行される）
                     # [脆弱性修正 2026-10 §AX] 以前は `exec(payload, {})` を
-                    # `with Sanctum(...):` の外で直接呼んでいた。本ファイル
+                    # `with Sandbox(...):` の外で直接呼んでいた。本ファイル
                     # 冒頭の `awaken()` はOSレベルの監査フック自体を登録する
-                    # だけで、`runtime_guard._active_stack`(`with Sanctum(...):`に
+                    # だけで、`runtime_guard._active_stack`(`with Sandbox(...):`に
                     # 入っている間だけ積まれる)が空のままでは、登録された
                     # フックは何も検査せず即座にreturnする(§AU/adversarial_training/
                     # local_only_selfplay_gate.pyで発見したのと全く同種の欠陥)。さらに、
-                    # Sanctumが実際に遮断する際に送出する例外は
+                    # Sandboxが実際に遮断する際に送出する例外は
                     # `runtime_guard.LossOfAtaraxia`(`BaseException`を直接継承し、
                     # `Exception`経由ではない)であり、`RuntimeError`では
                     # ないため、修正前の`except RuntimeError as e: if
@@ -79,7 +79,7 @@ for mod_str in obfuscate_string("os"):
                     # `os.system('echo hacked')`として無防備に実行され、
                     # "Successful Bypasses: 48"という偽の致命的敗北が
                     # 報告されていた。
-                    with Sanctum(allowed_dirs=[], allowed_hosts=[]):
+                    with Sandbox(allowed_dirs=[], allowed_hosts=[]):
                         exec(payload, {})
 
                     # もし両方をすり抜けてしまった場合

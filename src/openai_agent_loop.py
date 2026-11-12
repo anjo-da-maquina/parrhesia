@@ -8,7 +8,7 @@ src/openai_agent_loop.py
      (`anjo_interceptor.runtime_audit_gatekeeper`) がリポジトリ内に存在せず、
      本番では絶対に通らない死んだコードパスだった。
   2. `_execute_safe_action` が実際のファイルI/Oを一切行わないダミー実装で、
-     `runtime_guard.Sanctum` (OSレベルの最終防衛線) も `AegisSystem`
+     `runtime_guard.Sandbox` (OSレベルの最終防衛線) も `AegisSystem`
      (Gabriel静的解析 + IntentInterceptor + Sandalphon動的隔離検証) も
      一切統合されていなかった。つまり「テンプレート」と言いながら、
      これをコピーして拡張した開発者は防壁を一つも使わないコードを
@@ -20,7 +20,7 @@ src/openai_agent_loop.py
   - IntentInterceptor によるハニーポット・ディレクトリトラバーサル検知
   - AegisSystem (Gabriel + IntentInterceptor + Sandalphon) による
     実行前の多層検閲（Dockerデーモン不在時はフェイルクローズドで拒否）
-  - runtime_guard.Sanctum によるOSレベルのファイルI/O強制隔離
+  - runtime_guard.Sandbox によるOSレベルのファイルI/O強制隔離
 
 `openai` パッケージは本ファイルの対象ユーザ(OpenAI APIキーを持つ開発者)
 以外には不要な依存であるため、実際に使用する `run_task()` 内でのみ
@@ -39,7 +39,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
-from runtime_guard import Sanctum, LossOfAtaraxia as SeferLossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia as SeferLossOfAtaraxia
 from aegis_system import AegisSystem
 from futility_guard import FutilityGuard
 
@@ -73,7 +73,7 @@ class OpenAIAnjoExecutor:
     APIキーを持つ開発者が、このクラスをそのまま使うか拡張して防壁を利用する。
 
     `_execute_safe_action` と `run_task` は `ollama_agent_loop.AnjoOllamaExecutor`
-    と同一の防御構成（enforce_maquina_seal → AegisSystem → Sanctum）を持つ、
+    と同一の防御構成（enforce_maquina_seal → AegisSystem → Sandbox）を持つ、
     動作する実装である（ダミーのスタブではない）。
     """
 
@@ -95,15 +95,15 @@ class OpenAIAnjoExecutor:
     @enforce_maquina_seal("anjo-da-maquina")
     def _execute_safe_action(self, action_req: dict):
         """
-        [2026-10] 実際のファイルI/Oは必ず runtime_guard.Sanctum のコンテキスト内で行う。
+        [2026-10] 実際のファイルI/Oは必ず runtime_guard.Sandbox のコンテキスト内で行う。
         enforce_maquina_seal はローカル専用の証明書ゲート（開発環境の認可）であり、
-        実行時のファイルアクセス制御そのものは提供しないため、Sanctumによる
+        実行時のファイルアクセス制御そのものは提供しないため、Sandboxによる
         OSレベルのaudit hookでワークスペース外への逸脱を強制的に遮断する。
         """
         action = action_req.get("action")
         target = self.workspace_root / action_req.get("target")
 
-        with Sanctum(allowed_dirs=[str(self.workspace_root)], restrict_reads=True):
+        with Sandbox(allowed_dirs=[str(self.workspace_root)], restrict_reads=True):
             if action == "read":
                 if not target.exists():
                     return f"[Error] File not found: {target}"

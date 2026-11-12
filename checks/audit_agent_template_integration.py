@@ -13,7 +13,7 @@ NAME = "audit_agent_template_integration - 思考統制監査: src/openai_agent_
 #      (anjo_interceptor.runtime_audit_gatekeeper) がリポジトリに存在せず、
 #      本番では絶対に通らない死んだコードパスだった。
 #   2. _execute_safe_action が実ファイルI/Oを一切行わないダミー実装で、
-#      runtime_guard.Sanctum も AegisSystem も統合されていなかった。
+#      runtime_guard.Sandbox も AegisSystem も統合されていなかった。
 #      これをコピーして拡張する開発者は、防壁を一つも使わないコードを
 #      書く結果になってしまう構造的欠陥だった。
 # 本検査はこの2点が再発していないことを保証する。
@@ -41,14 +41,14 @@ def main():
                     "実行コードとして復活しています。"
                 )
 
-    # B: Sanctum / AegisSystem が実際に統合されているか（文字列の有無だけでなく、
+    # B: Sandbox / AegisSystem が実際に統合されているか（文字列の有無だけでなく、
     #    _execute_safe_action の中で実際に使われているかまで確認する）
-    if "from runtime_guard import Sanctum" not in text:
-        report_fail(NAME, "runtime_guard.Sanctum がimportされていません。OSレベルの最終防衛線が外れています。")
+    if "from runtime_guard import Sandbox" not in text:
+        report_fail(NAME, "runtime_guard.Sandbox がimportされていません。OSレベルの最終防衛線が外れています。")
     if "from aegis_system import AegisSystem" not in text:
         report_fail(NAME, "aegis_system.AegisSystem がimportされていません。Gabriel/Sandalphonの事前検閲が外れています。")
-    if "with Sanctum(" not in text:
-        report_fail(NAME, "_execute_safe_action が Sanctum コンテキスト内でファイルI/Oを行っていません。")
+    if "with Sandbox(" not in text:
+        report_fail(NAME, "_execute_safe_action が Sandbox コンテキスト内でファイルI/Oを行っていません。")
     if "self.aegis.execute_ai_intent" not in text and "aegis.execute_ai_intent" not in text:
         report_fail(NAME, "run_task が AegisSystem.execute_ai_intent による事前検閲を経由していません。")
 
@@ -57,7 +57,7 @@ def main():
         report_fail(NAME, "enforce_maquina_seal(証明書ゲート)が外れています。")
 
     report_pass(NAME, "OpenAI拡張テンプレートが、死んだフォールバックimportを持たず、"
-                       "Sanctum/AegisSystemによる実防壁統合を保ったまま提供されています。")
+                       "Sandbox/AegisSystemによる実防壁統合を保ったまま提供されています。")
 
 
 if __name__ == "__main__":

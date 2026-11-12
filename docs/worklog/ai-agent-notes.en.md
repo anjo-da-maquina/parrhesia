@@ -24,7 +24,7 @@ detail, not the main thread a reviewer needs first.
 ## A note on terminology (November 2026)
 
 Early on, this project used a few internal names (`DEFECTS.md`, `checks/`,
-`Sanctuary`/`Sanctum`) that borrowed mythological and religious imagery as a
+`Runtime Seal`/`Sandbox`) that borrowed mythological and religious imagery as a
 narrative flourish — a playful way of naming "the record of defects found" or
 "the checks that catch a regression coming back." There was never any intent
 to mock or diminish any faith or tradition; it was simply a friendly metaphor.

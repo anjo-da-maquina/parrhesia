@@ -5,14 +5,14 @@ src/angelic_shield.py
 
   1. 独自実装の `metatrons_seal`(sys.addaudithook)が、OSレベルの実行保護を
      提供しているかのような体裁("人と機械の境界は守護されています")で
-     表示されていたが、実態は `runtime_guard.Sanctum` よりはるかに弱い簡易実装
+     表示されていたが、実態は `runtime_guard.Sandbox` よりはるかに弱い簡易実装
      だった(保護対象の判定が `"anjo-da-maquina_2" in target_file` という
-     部分文字列一致のみで、Sanctumのような allowed_dirs によるパス正規化・
+     部分文字列一致のみで、Sandboxのような allowed_dirs によるパス正規化・
      物理的隔離を一切行わない)。本ファイル自体はコードを実行せず
      (RazielCherubimは外部API呼び出し、ZadkielDominionはJSONファイル
      読み書きのみ)、audit hookを仕掛ける意味自体がそもそも薄かった。
      本当にOSレベルの保護が必要な箇所(AIが生成したコードの実行)は、
-     `src/aegis_system.py` の `AegisSystem` と `runtime_guard.Sanctum` が担う。
+     `src/aegis_system.py` の `AegisSystem` と `runtime_guard.Sandbox` が担う。
      本ファイルはそれらの代替ではないため、誤解を招く表示を撤去した。
 
   2. `ZadkielDominion.assimilate_knowledge()` が、Gemini(LLM)の生出力を

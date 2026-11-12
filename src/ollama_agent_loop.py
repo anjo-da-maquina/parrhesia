@@ -13,7 +13,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
-from runtime_guard import Sanctum, LossOfAtaraxia as RuntimeGuardLossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia as RuntimeGuardLossOfAtaraxia
 from aegis_system import AegisSystem
 from futility_guard import FutilityGuard
 
@@ -68,29 +68,29 @@ class AnjoOllamaExecutor:
     def _execute_safe_action(self, action_req: dict):
         """
         [脆弱性修正 2026-10] 以前はここで実際にファイルの読み書きを行っていたが、
-        OSレベルの最終防衛線である runtime_guard.Sanctum を一切経由していなかった。
+        OSレベルの最終防衛線である runtime_guard.Sandbox を一切経由していなかった。
         enforce_maquina_seal はローカル専用の証明書ゲート（開発環境の認可）であり、
         実行時のファイルアクセス制御そのものは提供しない。実際の読み書きは
-        必ず Sanctum のコンテキスト内で行い、ワークスペース外への逸脱を
+        必ず Sandbox のコンテキスト内で行い、ワークスペース外への逸脱を
         OSレベルのaudit hookで強制的に遮断する。
 
         [2026-10 統合] "list"アクションを追加した。これは本来
         src/final_agent_loop.py(AutonomousAssistant)という別の独立した
         「実運用ループ」実装にのみ存在していた機能だったが、同じ
-        AegisSystem/Sanctumをラップする実運用エージェントループが並行して
+        AegisSystem/Sandboxをラップする実運用エージェントループが並行して
         2系統存在することは、片方にのみ脆弱性修正が入り他方が取り残される
         (DEFECTS.md §Hで実際に発生したのと同種の)リスクを生む。
         本ファイルを「唯一の実運用ループ」として一本化し、機能はこちらに
         統合した(詳細はDEFECTS.md §Mを参照)。
 
         [2026-10 実機検証による既知の限界] `pathlib.Path.iterdir()`は内部で
-        `os.scandir`監査イベントを発行するが、これはSanctumの
+        `os.scandir`監査イベントを発行するが、これはSandboxの
         `_michael_absolute_defense`においてホワイトリストにも個別ハンドラ
         にも存在せず、「デフォルト拒否」規則により*パスに関わらず常に
         遮断される*(実機検証済み)。一方`os.listdir`はホワイトリスト入り
-        しており*パスに関わらず常に許可*される。つまりSanctumの監査フック
+        しており*パスに関わらず常に許可*される。つまりSandboxの監査フック
         層は、ディレクトリ一覧取得に関しては境界保護を一切提供しない。
-        このため"list"は、open/writeとは異なりSanctumの監査フックではなく
+        このため"list"は、open/writeとは異なりSandboxの監査フックではなく
         `WorkspaceJail.secure_resolve()`(パス文字列の前方一致によるジェイル
         境界検証)で保護する。`final_agent_loop.py`も実は同じ理由で
         `self.jail.secure_resolve()`を使っていた。
@@ -98,9 +98,9 @@ class AnjoOllamaExecutor:
         action = action_req.get("action")
 
         if action == "list":
-            # os.listdir はSanctumの監査フックで常に素通りし(ホワイトリスト)、
+            # os.listdir はSandboxの監査フックで常に素通りし(ホワイトリスト)、
             # Path.iterdir()はos.scandirを発行して常に遮断される(デフォルト
-            # 拒否)ため、Sanctumコンテキストの外でWorkspaceJailによる明示的な
+            # 拒否)ため、Sandboxコンテキストの外でWorkspaceJailによる明示的な
             # パス境界検証を行う。
             try:
                 safe_path = self.aegis.jail.secure_resolve(action_req.get("target", "."))
@@ -126,13 +126,13 @@ class AnjoOllamaExecutor:
         # 正当化する前提のコメントがあったが、実際の本メソッドは"list"
         # アクションでのみ`secure_resolve()`を呼び、"read"/"write"では
         # 一切呼んでいなかった(宣言と実態の不一致)。実際にはこの直後の
-        # `runtime_guard.Sanctum`のOSレベルaudit hookが実機テスト
-        # (tests/test_agent_loop_sanctum_integration.py)上は絶対パスの
+        # `runtime_guard.Sandbox`のOSレベルaudit hookが実機テスト
+        # (tests/test_agent_loop_sandbox_integration.py)上は絶対パスの
         # 脱走も現状遮断できているため、現時点で実害のある脱走ではない。
         # しかし「唯一の防壁だと信じられていた層(secure_resolve)が実際には
-        # 存在せず、別の層(Sanctum)だけに実質的に依存していた」という
+        # 存在せず、別の層(Sandbox)だけに実質的に依存していた」という
         # 状態は、本件が繰り返し指摘してきた「宣言と実態の食い違い」その
-        # ものであり、Sanctum側に将来何らかの抜け道が見つかった場合
+        # ものであり、Sandbox側に将来何らかの抜け道が見つかった場合
         # (intent_checker.py自身が§AC・§AD等の前例を明記している)、
         # 多層防御の片方の層が実質的に存在しないまま放置されることになる。
         # そのため、"list"と同一の`secure_resolve()`による明示的なパス
@@ -142,7 +142,7 @@ class AnjoOllamaExecutor:
         except PermissionError as e:
             raise RuntimeGuardLossOfAtaraxia(str(e))
 
-        with Sanctum(allowed_dirs=[str(self.workspace_root)], restrict_reads=True):
+        with Sandbox(allowed_dirs=[str(self.workspace_root)], restrict_reads=True):
             if action == "read":
                 if not target.exists():
                     return f"[Error] File not found: {target}"

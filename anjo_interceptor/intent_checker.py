@@ -25,11 +25,11 @@ class IntentInterceptor:
     絶対パスの場合に左辺を無視して右辺そのものを返す仕様があるため
     (例: `Path("/jail") / "/etc/passwd"` は `Path("/etc/passwd")` になる)、
     "target"に絶対パスを指定すれば`workspace_root`は実質無視される。本件は
-    `runtime_guard.Sanctum`のOS監査フック(`_michael_absolute_defense`)が実際の
+    `runtime_guard.Sandbox`のOS監査フック(`_michael_absolute_defense`)が実際の
     `open()`呼び出しを最終防衛線として遮断するため、現行の実運用パイプライン
     では致命的な脱走には至らない(実機検証済み)。しかし`IntentInterceptor`は
     その「意図検閲」という設計上の役割そのもの(ディレクトリトラバーサルや
-    サンドボックス外への干渉を検知するレイヤー)を果たせておらず、Sanctumの
+    サンドボックス外への干渉を検知するレイヤー)を果たせておらず、Sandboxの
     監査フックに将来何らかの抜け道が見つかった場合(本セッションで実際に
     §AC・§AD等の抜け道を複数発見したように)、この層には何の安全網も無い。
 
@@ -158,7 +158,7 @@ class IntentInterceptor:
             # による封じ込め検証も行われるため、実運用上は致命的な脱走には
             # 至らない(実機検証済み)。しかし本クラスの役割はまさに
             # 「他の層が将来破れた場合の安全網」(クラスdocstring参照)であり、
-            # しかも"list"はSanctumの監査フックによる保護を一切受けない
+            # しかも"list"はSandboxの監査フックによる保護を一切受けない
             # (ollama_agent_loop.pyのdocstringで明記)ため、ここだけが唯一
             # 独立した安全網として機能すべき箇所だった。"read"/"write"と
             # 同一の封じ込め検証を適用する。

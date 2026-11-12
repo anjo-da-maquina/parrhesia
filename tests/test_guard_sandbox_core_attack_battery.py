@@ -5,7 +5,7 @@ tests/test_guard_sandbox_core_attack_battery.py
 
 本天使(「ミカエルの剣」)は、`ATTACKS`に列挙された既知の攻撃パターン
 (プロセス起動・無許可書き込み・破壊的なファイル削除)が、実際に
-`run_code_against_runtime_guard()`経由でSanctum配下に投げられたときに、確実に
+`run_code_against_runtime_guard()`経由でSandbox配下に投げられたときに、確実に
 遮断されることを検証する。`run_code_against_runtime_guard()`自体の正しさは
 他の天使のテストでも間接的に使われているが、本天使固有の「`ATTACKS`
 リストの全件が遮断されたかを確認し、1件でも漏れていればFAILにする」
@@ -21,7 +21,7 @@ import guard_sandbox_core_attack_battery as ms
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、ATTACKSの全件が実際に
-    Sanctumで遮断されるため、本天使はPASSを報告する。"""
+    Sandboxで遮断されるため、本天使はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

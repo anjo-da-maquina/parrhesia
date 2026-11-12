@@ -60,7 +60,7 @@ def test_raziel_ledger_unknown_approved_event_is_blocked(tmp_path, monkeypatch):
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sandbox(allowed_dirs=[str(base)]):
         try:
             sys.audit("zzz.custom_exfil_event", "payload")
             assert False, "承認済みの未知の禁止イベントが遮断されなかった"
@@ -78,7 +78,7 @@ def test_raziel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeyp
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sandbox(allowed_dirs=[str(base)]):
         sys.audit("zzz.not_in_ledger", "payload")  # 例外が出なければ成功
 
 
@@ -99,7 +99,7 @@ def test_raziel_ledger_entries_already_covered_by_existing_categories_do_not_reg
     target = base / "ok_to_remove.txt"
     target.write_text("x", encoding="utf-8")
 
-    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sandbox(allowed_dirs=[str(base)]):
         os.remove(str(target))  # 例外が出なければ成功(regression無し)
 
 
@@ -148,7 +148,7 @@ def test_always_passthrough_events_really_are_unenforceable_via_ledger(tmp_path,
 
     base = tmp_path / "jail_workspace"
     base.mkdir()
-    with runtime_guard.Sanctum(allowed_dirs=[str(base)]):
+    with runtime_guard.Sandbox(allowed_dirs=[str(base)]):
         for event in runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS:
             sys.audit(event, "dummy_arg")  # 例外が出なければ(=禁止できていない)成功
 

@@ -32,7 +32,7 @@ NAME = "guard_audit_log_truncation - runtime_guard.audit_chain.SignedAuditChain�
 # ファイルシステム権限で保護される前提であり、攻撃者が水位標ファイルと
 # ログファイルの両方を同時に削除・改ざんできる(例: ディレクトリ全体を
 # 削除してから両方を再生成する)場合は、この修正の範囲外である――これは
-# 本フレームワーク全体が前提とする脅威モデル(runtime_guard.Sanctum配下に
+# 本フレームワーク全体が前提とする脅威モデル(runtime_guard.Sandbox配下に
 # サンドボックス化された、allowed_dirs外のファイルには手が届かない
 # 未信頼AIコード)に依存する、各クラスのdocstringが既に明記している
 # 限界である。

@@ -94,7 +94,7 @@ notepad runtime_guard/raziel_ledger.json
 ```
 
 ## 🤖 実運用エージェントループ（ローカルLLMにタスクを実行させる）
-`runtime_guard.Sanctum`・`AegisSystem`（Gabriel + IntentInterceptor + Sandalphon）・
+`runtime_guard.Sandbox`・`AegisSystem`（Gabriel + IntentInterceptor + Sandalphon）・
 `runtime_audit_gatekeeper`の全防御層を統合した参照実装。いずれも`jail_workspace/`
 内のみで動作する隔離デモタスクを同梱している。
 

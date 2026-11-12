@@ -1,7 +1,7 @@
 ﻿# Parrhesia(旧名Pleroma) — 生成AIが作る成果物を、QAエンジニアの視点で監査するツールキット
 
-[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml)
-[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml)
+[![Core CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/core_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/core_ci.yml)
+[![Regression Checks CI](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 作者: 安城巻那(アンジョウ マキナ) ・ [English README](./README.en.md) ・ [開発ログ(読み物版)](./DEVLOG.md) ・ [全記録(DEFECTS.md)](./DEFECTS.md) ・ [担当範囲の境界線(BOUNDARY.md)](./docs/BOUNDARY.md)
@@ -117,7 +117,7 @@ AI生成コードの監査を固定価格で請け負うQAエンジニアとし�
 
 - **`parrhesia/`** — 上記の監査・検出ツールキット本体: `parrhesia/diff_fraud.py`(パターン検出器)、`parrhesia/audit.py` + `parrhesia/cli.py`(読み取り専用の第三者リポジトリ監査)、`parrhesia/touchstone/`(LLMが作り話・権威への迎合・確信度の誤較正をしないかの小さなベンチマーク)、`parrhesia/verify/`(他モデル・人間レビューへのエスカレーション機構)。
 - **`demo/`** — 上記の1コマンドデモ。
-- **`runtime_guard/`**(旧名`sefer/`) — `Sanctum`コンテキストによるファイルアクセス制限(静的監査ではなく、信頼できないAI生成コードを実際に「実行」する際の、別系統で保守される防御層)。
+- **`runtime_guard/`**(旧名`sefer/`) — `Sandbox`コンテキストによるファイルアクセス制限(静的監査ではなく、信頼できないAI生成コードを実際に「実行」する際の、別系統で保守される防御層)。
 - **`checks/`** — 約50本の継続的回帰チェック。上記バッジのCIでpushごとに実行。
 - **`adversarial_training/`**(旧名`tartarus/`) — 作者のローカルマシンに限定した赤/青自己対戦場(Limitations参照)。
 

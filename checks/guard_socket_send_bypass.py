@@ -12,21 +12,21 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # `checks/guard_network_exfiltration.py`の§CA時点のコメントは、「TCP
 # 経由のsend/sendallは専用eventを持たないが、必ず事前のconnectを要する
 # (=forbidden集合で遮断済み)ため検査不要」と判断していたが、これは
-# 「Sanctum起動**前**に確保したfd・接続は、起動後も検査を素通りする」
+# 「Sandbox起動**前**に確保したfd・接続は、起動後も検査を素通りする」
 # という、本プロジェクトが繰り返し発見している「事前オープンfdバイパス」
-# の構造を見落としていた。実機で確認したところ、Sanctum起動**前**に
+# の構造を見落としていた。実機で確認したところ、Sandbox起動**前**に
 # connect()しておいたソケットは、起動**後**に`.send()`/`.sendall()`で
 # データを送出しても無条件に成功した――os.sendfileより遥かに一般的に
 # 使われる「ソケットへの通常のデータ送信」そのものが、無検査だった。
 #
 # 本天使は、`runtime_guard/__init__.py`に新設した`_guarded_socket_send`/
-# `_guarded_socket_sendall`(§CO)が、この完全な実攻撃チェーン(Sanctum
+# `_guarded_socket_sendall`(§CO)が、この完全な実攻撃チェーン(Sandbox
 # 起動前の接続確立→起動後のsend/sendall攻撃)を正しく遮断し、かつ
-# Sanctum起動**後**に許可ホスト(allowed_hosts)へ新規接続して送信する
+# Sandbox起動**後**に許可ホスト(allowed_hosts)へ新規接続して送信する
 # 正当なフローは誤って遮断しないことを、継続的に検証する回帰連戦である。
 #
 # [正直な注記: 本検査の過程で発見した別の欠陥(§CO追記)] 本件の調査中、
-# `allowed_hosts`を指定してSanctumを起動していても、ソケットの生成その
+# `allowed_hosts`を指定してSandboxを起動していても、ソケットの生成その
 # もの(`socket.socket(...)`)が、ホスト情報を一切持たない
 # "socket.__new__"というaudit eventを`_michael_absolute_defense`の
 # 「2. ソケット通信検査」に誤って引っかけられ、常に無条件拒否されて
@@ -43,7 +43,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # ため、§COで`socket.socket.send`自体をモンキーパッチしても、
 # `ssl.SSLSocket`のインスタンス(`requests`・`urllib`等が内部で実際に
 # 使っているTLSソケット)には一切効果が及ばない。実機で、自己署名証明書
-# を用いた本物のTLSループバック接続を確立し、Sanctum起動後に
+# を用いた本物のTLSループバック接続を確立し、Sandbox起動後に
 # `SSLSocket.send()`で機密データを送出したところ、§COの修正後でも
 # 例外無しに成功し、受信側に実際にデータが届くことを確認した――§COより
 # さらに実際的な経路である(AIが生成したコードが外部APIへ通信する場合、
@@ -61,7 +61,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # 実装するC実装の`_ssl._SSLSocket`オブジェクトへの直接呼び出し——で
 # あり、`send`/`sendall`はおろか、基底クラスの`socket.socket`のどの
 # メソッドも一切経由しない、全く別の第三の経路だった。実機で、本物の
-# TLSループバック接続を確立し、Sanctum起動後に`SSLSocket.write()`で
+# TLSループバック接続を確立し、Sandbox起動後に`SSLSocket.write()`で
 # 機密データを送出したところ、§CPの修正後でも例外無しに成功し、受信側
 # に実際にデータが届くことを確認した。`runtime_guard/__init__.py`に
 # `_guarded_ssl_socket_write`を新設し、§CO/§CPの
@@ -97,9 +97,9 @@ def _make_self_signed_cert(tmpdir: str):
 
 
 def _check_send_to_presealed_socket_is_blocked() -> tuple:
-    """[核心] Sanctum起動**前**に接続済みの実ソケットへ、Sanctum起動
+    """[核心] Sandbox起動**前**に接続済みの実ソケットへ、Sandbox起動
     **後**に`.send()`で送出する攻撃が遮断されることを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -112,7 +112,7 @@ def _check_send_to_presealed_socket_is_blocked() -> tuple:
     secret = b"secret-via-socket-send"
     try:
         try:
-            with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
+            with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
                 cli.send(secret)
             return False, "事前接続済みソケットへのsend()が遮断されなかった"
         except LossOfAtaraxia:
@@ -139,7 +139,7 @@ def _check_send_to_presealed_socket_is_blocked() -> tuple:
 def _check_sendall_to_presealed_socket_is_blocked() -> tuple:
     """[核心] 同様の攻撃を`.sendall()`で行っても遮断されることを確認
     する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -152,7 +152,7 @@ def _check_sendall_to_presealed_socket_is_blocked() -> tuple:
     secret = b"secret-via-socket-sendall"
     try:
         try:
-            with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
+            with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
                 cli.sendall(secret)
             return False, "事前接続済みソケットへのsendall()が遮断されなかった"
         except LossOfAtaraxia:
@@ -176,11 +176,11 @@ def _check_sendall_to_presealed_socket_is_blocked() -> tuple:
 
 
 def _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tuple:
-    """[誤検知防止・核心] Sanctum起動**後**に許可ホスト(allowed_hosts)
+    """[誤検知防止・核心] Sandbox起動**後**に許可ホスト(allowed_hosts)
     へ新規接続し、送信する正当なフローが誤って遮断されないことを確認
     する。本検査は、同時に§CO追記で修正した"socket.__new__"の
     passthrough漏れ(fail-closed誤検知)の回帰も検証する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -188,7 +188,7 @@ def _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tupl
     port = srv.getsockname()[1]
 
     try:
-        with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
+        with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
             cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             cli.connect(("127.0.0.1", port))
             conn, _ = srv.accept()
@@ -205,8 +205,8 @@ def _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tupl
         srv.close()
 
 
-def _check_send_without_sanctum_is_unaffected() -> tuple:
-    """[誤検知防止] Sanctumを一切使っていない通常時(ガード非有効)は、
+def _check_send_without_sandbox_is_unaffected() -> tuple:
+    """[誤検知防止] Sandboxを一切使っていない通常時(ガード非有効)は、
     正当なsend()が誤って遮断されないことを確認する。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -221,7 +221,7 @@ def _check_send_without_sanctum_is_unaffected() -> tuple:
         try:
             cli.send(payload)
         except Exception as e:
-            return False, f"Sanctum未使用時にsend()が誤って失敗した: {e}"
+            return False, f"Sandbox未使用時にsend()が誤って失敗した: {e}"
 
         conn.settimeout(1.0)
         received = conn.recv(len(payload))
@@ -238,10 +238,10 @@ def _check_new_connect_to_disallowed_host_is_still_blocked() -> tuple:
     """[誤検知防止の裏側] "socket.__new__"をpassthroughに追加した後も、
     許可外ホストへの新規connect自体は従来通り遮断されることを確認する
     (§CO追記の修正がホスト検査そのものを無力化していないか確認)。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     try:
-        with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"api.openai.com"}):
+        with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"api.openai.com"}):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.settimeout(1)
             try:
@@ -269,7 +269,7 @@ def _check_new_connect_to_disallowed_host_is_still_blocked() -> tuple:
 def _make_tls_loopback_pair(tmpdir: str):
     """テスト用のTLSループバック接続(サーバー側・クライアント側)を
     確立して、両方のSSLSocketを返す。呼び出し側がcloseの責任を持つ。
-    サーバー側のスレッド起動はSanctumの**外側**で行うこと(Sanctum内での
+    サーバー側のスレッド起動はSandboxの**外側**で行うこと(Sandbox内での
     スレッド生成自体は本検査の対象外の、別の既存default-denyの対象)。"""
     certfile, keyfile = _make_self_signed_cert(tmpdir)
 
@@ -300,17 +300,17 @@ def _make_tls_loopback_pair(tmpdir: str):
 
 
 def _check_tls_send_to_presealed_socket_is_blocked() -> tuple:
-    """[核心・§CP] Sanctum起動**前**に接続済みの実TLSソケットへ、
-    Sanctum起動**後**に`ssl.SSLSocket.send()`で送出する攻撃が遮断
+    """[核心・§CP] Sandbox起動**前**に接続済みの実TLSソケットへ、
+    Sandbox起動**後**に`ssl.SSLSocket.send()`で送出する攻撃が遮断
     されることを確認する。"""
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
-    # idnaコーデックの遅延importがSanctum内での初回呼び出し時に
+    # idnaコーデックの遅延importがSandbox内での初回呼び出し時に
     # marshal.loadsという無関係な別のhard-deny対象を誤って発火させる
-    # ため(本検査の対象外)、Sanctumに入る前に一度ウォームアップする。
+    # ため(本検査の対象外)、Sandboxに入る前に一度ウォームアップする。
     "example".encode("idna")
 
     with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
@@ -318,7 +318,7 @@ def _check_tls_send_to_presealed_socket_is_blocked() -> tuple:
         secret = b"secret-over-tls-via-ssl-socket-send"
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
+                with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
                     tls_cli.send(secret)
                 return False, "事前接続済みTLSソケットへのsend()が遮断されなかった"
             except LossOfAtaraxia:
@@ -341,12 +341,12 @@ def _check_tls_send_to_presealed_socket_is_blocked() -> tuple:
 
 
 def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tuple:
-    """[誤検知防止・核心・§CP] Sanctum起動**後**に許可ホストへ新規TLS
+    """[誤検知防止・核心・§CP] Sandbox起動**後**に許可ホストへ新規TLS
     接続し、送信する正当なフローが誤って遮断されないことを確認する。"""
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -364,7 +364,7 @@ def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> 
             conn, _ = raw_srv.accept()
             accepted["conn"] = srv_ctx.wrap_socket(conn, server_side=True)
 
-        # サーバー側のスレッド起動はSanctumの外側で行う(本検査の対象外の、
+        # サーバー側のスレッド起動はSandboxの外側で行う(本検査の対象外の、
         # 既存のスレッド生成default-denyを踏まないため)。
         th = threading.Thread(target=_accept_and_wrap)
         th.start()
@@ -374,7 +374,7 @@ def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> 
         cli_ctx.verify_mode = ssl.CERT_NONE
 
         try:
-            with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
+            with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
                 raw_cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 raw_cli.connect(("127.0.0.1", port))
                 tls_cli = cli_ctx.wrap_socket(raw_cli, server_hostname="localhost")
@@ -393,15 +393,15 @@ def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> 
 
 
 def _check_tls_write_to_presealed_socket_is_blocked() -> tuple:
-    """[核心・§CR] Sanctum起動**前**に接続済みの実TLSソケットへ、
-    Sanctum起動**後**に`ssl.SSLSocket.write()`(`.send()`ではなく)で
+    """[核心・§CR] Sandbox起動**前**に接続済みの実TLSソケットへ、
+    Sandbox起動**後**に`ssl.SSLSocket.write()`(`.send()`ではなく)で
     送出する攻撃が遮断されることを確認する。`write()`は`send`/`sendall`
     のどちらとも別の、`self._sslobj.write()`への直接呼び出しという
     第三の経路であるため、§CPの検査とは独立に確認する必要がある。"""
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -410,7 +410,7 @@ def _check_tls_write_to_presealed_socket_is_blocked() -> tuple:
         secret = b"secret-over-tls-via-ssl-socket-write"
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
+                with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"example.com"}):
                     tls_cli.write(secret)
                 return False, "事前接続済みTLSソケットへのwrite()が遮断されなかった"
             except LossOfAtaraxia:
@@ -433,13 +433,13 @@ def _check_tls_write_to_presealed_socket_is_blocked() -> tuple:
 
 
 def _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked() -> tuple:
-    """[誤検知防止・核心・§CR] Sanctum起動**後**に許可ホストへ新規TLS
+    """[誤検知防止・核心・§CR] Sandbox起動**後**に許可ホストへ新規TLS
     接続し、`write()`で送信する正当なフローが誤って遮断されないことを
     確認する。"""
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
 
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     "example".encode("idna")
 
@@ -465,7 +465,7 @@ def _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked() ->
         cli_ctx.verify_mode = ssl.CERT_NONE
 
         try:
-            with Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
+            with Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
                 raw_cli = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 raw_cli.connect(("127.0.0.1", port))
                 tls_cli = cli_ctx.wrap_socket(raw_cli, server_hostname="localhost")
@@ -483,8 +483,8 @@ def _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked() ->
             raw_srv.close()
 
 
-def _check_tls_write_without_sanctum_is_unaffected() -> tuple:
-    """[誤検知防止・§CR] Sanctumを一切使っていない通常時は、正当な
+def _check_tls_write_without_sandbox_is_unaffected() -> tuple:
+    """[誤検知防止・§CR] Sandboxを一切使っていない通常時は、正当な
     `write()`が誤って遮断されないことを確認する。"""
     if not _OPENSSL_AVAILABLE:
         return True, "openssl CLIが利用できないためTLS検査をスキップ(検査対象外と判断した環境差異)"
@@ -498,7 +498,7 @@ def _check_tls_write_without_sanctum_is_unaffected() -> tuple:
             try:
                 tls_cli.write(payload)
             except Exception as e:
-                return False, f"Sanctum未使用時にwrite()が誤って失敗した: {e}"
+                return False, f"Sandbox未使用時にwrite()が誤って失敗した: {e}"
 
             tls_srv_conn.settimeout(1.0)
             received = tls_srv_conn.recv(len(payload))
@@ -515,13 +515,13 @@ CHECKS = [
     ("runtime_guard._guarded_socket_send: 事前接続バイパス遮断(§CO)", _check_send_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_socket_sendall: 事前接続バイパス遮断(§CO)", _check_sendall_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_socket_send: 許可ホストへの正当な新規接続の誤検知防止(§CO)", _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
-    ("runtime_guard._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", _check_send_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_socket_send: Sandbox未使用時の誤検知防止(§CO)", _check_send_without_sandbox_is_unaffected),
     ("runtime_guard._michael_absolute_defense: 許可外ホストへの新規connect遮断(§CO追記の回帰防止)", _check_new_connect_to_disallowed_host_is_still_blocked),
     ("runtime_guard._guarded_ssl_socket_send: TLS事前接続バイパス遮断(§CP)", _check_tls_send_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_ssl_socket_send: 許可ホストへの正当な新規TLS接続の誤検知防止(§CP)", _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
     ("runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _check_tls_write_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_ssl_socket_write: 許可ホストへの正当な新規TLS write()の誤検知防止(§CR)", _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked),
-    ("runtime_guard._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", _check_tls_write_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_ssl_socket_write: Sandbox未使用時の誤検知防止(§CR)", _check_tls_write_without_sandbox_is_unaffected),
 ]
 
 
@@ -558,7 +558,7 @@ def main():
         detail = "; ".join(f"{n}({d})" for n, d in failures)
         report_fail(
             NAME,
-            f"runtime_guard.Sanctumのsocket.send/sendall・ssl.SSLSocket.send/write"
+            f"runtime_guard.Sandboxのsocket.send/sendall・ssl.SSLSocket.send/write"
             f"による事前接続バイパス防止に、少なくとも1つの既知の問題が"
             f"再発しています(§CO/§CP/§CRの回帰): {detail}",
             evidence={"failures": failures},
@@ -569,8 +569,8 @@ def main():
         NAME,
         "socket.send/sendall(§CO)・ssl.SSLSocket.send(TLS、§CP)・"
         "ssl.SSLSocket.write(TLS、§CR)のいずれによる事前接続バイパスも"
-        "正しく遮断され、かつSanctum起動後の許可ホストへの正当な新規"
-        "接続・送信(TCP・TLSのsend/write双方)、およびSanctum未使用時の"
+        "正しく遮断され、かつSandbox起動後の許可ホストへの正当な新規"
+        "接続・送信(TCP・TLSのsend/write双方)、およびSandbox未使用時の"
         "正当な利用は誤って遮断されないことを確認しました。",
     )
 

@@ -95,28 +95,28 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
 
     `runtime_guard._michael_absolute_defense`(監査フック本体)は、冒頭で
     `if not _is_guard_active(): return`を行う。`_is_guard_active()`は
-    `runtime_guard._active_stack`(`with Sanctum(...):`に入っている間だけ積まれる)
+    `runtime_guard._active_stack`(`with Sandbox(...):`に入っている間だけ積まれる)
     が空でないかを見るものであり、`awaken()`は`sys.addaudithook()`で
     フック自体を**登録**するだけで、`_active_stack`に何も積まない。つまり
-    `awaken()`を呼んだだけで`with Sanctum(...):`に一度も入らなければ、
+    `awaken()`を呼んだだけで`with Sandbox(...):`に一度も入らなければ、
     登録されたフックは呼ばれるたびに即座に無条件でreturnするだけの、
     何も検査しない空のフックに等しい。
 
     実機検証済み: 旧来の生成スクリプトと全く同じ構成(`awaken()`のみ、
-    `with Sanctum(...):`無し)で`os.system('echo ...')`を実行したところ、
+    `with Sandbox(...):`無し)で`os.system('echo ...')`を実行したところ、
     一切遮断されずそのまま実行された。つまり本ファイル(`adversarial_training/
     local_only_selfplay_gate.py`、旧名`tartarus/armageddon.py`)が実施する「Lucifer(攻撃生成AI) vs Sefer(防壁)」の
     自己対戦は、実際には**防壁が一度も展開されていない空の闘技場**で
     行われていたに等しく、Luciferがどれほど単純な(難読化すら伴わない)
     攻撃を書いても常に「突破」と判定されてしまう構造的な欠陥だった。
     これは`checks/audit_agent_template_integration.py`が`src/openai_agent_loop.py`に対して
-    既に検査している規約(「`with Sanctum(`を経由しないファイルI/Oは
+    既に検査している規約(「`with Sandbox(`を経由しないファイルI/Oは
     実防壁が外れている」)と全く同じ種類の欠陥が、検査対象側ではなく
     検査する側(Armageddon自身)に存在していたことになる。
 
     本修正では、`payload_code`を直接スクリプトに埋め込むのではなく、
     `repr()`で安全にエスケープした文字列リテラルとして埋め込み、
-    `with Sanctum(allowed_dirs=[tartarus_dir], restrict_reads=True):`
+    `with Sandbox(allowed_dirs=[tartarus_dir], restrict_reads=True):`
     (`src/ollama_agent_loop.py`等の実運用コードと同一のパターン)の中で
     `exec()`するように変更した。`payload_code`をそのままインデント付きで
     埋め込む方式は、ペイロードが複数行の三重引用符文字列や空行を含む場合に
@@ -126,10 +126,10 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
     return (
         "import sys\n"
         f"sys.path.insert(0, {str(pleroma_dir)!r})\n"
-        "from runtime_guard import awaken, Sanctum\n"
+        "from runtime_guard import awaken, Sandbox\n"
         "awaken()\n"
         f"__lucifer_payload__ = {payload_code!r}\n"
-        f"with Sanctum(allowed_dirs=[{str(tartarus_dir)!r}], restrict_reads=True):\n"
+        f"with Sandbox(allowed_dirs=[{str(tartarus_dir)!r}], restrict_reads=True):\n"
         "    exec(__lucifer_payload__, {'__name__': '__main__'})\n"
     )
 

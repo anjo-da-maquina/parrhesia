@@ -46,7 +46,7 @@ labeled as such.
 | --- | --- |
 | **checks/** | CI check scripts: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. The number actually wired into CI is verified by a script, not counted by hand: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py) (55 as of this writing). |
 | **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DA). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
-| **Sanctuary / Sanctum** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
+| **Runtime Seal / Sandbox** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
 | **§A–§DA** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
 
 ## 2. A known self-inconsistency, found and actually fixed
@@ -99,7 +99,7 @@ The full record is [DEFECTS.md](../DEFECTS.md); a narrative version is
 
 ```
 commit:     f1e9d01
-run:        Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+run:        Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
 conclusion: success (zero failure-comments)
 result:     843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
 ```

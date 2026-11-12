@@ -122,15 +122,15 @@ def test_detects_continue_on_error_with_no_downstream_outcome_check():
     のに、同じジョブ内のどの後続ステップもそのoutcome/conclusionを
     一度も参照していない場合、失敗が黙って握り潰されたまま伝播しない
     (=ジョブ全体が誤ってgreenになり得る)ことを検知する。
-    `.github/workflows/sanctuary_ci.yml`の§BQ修正(outcome enforcement
+    `.github/workflows/core_ci.yml`の§BQ修正(outcome enforcement
     の追加)を、実際にその行を取り除いて再現し、本検査が正しくこの
     状態を検知することを確認済み。"""
     text = (
         "jobs:\n"
         "  j:\n"
         "    steps:\n"
-        "      - name: Execute Sanctuary Verification\n"
-        "        id: sanctuary_verify\n"
+        "      - name: Execute Core Verification\n"
+        "        id: runtime_seal_verify\n"
         "        continue-on-error: true\n"
         "        run: pytest tests/\n"
         "      - name: unrelated next step\n"
@@ -139,7 +139,7 @@ def test_detects_continue_on_error_with_no_downstream_outcome_check():
     result = avw.find_unchecked_continue_on_error_steps(text)
     assert len(result) == 1
     assert result[0][0] == "j"
-    assert result[0][1] == "Execute Sanctuary Verification"
+    assert result[0][1] == "Execute Core Verification"
 
 
 def test_does_not_flag_continue_on_error_whose_outcome_is_checked():
@@ -150,12 +150,12 @@ def test_does_not_flag_continue_on_error_whose_outcome_is_checked():
         "jobs:\n"
         "  j:\n"
         "    steps:\n"
-        "      - name: Execute Sanctuary Verification\n"
-        "        id: sanctuary_verify\n"
+        "      - name: Execute Core Verification\n"
+        "        id: runtime_seal_verify\n"
         "        continue-on-error: true\n"
         "        run: pytest tests/\n"
         "      - name: enforce\n"
-        "        if: steps.sanctuary_verify.outcome == 'failure'\n"
+        "        if: steps.runtime_seal_verify.outcome == 'failure'\n"
         "        run: exit 1\n"
     )
     assert avw.find_unchecked_continue_on_error_steps(text) == []
@@ -224,8 +224,8 @@ def test_continue_on_error_false_is_not_flagged():
     assert avw.find_unchecked_continue_on_error_steps(text) == []
 
 
-def test_battery_detects_reintroduced_sanctuary_ci_regression(monkeypatch):
-    """[自己レッドチームの固定] `.github/workflows/sanctuary_ci.yml`から
+def test_battery_detects_reintroduced_core_ci_regression(monkeypatch):
+    """[自己レッドチームの固定] `.github/workflows/core_ci.yml`から
     outcome enforcementの行を実際に取り除いて再現し(§BQ規模の退行)、
     本天使のmain()が正しくFAILすることを実機で確認した(git diff --stat
     で変更ファイルを正確に元へ復元したことも確認済み)。ここではmain()
@@ -241,8 +241,8 @@ def test_battery_detects_reintroduced_sanctuary_ci_regression(monkeypatch):
             "jobs:\n"
             "  verify_ataraxia:\n"
             "    steps:\n"
-            "      - name: Execute Sanctuary Verification\n"
-            "        id: sanctuary_verify\n"
+            "      - name: Execute Core Verification\n"
+            "        id: runtime_seal_verify\n"
             "        continue-on-error: true\n"
             "        run: pytest tests/\n"
             "      - name: 失敗時の詳細をコミットコメントとして可視化\n"
@@ -262,7 +262,7 @@ def test_detects_job_level_always_false_condition():
     """[核心・新設 2026-11・§CVの直後] ジョブ定義自身の`if:`が常に偽の
     場合、そのジョブ配下の全ステップが丸ごと実行されないにもかかわらず、
     既存の`find_disabled_steps`(ステップ単位のみを見る)はこれを一度も
-    検知しなかった。`.github/workflows/sanctuary_ci.yml`に実際に
+    検知しなかった。`.github/workflows/core_ci.yml`に実際に
     `if: false`をジョブ定義直下へ一時的に追加して再現し、本検査が正しく
     検知することを実機で確認済み(git diff --statで完全に復元したことも
     確認済み)。"""

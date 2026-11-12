@@ -207,7 +207,7 @@ gitリポジトリを`git init`して本物のコミット・diffを作り、モ
 「F章: 未着手」と記載していたが、これは誤りだった。`parrhesia/selftest.py`
 は既に実装済みであり(ファイル自体のdocstringに「F章「自己試験」の実装」
 と明記されている)、`tests/test_parrhesia_selftest.py`(6件)として、
-CIの`pytest tests/ -v -s`実行(`Sanctuary CI/CD`ワークフロー)の一部として
+CIの`pytest tests/ -v -s`実行(`Core CI/CD`ワークフロー)の一部として
 **既に毎回実行されている**。開発指示書§Fが求める「既知の不正を仕込んだ
 偽の作業サンプルを用意し、検出できるかを毎回CIで測る」という要件は、
 B章(diff_fraud/report)の5パターン+未開示変更+実在しない参照について、

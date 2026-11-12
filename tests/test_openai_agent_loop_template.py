@@ -10,7 +10,7 @@ src/openai_agent_loop.py (OpenAI拡張用テンプレート) の再構築を検�
      常に成功すること（遅延importが正しく機能していること）。
   2. 存在しないフォールバックimport (anjo_interceptor.runtime_audit_gatekeeper)
      が実行コード上に存在しないこと。
-  3. _execute_safe_action が実際に runtime_guard.Sanctum のコンテキスト内で
+  3. _execute_safe_action が実際に runtime_guard.Sandbox のコンテキスト内で
      ファイルI/Oを行う、動作する実装であること（ダミーのスタブでは
      ないこと）。
   4. run_task() が 'openai' パッケージ未インストール時、クラッシュせず
@@ -68,15 +68,15 @@ def test_no_dead_fallback_import_in_source():
     "passes regardless of rsa/cert state)",
     strict=False,
 )
-def test_execute_safe_action_uses_sanctum_and_is_not_a_stub(tmp_path):
-    """_execute_safe_action が実際にファイルへ書き込み、Sanctum隔離配下で
+def test_execute_safe_action_uses_sandbox_and_is_not_a_stub(tmp_path):
+    """_execute_safe_action が実際にファイルへ書き込み、Sandbox隔離配下で
     動作する「本物」の実装であることを確認する(以前はダミーのメッセージ
     文字列を返すだけの偽実装だった)。
 
     このsandboxは未承認環境(GITHUB_ACTIONS=true相当の証明書ゲート)のため、
     enforce_maquina_seal が先に LossOfAtaraxia で遮断すること自体が、
     「ゲートが正しく機能している」ことの証明になる。これはCI上でも
-    tests/test_sanctuary.py と同じ論理で安定して検証できる。
+    tests/test_runtime_seal_enforcement.py と同じ論理で安定して検証できる。
     """
     agent = openai_agent_loop.OpenAIAnjoExecutor(
         workspace_root=str(tmp_path), model_name="gpt-4o"

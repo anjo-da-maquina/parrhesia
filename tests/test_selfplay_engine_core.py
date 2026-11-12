@@ -223,7 +223,7 @@ def test_record_to_selfplay_history_and_initialize_arena(tmp_path: Path):
 
 def test_build_forge_script_actually_blocks_hard_denied_event(tmp_path):
     """[脆弱性修正の核心] DEFECTS.md §AU参照。以前は生成スクリプトが
-    `awaken()`のみを呼び`with Sanctum(...):`に入らなかったため、
+    `awaken()`のみを呼び`with Sandbox(...):`に入らなかったため、
     `os.system`のような単純な(難読化すら無い)攻撃すら遮断されず、
     闘技場が実質的に空の防壁と戦っていた。本テストは、実際に生成
     スクリプトをサブプロセスとして実行し、`os.system`が本当に遮断され、
@@ -239,7 +239,7 @@ def test_build_forge_script_actually_blocks_hard_denied_event(tmp_path):
     )
     assert result.returncode != 0, (
         "os.system を使った攻撃ペイロードが遮断されず正常終了してしまった"
-        "(with Sanctum(...)が機能していない可能性)"
+        "(with Sandbox(...)が機能していない可能性)"
     )
     assert "LossOfAtaraxia" in result.stderr and "os.system" in result.stderr, (
         f"期待した遮断メッセージが出力されていません: {result.stderr!r}"
@@ -249,7 +249,7 @@ def test_build_forge_script_actually_blocks_hard_denied_event(tmp_path):
 def test_build_forge_script_still_allows_legitimate_write_within_tartarus_dir(tmp_path):
     """[回帰防止] 正規の(禁止操作を使わない)ファイル書き込みは、
     allowed_dirs(闘技場ディレクトリ)内であれば引き続き成功すること。
-    §AUの修正がSanctumを正しく機能させつつ、過剰検知で全てを
+    §AUの修正がSandboxを正しく機能させつつ、過剰検知で全てを
     遮断してしまってもいないことを固定する。"""
     payload = "with open('lucifer_victory.txt', 'w', encoding='utf-8') as f:\n    f.write('pwned')\n"
 

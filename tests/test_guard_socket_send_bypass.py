@@ -7,7 +7,7 @@ tests/test_guard_socket_send_bypass.py
 audit eventを一切発生させない。`runtime_guard/__init__.py`の既存の防御
 (`_michael_absolute_defense`が"socket.connect"/"socket.sendto"/
 "socket.sendmsg"をイベント名で監視)は、これらのイベント自体が発火
-しないsend/sendallには一切及ばず、Sanctum起動前に接続済みのソケット
+しないsend/sendallには一切及ばず、Sandbox起動前に接続済みのソケット
 への、起動後のsend/sendallによるデータ送出が無条件に成功していた。
 この経路を塞ぐ`_guarded_socket_send`/`_guarded_socket_sendall`の、
 継続的な再検証を本天使が担う。
@@ -58,8 +58,8 @@ def test_check_send_to_newly_connected_allowed_host_is_not_falsely_blocked_direc
     assert success is True, detail
 
 
-def test_check_send_without_sanctum_is_unaffected_directly():
-    success, detail = hsg._check_send_without_sanctum_is_unaffected()
+def test_check_send_without_sandbox_is_unaffected_directly():
+    success, detail = hsg._check_send_without_sandbox_is_unaffected()
     assert success is True, detail
 
 
@@ -72,7 +72,7 @@ def test_check_tls_send_to_presealed_socket_is_blocked_directly():
     """[新設 §CP] §CO(socket.send/sendall)の修正を実機で確認した直後、
     `ssl.SSLSocket`が`send`/`sendall`を独自に上書きしている(基底クラス
     `socket.socket`のメソッドを呼ばない)ため、§COの修正がTLS通信には
-    一切及ばないことを発見した。本テストは、Sanctum起動前に接続済みの
+    一切及ばないことを発見した。本テストは、Sandbox起動前に接続済みの
     実TLSソケットへの、起動後のsend()による送出が遮断されることを、
     継続的に再検証する。"""
     success, detail = hsg._check_tls_send_to_presealed_socket_is_blocked()
@@ -89,7 +89,7 @@ def test_check_tls_write_to_presealed_socket_is_blocked_directly():
     直後、`dir(ssl.SSLSocket)`で同クラスの他のメソッドを機械的に棚卸し
     したところ、`write()`も独自実装で上書きされており、`self._sslobj.
     write()`への直接呼び出し――`send`/`sendall`のどちらとも別の、
-    第三の経路――であることを発見した。Sanctum起動前に接続済みの実TLS
+    第三の経路――であることを発見した。Sandbox起動前に接続済みの実TLS
     ソケットへの、起動後のwrite()による送出が遮断されることを、本テスト
     が継続的に再検証する。"""
     success, detail = hsg._check_tls_write_to_presealed_socket_is_blocked()
@@ -101,8 +101,8 @@ def test_check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked_
     assert success is True, detail
 
 
-def test_check_tls_write_without_sanctum_is_unaffected_directly():
-    success, detail = hsg._check_tls_write_without_sanctum_is_unaffected()
+def test_check_tls_write_without_sandbox_is_unaffected_directly():
+    success, detail = hsg._check_tls_write_without_sandbox_is_unaffected()
     assert success is True, detail
 
 
@@ -118,7 +118,7 @@ def test_battery_detects_reintroduced_tls_write_bypass_regression(monkeypatch):
 
     patched_checks = [
         ("runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _vulnerable_check),
-        ("runtime_guard._guarded_ssl_socket_write: Sanctum未使用時の誤検知防止(§CR)", hsg._check_tls_write_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_ssl_socket_write: Sandbox未使用時の誤検知防止(§CR)", hsg._check_tls_write_without_sandbox_is_unaffected),
     ]
     monkeypatch.setattr(hsg, "CHECKS", patched_checks)
 
@@ -138,7 +138,7 @@ def test_battery_detects_reintroduced_send_bypass_regression(monkeypatch):
 
     patched_checks = [
         ("runtime_guard._guarded_socket_send: 事前接続バイパス遮断(§CO)", _vulnerable_check),
-        ("runtime_guard._guarded_socket_send: Sanctum未使用時の誤検知防止(§CO)", hsg._check_send_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_socket_send: Sandbox未使用時の誤検知防止(§CO)", hsg._check_send_without_sandbox_is_unaffected),
     ]
     monkeypatch.setattr(hsg, "CHECKS", patched_checks)
 

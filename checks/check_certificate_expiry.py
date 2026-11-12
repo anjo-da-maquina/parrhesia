@@ -12,7 +12,7 @@ NAME = "check_certificate_expiry - 分散鍵管理・鍵更新監査: 証明書�
 # 分散鍵管理・鍵更新監査: 証明書の有効期限が切れていないか、
 # および残り有効期間が閾値を下回っていないかを検証する。
 # [注] GitHub Actions等の未承認クラウド環境では、ゼロトラスト思想に基づき
-# 証明書が無効/失効していることが「正しい状態」である(test_sanctuary.py参照)。
+# 証明書が無効/失効していることが「正しい状態」である(test_runtime_seal_enforcement.py参照)。
 # そのためクラウド環境では失効を失敗ではなく想定内の情報として報告する。
 from datetime import datetime, timezone
 

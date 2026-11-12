@@ -7,7 +7,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 
 # [新設 2026-10 §BV] §11.9フェーズE(未宣言の依存関係・サプライチェーン
 # 注入の検知)。requirements.txtは、本リポジトリが「依存関係の単一の正」
-# として既に(.github/workflows/sanctuary_ci.yml自身のコメント§APで)
+# として既に(.github/workflows/core_ci.yml自身のコメント§APで)
 # 明記している方針である。しかし実際に調査したところ、以下2種類の
 # 「宣言と実態の食い違い」を発見した:
 #

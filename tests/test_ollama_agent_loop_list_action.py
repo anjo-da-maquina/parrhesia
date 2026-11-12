@@ -4,13 +4,13 @@
 
 背景: "list" アクションは元々 src/final_agent_loop.py (AutonomousAssistant)
 という、ollama_agent_loop.pyとは別に並行して存在していた「もう一つの実運用
-ループ」実装にのみ存在していた。同じAegisSystem/Sanctumをラップするループが
+ループ」実装にのみ存在していた。同じAegisSystem/Sandboxをラップするループが
 2系統並行して存在することは、修正が片方にしか入らず他方が取り残されるリスク
 を生むため、唯一の実運用ループ(ollama_agent_loop.py)に一本化し、
 final_agent_loop.pyは削除した(DEFECTS.md §M参照)。本テストは、統合後も
-"list"がSanctumのワークスペース境界内で正しく動作することを固定する。
+"list"がSandboxのワークスペース境界内で正しく動作することを固定する。
 
-test_agent_loop_sanctum_integration.pyと同じ手法(サブプロセス起動 +
+test_agent_loop_sandbox_integration.pyと同じ手法(サブプロセス起動 +
 runtime_audit_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
 """
 import subprocess
@@ -79,9 +79,9 @@ def test_list_of_nonexistent_target_returns_error_not_exception():
         assert "UNBLOCKED:[Error]" in res.stdout, f"stdout={res.stdout} stderr={res.stderr}"
 
 
-def test_list_outside_workspace_via_traversal_is_blocked_by_sanctum(tmp_path: Path):
+def test_list_outside_workspace_via_traversal_is_blocked_by_sandbox(tmp_path: Path):
     """
-    listアクションもread/writeと同じくSanctumのワークスペース境界内で
+    listアクションもread/writeと同じくSandboxのワークスペース境界内で
     実行されるため、トラバーサルでの脱走は遮断される。
     """
     import json

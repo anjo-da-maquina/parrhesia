@@ -40,7 +40,7 @@ python3 demo/build_and_audit_demo.py
 | --- | --- |
 | **checks/** | CIチェックスクリプト群。「過去に見つけた欠陥が再発していないか」を、push毎に機械的に再検証する。現在実際にCIへ配線されている本数は、手集計ではなくスクリプトで確認している: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py)(本稿執筆時点で55本)。 |
 | **DEFECTS.md** | 見つけた欠陥すべての生の記録(§A〜§DAの通し番号)。1件ごとに発見経緯・原因・修正・検証方法を書いた、エンジニアリング日誌。 |
-| **Sanctuary / Sanctum** | AI生成コードを実行する際の、ファイルアクセス制限・ネットワーク遮断などの隔離機構(サンドボックス)の社内呼称。 |
+| **Runtime Seal / Sandbox** | AI生成コードを実行する際の、ファイルアクセス制限・ネットワーク遮断などの隔離機構(サンドボックス)の社内呼称。 |
 | **§A〜§DA** | DEFECTS.md内の個別の欠陥記録につけた通し番号(アルファベット式、A=1・Z=26・AA=27...)。手集計ではなく[`tools/count_defects_entries.py`](../tools/count_defects_entries.py)で自動検証している。 |
 
 ## 2. 自己矛盾を見つけ、実際に修正した実例
@@ -78,7 +78,7 @@ python3 demo/build_and_audit_demo.py
 
 | 記録 | 何が起きていたか | 再現手順(実機検証済み) | 修正コミット |
 | --- | --- | --- | --- |
-| [§AV](../DEFECTS.md) — 最も驚いた発見 | ネストしたサンドボックスの許可範囲が、絞るはずの操作で逆に**ファイルシステム全体まで広がる**バグ。 | 親Sanctum内で子Sanctumを`allowed_dirs=["/"]`で開き、`/tmp/`への書き込みを試行 → 例外無しで書き込みが成功(脱獄確認)。 | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
+| [§AV](../DEFECTS.md) — 最も驚いた発見 | ネストしたサンドボックスの許可範囲が、絞るはずの操作で逆に**ファイルシステム全体まで広がる**バグ。 | 親Sandbox内で子Sandboxを`allowed_dirs=["/"]`で開き、`/tmp/`への書き込みを試行 → 例外無しで書き込みが成功(脱獄確認)。 | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
 | [§AR](../DEFECTS.md) | 判決文言は「実行は不可能です」と表示しながら、CLIの終了コードは常に`0`(成功)。 | `python src/kamael_judgment.py <違反ファイル>`を実行 → 画面は拒否を表示するが`echo $?`は常に0。 | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
 | [§CT](../DEFECTS.md) | `socket.getaddrinfo()`(DNS名前解決)が、`connect()`を経由しないため2つの独立した防御層のどちらからも素通り。 | 許可ホスト以外のホスト名で`getaddrinfo()`を呼ぶ → 遮断されず素通り(=何も遮断していない証拠)。修正後は両層で遮断されることを確認。 | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
 
@@ -88,7 +88,7 @@ python3 demo/build_and_audit_demo.py
 
 ```
 commit:  f1e9d01
-run:     Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
 結論:    success(失敗コメント0件)
 結果:    843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
 ```

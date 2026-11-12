@@ -11,7 +11,7 @@ NAME = "guard_process_spawn - 封鎖中にos.fork()が正しく遮断される�
 # `os.fork()`は、これらのいずれも経由せず、専用の全く別のaudit event
 # "os.fork"を発火させてプロセスを生成できるため、`forbidden`集合に
 # 一度も一致せず、封鎖中でも完全に素通りしていた(実機で確認済み:
-# `set_sanctuary_sealed(True)`の状態でも、`os.fork()`が例外無しに
+# `set_runtime_sealed(True)`の状態でも、`os.fork()`が例外無しに
 # 成立することを確認した)。
 #
 # [別個の防御層との非対称性] 本リポジトリには、本ファイルとは別個に
@@ -60,7 +60,7 @@ def _check_fork_is_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         pid = os.fork()
         if pid == 0:
@@ -78,7 +78,7 @@ def _check_fork_is_blocked_while_sealed() -> tuple:
     except mg.LossOfAtaraxia:
         return True, "OK"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def _check_fork_is_allowed_when_unsealed() -> tuple:
@@ -87,7 +87,7 @@ def _check_fork_is_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     try:
         pid = os.fork()
@@ -111,7 +111,7 @@ def _check_forkpty_is_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         pid, master_fd = os.forkpty()
         if pid == 0:
@@ -127,7 +127,7 @@ def _check_forkpty_is_blocked_while_sealed() -> tuple:
     except mg.LossOfAtaraxia:
         return True, "OK"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def _check_forkpty_is_allowed_when_unsealed() -> tuple:
@@ -136,7 +136,7 @@ def _check_forkpty_is_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     try:
         pid, master_fd = os.forkpty()

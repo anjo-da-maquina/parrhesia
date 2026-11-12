@@ -12,15 +12,15 @@
      ただ呼ぶだけで次に進んでいた。`inquisition()`は違反を検知しても
      例外を送出しない純粋関数であるため、直後の`except PermissionError:`
      は一度も発火し得ない死んだコードだった。
-  2. `exec(payload, {})` が `with Sanctum(...):` の外で直接呼ばれており、
+  2. `exec(payload, {})` が `with Sandbox(...):` の外で直接呼ばれており、
      冒頭の`awaken()`だけでは監査フックが実質的に無効(§AU/local_only_selfplay_gate.py
-     と同種の欠陥)だった。さらに、Sanctumが実際に遮断する際の例外は
+     と同種の欠陥)だった。さらに、Sandboxが実際に遮断する際の例外は
      `runtime_guard.LossOfAtaraxia`(`BaseException`直接継承)だが、旧コードは
      `except RuntimeError as e: if "Michael's Sword" in str(e):`という、
      型も文言も一致しない死んだ捕捉を書いていた。
 
 本テストは、修正後に実際に`python tools/auto_red_team.py`をサブプロセスで
-実行し、(1) Successful Bypassesが0件であること(=本物のGabriel/Sanctumが
+実行し、(1) Successful Bypassesが0件であること(=本物のGabriel/Sandboxが
 正しく機能していること)、(2) Blocked by Gabrielが実際に48件(全件)である
 こと(=戻り値が本当に確認されていること)を実機で固定する。
 """
@@ -42,7 +42,7 @@ def _run_auto_red_team():
 
 
 def test_auto_red_team_reports_zero_bypasses_against_real_defenses():
-    """[脆弱性の核心] 本物のGabriel静的解析とSanctum動的フックに対して
+    """[脆弱性の核心] 本物のGabriel静的解析とSandbox動的フックに対して
     実行すると、難読化ペイロードは1件も実行まで到達しない(0 bypasses)
     こと。修正前はここが常に48(全件)になっていた。"""
     result = _run_auto_red_team()

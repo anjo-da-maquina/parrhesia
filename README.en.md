@@ -1,7 +1,7 @@
 # Parrhesia (formerly Pleroma) — a QA engineer's audit toolkit for AI-generated code
 
-[![Sanctuary CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/sanctuary_ci.yml)
-[![Angels Protocol](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml)
+[![Core CI/CD](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/core_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/core_ci.yml)
+[![Regression Checks CI](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml/badge.svg)](https://github.com/anjo-da-maquina/parrhesia/actions/workflows/regression_checks_ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 Author: Makina Anjo (安城巻那) — [日本語README](./README.md) ・ [Dev log](./DEVLOG.md) ・ [Full record (DEFECTS.md, Japanese)](./DEFECTS.md) ・ [Scope of responsibility (BOUNDARY.md, Japanese)](./docs/BOUNDARY.md)
@@ -86,7 +86,7 @@ I'm a QA engineer. As more production code gets written by AI agents, I kept run
 
 - The 5-defect demo above: **5/5 planted defects detected**, confirmed by actually running the command, not by design intent. (While building this demo, 3 of the 5 were *not* detected on the first real run, because the sample code didn't match the detector's exact pattern — that failure, and the fix, is recorded in this repo's own commit history rather than smoothed over.)
 - `tests/test_parrhesia_selftest.py`: every known-fraud sample is detected, **and** a negative-control sample (a legitimate test addition) is confirmed to trigger *zero* false positives — a detector that flags everything would still fail this suite.
-- CI (`Sanctuary CI/CD` and `Anjo da máquina Protocol - Angels`, badges above): both green on `main`'s most recent push (verified directly against the GitHub Actions run via `gh run watch`, not assumed from a local pass). The badges above always reflect the current state of `main`; this bullet describes the check performed while writing this README, which may be older than what the badges show now.
+- CI (`Core CI/CD` and `Regression Checks CI`, badges above): both green on `main`'s most recent push (verified directly against the GitHub Actions run via `gh run watch`, not assumed from a local pass). The badges above always reflect the current state of `main`; this bullet describes the check performed while writing this README, which may be older than what the badges show now.
 
 ## Quickstart
 
@@ -123,7 +123,7 @@ I'm a QA engineer available for fixed-price audits of AI-generated code — see 
 
 - **`parrhesia/`** — the audit/detection toolkit described above: `parrhesia/diff_fraud.py` (pattern detectors), `parrhesia/audit.py` + `parrhesia/cli.py` (read-only third-party repo auditing), `parrhesia/touchstone/` (a small benchmark of prompts + graders for testing whether an LLM fabricates, flatters authority, or miscalibrates confidence), `parrhesia/verify/` (cross-model and human-review escalation primitives).
 - **`demo/`** — the one-command demo above.
-- **`runtime_guard/`** (formerly `sefer/`) — file-access restriction via a `Sanctum` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
+- **`runtime_guard/`** (formerly `sefer/`) — file-access restriction via a `Sandbox` context (a separate, independently maintained defense layer for *running* untrusted AI-generated code, as opposed to *auditing* it statically).
 - **`checks/`** — ~50 standing regression checks, run on every push via the CI badges above.
 - **`adversarial_training/`** (formerly `tartarus/`) — the local-only, author-machine-gated red/blue self-play arena (see Limitations).
 

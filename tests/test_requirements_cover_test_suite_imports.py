@@ -3,7 +3,7 @@ tests/test_requirements_cover_test_suite_imports.py
 ========================================================
 requirements.txt の回帰テスト。DEFECTS.md §AP 参照。
 
-背景: `.github/workflows/sanctuary_ci.yml` は `pip install -r requirements.txt`
+背景: `.github/workflows/core_ci.yml` は `pip install -r requirements.txt`
 のみを依存のインストール手段として使い(別のワークフロー
 `regression_checks_ci.yml`側のインストール内容は一切反映されない)、
 その直後に `pytest tests/ -v -s` を実行する。
@@ -96,7 +96,7 @@ def _top_level_imports_of_file(path: Path) -> set:
 def test_every_third_party_import_in_test_suite_is_listed_in_requirements_txt():
     """[脆弱性修正の核心] tests/配下のテストファイルがモジュールレベルで
     importするサードパーティパッケージは、全てrequirements.txtに列挙
-    されていなければならない。sanctuary_ci.ymlはrequirements.txtのみを
+    されていなければならない。core_ci.ymlはrequirements.txtのみを
     インストールしてpytestを実行するため、ここに無いパッケージへの依存は
     実際のCIでModuleNotFoundErrorとして失敗する。"""
     stdlib = _stdlib_names()
@@ -113,7 +113,7 @@ def test_every_third_party_import_in_test_suite_is_listed_in_requirements_txt():
     assert not violations, (
         "以下のテストファイルが、requirements.txtに列挙されていない"
         f"サードパーティ依存をモジュールレベルでimportしています: {violations}\n"
-        "sanctuary_ci.ymlの実際のCI環境ではこれらのパッケージは存在せず、"
+        "core_ci.ymlの実際のCI環境ではこれらのパッケージは存在せず、"
         "ModuleNotFoundErrorで失敗します。requirements.txtに追記してください。"
     )
 

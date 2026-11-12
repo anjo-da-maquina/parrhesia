@@ -16,7 +16,7 @@
 - `pyproject.toml` で `name = "sefer"` として **PyPI配布物そのものの名前**になっている
   (`sefer.egg-info/` も存在、`description = "Zero-Trust OS Fortress for Local AI Agents"`)。
 - 実体は3つの役割を持つ:
-  1. `sefer/__init__.py` の `Sanctum` クラス — `allowed_dirs`/`allowed_hosts`/`restrict_reads`を
+  1. `sefer/__init__.py` の `Sandbox` クラス — `allowed_dirs`/`allowed_hosts`/`restrict_reads`を
      指定してネスト可能な「許可範囲」を宣言するコンテキストマネージャ。
   2. 同ファイルの `_michael_absolute_defense`(`sys.addaudithook`に登録される監査フック本体)
      — ファイル書き込み・ソケット通信・mmap・fd経由書き込み等、約10種の脱獄経路を実機検証の上で遮断する。
@@ -29,7 +29,7 @@
 `runtime_guard`(パッケージ名・PyPI配布名として)
 
 理由: 実行時(`sys.addaudithook`)に常駐して脱獄経路を遮断する防御基盤という実際の役割をそのまま表す。
-`Sanctum`→`ScopedPolicy`、`inquisition()`→`scan_source()`、`_michael_absolute_defense`→
+`Sandbox`→`ScopedPolicy`、`inquisition()`→`scan_source()`、`_michael_absolute_defense`→
 `_runtime_audit_hook` のような内部名の追随改名も合わせて検討可能(ただし関数名改名は別途影響調査が必要)。
 
 ### 影響範囲(高リスク)
@@ -121,7 +121,7 @@
   - `ZKAuditTrail`(HMAC-SHA256鍵付きハッシュ連鎖で署名する監査証跡クラス、`sefer/audit_chain.py`の
     `SignedAuditChain`とは別実装で、2つが「同種のログを別々に実装している」ことがDEFECTS.md §AHで
     言及されている)
-  - `_GLOBAL_SANCTUARY_LOCK`/`is_sanctuary_sealed()`/`set_sanctuary_sealed()` —
+  - `_GLOBAL_RUNTIME_LOCK`/`is_runtime_sealed()`/`set_runtime_sealed()` —
     プロセス全体で共有する「封鎖(seal)」状態。これが破られるとAI実行を完全停止する最終防衛線。
   - `get_machine_id()` とRSA公開鍵 — おそらく創造主のマシン認証に関連(関数名から推測、
     今回は内部ロジックの全文は未読のため確定的な説明ではない)。
@@ -134,7 +134,7 @@
 
 ### 影響範囲(最大リスク)
 - `.py`ファイル中の `maquina_gatekeeper` 参照: **42ファイル**(今回提案対象中最多)。
-- `_GLOBAL_SANCTUARY_LOCK`/`is_sanctuary_sealed`等はプロセス全体の状態を扱う既存の脆弱性修正
+- `_GLOBAL_RUNTIME_LOCK`/`is_runtime_sealed`等はプロセス全体の状態を扱う既存の脆弱性修正
   (2026-10のスレッドローカル化バグ)の対象そのものであり、改名作業中に誤ってこの排他制御ロジックに
   触れると、`checks/`リネームで確立した「ロジック自体には絶対に手を入れず、識別子の置換のみ行う」
   という安全な手順の遵守が特に重要になる。

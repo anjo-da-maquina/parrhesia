@@ -13,7 +13,7 @@ NAME = "check_core_module_integration - 機能要件E2E監査: 重要モジュ�
 # 基本的な公開APIが期待通りに動作することをE2Eで検証する。
 def main():
     sys.path.insert(0, str(ROOT))
-    from runtime_guard import inquisition, Sanctum, LossOfAtaraxia
+    from runtime_guard import inquisition, Sandbox, LossOfAtaraxia
     findings = inquisition("import os\nos.system('x')")
     if not findings:
         report_fail(NAME, "inquisition()が既知の危険コードを検知できませんでした。")

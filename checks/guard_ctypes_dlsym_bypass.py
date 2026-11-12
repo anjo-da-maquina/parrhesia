@@ -32,9 +32,9 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # ままで)同じ攻撃に対して既に保護されていることも裏付けとして
 # 検証する。
 #
-# [正直な注記: 本検査の限界] 本修正は「Sanctumに入った『後』に
+# [正直な注記: 本検査の限界] 本修正は「Sandboxに入った『後』に
 # 新たにシンボルを解決・新たなハンドルを取得する」というパターンを
-# 塞ぐものである。Sanctumに入る『前』に関数ポインタ自体を解決・
+# 塞ぐものである。Sandboxに入る『前』に関数ポインタ自体を解決・
 # 変数に保存しておけば、その後の呼び出し自体は新たなaudit eventを
 # 一切発生させないため(実機で確認済み)、本修正・本天使のいずれも
 # これには及ばない。これは本防御方式(audit hookベースの検査)
@@ -63,7 +63,7 @@ import ctypes, os, sys
 import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
-mg.set_sanctuary_sealed(True)
+mg.set_runtime_sealed(True)
 try:
     try:
         c_unlink = ctypes.pythonapi.unlink
@@ -73,7 +73,7 @@ try:
     except mg.LossOfAtaraxia:
         sys.exit(0)
 finally:
-    mg.set_sanctuary_sealed(False)
+    mg.set_runtime_sealed(False)
 """
         res = _run(script)
         if res.returncode != 0:
@@ -94,7 +94,7 @@ import ctypes, sys
 import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
-mg.set_sanctuary_sealed(True)
+mg.set_runtime_sealed(True)
 try:
     try:
         ctypes.CDLL(None)
@@ -102,7 +102,7 @@ try:
     except mg.LossOfAtaraxia:
         sys.exit(0)
 finally:
-    mg.set_sanctuary_sealed(False)
+    mg.set_runtime_sealed(False)
 """
     res = _run(script)
     if res.returncode != 0:
@@ -141,10 +141,10 @@ def _check_runtime_guard_already_protected_without_modification() -> tuple:
     try:
         script = f"""
 import ctypes, os, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 try:
-    with Sanctum(allowed_dirs=["/tmp/chamuel_nonexistent_jail"]):
+    with Sandbox(allowed_dirs=["/tmp/chamuel_nonexistent_jail"]):
         c_unlink = ctypes.pythonapi.unlink
         c_unlink.argtypes = [ctypes.c_char_p]
         c_unlink({victim!r}.encode())

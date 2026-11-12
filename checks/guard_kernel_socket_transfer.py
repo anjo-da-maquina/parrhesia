@@ -16,7 +16,7 @@ NAME = "guard_kernel_socket_transfer - 検査用の被害ファイルと攻撃�
 # の同名syscall相当を直接呼び、ユーザー空間のバッファ(os.write系が
 # 引数として受け取るbytes)を一切経由しないため、既存のos.write系4関数
 # のラップも一度も呼ばない。実機検証済み: allowed_dirs外のファイルに
-# ついて、Sanctumに入る前に確保した書き込み用fdへ、別のfdから
+# ついて、Sandboxに入る前に確保した書き込み用fdへ、別のfdから
 # os.sendfileまたはos.copy_file_rangeで直接データを転送する攻撃が、
 # 例外を一切発生させずに成功し、ファイル内容が実際に書き換わることを
 # 確認した。
@@ -25,14 +25,14 @@ NAME = "guard_kernel_socket_transfer - 検査用の被害ファイルと攻撃�
 # 同じ(fd事前オープンによる書き込み制限の迂回)だが、別のAPIを使う
 # だけで素通りする」という構造の欠陥であり、§BW(import os.path)・
 # §CA(socket.sendto)・§CB(mmap)と同種である。本天使は、実装詳細を
-# 静的に解析するのではなく、実際にSanctumを起動し、既知の具体的な
+# 静的に解析するのではなく、実際にSandboxを起動し、既知の具体的な
 # 迂回手口(sendfile/copy_file_rangeによるfd事前オープン書き込み)を
 # 実行して、正しく遮断されることを継続的に検証する回帰連戦である。
 #
-# [正直な注記: 本検査の限界] 同じ調査の過程で、Sanctumに入る「前」に
+# [正直な注記: 本検査の限界] 同じ調査の過程で、Sandboxに入る「前」に
 # 確保したPythonファイルオブジェクト(`open(path, 'r+b')`等が返す
 # `io.FileIO`/`io.BufferedWriter`)の`.write()`メソッドも、同様に
-# 監査イベントを発生させず、本修正後もSanctumを完全に迂回して書き込め
+# 監査イベントを発生させず、本修正後もSandboxを完全に迂回して書き込め
 # ることを実機で確認した。これはCPythonの`_io`拡張型のメソッドで、
 # `io.FileIO.write = ...`のような通常の属性代入によるモンキーパッチが
 # `TypeError: cannot set 'write' attribute of immutable type
@@ -62,9 +62,9 @@ def _victim_pair(victim_content: bytes, payload_content: bytes):
 
 
 def _check_sendfile_write_is_blocked() -> tuple:
-    """Sanctumに入る前に確保した書き込み用fdへ、os.sendfile()で別の
+    """Sandboxに入る前に確保した書き込み用fdへ、os.sendfile()で別の
     fdから直接データを転送する攻撃が遮断されることを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     original = b"original content, untouched so far............"
     vpath, ppath = _victim_pair(original, b"PWNED_VIA_SENDFILE")
@@ -73,7 +73,7 @@ def _check_sendfile_write_is_blocked() -> tuple:
         src_fd = os.open(ppath, os.O_RDONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
                     os.sendfile(dst_fd, src_fd, 0, 19)
                 return False, "os.sendfileによる書き込みが遮断されなかった"
             except LossOfAtaraxia:
@@ -99,7 +99,7 @@ def _check_sendfile_write_is_blocked() -> tuple:
 def _check_copy_file_range_write_is_blocked() -> tuple:
     """[核心] 同様の攻撃をos.copy_file_range()で行っても遮断されることを
     確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     original = b"original content 2, untouched........"
     vpath, ppath = _victim_pair(original, b"PWNED_VIA_COPY_FILE_RANGE")
@@ -108,7 +108,7 @@ def _check_copy_file_range_write_is_blocked() -> tuple:
         src_fd = os.open(ppath, os.O_RDONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
                     os.copy_file_range(src_fd, dst_fd, 25)
                 return False, "os.copy_file_rangeによる書き込みが遮断されなかった"
             except LossOfAtaraxia:
@@ -133,7 +133,7 @@ def _check_copy_file_range_write_is_blocked() -> tuple:
 def _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当なsendfileが
     引き続き許可されることを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dst = os.path.join(tmpdir, "ok_dst.txt")
@@ -146,7 +146,7 @@ def _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
         src_fd = os.open(src, os.O_RDONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=[tmpdir]):
+                with Sandbox(allowed_dirs=[tmpdir]):
                     os.sendfile(dst_fd, src_fd, 0, 100)
             except LossOfAtaraxia as e:
                 return False, f"allowed_dirs内への正当なsendfileが誤って遮断された: {e}"
@@ -164,7 +164,7 @@ def _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
 def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当な
     copy_file_rangeが引き続き許可されることを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         dst = os.path.join(tmpdir, "ok_dst.txt")
@@ -177,7 +177,7 @@ def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple
         src_fd = os.open(src, os.O_RDONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=[tmpdir]):
+                with Sandbox(allowed_dirs=[tmpdir]):
                     os.copy_file_range(src_fd, dst_fd, 100)
             except LossOfAtaraxia as e:
                 return False, f"allowed_dirs内への正当なcopy_file_rangeが誤って遮断された: {e}"
@@ -202,8 +202,8 @@ def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple
 # `_check_fd_write_allowed`のチェック自体をスキップしていたことが
 # 判明した(ファイル書き込み制限の観点では「パスが存在しないので対象外」
 # という正しい判断だったが、ネットワーク送出の観点では無検査のまま
-# だったという副作用)。実機で、Sanctum起動**前**に接続済みの実TCP
-# ソケットへ、Sanctum起動**後**にos.sendfileでファイル内容を送出する
+# だったという副作用)。実機で、Sandbox起動**前**に接続済みの実TCP
+# ソケットへ、Sandbox起動**後**にos.sendfileでファイル内容を送出する
 # 攻撃が例外無しで成功し、受信側で実際にファイル内容を受信できることを
 # 確認した(本物の情報持ち出し)。`_check_fd_not_socket_for_sendfile`を
 # 新設してこの経路を明示的に拒否する修正の、継続的な再検証を本天使が
@@ -217,13 +217,13 @@ def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple
 
 
 def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
-    """[核心・§CN] Sanctum起動**前**に接続済みの実ソケットへ、Sanctum
+    """[核心・§CN] Sandbox起動**前**に接続済みの実ソケットへ、Sandbox
     起動**後**にos.sendfileでファイル内容を送出する攻撃が、実際に
     遮断されることを確認する(「事前オープンfdバイパス」の前提条件を
     満たした、完全な実攻撃チェーンでの検証)。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
-    # Sanctum起動前に、実際のTCPループバック接続を確立する
+    # Sandbox起動前に、実際のTCPループバック接続を確立する
     # (socket.connect自体はmichaelの深層保護で遮断されるため、
     #  ガードが有効になる前に接続を済ませておく必要がある)。
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -243,7 +243,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
         src_fd = os.open(vpath, os.O_RDONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
                     os.sendfile(cli.fileno(), src_fd, 0, len(secret))
                 return False, "os.sendfileによるソケットへの送出が遮断されなかった"
             except LossOfAtaraxia:
@@ -274,8 +274,8 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
         os.remove(vpath)
 
 
-def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
-    """[誤検知防止・§CN] Sanctumを一切使っていない通常時(ガード非有効)
+def _check_sendfile_to_socket_without_sandbox_is_unaffected() -> tuple:
+    """[誤検知防止・§CN] Sandboxを一切使っていない通常時(ガード非有効)
     は、ソケットへの正当なos.sendfileが誤って遮断されないことを確認
     する(本検査自体がruntime_guard全体を誤作動させていないかの確認)。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -296,7 +296,7 @@ def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
         try:
             os.sendfile(cli.fileno(), src_fd, 0, len(payload))
         except Exception as e:
-            return False, f"Sanctum未使用時にos.sendfileが誤って失敗した: {e}"
+            return False, f"Sandbox未使用時にos.sendfileが誤って失敗した: {e}"
         finally:
             os.close(src_fd)
 
@@ -320,7 +320,7 @@ def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
 # `_check_fd_write_allowed`のみを呼んでいたが、同関数は送り先fdが
 # ソケットに解決される場合、`_resolve_fd_path`が意図的に`None`を返し
 # チェック自体をスキップする設計だった(§CNと全く同じ構造)。実機で、
-# Sanctum起動**前**に接続済みのソケットへ、起動**後**に
+# Sandbox起動**前**に接続済みのソケットへ、起動**後**に
 # `os.write(sock.fileno(), data)`で実際のデータを書き込めてしまう
 # ことを確認した――§CNのos.sendfileより**さらに基本的な**低レベル
 # API(全てのファイル書き込みの根底にある関数)が、実は同じ穴を
@@ -330,11 +330,11 @@ def _check_sendfile_to_socket_without_sanctum_is_unaffected() -> tuple:
 
 
 def _check_os_write_to_presealed_socket_is_blocked_end_to_end() -> tuple:
-    """[核心・§CQ] Sanctum起動**前**に接続済みの実ソケットへ、Sanctum
+    """[核心・§CQ] Sandbox起動**前**に接続済みの実ソケットへ、Sandbox
     起動**後**に`os.write()`で直接書き込む攻撃が遮断されることを確認
     する(「事前オープンfdバイパス」の前提条件を満たした、完全な実
     攻撃チェーンでの検証)。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -347,7 +347,7 @@ def _check_os_write_to_presealed_socket_is_blocked_end_to_end() -> tuple:
     secret = b"secret-via-os-write-on-socket-fd"
     try:
         try:
-            with Sanctum(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+            with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
                 os.write(cli.fileno(), secret)
             return False, "os.writeによるソケットfdへの書き込みが遮断されなかった"
         except LossOfAtaraxia:
@@ -373,7 +373,7 @@ def _check_os_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止・§CQ] allowed_dirs内の通常ファイルへの正当な
     os.write()が、本件の修正によって誤って遮断されないことを確認
     する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "ok.txt")
@@ -381,7 +381,7 @@ def _check_os_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
         fd = os.open(path, os.O_WRONLY)
         try:
             try:
-                with Sanctum(allowed_dirs=[tmpdir]):
+                with Sandbox(allowed_dirs=[tmpdir]):
                     os.write(fd, b"legit os.write payload")
             except LossOfAtaraxia as e:
                 return False, f"allowed_dirs内への正当なos.writeが誤って遮断された: {e}"
@@ -395,8 +395,8 @@ def _check_os_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
         return True, "OK"
 
 
-def _check_os_write_without_sanctum_is_unaffected() -> tuple:
-    """[誤検知防止・§CQ] Sanctumを一切使っていない通常時は、ソケットへの
+def _check_os_write_without_sandbox_is_unaffected() -> tuple:
+    """[誤検知防止・§CQ] Sandboxを一切使っていない通常時は、ソケットへの
     正当なos.writeが誤って遮断されないことを確認する。"""
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -411,7 +411,7 @@ def _check_os_write_without_sanctum_is_unaffected() -> tuple:
         try:
             os.write(cli.fileno(), payload)
         except Exception as e:
-            return False, f"Sanctum未使用時にos.writeが誤って失敗した: {e}"
+            return False, f"Sandbox未使用時にos.writeが誤って失敗した: {e}"
 
         conn.settimeout(1.0)
         received = conn.recv(len(payload))
@@ -430,10 +430,10 @@ CHECKS = [
     ("runtime_guard._guarded_os_sendfile: allowed_dirs内の誤検知防止", _check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
     ("runtime_guard._guarded_os_copy_file_range: allowed_dirs内の誤検知防止", _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked),
     ("runtime_guard._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _check_sendfile_to_socket_is_blocked_end_to_end),
-    ("runtime_guard._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", _check_sendfile_to_socket_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_os_sendfile: Sandbox未使用時のソケット送出への誤検知防止(§CN)", _check_sendfile_to_socket_without_sandbox_is_unaffected),
     ("runtime_guard._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _check_os_write_to_presealed_socket_is_blocked_end_to_end),
     ("runtime_guard._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", _check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
-    ("runtime_guard._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", _check_os_write_without_sanctum_is_unaffected),
+    ("runtime_guard._guarded_os_write: Sandbox未使用時の誤検知防止(§CQ)", _check_os_write_without_sandbox_is_unaffected),
 ]
 
 
@@ -470,7 +470,7 @@ def main():
         detail = "; ".join(f"{n}({d})" for n, d in failures)
         report_fail(
             NAME,
-            f"Sanctumのos.sendfile/os.copy_file_range/os.writeによるfd事前"
+            f"Sandboxのos.sendfile/os.copy_file_range/os.writeによるfd事前"
             f"オープン迂回防止(書き込み・ソケット送出の両方)に、少なくとも"
             f"1つの既知の問題が再発しています(§CD/§CN/§CQの回帰): {detail}",
             evidence={"failures": failures},
@@ -483,7 +483,7 @@ def main():
         "バイパス(§CD)、os.sendfileによるソケット宛のネットワーク"
         "情報持ち出しバイパス(§CN)、およびos.writeによるソケット宛の"
         "同種のバイパス(§CQ)がいずれも正しく遮断され、かつ"
-        "allowed_dirs内・Sanctum未使用時の正当な利用は誤って遮断されない"
+        "allowed_dirs内・Sandbox未使用時の正当な利用は誤って遮断されない"
         "ことを確認しました。",
     )
 

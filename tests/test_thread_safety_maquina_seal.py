@@ -1,16 +1,16 @@
 """
 tests/test_thread_safety_maquina_seal.py
 ==========================================
-runtime_audit_gatekeeper.py の`is_sanctuary_sealed()`/`set_sanctuary_sealed()`の
+runtime_audit_gatekeeper.py の`is_runtime_sealed()`/`set_runtime_sealed()`の
 回帰テスト。DEFECTS.md §AD 参照。
 
 背景: 封鎖ステータスが`threading.local()`(スレッドごとに独立)で管理されて
 いたため、`enforce_maquina_seal`デコレータによって「封鎖済み」のメイン
 スレッドの中で新規スレッドを一つ生成するだけで、その子スレッド内では
-`is_sanctuary_sealed()`が常に`False`(threading.local()の既定値)を返し、
+`is_runtime_sealed()`が常に`False`(threading.local()の既定値)を返し、
 `ultimate_audit_hook`による「深層保護」(subprocess.Popen等の禁止操作の
 遮断)が子スレッドでは一切働かなくなる重大なバイパス脆弱性があった。
-`enforce_maquina_seal`は`_GLOBAL_SANCTUARY_LOCK`により呼び出し自体を
+`enforce_maquina_seal`は`_GLOBAL_RUNTIME_LOCK`により呼び出し自体を
 プロセス全体で直列化しているため、複数スレッドが同時に独立した封鎖状態
 を持つ正当な理由はそもそも存在しない。封鎖フラグをプロセス全体で共有
 するグローバル変数に修正し、本テストで固定する。
@@ -110,12 +110,12 @@ def test_sealed_state_is_shared_across_threads():
     その中で新たに生成した子スレッドにも共有されなければならない。
     """
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         result = {}
 
         def check_in_child_thread():
-            result["sealed_in_child"] = mg.is_sanctuary_sealed()
+            result["sealed_in_child"] = mg.is_runtime_sealed()
 
         t = threading.Thread(target=check_in_child_thread)
         t.start()
@@ -126,7 +126,7 @@ def test_sealed_state_is_shared_across_threads():
             "深層保護(ultimate_audit_hook)が無検査で素通りしてしまう。"
         )
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def test_forbidden_operation_is_blocked_even_from_a_child_thread():
@@ -136,7 +136,7 @@ def test_forbidden_operation_is_blocked_even_from_a_child_thread():
     LossOfAtaraxiaで遮断されなければならない。
     """
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         result = {}
 
@@ -157,13 +157,13 @@ def test_forbidden_operation_is_blocked_even_from_a_child_thread():
             "深層保護をすり抜けて実行されてしまった。"
         )
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def test_unsealed_state_allows_normal_operation():
     """封鎖していない通常時は、禁止操作も(この監査フックによっては)遮断されない。"""
     mg._register_audit_hook_once()
-    assert mg.is_sanctuary_sealed() is False
+    assert mg.is_runtime_sealed() is False
     import subprocess
     p = subprocess.Popen(["echo", "ok"], stdout=subprocess.PIPE)
     out, _ = p.communicate()
@@ -183,7 +183,7 @@ def test_udp_sendto_is_blocked_while_sealed():
     import socket
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         try:
@@ -195,7 +195,7 @@ def test_udp_sendto_is_blocked_while_sealed():
         except mg.LossOfAtaraxia:
             pass
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
         s.close()
 
 
@@ -205,7 +205,7 @@ def test_udp_sendto_is_allowed_when_unsealed():
     import socket
 
     mg._register_audit_hook_once()
-    assert mg.is_sanctuary_sealed() is False
+    assert mg.is_runtime_sealed() is False
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.sendto(b"hello", ("127.0.0.1", 1))
@@ -224,13 +224,13 @@ def test_os_fork_is_blocked_while_sealed():
     「新しいプロセスを起動する」ことを目的とした複数のAPIが含まれて
     いたが、同じ目的を達成できる`os.fork()`が発火する専用のaudit event
     "os.fork"は含まれていなかった。実機で確認済み: 修正前は
-    `set_sanctuary_sealed(True)`の状態でも`os.fork()`が例外無しに成立
+    `set_runtime_sealed(True)`の状態でも`os.fork()`が例外無しに成立
     していた(別個に独立して存在する`runtime_guard/__init__.py`の
     `_HARD_DENY_EVENTS`は既に"os.fork"を遮断していたが、本ファイルの
     `ultimate_audit_hook`には反映されていなかった)。
     """
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         try:
             pid = os.fork()
@@ -250,13 +250,13 @@ def test_os_fork_is_blocked_while_sealed():
         except mg.LossOfAtaraxia:
             pass
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def test_os_fork_is_allowed_when_unsealed():
     """[誤検知防止] 封鎖していない通常時は、os.fork()が誤って遮断されない。"""
     mg._register_audit_hook_once()
-    assert mg.is_sanctuary_sealed() is False
+    assert mg.is_runtime_sealed() is False
     pid = os.fork()
     if pid == 0:
         os._exit(0)
@@ -275,7 +275,7 @@ def test_os_forkpty_is_blocked_while_sealed():
     されることを確認した。
     """
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         try:
             pid, fd = os.forkpty()
@@ -292,7 +292,7 @@ def test_os_forkpty_is_blocked_while_sealed():
         except mg.LossOfAtaraxia:
             pass
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 @pytest.mark.skipif(
@@ -329,7 +329,7 @@ def test_fork_then_exec_combo_is_unreachable_while_sealed():
         "sys.path.insert(0, " + repr(_repo_root) + ")\n"
         "import runtime_audit_gatekeeper as mg\n"
         "mg._register_audit_hook_once()\n"
-        "mg.set_sanctuary_sealed(True)\n"
+        "mg.set_runtime_sealed(True)\n"
         "try:\n"
         "    pid = os.fork()\n"
         "    if pid == 0:\n"
@@ -344,7 +344,7 @@ def test_fork_then_exec_combo_is_unreachable_while_sealed():
         "except mg.LossOfAtaraxia as e:\n"
         "    print('RESULT: BLOCKED_AT_FORK: ' + str(e))\n"
         "finally:\n"
-        "    mg.set_sanctuary_sealed(False)\n"
+        "    mg.set_runtime_sealed(False)\n"
     )
     r = subprocess.run(
         [sys.executable, "-c", script],

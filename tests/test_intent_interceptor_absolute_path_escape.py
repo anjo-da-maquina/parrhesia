@@ -11,7 +11,7 @@ target_pathが絶対パス(例: "/etc/passwd")である場合の封じ込め検�
 `workspace_root / target_path`という結合を使っているが、Pythonの
 pathlib.Path.__truediv__は右辺が絶対パスの場合に左辺(workspace_root)を
 無視する仕様があるため、絶対パスを指定すればworkspace_rootの境界は
-実質無視される。最終防衛線のruntime_guard.Sanctumが実際のopen()呼び出しレベルで
+実質無視される。最終防衛線のruntime_guard.Sandboxが実際のopen()呼び出しレベルで
 これを遮断するため現行パイプラインでは致命的な脱走には至らないが(実機
 確認済み)、IntentInterceptor自体はその役割(トラバーサル・サンドボックス
 外への干渉の検知)を果たせていなかった。

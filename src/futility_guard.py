@@ -5,7 +5,7 @@ src/futility_guard.py
 ローカルLLMが存在しない架空のパスへの"read"を5ステップ連続で繰り返し、
 何も得られないまま上限ステップ数(max_steps)を使い切る挙動が実際に観測
 された。各ステップ単体は正常に完結しており(Gabriel/IntentInterceptor/
-Sandalphon/Sanctumのいずれも異常なく処理を完了させている)、危険な操作
+Sandalphon/Sandboxのいずれも異常なく処理を完了させている)、危険な操作
 でもないため、既存のどの防御層にも引っかからない。
 
 これはSandalphonの実行タイムアウト(「1回の実行が長すぎる」ことへの防御)

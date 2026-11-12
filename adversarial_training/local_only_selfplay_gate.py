@@ -129,7 +129,7 @@ def execute_armageddon():
             continue
 
         # [脆弱性修正 2026-10 §AU] 以前はここで `awaken()` のみを呼び、
-        # `with Sanctum(...):` に一度も入らずペイロードを実行していたため、
+        # `with Sandbox(...):` に一度も入らずペイロードを実行していたため、
         # 監査フックが実質的に無効(何も検査しない)な状態で「闘技」が
         # 行われていた。詳細は selfplay_engine_core.build_forge_script() の
         # docstring参照。

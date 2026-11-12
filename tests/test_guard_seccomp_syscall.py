@@ -5,7 +5,7 @@ tests/test_guard_seccomp_syscall.py
 
 実際に発見した具体例: §CFで導入したLinuxケーパビリティの剥奪は
 「root相当の特権の有無」を制御するが、「どのシステムコール自体を
-呼べるか」は制御しない。§CD・§CEで発見した「Sanctumに入る前に確保済み
+呼べるか」は制御しない。§CD・§CEで発見した「Sandboxに入る前に確保済み
 のfd・関数ポインタを使った迂回」は、特権を一切必要とせず、無権限プロ
 セスのままでも到達できるシステムコールの範疇にある。本テストは、
 `src/docker_sandbox/seccomp-profile.json`(denylist方式のseccompプロファ

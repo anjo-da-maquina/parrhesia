@@ -132,7 +132,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
             # ケーパビリティによる特権昇格を、カーネルレベルで一切
             # 不可能にする。これらはPython層のaudit hook
             # (runtime_guard/runtime_audit_gatekeeper)とは独立した、カーネルが直接
-            # 強制するOSレベルの防御であり、Sanctumに入る『前』に
+            # 強制するOSレベルの防御であり、Sandboxに入る『前』に
             # 解決済みのfd・関数ポインタを使った既知の迂回手口(§CD・§CE)
             # に対しても、「迂回に成功した後にできる操作」そのものを
             # 狭める効果がある。さらに`pids-limit`で、fork爆弾等による
@@ -145,7 +145,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
             # 「root相当の特権の有無」を制御するが、「どのシステムコール
             # 自体を呼べるか」は制御しない――無権限プロセスのままでも
             # fork/clone/execve/ptrace/mount/socket等は、特権を一切使わ
-            # ずに呼べてしまう。§CD・§CEで発見した「Sanctumに入る前に
+            # ずに呼べてしまう。§CD・§CEで発見した「Sandboxに入る前に
             # 確保済みのfd・関数ポインタを使った迂回」は、まさにこの
             # 「無権限のままでも到達できるシステムコール」の範疇にある。
             # seccompプロファイル(src/docker_sandbox/seccomp-profile.json)

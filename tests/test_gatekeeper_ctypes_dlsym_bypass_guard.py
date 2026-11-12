@@ -75,7 +75,7 @@ import ctypes, os, sys
 import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
-mg.set_sanctuary_sealed(True)
+mg.set_runtime_sealed(True)
 try:
     try:
         c_unlink = ctypes.pythonapi.unlink
@@ -85,7 +85,7 @@ try:
     except mg.LossOfAtaraxia:
         sys.exit(0)
 finally:
-    mg.set_sanctuary_sealed(False)
+    mg.set_runtime_sealed(False)
 """
         res = _run(script)
         assert res.returncode == 0, f"stdout={res.stdout}\nstderr={res.stderr}"
@@ -102,7 +102,7 @@ import ctypes, sys
 import runtime_audit_gatekeeper as mg
 
 mg._register_audit_hook_once()
-mg.set_sanctuary_sealed(True)
+mg.set_runtime_sealed(True)
 try:
     try:
         ctypes.CDLL(None)
@@ -110,7 +110,7 @@ try:
     except mg.LossOfAtaraxia:
         sys.exit(0)
 finally:
-    mg.set_sanctuary_sealed(False)
+    mg.set_runtime_sealed(False)
 """
     res = _run(script)
     assert res.returncode == 0, f"stdout={res.stdout}\nstderr={res.stderr}"
@@ -148,10 +148,10 @@ def test_runtime_guard_already_blocks_the_same_scenario_via_its_existing_default
 
         script = f"""
 import ctypes, os, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 try:
-    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
+    with Sandbox(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         c_unlink = ctypes.pythonapi.unlink
         c_unlink.argtypes = [ctypes.c_char_p]
         c_unlink({victim!r}.encode())

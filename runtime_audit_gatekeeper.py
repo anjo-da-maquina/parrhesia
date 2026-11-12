@@ -14,7 +14,7 @@ from pathlib import Path
 class LossOfAtaraxia(Exception):
     pass
 
-_GLOBAL_SANCTUARY_LOCK = threading.Lock()
+_GLOBAL_RUNTIME_LOCK = threading.Lock()
 _AUDIT_HOOK_REGISTERED = False
 _GENESIS_HASH = "0000000000000000000000000000000000000000000000000000000000000000"
 _LAST_TIMESTAMP = datetime.min
@@ -22,11 +22,11 @@ _LAST_TIMESTAMP = datetime.min
 # [脆弱性修正 2026-10] 以前はスレッドごとに独立した封鎖ステータス
 # (threading.local()) を使っていたが、これは`ultimate_audit_hook`による
 # 「深層保護」を実質的に無効化できる重大なバイパス脆弱性だった。
-# `enforce_maquina_seal`デコレータは`_GLOBAL_SANCTUARY_LOCK`により呼び出し
+# `enforce_maquina_seal`デコレータは`_GLOBAL_RUNTIME_LOCK`により呼び出し
 # 自体をプロセス全体で直列化しているため、複数スレッドが同時に独立した
 # 封鎖状態を持つ正当な理由はそもそも存在しない。にもかかわらず封鎖フラグ
 # がスレッドローカルだったため、封鎖済みのメインスレッドの中で新規スレッド
-# を一つ生成するだけで、その子スレッド内では`is_sanctuary_sealed()`が
+# を一つ生成するだけで、その子スレッド内では`is_runtime_sealed()`が
 # 常に`False`(threading.local()の既定値)を返し、`ultimate_audit_hook`が
 # 一切の検査をせずに即座にreturnしてしまい、`subprocess.Popen`等の
 # 禁止操作が完全に素通りしてしまうことを実機検証済み(メインスレッドでは
@@ -37,16 +37,16 @@ _LAST_TIMESTAMP = datetime.min
 # いたことが原因だった(`runtime_guard/__init__.py`参照)。封鎖フラグをプロセス
 # 全体で共有するグローバル変数に戻し、スレッドを跨いでも封鎖状態が
 # 維持されるよう修正した。
-_sanctuary_seal_lock = threading.Lock()
-_is_sanctuary_sealed_global = False
+_runtime_seal_lock = threading.Lock()
+_is_runtime_sealed_global = False
 
-def is_sanctuary_sealed():
-    return _is_sanctuary_sealed_global
+def is_runtime_sealed():
+    return _is_runtime_sealed_global
 
-def set_sanctuary_sealed(state: bool):
-    global _is_sanctuary_sealed_global
-    with _sanctuary_seal_lock:
-        _is_sanctuary_sealed_global = state
+def set_runtime_sealed(state: bool):
+    global _is_runtime_sealed_global
+    with _runtime_seal_lock:
+        _is_runtime_sealed_global = state
 
 MAQUINA_PUBLIC_KEY_PEM = """-----BEGIN RSA PUBLIC KEY-----
 MIIBCgKCAQEA4AbFPmuW0Uz6zwuHFm8dwiHpa9Gw53SBDmpJg/ObsS5rcMy2lbn7
@@ -120,12 +120,12 @@ def _register_audit_hook_once():
     if _AUDIT_HOOK_REGISTERED: return
 
     def ultimate_audit_hook(event, args):
-        if not is_sanctuary_sealed(): return
+        if not is_runtime_sealed(): return
 
         # [脆弱性修正 2026-10 §CA] 以前は"socket.connect"のみを遮断して
         # いたが、UDPの`socket.sendto()`は接続(connect)を一切行わずに
         # データを送信できるため、"socket.connect"というaudit eventを
-        # 一度も発火させない。実機検証済み: `set_sanctuary_sealed(True)`
+        # 一度も発火させない。実機検証済み: `set_runtime_sealed(True)`
         # (深層保護が有効な状態)でも、`socket.sendto()`によるデータ送信が
         # 例外無しで素通りすることを確認した(TCP経由の`send`/`sendall`は
         # そもそも専用のaudit eventを持たず、必ず事前の`connect`を要する
@@ -141,7 +141,7 @@ def _register_audit_hook_once():
         # (新しいOSプロセスを生成する)を達成できる`os.fork()`が発火する
         # 専用のaudit event"os.fork"(および`os.forkpty()`の"os.forkpty")
         # が、この列挙から漏れていたことを実機で確認した
-        # (`set_sanctuary_sealed(True)`の状態でも`os.fork()`が例外無しで
+        # (`set_runtime_sealed(True)`の状態でも`os.fork()`が例外無しで
         # 成立することを確認済み)。これは本ファイルとは別個に独立して
         # 存在する`runtime_guard/__init__.py`の`_HARD_DENY_EVENTS`が既に
         # "os.fork"/"os.forkpty"を含んでいたにもかかわらず、本フック
@@ -188,7 +188,7 @@ def _register_audit_hook_once():
         # (UDPの接続不要送信)を追加していたが、同じ「接続不要でデータを
         # 送信できる」別のAPIである`socket.sendmsg()`が発火する専用の
         # audit event"socket.sendmsg"が、この列挙から漏れていたことを
-        # 実機で確認した(`set_sanctuary_sealed(True)`の状態でも
+        # 実機で確認した(`set_runtime_sealed(True)`の状態でも
         # `socket.sendmsg()`によるUDPデータ送信が例外無しで成立し、実際に
         # OSレベルの送信まで到達することを確認済み)。§CAと全く同じ構造の
         # 欠陥――禁止したい意図(接続不要でのデータ送信)は同じなのに、
@@ -210,7 +210,7 @@ def _register_audit_hook_once():
         # 一切経由せずに、機密データをサブドメインラベルに符号化して
         # DNSクエリとして外部(攻撃者が管理する権威DNSサーバー)へ送出
         # できる、古典的な「DNS exfiltration」技法である。実機で、
-        # `set_sanctuary_sealed(True)`の状態でも`socket.getaddrinfo()`が
+        # `set_runtime_sealed(True)`の状態でも`socket.getaddrinfo()`が
         # 例外無しに成立し、このサンドボックス自身のDNS到達性の欠如に
         # よるOSErrorでのみ失敗すること(=本フックが何も遮断していない
         # こと)を確認した。独立した別の防御層である`runtime_guard/__init__.py`の
@@ -229,7 +229,7 @@ def _register_audit_hook_once():
         # `socket.getnameinfo()`("socket.getnameinfo")も、同じ
         # DNS exfiltration経路になり得るにもかかわらず、本ファイルの
         # forbidden集合に一度も含まれていなかったことを発見した(実機で
-        # `set_sanctuary_sealed(True)`の状態でも`socket.gethostbyname()`
+        # `set_runtime_sealed(True)`の状態でも`socket.gethostbyname()`
         # が例外無しに成立することを確認済み)。独立した別の防御層である
         # `runtime_guard/__init__.py`の`_michael_absolute_defense`は、これらの
         # イベント名に対する個別の列挙ではなく、引数からホスト名/アドレス
@@ -249,7 +249,7 @@ def _register_audit_hook_once():
             raise LossOfAtaraxia(f"[深層保護] 不純な干渉（{event}）を破棄しました。")
 
         # 封鎖フラグ自体の改ざんを検知
-        if event == "object.__setattr__" and hasattr(args[0], "set_sanctuary_sealed"):
+        if event == "object.__setattr__" and hasattr(args[0], "set_runtime_sealed"):
             raise LossOfAtaraxia("[深層保護] 認識の改ざんを検知しました。")
 
     # [脆弱性修正 2026-10 §BS] 以前は`except Exception: pass`で、
@@ -257,12 +257,12 @@ def _register_audit_hook_once():
     # 「唯一の深層保護(ultimate_audit_hook、subprocess.Popen・os.system・
     # ctypes importなどを遮断する)の設置そのものが失敗しても、呼び出し元
     # は(例外が伝播しないため)成功したものとして処理を継続し、
-    # `set_sanctuary_sealed(True)`で『封鎖済み』を宣言してしまう」という、
+    # `set_runtime_sealed(True)`で『封鎖済み』を宣言してしまう」という、
     # フェイルオープン(安全装置の設置失敗を、安全装置が有効であるかの
     # ように握り潰して通過させる)の典型例であり、本リポジトリのゼロ
     # トラスト思想(例: check_certificate_expiry.pyの証明書失効時の扱い)に反する。
     # ゼロトラストの原則に従い、設置の失敗は握り潰さずそのまま伝播させ
-    # (フェイルクローズ)、`enforce_maquina_seal`/`_seal_sanctuary`の
+    # (フェイルクローズ)、`enforce_maquina_seal`/`_seal_runtime`の
     # 呼び出し自体を失敗させることで、「保護されていないのに保護されて
     # いるかのように動作する」状態を構造的に防ぐ。
     sys.addaudithook(ultimate_audit_hook)
@@ -463,7 +463,7 @@ class ZKAuditTrail:
 def enforce_maquina_seal(github_id, cert_path='ataraxia_certificate.json'):
     def decorator(func):
         def absolute_closure(*args, **kwargs):
-            with _GLOBAL_SANCTUARY_LOCK:
+            with _GLOBAL_RUNTIME_LOCK:
                 _register_audit_hook_once()
                 if not os.path.exists(cert_path): raise LossOfAtaraxia("証明書が見つかりません。")
                 with open(cert_path, 'r', encoding='utf-8') as f: cert = json.load(f)
@@ -473,20 +473,20 @@ def enforce_maquina_seal(github_id, cert_path='ataraxia_certificate.json'):
                 rsa.verify(json.dumps(cert['payload'], sort_keys=True).encode('utf-8'), base64.b64decode(cert['signature']), pubkey)
                 if get_absolute_hardware_fingerprint() != cert['payload']['hardware_fingerprint']: raise LossOfAtaraxia("環境の指紋が一致しません。")
 
-                set_sanctuary_sealed(True)
+                set_runtime_sealed(True)
                 try:
                     result = func(*args, **kwargs)
                 finally:
-                    set_sanctuary_sealed(False)
+                    set_runtime_sealed(False)
 
                 ZKAuditTrail.verify_and_record(func.__name__, *args, **kwargs)
                 return result
         return absolute_closure
     return decorator
 
-def _seal_sanctuary():
+def _seal_runtime():
     _register_audit_hook_once()
-    set_sanctuary_sealed(True)
+    set_runtime_sealed(True)
 
-def _unseal_sanctuary():
-    set_sanctuary_sealed(False)
+def _unseal_runtime():
+    set_runtime_sealed(False)

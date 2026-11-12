@@ -14,14 +14,14 @@ on:
 jobs:
   regression-checks-audit:
     name: ゼロトラスト統合監査 (Zero-Trust Audit)
-    # [緊急修正 2026-10 §CH] .github/workflows/sanctuary_ci.ymlと同じ理由
+    # [緊急修正 2026-10 §CH] .github/workflows/core_ci.ymlと同じ理由
     # (Ubuntu 26移行とPlaywright 1.56.0の非対応による依存関係インストール
     # 失敗、DEFECTS.md §CH参照)で、既知の安定イメージへ明示的に固定した。
     runs-on: ubuntu-22.04
     # [新設 2026-10 §CK] 失敗時にこのジョブ自身のログを取得し
     # (`actions: read`)、その内容をコミットコメントとして投稿する
     # (`contents: write`)ために、デフォルトのリポジトリ設定に依存せず
-    # 本ワークフロー自身で明示的に宣言する(`sanctuary_ci.yml`の§BQと
+    # 本ワークフロー自身で明示的に宣言する(`core_ci.yml`の§BQと
     # 同じ方針)。
     permissions:
       contents: write
@@ -130,7 +130,7 @@ jobs:
         # [脆弱性修正 2026-10 §BV] 以前は`pip install networkx pyyaml
         # playwright mcp pandas openpyxl pytest`という、requirements.txtと
         # 無関係に独自管理されたハードコードの依存リストを使っていた。
-        # これは.github/workflows/sanctuary_ci.yml自身のコメント(§AP)が
+        # これは.github/workflows/core_ci.yml自身のコメント(§AP)が
         # 既に「2本のワークフローが依存関係を共有せずに乖離すると、修正が
         # 片方にしか反映されない事故が起きる」と明記していた教訓に、まさに
         # この箇所自身が違反し続けていた。さらにnetworkx・mcp・pandasは
@@ -205,7 +205,7 @@ jobs:
         run: python checks/check_disk_and_log_capacity.py
       - name: 12.5. 拡張テンプレート防壁統合監査 (Template Integration Audit)
         # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。src/openai_agent_loop.py
-        # (拡張用テンプレート)がSanctum/AegisSystemの実防壁統合を保った
+        # (拡張用テンプレート)がSandbox/AegisSystemの実防壁統合を保った
         # ままであることを検証するスクリプトが、CIワークフローに一度も
         # 追加されていなかった。
         run: python checks/audit_agent_template_integration.py
@@ -225,7 +225,7 @@ jobs:
         # audit_package_boundary_isolation`でDEFECTS.md以外に一件もヒットしないことを
         # 確認した)。実際のsdistビルドによる内容検査(tools/build_public_scripture.py・
         # tests/test_public_scripture_isolation.py)は別途pytest経由でCI
-        # (.github/workflows/sanctuary_ci.yml)に組み込まれているため配布物
+        # (.github/workflows/core_ci.yml)に組み込まれているため配布物
         # そのものの安全性は守られていたが、本スクリプトが担う「設定ファイル
         # 自体が将来静かに後退していないか」という、より早期・軽量な静的検証
         # 層が実質無効化されていた。
@@ -315,7 +315,7 @@ jobs:
         # importされていた実際のバグ、および本ワークフロー自身の依存
         # インストール手順がrequirements.txtと無関係にnetworkx/mcp/pandas
         # 等をハードコードしていた実際の乖離(.github/workflows/
-        # sanctuary_ci.yml自身のコメント§APが既に警告していた教訓への
+        # core_ci.yml自身のコメント§APが既に警告していた教訓への
         # 違反の再発)を、両方とも一般化して継続的に検知する。
         if: success()
         run: python checks/guard_undeclared_dependency.py
@@ -366,7 +366,7 @@ jobs:
         # ("ミカエルの絶対防衛")は、"mmap.__new__"監査イベントを一度も
         # 検査していなかった。既存の「fd事前オープン対策」はos.write系
         # (write/pwrite/writev/pwritev)の4系統のみをラップしており、
-        # Sanctumに入る前に確保した書き込み用fdをmmap.mmap(fd, length,
+        # Sandboxに入る前に確保した書き込み用fdをmmap.mmap(fd, length,
         # access=mmap.ACCESS_WRITE)でマップし、スライス代入で書き込む
         # だけで、これら全てを迂回してallowed_dirs外への書き込みができて
         # いた。さらにargs[2](access)フィールドは`prot=`/`flags=`方式の
@@ -398,7 +398,7 @@ jobs:
         # いずれもCPythonのaudit eventを一切発生させないため、
         # mmap.__new__のように「監査すべきイベントが存在するのに検査
         # していなかった」のではなく、そもそも監査可能なイベント自体が
-        # 存在しなかった。Sanctumに入る前に確保した書き込み用fdへ、
+        # 存在しなかった。Sandboxに入る前に確保した書き込み用fdへ、
         # 別のfdからこの2関数で直接データを転送するだけで、例外を一切
         # 発生させずにallowed_dirs外への書き込みができていた(実機
         # 検証済み)。監査イベントが存在しない以上、既存のos.write系
@@ -447,7 +447,7 @@ jobs:
         # 方式を採用しているため)この欠陥の対象ではなく、一切の変更を
         # 加えていない。この非対称性は§CAの教訓と同種のものである。
         #
-        # [正直な注記: 本検査の限界] Sanctumに入る『前』に関数ポインタ
+        # [正直な注記: 本検査の限界] Sandboxに入る『前』に関数ポインタ
         # 自体を解決・変数に保存しておけば、その後の呼び出し自体は
         # 新たなaudit eventを一切発生させないため(実機で確認済み)、
         # 本修正・本天使のいずれもこれには及ばない。これは本防御方式
@@ -458,7 +458,7 @@ jobs:
       - name: 22.87. コンテナのLinuxケーパビリティ・特権昇格の恒久的剥奪 (Container Capability Stripping Audit)
         # [新設 2026-10 §CF] §CD・§CEで繰り返し正直に記録してきた通り、
         # Python層のaudit hook(sefer/maquina_gatekeeper)には構造的な
-        # 限界がある――Sanctumに入る『前』に確保済みのfdや関数ポインタ
+        # 限界がある――Sandboxに入る『前』に確保済みのfdや関数ポインタ
         # を使った操作は、以後いかなる新たな監査イベントも発生させずに
         # 素通りする。これは「城内に関所を増やす」方式そのものの限界で
         # あり、恒久対策には「城を囲む外壁」すなわちOSレベル(カーネル
@@ -490,7 +490,7 @@ jobs:
       - name: 22.88. seccompによるシステムコール制限の検知 (Seccomp Syscall Audit)
         # [新設 2026-10 §CG] §CFのLinuxケーパビリティ剥奪は「root相当の
         # 特権の有無」を制御するが、「どのシステムコール自体を呼べるか」
-        # は制御しない――§CD・§CEで発見した「Sanctumに入る前に確保済みの
+        # は制御しない――§CD・§CEで発見した「Sandboxに入る前に確保済みの
         # fd・関数ポインタを使った迂回」は、特権を一切必要とせず、無権限
         # プロセスのままでも到達できるシステムコールの範疇にある。
         #
@@ -542,9 +542,9 @@ jobs:
         # audit eventを発火しないことが判明した。`checks/
         # guard_network_exfiltration.py`の§CA時点のコメントは「必ず
         # 事前のconnectを要するため検査不要」と判断していたが、これは
-        # §CB・§CD・§CNで繰り返し発見している「Sanctum起動前に確保した
+        # §CB・§CD・§CNで繰り返し発見している「Sandbox起動前に確保した
         # fd・接続は起動後も検査を素通りする」という前提openedバイパスの
-        # 構造を見落としていた。実機で、Sanctum起動前に実TCP接続を確立し、
+        # 構造を見落としていた。実機で、Sandbox起動前に実TCP接続を確立し、
         # 起動後に`.send()`で実際のデータを送出する完全な攻撃チェーンが、
         # 無条件に成功し受信側に実際にデータが届くことを確認した。
         #
@@ -585,14 +585,14 @@ jobs:
     # [新設・2026-10 §CK] 失敗時にregression-checks-auditジョブ自身のログを取得し
     # (`actions: read`)、その内容をコミットコメントとして投稿する
     # (`contents: write`)ために、デフォルトのリポジトリ設定に依存せず
-    # 本ワークフロー自身で明示的に宣言する(`sanctuary_ci.yml`の§BQと
+    # 本ワークフロー自身で明示的に宣言する(`core_ci.yml`の§BQと
     # 同じ方針)。
     permissions:
       contents: write
       actions: read
     steps:
       - name: regression-checks-auditジョブ自身のログを取得し、コミットコメントとして投稿
-        # [新設 2026-10 §CK] §BQで`sanctuary_ci.yml`に実装した「失敗時の
+        # [新設 2026-10 §CK] §BQで`core_ci.yml`に実装した「失敗時の
         # pytest出力をコミットコメントとして投稿する」仕組みが、この
         # ワークフロー(`regression_checks_ci.yml`)には一度も存在して
         # いなかった。§CH・§CJでは、この調査環境自身のネットワーク許可

@@ -5,9 +5,9 @@ from pathlib import Path
 def run_guarded(code_snippet):
     script = f"""
 import sys
-from runtime_guard import Sanctum
+from runtime_guard import Sandbox
 try:
-    with Sanctum(allowed_dirs=[]):
+    with Sandbox(allowed_dirs=[]):
         exec({repr(code_snippet)})
 except BaseException:
     sys.exit(42)

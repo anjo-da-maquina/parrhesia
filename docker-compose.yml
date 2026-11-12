@@ -18,8 +18,8 @@ services:
 
     # 【非対称性】ホスト側の証明書とログを、読み取り専用（ro）などで安全にマウント
     volumes:
-      - ./ataraxia_certificate.json:/sanctuary/ataraxia_certificate.json:ro
-      - ./zk_audit_trail.json:/sanctuary/zk_audit_trail.json
+      - ./ataraxia_certificate.json:/runtime_seal/ataraxia_certificate.json:ro
+      - ./zk_audit_trail.json:/runtime_seal/zk_audit_trail.json
 
     # 【権限の剥奪】新たな特権の獲得をカーネルレベルで禁止
     security_opt:

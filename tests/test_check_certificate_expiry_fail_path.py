@@ -6,7 +6,7 @@ tests/test_check_certificate_expiry_fail_path.py
 checks/check_certificate_expiry.pyは、証明書の有効期限切れを「GitHub Actions等の
 未承認クラウド環境(IS_UNVERIFIED_CLOUD)では正常」「それ以外(ローカル等)
 では異常」として、異なる2つの分岐(report_pass / report_fail)に振り分ける
-設計である。これ自体は`test_sanctuary.py`のゼロトラスト思想と整合する
+設計である。これ自体は`test_runtime_seal_enforcement.py`のゼロトラスト思想と整合する
 正当な設計意図だが、本リポジトリには、この2分岐のうち
 「IS_UNVERIFIED_CLOUDがFalseの場合に、本当にreport_fail(CI失敗)が
 発火するか」を直接検証する専用テストが一件も存在していなかった

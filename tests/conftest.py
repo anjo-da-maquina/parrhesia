@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 #    必要になるのは、runtime_audit_gatekeeperに直接依存する個々のテスト
 #    ファイル側であり、それらは自分自身で
 #    `pytest.importorskip("rsa")` を使って明示的にスキップする設計にして
-#    いる(tests/test_sanctuary.py 等を参照)。
+#    いる(tests/test_runtime_seal_enforcement.py 等を参照)。
 try:
     from runtime_audit_gatekeeper import LossOfAtaraxia
 except ImportError:

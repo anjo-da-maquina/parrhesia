@@ -59,7 +59,7 @@ def test_check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked_direct
 def test_check_sendfile_to_socket_is_blocked_end_to_end_directly():
     """[新設 §CN] §CDの修正は書き込み先がファイルである場合のみを
     想定しており、送り先fdがソケットである場合は`_resolve_fd_path`が
-    `None`を返して検査自体をスキップしていた。Sanctum起動前に接続
+    `None`を返して検査自体をスキップしていた。Sandbox起動前に接続
     済みの実ソケットへ、起動後にos.sendfileでファイル内容を送出する
     完全な実攻撃チェーンが遮断されることを、本テストが継続的に
     再検証する。"""
@@ -67,8 +67,8 @@ def test_check_sendfile_to_socket_is_blocked_end_to_end_directly():
     assert success is True, detail
 
 
-def test_check_sendfile_to_socket_without_sanctum_is_unaffected_directly():
-    success, detail = skt._check_sendfile_to_socket_without_sanctum_is_unaffected()
+def test_check_sendfile_to_socket_without_sandbox_is_unaffected_directly():
+    success, detail = skt._check_sendfile_to_socket_without_sandbox_is_unaffected()
     assert success is True, detail
 
 
@@ -85,7 +85,7 @@ def test_battery_detects_reintroduced_sendfile_socket_regression(monkeypatch):
         ("runtime_guard._guarded_os_sendfile: fd事前オープン書き込み遮断", skt._check_sendfile_write_is_blocked),
         ("runtime_guard._guarded_os_sendfile: allowed_dirs内の誤検知防止", skt._check_sendfile_inside_allowed_dirs_is_not_falsely_blocked),
         ("runtime_guard._guarded_os_sendfile: ソケット宛送出遮断(§CN・事前接続バイパス込み)", _vulnerable_check),
-        ("runtime_guard._guarded_os_sendfile: Sanctum未使用時のソケット送出への誤検知防止(§CN)", skt._check_sendfile_to_socket_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_os_sendfile: Sandbox未使用時のソケット送出への誤検知防止(§CN)", skt._check_sendfile_to_socket_without_sandbox_is_unaffected),
     ]
     monkeypatch.setattr(skt, "CHECKS", patched_checks)
 
@@ -129,7 +129,7 @@ def test_check_os_write_to_presealed_socket_is_blocked_end_to_end_directly():
     os.write系4関数に広げて再確認したところ、`_guarded_os_write`等が
     `_check_fd_write_allowed`のみを呼び、ソケットfdへの書き込みを
     `_resolve_fd_path`がNoneを返すことで無検査にしていた(§CNと同じ
-    構造)ことを発見した。Sanctum起動前に接続済みの実ソケットへ、
+    構造)ことを発見した。Sandbox起動前に接続済みの実ソケットへ、
     起動後にos.write()で直接書き込む完全な実攻撃チェーンが遮断される
     ことを、本テストが継続的に再検証する。"""
     success, detail = skt._check_os_write_to_presealed_socket_is_blocked_end_to_end()
@@ -141,8 +141,8 @@ def test_check_os_write_inside_allowed_dirs_is_not_falsely_blocked_directly():
     assert success is True, detail
 
 
-def test_check_os_write_without_sanctum_is_unaffected_directly():
-    success, detail = skt._check_os_write_without_sanctum_is_unaffected()
+def test_check_os_write_without_sandbox_is_unaffected_directly():
+    success, detail = skt._check_os_write_without_sandbox_is_unaffected()
     assert success is True, detail
 
 
@@ -159,7 +159,7 @@ def test_battery_detects_reintroduced_os_write_socket_regression(monkeypatch):
     patched_checks = [
         ("runtime_guard._guarded_os_write: ソケットfd宛書き込み遮断(§CQ・事前接続バイパス込み)", _vulnerable_check),
         ("runtime_guard._guarded_os_write: allowed_dirs内の誤検知防止(§CQ)", skt._check_os_write_inside_allowed_dirs_is_not_falsely_blocked),
-        ("runtime_guard._guarded_os_write: Sanctum未使用時の誤検知防止(§CQ)", skt._check_os_write_without_sanctum_is_unaffected),
+        ("runtime_guard._guarded_os_write: Sandbox未使用時の誤検知防止(§CQ)", skt._check_os_write_without_sandbox_is_unaffected),
     ]
     monkeypatch.setattr(skt, "CHECKS", patched_checks)
 

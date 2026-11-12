@@ -10,8 +10,8 @@ importなどをプロセス全体で遮断する`sys.addaudithook`ベースの�
 を設置する唯一の箇所である。以前はこの設置処理全体が
 `except Exception: pass`で囲まれていたため、`sys.addaudithook()`自体が
 何らかの理由で例外を投げた場合、その失敗は完全に握り潰され、呼び出し元
-(`enforce_maquina_seal`デコレータ・`_seal_sanctuary()`)は何も知らずに
-処理を継続し、`set_sanctuary_sealed(True)`で「封鎖済み」を宣言して
+(`enforce_maquina_seal`デコレータ・`_seal_runtime()`)は何も知らずに
+処理を継続し、`set_runtime_sealed(True)`で「封鎖済み」を宣言して
 しまっていた。つまり、唯一の安全装置の設置そのものが失敗しても、
 「保護されている」という偽りの状態のまま後続処理が実行される
 フェイルオープンだった(§BQ/§BRの「自壊理由のログ消失」とは別種だが、

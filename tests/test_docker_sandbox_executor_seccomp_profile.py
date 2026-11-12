@@ -6,7 +6,7 @@ tests/test_docker_sandbox_executor_seccomp_profile.py
 docker runへ渡していることの回帰テスト。
 
 §CFで導入したLinuxケーパビリティの剥奪は「root相当の特権の有無」を
-制御するが、§CD・§CEで発見した迂回手口(Sanctumに入る前に確保済みの
+制御するが、§CD・§CEで発見した迂回手口(Sandboxに入る前に確保済みの
 fd・関数ポインタを使う)は特権を一切必要としない。本修正は、カーネル
 レベルでシステムコール自体を直接拒否するseccompプロファイルを
 `docker run`へ渡すことで、この隙間を塞ぐ。

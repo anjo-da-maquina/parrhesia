@@ -4,7 +4,7 @@ tests/test_michael_mmap_fd_bypass_guard.py
 [新設 2026-10 §CB] runtime_guard/__init__.py の _michael_absolute_defense() が
 "mmap.__new__" 監査イベントを一度も検査していなかった欠陥の回帰テスト。
 
-発見した具体的な攻撃: Sanctumコンテキストに「入る前」に、allowed_dirs
+発見した具体的な攻撃: Sandboxコンテキストに「入る前」に、allowed_dirs
 の外にあるファイルへの書き込み用fdを確保しておき、そのfdを
 `mmap.mmap(fd, length, access=mmap.ACCESS_WRITE)` でメモリへマップして
 `mm[0:N] = b'...'` のようにスライス代入するだけで、os.write系APIを
@@ -32,7 +32,7 @@ def _run(script: str) -> subprocess.CompletedProcess:
 
 
 def test_mmap_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
-    """[核心・実機で発見した脆弱性] Sanctumに入る前に確保したfdを
+    """[核心・実機で発見した脆弱性] Sandboxに入る前に確保したfdを
     mmap(access=ACCESS_WRITE)でマップし、スライス代入で書き込む攻撃が
     遮断され、ファイルが一切変更されないことを確認する。"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -42,11 +42,11 @@ def test_mmap_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
 
         script = f"""
 import os, mmap, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 fd = os.open({victim!r}, os.O_RDWR)
 try:
-    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
+    with Sandbox(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         mm = mmap.mmap(fd, 11, access=mmap.ACCESS_WRITE)
         mm[0:11] = b"via mmap!!!"
         mm.close()
@@ -77,11 +77,11 @@ def test_mmap_write_via_prot_flags_style_outside_allowed_dirs_is_also_blocked():
 
         script = f"""
 import os, mmap, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 fd = os.open({victim!r}, os.O_RDWR)
 try:
-    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
+    with Sandbox(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         mm = mmap.mmap(fd, 11, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ | mmap.PROT_WRITE)
         mm[0:11] = b"via mmap!!!"
         mm.close()
@@ -105,9 +105,9 @@ def test_anonymous_mmap_is_always_allowed():
     (過剰検知の回帰防止)。"""
     script = """
 import mmap
-from runtime_guard import Sanctum
+from runtime_guard import Sandbox
 
-with Sanctum(allowed_dirs=[]):
+with Sandbox(allowed_dirs=[]):
     mm = mmap.mmap(-1, 100)
     mm[0:5] = b"anon!"
     mm.close()
@@ -120,7 +120,7 @@ print("OK")
 
 def test_mmap_write_inside_allowed_dirs_still_works():
     """[過剰検知防止] allowed_dirs内のファイルに対する正当なmmap書き込み
-    (fdをSanctumに入る前に確保した場合・中で確保した場合の両方)が、
+    (fdをSandboxに入る前に確保した場合・中で確保した場合の両方)が、
     引き続き正常に動作することを確認する。"""
     with tempfile.TemporaryDirectory() as tmpdir:
         inside = os.path.join(tmpdir, "allowed.txt")
@@ -129,18 +129,18 @@ def test_mmap_write_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, mmap
-from runtime_guard import Sanctum
+from runtime_guard import Sandbox
 
-# Case A: fd opened BEFORE entering Sanctum, but path IS within allowed_dirs.
+# Case A: fd opened BEFORE entering Sandbox, but path IS within allowed_dirs.
 fd = os.open({inside!r}, os.O_RDWR)
-with Sanctum(allowed_dirs=[{tmpdir!r}]):
+with Sandbox(allowed_dirs=[{tmpdir!r}]):
     mm = mmap.mmap(fd, 11, access=mmap.ACCESS_WRITE)
     mm[0:11] = b"legit write"
     mm.close()
 os.close(fd)
 
-# Case B: fd opened INSIDE the Sanctum context, path within allowed_dirs.
-with Sanctum(allowed_dirs=[{tmpdir!r}]):
+# Case B: fd opened INSIDE the Sandbox context, path within allowed_dirs.
+with Sandbox(allowed_dirs=[{tmpdir!r}]):
     fd2 = os.open({inside!r}, os.O_RDWR)
     mm2 = mmap.mmap(fd2, 5, access=mmap.ACCESS_WRITE)
     mm2[0:5] = b"redo!"

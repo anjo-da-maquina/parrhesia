@@ -9,7 +9,7 @@ NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そ�
 # バイパス対策」(`_guarded_os_write`/`_guarded_os_pwrite`/
 # `_guarded_os_writev`/`_guarded_os_pwritev`)を備えていたが、これは
 # os.write系の4系統のみをラップするものであった。しかし
-# `mmap.mmap(fd, length, access=mmap.ACCESS_WRITE)`で、Sanctumに
+# `mmap.mmap(fd, length, access=mmap.ACCESS_WRITE)`で、Sandboxに
 # 「入る前」に確保しておいた書き込み用fdをメモリへマップし、
 # `mm[0:N] = b'...'`のようにスライス代入するだけで、os.write系APIを
 # 一切呼ばずに任意パスへ書き込める。これはCPythonの正式な監査イベント
@@ -17,7 +17,7 @@ NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そ�
 # 一度も検査していなかった(ハードデニー・ソケット・open/os.open・
 # 削除系・リネーム系・デフォルト拒否のいずれにも一致せず、完全に
 # 素通りしていた。実機検証済み: allowed_dirs外のファイルについて、
-# Sanctumに入る前に確保したfdをmmapし、スライス代入で書き込む攻撃が、
+# Sandboxに入る前に確保したfdをmmapし、スライス代入で書き込む攻撃が、
 # 例外を一切発生させずに成功することを確認した)。
 #
 # [一般化の方針] これは本セッションで繰り返し発見している「宣言された
@@ -25,7 +25,7 @@ NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そ�
 # 持つ別のAPI/イベント名が存在し、それを使うだけで素通りする」という
 # 構造の欠陥であり、§BW(import os.path)・§CA(socket.sendto)と同種で
 # ある。本天使は、`_michael_absolute_defense`の実装詳細を静的に解析
-# するのではなく、実際にSanctumを起動し、既知の具体的な迂回手口
+# するのではなく、実際にSandboxを起動し、既知の具体的な迂回手口
 # (mmapによるfd事前オープン書き込み)を実行して、正しく遮断される
 # ことを継続的に検証する回帰連戦である。
 #
@@ -57,9 +57,9 @@ def _victim_file(content: bytes):
 
 
 def _check_mmap_write_via_access_kwarg_is_blocked() -> tuple:
-    """Sanctumに入る前に確保したfdを`access=mmap.ACCESS_WRITE`方式で
+    """Sandboxに入る前に確保したfdを`access=mmap.ACCESS_WRITE`方式で
     mmapし、スライス代入による書き込みが遮断されることを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     original = b"original content, untouched so far...."
     path = _victim_file(original)
@@ -67,7 +67,7 @@ def _check_mmap_write_via_access_kwarg_is_blocked() -> tuple:
         fd = os.open(path, os.O_RDWR)
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp/sealtiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/sealtiel_nonexistent_jail"]):
                     mm = mmap.mmap(fd, 11, access=mmap.ACCESS_WRITE)
                     mm[0:11] = b"via mmap!!!"
                     mm.close()
@@ -95,7 +95,7 @@ def _check_mmap_write_via_prot_flags_kwargs_is_blocked() -> tuple:
     """[核心] accessフィールドが信頼できない`prot=`/`flags=`方式でも、
     同じ攻撃が遮断されることを確認する。これがaccess値を信用しない
     設計(§CBの修正の核心)が実際に機能していることの直接の裏付け。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     original = b"original content 2, untouched........"
     path = _victim_file(original)
@@ -103,7 +103,7 @@ def _check_mmap_write_via_prot_flags_kwargs_is_blocked() -> tuple:
         fd = os.open(path, os.O_RDWR)
         try:
             try:
-                with Sanctum(allowed_dirs=["/tmp/sealtiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/sealtiel_nonexistent_jail"]):
                     mm = mmap.mmap(fd, 11, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ | mmap.PROT_WRITE)
                     mm[0:11] = b"via mmap!!!"
                     mm.close()
@@ -130,10 +130,10 @@ def _check_anonymous_mmap_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] 匿名マッピング(fileno=-1)は実体ファイルを持たず
     持ち出しのリスクがないため、allowed_dirsが空でも誤って遮断されない
     ことを確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     try:
-        with Sanctum(allowed_dirs=[]):
+        with Sandbox(allowed_dirs=[]):
             mm = mmap.mmap(-1, 100)
             mm[0:5] = b"anon!"
             mm.close()
@@ -144,9 +144,9 @@ def _check_anonymous_mmap_is_not_falsely_blocked() -> tuple:
 
 def _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
     """[誤検知防止] allowed_dirs内のファイルに対する正当なmmap書き込み
-    (fdをSanctumに入る前に確保した場合)が、引き続き許可されることを
+    (fdをSandboxに入る前に確保した場合)が、引き続き許可されることを
     確認する。"""
-    from runtime_guard import Sanctum, LossOfAtaraxia
+    from runtime_guard import Sandbox, LossOfAtaraxia
 
     with tempfile.TemporaryDirectory() as tmpdir:
         path = os.path.join(tmpdir, "allowed.txt")
@@ -156,7 +156,7 @@ def _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
         fd = os.open(path, os.O_RDWR)
         try:
             try:
-                with Sanctum(allowed_dirs=[tmpdir]):
+                with Sandbox(allowed_dirs=[tmpdir]):
                     mm = mmap.mmap(fd, 11, access=mmap.ACCESS_WRITE)
                     mm[0:11] = b"legit write"
                     mm.close()
@@ -213,7 +213,7 @@ def main():
         detail = "; ".join(f"{n}({d})" for n, d in failures)
         report_fail(
             NAME,
-            f"Sanctumのmmapによるfd事前オープン迂回防止に、少なくとも1つの"
+            f"Sandboxのmmapによるfd事前オープン迂回防止に、少なくとも1つの"
             f"既知の問題が再発しています(§CBの回帰): {detail}",
             evidence={"failures": failures},
         )

@@ -4,7 +4,7 @@ tests/test_guard_mmap_write_bypass.py
 [新設 2026-10 §CB] checks/guard_mmap_write_bypass.py の単体テスト。
 
 実際に発見した具体例: `runtime_guard/__init__.py`の`_michael_absolute_defense`は
-"mmap.__new__"監査イベントを一度も検査していなかったため、Sanctumに
+"mmap.__new__"監査イベントを一度も検査していなかったため、Sandboxに
 入る前に確保した書き込み用fdを`mmap.mmap(fd, length, access=...)`で
 マップし、スライス代入で書き込むだけで、os.write系の既存対策を
 完全に迂回して任意パスへ書き込めた。"mmap."を`monitored_namespaces`

@@ -8,16 +8,16 @@
 精査の結果、`execute_ai_intent()`はGabriel(静的AST解析)・IntentInterceptor
 (ハニーポット・トラバーサル検知)・Dockerの隔離結界内での使い捨てドライラン
 のみを行う「事前検閲」であり、実際のファイルI/O・コード実行は呼び出し側が
-`runtime_guard.Sanctum`の中で行う責務として明示的に残されている
+`runtime_guard.Sandbox`の中で行う責務として明示的に残されている
 (src/aegis_system.pyのdocstring参照)。以前の`run_evolution()`はこの責務を
 一度も果たさず、事前検閲を通過しただけで無条件に「突破」と断定していた。
 
 しかしGabriel/IntentInterceptorはいずれも`open(path, "w").write(...)`の
 ように、禁止モジュール名も禁止関数名も含まないペイロードを素通りさせる
-(実機検証済み)。一方、実際に`with Sanctum(allowed_dirs=[],
+(実機検証済み)。一方、実際に`with Sandbox(allowed_dirs=[],
 allowed_hosts=[]):`の中で同じペイロードを実行すると、Michael
-(SanctumのOS監査フック)が確実に遮断することを確認した。本テストはこの
-ギャップと、修正後に`execute_payload_under_sanctum()`がそれを正しく
+(SandboxのOS監査フック)が確実に遮断することを確認した。本テストはこの
+ギャップと、修正後に`execute_payload_under_sandbox()`がそれを正しく
 `LossOfAtaraxia`として伝播することを固定する。
 """
 import sys
@@ -79,19 +79,19 @@ def test_bypass_payload_also_passes_intent_interceptor():
     }))
 
 
-def test_execute_payload_under_sanctum_blocks_the_bypass():
-    """[修正の核心] 事前検閲を通過したペイロードを実際にSanctumの中で
+def test_execute_payload_under_sandbox_blocks_the_bypass():
+    """[修正の核心] 事前検閲を通過したペイロードを実際にSandboxの中で
     実行すると、Michaelが`LossOfAtaraxia`で確実に遮断する。これにより
     `run_evolution()`は誤って「突破」と報告しなくなる。"""
     _ensure_ollama_stub()
-    from adversarial_evolution import execute_payload_under_sanctum
+    from adversarial_evolution import execute_payload_under_sandbox
 
     target = Path("/tmp/__pleroma_test_bb_should_never_be_created__.txt")
     if target.exists():
         target.unlink()
     try:
         try:
-            execute_payload_under_sanctum(_BYPASS_PAYLOAD)
+            execute_payload_under_sandbox(_BYPASS_PAYLOAD)
             assert False, "Michaelがopen().write()バイパスを遮断しなかった"
         except LossOfAtaraxia:
             pass
@@ -101,11 +101,11 @@ def test_execute_payload_under_sanctum_blocks_the_bypass():
             target.unlink()
 
 
-def test_execute_payload_under_sanctum_allows_genuinely_harmless_code():
+def test_execute_payload_under_sandbox_allows_genuinely_harmless_code():
     """[回帰防止] ファイルI/O・外部接続を一切行わない、本当に無害な
-    コードは、Sanctum内でも正常に完了しなければならない(過剰検知で
+    コードは、Sandbox内でも正常に完了しなければならない(過剰検知で
     無関係なコードまでLossOfAtaraxiaにしていないことの確認)。"""
     _ensure_ollama_stub()
-    from adversarial_evolution import execute_payload_under_sanctum
+    from adversarial_evolution import execute_payload_under_sandbox
 
-    execute_payload_under_sanctum("x = 1 + 1\nassert x == 2\n")
+    execute_payload_under_sandbox("x = 1 + 1\nassert x == 2\n")

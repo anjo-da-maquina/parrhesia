@@ -28,7 +28,7 @@ def test_detects_the_real_sbt_bug_pattern():
         "class C:\n"
         "    def f(self, req):\n"
         "        target = self.workspace_root / req.get('target')\n"
-        "        with Sanctum():\n"
+        "        with Sandbox():\n"
         "            if True:\n"
         "                return target.read_text()\n"
     )
@@ -48,7 +48,7 @@ def test_does_not_flag_when_secure_resolve_is_the_assignment_itself():
         "            target = self.aegis.jail.secure_resolve(req.get('target', '.'))\n"
         "        except PermissionError as e:\n"
         "            raise SeferLossOfAtaraxia(str(e))\n"
-        "        with Sanctum():\n"
+        "        with Sandbox():\n"
         "            return target.read_text()\n"
     )
     assert hpg.find_unsanitized_path_joins(text) == []

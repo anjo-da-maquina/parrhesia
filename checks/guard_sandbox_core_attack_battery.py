@@ -6,10 +6,10 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "guard_sandbox_core_attack_battery - 論理隔離監査: 既知の攻撃パターンが実際にSanctumで遮断されるかを実行して検証する。"
+NAME = "guard_sandbox_core_attack_battery - 論理隔離監査: 既知の攻撃パターンが実際にSandboxで遮断されるかを実行して検証する。"
 
 
-# 論理隔離監査: 既知の攻撃パターンが実際にSanctumで遮断されるかを実行して検証する。
+# 論理隔離監査: 既知の攻撃パターンが実際にSandboxで遮断されるかを実行して検証する。
 ATTACKS = [
     "import os; os.system('echo hacked')",
     "import subprocess; subprocess.Popen('echo hacked', shell=True)",

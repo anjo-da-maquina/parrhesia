@@ -77,12 +77,12 @@ def report_info(name: str, message: str):
 
 
 def run_code_against_runtime_guard(code: str, allowed_dirs=None, allowed_hosts=None):
-    """コードをSanctum配下のサブプロセスで実行し、遮断されたかどうかを返す。"""
+    """コードをSandbox配下のサブプロセスで実行し、遮断されたかどうかを返す。"""
     script = (
         "import sys; sys.path.insert(0, %r)\n"
-        "from runtime_guard import Sanctum\n"
+        "from runtime_guard import Sandbox\n"
         "try:\n"
-        "    with Sanctum(allowed_dirs=%r, allowed_hosts=%r):\n"
+        "    with Sandbox(allowed_dirs=%r, allowed_hosts=%r):\n"
         "        exec(%r)\n"
         "    sys.exit(0)\n"
         "except BaseException:\n"

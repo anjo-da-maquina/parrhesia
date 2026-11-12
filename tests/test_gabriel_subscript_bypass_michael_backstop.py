@@ -17,7 +17,7 @@
 しかし、本番でAI生成コードを実行する唯一の経路(`src/aegis_system.py`の
 `execute_ai_intent()`、および`src/ollama_agent_loop.py`等の実運用ループ)は、
 Gabrielの静的解析だけで実行を許可するのではなく、実際の動的実行を必ず
-`with Sanctum(...):`のコンテキスト内で行う。Sanctumの監査フック
+`with Sandbox(...):`のコンテキスト内で行う。Sandboxの監査フック
 (`runtime_guard._michael_absolute_defense`、Michael)はPythonのaudit event
 (`os.system`)をCレベルで捕捉するため、Pythonコード側がどのような属性
 アクセス経路でそこに到達したか(`os.system(...)`直接呼び出しか、
@@ -44,7 +44,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from runtime_guard import inquisition, awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import inquisition, awaken, Sandbox, LossOfAtaraxia
 
 _BYPASS_PAYLOAD = "import sys\nsys.modules['os'].system('echo should_be_blocked')\n"
 
@@ -61,11 +61,11 @@ def test_gabriel_misses_sys_modules_subscript_bypass():
 
 
 def test_michael_still_blocks_the_bypass_at_execution_time():
-    """[多層防御の核心] Gabrielの静的解析をすり抜けても、実際にSanctumの
+    """[多層防御の核心] Gabrielの静的解析をすり抜けても、実際にSandboxの
     中で実行すれば、MichaelのOSレベル監査フックが確実に遮断する。"""
     awaken()
     try:
-        with Sanctum(allowed_dirs=[], allowed_hosts=[]):
+        with Sandbox(allowed_dirs=[], allowed_hosts=[]):
             exec(_BYPASS_PAYLOAD, {})
         assert False, "Michaelがsys.modules経由のos.system呼び出しを遮断しなかった"
     except LossOfAtaraxia as e:

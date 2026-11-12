@@ -6,7 +6,7 @@ NAME = "guard_container_capabilities - コンテナ権限監査: docker run呼�
 
 # [新設 2026-10 §CF] これまで§CD・§CEで繰り返し正直に記録してきた通り、
 # Python層のaudit hook(runtime_guard/runtime_audit_gatekeeper)には構造的な限界があ
-# る――Sanctumに入る『前』に確保済みのfdや関数ポインタを使った操作は、
+# る――Sandboxに入る『前』に確保済みのfdや関数ポインタを使った操作は、
 # 以後いかなる新たな監査イベントも発生させずに素通りする。これは「城内
 # に関所を増やす」方式そのものの限界であり、恒久対策には「城を囲む外壁」
 # すなわちOSレベル(カーネルレベル)の強制が必要であると、DEFECTS.mdに

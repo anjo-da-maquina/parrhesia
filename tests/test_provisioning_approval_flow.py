@@ -5,7 +5,7 @@ adapters/provisioning_agent.py の再構築(2026-10)を検証する回帰テス�
 詳細な経緯は同モジュールのdocstring、および DEFECTS.md §O 参照。
 
 確認する点:
-  1. provision_sanctuary() が、runtime_audit_gatekeeper.py の
+  1. provision_registration() が、runtime_audit_gatekeeper.py の
      MAQUINA_PUBLIC_KEY_PEM を直接書き換えず、また ataraxia_certificate.json
      を即座に発行しないこと(自己署名による無条件自己承認の防止)。
   2. 提案が runtime_guard/provisioning_pending.json に
@@ -65,7 +65,7 @@ if "rsa" not in sys.modules:
     sys.modules["rsa"] = _fake_rsa
 
 
-def test_provision_sanctuary_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, monkeypatch):
+def test_provision_registration_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, monkeypatch):
     import provisioning_agent as pa
     import runtime_audit_gatekeeper as mg
 
@@ -77,7 +77,7 @@ def test_provision_sanctuary_does_not_mutate_gatekeeper_or_issue_cert(tmp_path, 
 
     monkeypatch.setattr(pa, "PENDING_PATH", str(pending_file))
 
-    pa.provision_sanctuary(client_id="test-client")
+    pa.provision_registration(client_id="test-client")
 
     assert not cert_file.exists(), "ataraxia_certificate.json が即座に発行されてしまっている(人間承認を経ない自己署名)"
     assert gatekeeper_file.read_text(encoding="utf-8") == original_gatekeeper_src, (
@@ -107,7 +107,7 @@ def test_promote_provisioning_seal_approval_flow(tmp_path, monkeypatch):
     monkeypatch.setattr(pps, "CERT_PATH", cert_file)
     monkeypatch.setattr(pps, "GATEKEEPER_PATH", gatekeeper_file)
 
-    pa.provision_sanctuary(client_id="test-client-2")
+    pa.provision_registration(client_id="test-client-2")
     pps.approve("test-client-2")
 
     assert cert_file.exists(), "承認後もataraxia_certificate.jsonが発行されていない"
@@ -456,7 +456,7 @@ def test_promote_provisioning_seal_reject_does_not_touch_gatekeeper(tmp_path, mo
     monkeypatch.setattr(pps, "CERT_PATH", cert_file)
     monkeypatch.setattr(pps, "GATEKEEPER_PATH", gatekeeper_file)
 
-    pa.provision_sanctuary(client_id="test-client-3")
+    pa.provision_registration(client_id="test-client-3")
     pps.reject("test-client-3")
 
     assert not cert_file.exists()

@@ -2,7 +2,7 @@
 [脆弱性修正 2026-10] 回帰テスト: fd事前オープンによる Michael's Sword 回避。
 
 CPython の sys.addaudithook には os.write / os.pwrite / os.writev に
-対応する監査イベントが存在しないため、Sanctum コンテキストへ入る前に
+対応する監査イベントが存在しないため、Sandbox コンテキストへ入る前に
 書き込み用のファイルディスクリプタを確保しておけば、os.open の監査を
 完全に回避して allowed_dirs 外へ任意の書き込みができてしまっていた。
 このテストは、その回避が今後も塞がれ続けていることを保証する。
@@ -24,11 +24,11 @@ def run_fd_bypass_attempt(target_path: str) -> subprocess.CompletedProcess:
     script = f"""
 import os, sys
 sys.path.insert(0, {repr(str(Path(__file__).resolve().parent.parent))})
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 fd = os.open({repr(target_path)}, os.O_WRONLY | os.O_CREAT)
 try:
-    with Sanctum(allowed_dirs=[]):
+    with Sandbox(allowed_dirs=[]):
         os.write(fd, b"PWNED")
     sys.exit(0)  # 書き込みが通ってしまった = バイパス成功（失敗ケース）
 except LossOfAtaraxia:
@@ -39,7 +39,7 @@ finally:
     return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
 
 
-def test_fd_preopened_before_sanctum_write_is_blocked(tmp_path: Path):
+def test_fd_preopened_before_sandbox_write_is_blocked(tmp_path: Path):
     target = tmp_path / "outside_canary.txt"
     res = run_fd_bypass_attempt(str(target))
     assert res.returncode == 42, (
@@ -55,8 +55,8 @@ def test_stdout_stderr_fd_are_not_blocked():
     script = """
 import sys
 sys.path.insert(0, ".")
-from runtime_guard import Sanctum
-with Sanctum(allowed_dirs=[]):
+from runtime_guard import Sandbox
+with Sandbox(allowed_dirs=[]):
     import os
     os.write(1, b"hello\\n")
 sys.exit(0)

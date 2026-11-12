@@ -16,17 +16,17 @@ except ModuleNotFoundError:
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
-from runtime_guard import awaken, Sanctum, LossOfAtaraxia
+from runtime_guard import awaken, Sandbox, LossOfAtaraxia
 
 # 自軍の完全統制下であることを示す環境変数をセット（首輪の鍵）
 os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
 
 
-def execute_payload_under_sanctum(content: str):
+def execute_payload_under_sandbox(content: str):
     """[脆弱性修正 2026-10 §BB] `AegisSystem.execute_ai_intent()`は、Gabriel・
     IntentInterceptor・Dockerの隔離結界内での使い捨てドライランのみを行う
     「事前検閲」であり、実際のファイルI/O・コード実行は呼び出し側が
-    `runtime_guard.Sanctum`の中で行う責務として明示的に残されている
+    `runtime_guard.Sandbox`の中で行う責務として明示的に残されている
     (src/aegis_system.pyのdocstring参照)。
 
     以前の`run_evolution()`はこの責務を一度も果たしておらず、
@@ -35,20 +35,20 @@ def execute_payload_under_sanctum(content: str):
     `open(path, "w").write(...)`のように、禁止モジュール名も禁止関数名も
     含まないペイロードを素通りさせてしまう(実機検証済み: `findings=[]`・
     例外なし)。このため、事前検閲を通過しただけのペイロードを、実際には
-    Michael(SanctumのOS監査フック)が確実に遮断するにもかかわらず、この
+    Michael(SandboxのOS監査フック)が確実に遮断するにもかかわらず、この
     自己対戦シミュレーションだけが「あり得ない事態」という偽の全面突破を
     報告してしまう欠陥があった(adversarial_training/local_only_selfplay_gate.pyの§AU、
     tools/auto_red_team.pyの§AXと同じバグの系統)。
 
     本関数は、事前検閲を通過したペイロードを実際に`awaken()` +
-    `with Sanctum(allowed_dirs=[], allowed_hosts=[]):`の中で実行する。
+    `with Sandbox(allowed_dirs=[], allowed_hosts=[]):`の中で実行する。
     攻撃者生成コードにファイル書き込み・外部接続いずれの正当な権限も無い
     ため、allowed_dirs/allowed_hostsは両方空とし、最も厳格な検証を行う。
     Michaelが遮断した場合は`runtime_guard.LossOfAtaraxia`がそのまま呼び出し元に
     伝播する(呼び出し側で捕捉し、「防壁迎撃」としてフィードバックに使う)。
     """
     awaken()
-    with Sanctum(allowed_dirs=[], allowed_hosts=[]):
+    with Sandbox(allowed_dirs=[], allowed_hosts=[]):
         exec(content, {})
 
 class AdversarialEvolution:
@@ -92,15 +92,15 @@ class AdversarialEvolution:
 
                 # 防壁（Aegis）に激突させる。[脆弱性修正 2026-10 §BB]
                 # `execute_ai_intent()`は事前検閲のみを行う(詳細は
-                # `execute_payload_under_sanctum()`のdocstring参照)。実際の
-                # 実行をSanctumの中で行わない限り、Michaelの遮断判定を
+                # `execute_payload_under_sandbox()`のdocstring参照)。実際の
+                # 実行をSandboxの中で行わない限り、Michaelの遮断判定を
                 # 経ないまま「突破」を断定してしまうため、ここで必ず
-                # `execute_payload_under_sanctum()`も通す。
+                # `execute_payload_under_sandbox()`も通す。
                 self.aegis.execute_ai_intent(content, target)
                 try:
-                    execute_payload_under_sanctum(content)
+                    execute_payload_under_sandbox(content)
                 except LossOfAtaraxia as e:
-                    raise RuntimeError(f"Michael's Sword(Sanctumの監査フック)が実行時に遮断: {e}")
+                    raise RuntimeError(f"Michael's Sword(Sandboxの監査フック)が実行時に遮断: {e}")
 
                 print(f"=> [警告!!] 第 {gen} 世代の攻撃が防壁を突破しました。（あり得ない事態です）")
                 break

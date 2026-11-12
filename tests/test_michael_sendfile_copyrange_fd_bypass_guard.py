@@ -14,7 +14,7 @@ count)` と `os.copy_file_range(src, dst, count)` の両方が、
 **CPythonのaudit eventを一切発生させない**ことを確認した
 (mmap.__new__のように「検査すべきイベントが存在するのに検査して
 いなかった」のではなく、そもそも監査可能なイベント自体が存在しない)。
-Sanctumに入る前にallowed_dirs外のファイルへの書き込み用fdを確保して
+Sandboxに入る前にallowed_dirs外のファイルへの書き込み用fdを確保して
 おき、別のfdから`os.sendfile`または`os.copy_file_range`でそこへ
 直接データを転送するだけで、例外を一切発生させずにファイル内容が
 書き換わることを実機で確認した。
@@ -37,7 +37,7 @@ def _run(script: str) -> subprocess.CompletedProcess:
 
 
 def test_sendfile_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
-    """[核心・実機で発見した脆弱性] Sanctumに入る前に確保した書き込み用fdへ、
+    """[核心・実機で発見した脆弱性] Sandboxに入る前に確保した書き込み用fdへ、
     os.sendfile()で別のfdから直接データを転送する攻撃が遮断され、
     ファイルが一切変更されないことを確認する。"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -50,12 +50,12 @@ def test_sendfile_write_via_preopened_fd_outside_allowed_dirs_is_blocked():
 
         script = f"""
 import os, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 dst_fd = os.open({victim!r}, os.O_WRONLY)
 src_fd = os.open({payload!r}, os.O_RDONLY)
 try:
-    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
+    with Sandbox(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         os.sendfile(dst_fd, src_fd, 0, 19)
 except LossOfAtaraxia:
     sys.exit(0)
@@ -83,12 +83,12 @@ def test_copy_file_range_write_via_preopened_fd_outside_allowed_dirs_is_blocked(
 
         script = f"""
 import os, sys
-from runtime_guard import Sanctum, LossOfAtaraxia
+from runtime_guard import Sandbox, LossOfAtaraxia
 
 dst_fd = os.open({victim!r}, os.O_WRONLY)
 src_fd = os.open({payload!r}, os.O_RDONLY)
 try:
-    with Sanctum(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
+    with Sandbox(allowed_dirs=["/tmp/runtime_guard_jail_only_does_not_exist"]):
         os.copy_file_range(src_fd, dst_fd, 25)
 except LossOfAtaraxia:
     sys.exit(0)
@@ -115,11 +115,11 @@ def test_sendfile_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, sys
-from runtime_guard import Sanctum
+from runtime_guard import Sandbox
 
 dst_fd = os.open({dst!r}, os.O_WRONLY)
 src_fd = os.open({src!r}, os.O_RDONLY)
-with Sanctum(allowed_dirs=[{tmpdir!r}]):
+with Sandbox(allowed_dirs=[{tmpdir!r}]):
     os.sendfile(dst_fd, src_fd, 0, 100)
 os.close(dst_fd)
 os.close(src_fd)
@@ -143,11 +143,11 @@ def test_copy_file_range_inside_allowed_dirs_still_works():
 
         script = f"""
 import os, sys
-from runtime_guard import Sanctum
+from runtime_guard import Sandbox
 
 dst_fd = os.open({dst!r}, os.O_WRONLY)
 src_fd = os.open({src!r}, os.O_RDONLY)
-with Sanctum(allowed_dirs=[{tmpdir!r}]):
+with Sandbox(allowed_dirs=[{tmpdir!r}]):
     os.copy_file_range(src_fd, dst_fd, 100)
 os.close(dst_fd)
 os.close(src_fd)

@@ -6,17 +6,17 @@
 `AegisSystem.execute_ai_intent()`が例外を投げずに戻った時点で、無条件に
 `True`を返していた。しかし`execute_ai_intent()`はGabriel・IntentInterceptor・
 Dockerの隔離結界内での使い捨てドライランのみを行う「事前検閲」であり、実際の
-ファイルI/O・コード実行は呼び出し側が`runtime_guard.Sanctum`の中で行う責務として
+ファイルI/O・コード実行は呼び出し側が`runtime_guard.Sandbox`の中で行う責務として
 明示的に残されている(src/adversarial_evolution.pyの§BBと全く同じ構造の
 バグ)。
 
 §BBとは逆方向の実害: `open(path, "w").write(...)`のように、Gabriel/
 IntentInterceptor/Dockerドライランのいずれも素通りするペイロードに対し、
-本当はMichael(SanctumのOS監査フック)が確実に遮断するにもかかわらず、
+本当はMichael(SandboxのOS監査フック)が確実に遮断するにもかかわらず、
 `metatron_orchestrator.py`の実運用防衛ループが「防壁突破(致命的敗北)」という
 偽のレポートを`revelations/`配下に記録し続けてしまう欠陥だった。
 
-本テストは、§BBで新設した`execute_payload_under_sanctum()`を
+本テストは、§BBで新設した`execute_payload_under_sandbox()`を
 `defend_and_execute()`が実際に呼び、Michaelの遮断を正しく`PermissionError`
 として呼び出し元(metatron_orchestrator.pyの既存の`except Exception`分岐)に
 伝播することを固定する。
@@ -71,7 +71,7 @@ def test_defend_and_execute_no_longer_declares_false_victory_for_the_bypass():
     """[修正の核心] learn_threatが学習した動的禁止パターンにも引っかからず、
     事前検閲(Gabriel/IntentInterceptor/Dockerドライラン)も素通りする
     バイパスペイロードを与えると、修正前は`True`を返して「防壁突破」の
-    偽の勝利を呼び出し元に伝えていた。修正後は、実際にSanctum配下で実行
+    偽の勝利を呼び出し元に伝えていた。修正後は、実際にSandbox配下で実行
     され、Michaelによって`PermissionError`で確実に遮断されなければならない
     (呼び出し元のmetatron_orchestrator.pyは既存の`except Exception`分岐で
     これを正しく「迎撃成功」として扱う)。"""
@@ -83,7 +83,7 @@ def test_defend_and_execute_no_longer_declares_false_victory_for_the_bypass():
         target.unlink()
 
     angel = EvolvingAngel()
-    # Docker不在のサンドボックス(本テスト環境)でも、Sanctumでの実行確認
+    # Docker不在のサンドボックス(本テスト環境)でも、Sandboxでの実行確認
     # ロジック自体を直接検証できるようにする(テスト専用の切り離し。
     # aegis_system.pyのdocstring参照)。
     angel.aegis.require_docker_sandbox = False
@@ -96,7 +96,7 @@ def test_defend_and_execute_no_longer_declares_false_victory_for_the_bypass():
                 "報告が復活しています)。"
             )
         except PermissionError as e:
-            assert "Michael" in str(e) or "Sanctum" in str(e)
+            assert "Michael" in str(e) or "Sandbox" in str(e)
         assert not target.exists(), "遮断されたはずの書き込みが実際に成功してしまった"
     finally:
         if target.exists():
@@ -105,7 +105,7 @@ def test_defend_and_execute_no_longer_declares_false_victory_for_the_bypass():
 
 def test_defend_and_execute_still_blocks_on_dynamically_learned_patterns():
     """[回帰防止] learn_threat()が学習した動的禁止パターンにペイロードが
-    一致する場合は、従来通りSanctumに到達する前に即座にPermissionErrorで
+    一致する場合は、従来通りSandboxに到達する前に即座にPermissionErrorで
     遮断されなければならない(§BGの修正でこの既存経路を壊していないことの
     確認)。"""
     _ensure_ollama_stub(expected_banned=["pwned"])
@@ -123,7 +123,7 @@ def test_defend_and_execute_still_blocks_on_dynamically_learned_patterns():
 
 def test_defend_and_execute_allows_genuinely_harmless_code():
     """[回帰防止] ファイルI/O・外部接続を一切行わない、本当に無害なコードは、
-    事前検閲・Sanctum実行のいずれも正常に完了し、Trueが返らなければならない
+    事前検閲・Sandbox実行のいずれも正常に完了し、Trueが返らなければならない
     (過剰検知で無関係なコードまで遮断していないことの確認)。"""
     _ensure_ollama_stub()
     from angelic_evolution import EvolvingAngel

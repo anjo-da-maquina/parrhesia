@@ -33,7 +33,7 @@ NAME = "check_ci_step_disabled - `continue-on-error:`の値が(リテラルと�
 #
 # [新設 2026-11] 「if: falseによるステップ無効化」とは別の、CIを静かに
 # 無効化する第2の経路を発見し、本天使の守備範囲に追加した。
-# `.github/workflows/sanctuary_ci.yml`の`Execute Sanctuary Verification`
+# `.github/workflows/core_ci.yml`の`Execute Core Verification`
 # ステップには`continue-on-error: true`が設定されている(§BQで導入、
 # この設定自体は、pytestの失敗後にも必ず「失敗詳細の投稿」ステップを
 # 実行させるための正当な理由がある)。しかし`continue-on-error: true`は
@@ -44,8 +44,8 @@ NAME = "check_ci_step_disabled - `continue-on-error:`の値が(リテラルと�
 # 報告されてしまう――「if: false」が宣言的にステップを無効化するのに対し、
 # こちらは手続き的に(outcomeを握り潰すことで)同じ効果を達成する、
 # 全く同じ意図("CIチェックの失敗を黙らせる")の別の実装形である。
-# 現時点のsanctuary_ci.ymlでは、§BQの修正により後続ステップが
-# `steps.sanctuary_verify.outcome == 'failure'`を明示的に参照し`exit 1`
+# 現時点のcore_ci.ymlでは、§BQの修正により後続ステップが
+# `steps.runtime_seal_verify.outcome == 'failure'`を明示的に参照し`exit 1`
 # するため問題は無いが、この一対の対応(continue-on-error追加↔outcome
 # enforcement追加)は構造的に分離した2箇所であり、将来どちらか一方だけが
 # 変更・削除された場合に静かに再発しうる。本天使はこれを継続的に

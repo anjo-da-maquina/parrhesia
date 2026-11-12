@@ -28,8 +28,8 @@ test_integrated_defense モジュール自体がリポジトリのどこにも�
 `require_docker_sandbox=False` を明示的に渡した場合のみ無効化できる
 （テスト・デバッグ専用。本番運用では使用しないこと）。
 さらに実際にコードを実行する/ファイルを書き込む呼び出し側は、必ず
-`runtime_guard.Sanctum` (OSレベルの audit hook) の中で実行すること。
-AegisSystemはSanctumの代替ではなく、Sanctumの前段に立つ追加の防御層である。
+`runtime_guard.Sandbox` (OSレベルの audit hook) の中で実行すること。
+AegisSystemはSandboxの代替ではなく、Sandboxの前段に立つ追加の防御層である。
 """
 import sys
 import json
@@ -62,7 +62,7 @@ class AegisSystem:
         `target`（操作対象パス）を実行前に検閲する。危険と判断した場合は
         PermissionError を送出する。戻り値 True は「ここまでの全層の検閲・動的
         検証を通過した」ことを意味する。実際のファイルI/Oは依然として
-        呼び出し側が `runtime_guard.Sanctum` の中で行う必要がある。
+        呼び出し側が `runtime_guard.Sandbox` の中で行う必要がある。
         """
         # 1. Gabriel: 静的AST解析
         findings = inquisition(code)
