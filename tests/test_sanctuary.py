@@ -1,5 +1,7 @@
 import os
 import pytest
+
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
 from runtime_audit_gatekeeper import LossOfAtaraxia, enforce_maquina_seal
 
 # GitHub Actionsなどの未承認クラウド環境であるかを判定

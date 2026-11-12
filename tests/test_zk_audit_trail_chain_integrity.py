@@ -34,7 +34,15 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# rsaの疑似実装(test_thread_safety_maquina_seal.py参照)が既に
+# sys.modulesに入っていれば、このimportorskipは素通りする。入っていない
+# 状態でこのファイル単体を実行した場合(本物のrsaも無い場合)は、収集
+# エラーではなくスキップとして報告されるようにする。
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
 
 import runtime_audit_gatekeeper as mg  # noqa: E402
 

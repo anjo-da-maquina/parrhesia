@@ -21,6 +21,9 @@ importなどをプロセス全体で遮断する`sys.addaudithook`ベースの�
 修正後は(フェイルクローズの原則に従い)その例外がそのまま
 `_register_audit_hook_once()`の呼び出し元まで伝播することを固定する。
 """
+import pytest
+
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
 import runtime_audit_gatekeeper as mg
 
 

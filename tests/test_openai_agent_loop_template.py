@@ -26,6 +26,7 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
+pytest.importorskip("rsa", reason="rsa unavailable (PyPI unreachable in this sandbox) — see GRIMOIRE.md known environment gaps")
 from runtime_audit_gatekeeper import LossOfAtaraxia
 import openai_agent_loop
 
