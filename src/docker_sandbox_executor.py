@@ -5,9 +5,9 @@ import subprocess
 from pathlib import Path
 
 # [2026-10 改修] これまで本モジュールはCLIから手動で呼び出す場合のみ
-# 機能する独立ツールであり、AegisSystem/AI実行経路からは一度も呼ばれて
+# 機能する独立ツールであり、DefenseOrchestrator/AI実行経路からは一度も呼ばれて
 # いなかった（=「Docker隔離は任意・手動のおまけ」でしかなかった）。
-# `run_in_docker_sandbox()` を切り出し、aegis_system.py からの
+# `run_in_docker_sandbox()` を切り出し、defense_orchestrator.py からの
 # 強制的（mandatory）な動的検証に使えるようにする。
 # [改名 2026-11 — docs/lore/OUT_OF_SCOPE_RENAME_PROPOSAL.md §3]
 # 旧名 sandalphon_jail / run_in_sandalphon / _SANDALPHON_* から改名。

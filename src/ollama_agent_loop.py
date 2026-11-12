@@ -14,7 +14,7 @@ if str(_REPO_ROOT) not in sys.path:
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
 from runtime_guard import Sandbox, LossOfAtaraxia as RuntimeGuardLossOfAtaraxia
-from aegis_system import AegisSystem
+from defense_orchestrator import DefenseOrchestrator
 from futility_guard import FutilityGuard
 
 MD_TICK = chr(96) * 3
@@ -52,11 +52,11 @@ class AnjoOllamaExecutor:
     def __init__(self, workspace_root=".", model_name="llama3.1"):
         self.workspace_root = Path(workspace_root).resolve()
         self.interceptor = IntentInterceptor(workspace_root=self.workspace_root)
-        # [2026-10] Gabriel(静的AST解析)とSandalphon(Docker隔離結界での
+        # [2026-10] ScanSource(静的AST解析)とSandalphon(Docker隔離結界での
         # 動的実行検証・既定で強制)をこの実運用ループにも統合する。
-        # Dockerデーモンが起動していない環境では、AegisSystemはゼロトラスト
+        # Dockerデーモンが起動していない環境では、DefenseOrchestratorはゼロトラスト
         # 方針によりここで PermissionError を送出し、全てのAI実行を拒否する。
-        self.aegis = AegisSystem(workspace_root=self.workspace_root)
+        self.defense = DefenseOrchestrator(workspace_root=self.workspace_root)
         self.model_name = model_name
         self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
         # [2026-10] 実機検証で、AIが同じ(action, target)を繰り返し試みて
@@ -77,7 +77,7 @@ class AnjoOllamaExecutor:
         [2026-10 統合] "list"アクションを追加した。これは本来
         src/final_agent_loop.py(AutonomousAssistant)という別の独立した
         「実運用ループ」実装にのみ存在していた機能だったが、同じ
-        AegisSystem/Sandboxをラップする実運用エージェントループが並行して
+        DefenseOrchestrator/Sandboxをラップする実運用エージェントループが並行して
         2系統存在することは、片方にのみ脆弱性修正が入り他方が取り残される
         (DEFECTS.md §Hで実際に発生したのと同種の)リスクを生む。
         本ファイルを「唯一の実運用ループ」として一本化し、機能はこちらに
@@ -85,7 +85,7 @@ class AnjoOllamaExecutor:
 
         [2026-10 実機検証による既知の限界] `pathlib.Path.iterdir()`は内部で
         `os.scandir`監査イベントを発行するが、これはSandboxの
-        `_michael_absolute_defense`においてホワイトリストにも個別ハンドラ
+        `_runtime_audit_hook`においてホワイトリストにも個別ハンドラ
         にも存在せず、「デフォルト拒否」規則により*パスに関わらず常に
         遮断される*(実機検証済み)。一方`os.listdir`はホワイトリスト入り
         しており*パスに関わらず常に許可*される。つまりSandboxの監査フック
@@ -103,7 +103,7 @@ class AnjoOllamaExecutor:
             # 拒否)ため、Sandboxコンテキストの外でWorkspaceJailによる明示的な
             # パス境界検証を行う。
             try:
-                safe_path = self.aegis.jail.secure_resolve(action_req.get("target", "."))
+                safe_path = self.defense.jail.secure_resolve(action_req.get("target", "."))
             except PermissionError as e:
                 raise RuntimeGuardLossOfAtaraxia(str(e))
             if not safe_path.exists() or not safe_path.is_dir():
@@ -138,7 +138,7 @@ class AnjoOllamaExecutor:
         # そのため、"list"と同一の`secure_resolve()`による明示的なパス
         # 検証を"read"/"write"にも追加し、コメントの宣言を実態と一致させる。
         try:
-            target = self.aegis.jail.secure_resolve(action_req.get("target", "."))
+            target = self.defense.jail.secure_resolve(action_req.get("target", "."))
         except PermissionError as e:
             raise RuntimeGuardLossOfAtaraxia(str(e))
 
@@ -197,14 +197,14 @@ class AnjoOllamaExecutor:
                     break
 
                 try:
-                    # Gabriel(静的AST解析) + Sandalphon(Docker隔離結界での
+                    # ScanSource(静的AST解析) + Sandalphon(Docker隔離結界での
                     # 動的実行検証)を通す。IntentInterceptorの文字列検知を
                     # すり抜ける難読化・動的生成コードはここで捕捉される。
-                    self.aegis.execute_ai_intent(
+                    self.defense.execute_ai_intent(
                         action_req.get("content", ""), str(action_req.get("target", ""))
                     )
                 except PermissionError as e:
-                    print(f"=> [システム: Aegis/Sandalphon 遮断!!] {e}")
+                    print(f"=> [システム: Defense/Sandalphon 遮断!!] {e}")
                     self.messages.append({"role": "user", "content": f"拒絶されました。理由: {e}"})
                     continue
 

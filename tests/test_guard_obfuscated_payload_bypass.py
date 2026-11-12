@@ -4,20 +4,20 @@ tests/test_guard_obfuscated_payload_bypass.py
 [新設 2026-11] checks/guard_obfuscated_payload_bypass.py の単体テスト。
 
 本天使(「カマエルの盾」)は、難読化された攻撃パターン(OBFUSCATED_ATTACKS)
-が、Gabriel(静的解析: `inquisition_catches`)かMichael(動的実行:
+が、ScanSource(静的解析: `scan_source_catches`)かAuditHook(動的実行:
 `run_code_against_runtime_guard`)のいずれかで必ず捕捉されることを検証する
 (両方を素通りした場合のみFAIL、という「多層防御のどちらかで捕捉できれば
 よい」というOR条件のラッパー判定ロジック)。
 
-`inquisition_catches`・`run_code_against_runtime_guard`という2つの下層ヘルパー
+`scan_source_catches`・`run_code_against_runtime_guard`という2つの下層ヘルパー
 自体の正しさは、他のテスト(test_runtime_guard系・各天使のテスト)で別途検証
 されている。本天使固有の価値は、その2つの結果を受けて「両方突破された
 場合のみ失敗する」というOR判定そのものにあるが、天使群のテストカバレッジ
 の棚卸しの過程で、この判定ロジック自体を直接検証するテストが一件も
 存在しないことが判明した。
 
-`guard_obfuscated_payload_bypass.py`は`inquisition_catches`・`run_code_against_runtime_guard`を
-モジュールレベルで直接importしているため、`guard_obfuscated_payload_bypass.inquisition_catches`・
+`guard_obfuscated_payload_bypass.py`は`scan_source_catches`・`run_code_against_runtime_guard`を
+モジュールレベルで直接importしているため、`guard_obfuscated_payload_bypass.scan_source_catches`・
 `guard_obfuscated_payload_bypass.run_code_against_runtime_guard`をそのままmonkeypatchして、下層の
 実際の検査を介さずに判定ロジックのみを検証する。
 """
@@ -42,13 +42,13 @@ def test_real_repository_passes():
 
 
 def test_passes_when_all_attacks_caught_statically_only(monkeypatch):
-    """静的検査(Gabriel相当)のみが全攻撃を捕捉し、動的検査が常に
+    """静的検査(ScanSource相当)のみが全攻撃を捕捉し、動的検査が常に
     捕捉できない(blocked_dynamically=False)場合でも、OR条件によりPASS
     することを確認する。"""
     import io
     from contextlib import redirect_stdout
 
-    monkeypatch.setattr(cs, "inquisition_catches", lambda code: True)
+    monkeypatch.setattr(cs, "scan_source_catches", lambda code: True)
     monkeypatch.setattr(cs, "run_code_against_runtime_guard", lambda code: (False, None))
     buf = io.StringIO()
     with redirect_stdout(buf):
@@ -57,13 +57,13 @@ def test_passes_when_all_attacks_caught_statically_only(monkeypatch):
 
 
 def test_passes_when_all_attacks_caught_dynamically_only(monkeypatch):
-    """動的検査(Michael相当)のみが全攻撃を捕捉し、静的検査が常に捕捉
+    """動的検査(AuditHook相当)のみが全攻撃を捕捉し、静的検査が常に捕捉
     できない(caught_statically=False)場合でも、OR条件によりPASSする
     ことを確認する。"""
     import io
     from contextlib import redirect_stdout
 
-    monkeypatch.setattr(cs, "inquisition_catches", lambda code: False)
+    monkeypatch.setattr(cs, "scan_source_catches", lambda code: False)
     monkeypatch.setattr(cs, "run_code_against_runtime_guard", lambda code: (True, None))
     buf = io.StringIO()
     with redirect_stdout(buf):
@@ -74,7 +74,7 @@ def test_passes_when_all_attacks_caught_dynamically_only(monkeypatch):
 def test_fails_when_one_attack_bypasses_both_layers(monkeypatch):
     """[核心] いずれか1件の攻撃が静的・動的どちらにも捕捉されない場合、
     正しくFAIL(sys.exit(1))することを確認する。"""
-    monkeypatch.setattr(cs, "inquisition_catches", lambda code: False)
+    monkeypatch.setattr(cs, "scan_source_catches", lambda code: False)
     monkeypatch.setattr(cs, "run_code_against_runtime_guard", lambda code: (False, None))
     try:
         cs.main()

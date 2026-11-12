@@ -5,7 +5,7 @@ from _common import report_pass, report_fail, ROOT
 NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そのパスを返す。"
 
 # [新設 2026-10 §CB] 実際に発見した具体例: `runtime_guard/__init__.py`の
-# `_michael_absolute_defense()`は、既に「fd事前オープンによる書き込み
+# `_runtime_audit_hook()`は、既に「fd事前オープンによる書き込み
 # バイパス対策」(`_guarded_os_write`/`_guarded_os_pwrite`/
 # `_guarded_os_writev`/`_guarded_os_pwritev`)を備えていたが、これは
 # os.write系の4系統のみをラップするものであった。しかし
@@ -24,7 +24,7 @@ NAME = "guard_mmap_write_bypass - 検査用の一時ファイルを作り、そ�
 # API/イベント名は特定の1つだけを対象にしているが、同じ危険な効果を
 # 持つ別のAPI/イベント名が存在し、それを使うだけで素通りする」という
 # 構造の欠陥であり、§BW(import os.path)・§CA(socket.sendto)と同種で
-# ある。本天使は、`_michael_absolute_defense`の実装詳細を静的に解析
+# ある。本天使は、`_runtime_audit_hook`の実装詳細を静的に解析
 # するのではなく、実際にSandboxを起動し、既知の具体的な迂回手口
 # (mmapによるfd事前オープン書き込み)を実行して、正しく遮断される
 # ことを継続的に検証する回帰連戦である。
@@ -173,15 +173,15 @@ def _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked() -> tuple:
 
 
 CHECKS = [
-    ("runtime_guard._michael_absolute_defense: mmap access=方式の書き込み遮断", _check_mmap_write_via_access_kwarg_is_blocked),
-    ("runtime_guard._michael_absolute_defense: mmap prot=/flags=方式の書き込み遮断", _check_mmap_write_via_prot_flags_kwargs_is_blocked),
-    ("runtime_guard._michael_absolute_defense: 匿名mmapの誤検知防止", _check_anonymous_mmap_is_not_falsely_blocked),
-    ("runtime_guard._michael_absolute_defense: allowed_dirs内mmap書き込みの誤検知防止", _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked),
+    ("runtime_guard._runtime_audit_hook: mmap access=方式の書き込み遮断", _check_mmap_write_via_access_kwarg_is_blocked),
+    ("runtime_guard._runtime_audit_hook: mmap prot=/flags=方式の書き込み遮断", _check_mmap_write_via_prot_flags_kwargs_is_blocked),
+    ("runtime_guard._runtime_audit_hook: 匿名mmapの誤検知防止", _check_anonymous_mmap_is_not_falsely_blocked),
+    ("runtime_guard._runtime_audit_hook: allowed_dirs内mmap書き込みの誤検知防止", _check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked),
 ]
 
 
 def run_battery():
-    """`_michael_absolute_defense`に対し、既知のmmapによるfd事前オープン
+    """`_runtime_audit_hook`に対し、既知のmmapによるfd事前オープン
     迂回経路を実際に与えて、正しく処理されるかを確認する。
     戻り値: [(name, detail), ...] (失敗したものだけ)"""
     failures = []

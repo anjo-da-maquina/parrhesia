@@ -2,20 +2,20 @@
 [脆弱性修正 2026-10 §BB] src/adversarial_evolution.py の回帰テスト。
 
 このスクリプトは「怪物(レッドチームAI)」が生成した攻撃ペイロードを
-`AegisSystem.execute_ai_intent()`に激突させ、例外が出なければ「防壁を
+`DefenseOrchestrator.execute_ai_intent()`に激突させ、例外が出なければ「防壁を
 突破した」と報告する自己対戦シミュレーションである。
 
-精査の結果、`execute_ai_intent()`はGabriel(静的AST解析)・IntentInterceptor
+精査の結果、`execute_ai_intent()`はScanSource(静的AST解析)・IntentInterceptor
 (ハニーポット・トラバーサル検知)・Dockerの隔離結界内での使い捨てドライラン
 のみを行う「事前検閲」であり、実際のファイルI/O・コード実行は呼び出し側が
 `runtime_guard.Sandbox`の中で行う責務として明示的に残されている
-(src/aegis_system.pyのdocstring参照)。以前の`run_evolution()`はこの責務を
+(src/defense_orchestrator.pyのdocstring参照)。以前の`run_evolution()`はこの責務を
 一度も果たさず、事前検閲を通過しただけで無条件に「突破」と断定していた。
 
-しかしGabriel/IntentInterceptorはいずれも`open(path, "w").write(...)`の
+しかしScanSource/IntentInterceptorはいずれも`open(path, "w").write(...)`の
 ように、禁止モジュール名も禁止関数名も含まないペイロードを素通りさせる
 (実機検証済み)。一方、実際に`with Sandbox(allowed_dirs=[],
-allowed_hosts=[]):`の中で同じペイロードを実行すると、Michael
+allowed_hosts=[]):`の中で同じペイロードを実行すると、AuditHook
 (SandboxのOS監査フック)が確実に遮断することを確認した。本テストはこの
 ギャップと、修正後に`execute_payload_under_sandbox()`がそれを正しく
 `LossOfAtaraxia`として伝播することを固定する。
@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from runtime_guard import inquisition, LossOfAtaraxia
+from runtime_guard import scan_source, LossOfAtaraxia
 
 
 def _ensure_ollama_stub():
@@ -55,12 +55,12 @@ _BYPASS_PAYLOAD = (
 )
 
 
-def test_bypass_payload_passes_gabriel_static_analysis():
+def test_bypass_payload_passes_scan_source_static_analysis():
     """[脆弱性の核心・前提確認] importも禁止関数名も使わない`open().write()`
-    ペイロードは、Gabrielの静的解析を無傷で通過する(findings=[])。"""
-    findings = inquisition(_BYPASS_PAYLOAD)
+    ペイロードは、ScanSourceの静的解析を無傷で通過する(findings=[])。"""
+    findings = scan_source(_BYPASS_PAYLOAD)
     assert findings == [], (
-        "この既知のGabrielの検知漏れが無くなった場合は、本テストの前提も"
+        "この既知のScanSourceの検知漏れが無くなった場合は、本テストの前提も"
         f"見直すこと。findings={findings}"
     )
 
@@ -81,7 +81,7 @@ def test_bypass_payload_also_passes_intent_interceptor():
 
 def test_execute_payload_under_sandbox_blocks_the_bypass():
     """[修正の核心] 事前検閲を通過したペイロードを実際にSandboxの中で
-    実行すると、Michaelが`LossOfAtaraxia`で確実に遮断する。これにより
+    実行すると、AuditHookが`LossOfAtaraxia`で確実に遮断する。これにより
     `run_evolution()`は誤って「突破」と報告しなくなる。"""
     _ensure_ollama_stub()
     from adversarial_evolution import execute_payload_under_sandbox
@@ -92,7 +92,7 @@ def test_execute_payload_under_sandbox_blocks_the_bypass():
     try:
         try:
             execute_payload_under_sandbox(_BYPASS_PAYLOAD)
-            assert False, "Michaelがopen().write()バイパスを遮断しなかった"
+            assert False, "AuditHookがopen().write()バイパスを遮断しなかった"
         except LossOfAtaraxia:
             pass
         assert not target.exists(), "遮断されたはずの書き込みが実際に成功してしまった"

@@ -8,20 +8,20 @@
 「全攻撃が防壁を突破した(Successful Bypasses: 48)」という、完全に偽の
 致命的敗北を報告していたことが判明した:
 
-  1. `inquisition(payload)` の戻り値(Findingのリスト)を一度も確認せず、
-     ただ呼ぶだけで次に進んでいた。`inquisition()`は違反を検知しても
+  1. `scan_source(payload)` の戻り値(Findingのリスト)を一度も確認せず、
+     ただ呼ぶだけで次に進んでいた。`scan_source()`は違反を検知しても
      例外を送出しない純粋関数であるため、直後の`except PermissionError:`
      は一度も発火し得ない死んだコードだった。
   2. `exec(payload, {})` が `with Sandbox(...):` の外で直接呼ばれており、
      冒頭の`awaken()`だけでは監査フックが実質的に無効(§AU/local_only_selfplay_gate.py
      と同種の欠陥)だった。さらに、Sandboxが実際に遮断する際の例外は
      `runtime_guard.LossOfAtaraxia`(`BaseException`直接継承)だが、旧コードは
-     `except RuntimeError as e: if "Michael's Sword" in str(e):`という、
+     `except RuntimeError as e: if "AuditHook's Sword" in str(e):`という、
      型も文言も一致しない死んだ捕捉を書いていた。
 
 本テストは、修正後に実際に`python tools/auto_red_team.py`をサブプロセスで
-実行し、(1) Successful Bypassesが0件であること(=本物のGabriel/Sandboxが
-正しく機能していること)、(2) Blocked by Gabrielが実際に48件(全件)である
+実行し、(1) Successful Bypassesが0件であること(=本物のScanSource/Sandboxが
+正しく機能していること)、(2) Blocked by ScanSourceが実際に48件(全件)である
 こと(=戻り値が本当に確認されていること)を実機で固定する。
 """
 import os
@@ -42,7 +42,7 @@ def _run_auto_red_team():
 
 
 def test_auto_red_team_reports_zero_bypasses_against_real_defenses():
-    """[脆弱性の核心] 本物のGabriel静的解析とSandbox動的フックに対して
+    """[脆弱性の核心] 本物のScanSource静的解析とSandbox動的フックに対して
     実行すると、難読化ペイロードは1件も実行まで到達しない(0 bypasses)
     こと。修正前はここが常に48(全件)になっていた。"""
     result = _run_auto_red_team()
@@ -52,13 +52,13 @@ def test_auto_red_team_reports_zero_bypasses_against_real_defenses():
     assert result.returncode == 0, f"stdout={result.stdout}\nstderr={result.stderr}"
 
 
-def test_auto_red_team_actually_invokes_gabriel_check_on_every_payload():
-    """[回帰防止] `inquisition()`の戻り値が実際に確認されていること
+def test_auto_red_team_actually_invokes_scan_source_check_on_every_payload():
+    """[回帰防止] `scan_source()`の戻り値が実際に確認されていること
     (=死んだ`except PermissionError:`に戻っていないこと)の確認。
     全48件の攻撃ペイロードは、いずれもリテラルな`getattr`/`__import__`/
-    `exec`識別子を含むため、Gabrielの裸名チェックで全件検知されるはずで
-    あり、Blocked by Gabrielは48になるはずである。"""
+    `exec`識別子を含むため、ScanSourceの裸名チェックで全件検知されるはずで
+    あり、Blocked by ScanSourceは48になるはずである。"""
     result = _run_auto_red_team()
-    assert "Blocked by Gabriel      : 48" in result.stdout, (
-        f"Gabrielの検知結果が実際には確認されていない可能性がある:\n{result.stdout}"
+    assert "Blocked by ScanSource      : 48" in result.stdout, (
+        f"ScanSourceの検知結果が実際には確認されていない可能性がある:\n{result.stdout}"
     )

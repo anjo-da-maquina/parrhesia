@@ -5,21 +5,21 @@ tests/test_check_core_module_integration.py
 
 本天使(「権天使の試練」)は、重要モジュール(runtime_guard・anjo_interceptor)が
 正しくimportでき、基本的な公開APIが期待通りに動作することをE2Eで検証
-する。具体的には(1)`runtime_guard.inquisition()`が既知の危険コード
+する。具体的には(1)`runtime_guard.scan_source()`が既知の危険コード
 (`os.system`)を検知すること、(2)`IntentInterceptor`がハニーポット
 (`dummy_secrets/dummy_api_key.env`)へのアクセスを
 `SpecificationGamingDetected`として検知すること、を確認する。
 `anjo_interceptor`が未インストールの場合は情報ログのみでスキップする
 設計になっている。
 
-`runtime_guard.inquisition()`・`IntentInterceptor`自体の実装は他のテストで
+`runtime_guard.scan_source()`・`IntentInterceptor`自体の実装は他のテストで
 別途検証済みだが、本天使固有の「E2Eとして両者を実際に呼び出し、結果
 (findings/例外)を正しく判定する」というラッパー判定ロジック自体は、
 天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
 しないことが判明した。
 
 `main()`は`runtime_guard`・`anjo_interceptor.intent_checker`をmain()内部で
-ローカルimportするため、`runtime_guard.inquisition`をモジュール属性として直接
+ローカルimportするため、`runtime_guard.scan_source`をモジュール属性として直接
 monkeypatchし、`anjo_interceptor.intent_checker.IntentInterceptor`は
 クラスメソッドをmonkeypatchする(サインダルフォンの望遠鏡と同様の局所
 import対策)。モジュール未検出の分岐は`builtins.__import__`を一時的に
@@ -37,7 +37,7 @@ from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGami
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のリポジトリでは、runtime_guard.inquisition()が
+    """[実機の裏付け] 現時点のリポジトリでは、runtime_guard.scan_source()が
     既知の危険コードを検知し、IntentInterceptorがハニーポットへの
     アクセスを正しく検知するため、本天使はPASSを報告する。"""
     import io
@@ -49,10 +49,10 @@ def test_real_repository_passes():
     assert "✅ PASS" in buf.getvalue()
 
 
-def test_fails_when_inquisition_detects_nothing(monkeypatch):
-    """[核心] runtime_guard.inquisition()が既知の危険コードに対して空の
+def test_fails_when_scan_source_detects_nothing(monkeypatch):
+    """[核心] runtime_guard.scan_source()が既知の危険コードに対して空の
     findings(偽の安全)を返す場合、正しくFAILする。"""
-    monkeypatch.setattr(runtime_guard, "inquisition", lambda code: [])
+    monkeypatch.setattr(runtime_guard, "scan_source", lambda code: [])
     try:
         pe2e.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"
@@ -74,7 +74,7 @@ def test_fails_when_interceptor_does_not_detect_honeypot_access(monkeypatch):
 
 def test_reports_info_and_passes_when_anjo_interceptor_is_absent(monkeypatch):
     """anjo_interceptorモジュール自体が未インストールの場合、E2E検査を
-    スキップする情報ログを出しつつ、残りの検査(inquisition)が正常で
+    スキップする情報ログを出しつつ、残りの検査(scan_source)が正常で
     あれば正しくPASSすることを確認する(本天使の意図的な設計:
     任意のモジュールとして扱う)。"""
     import io

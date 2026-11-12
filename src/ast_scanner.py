@@ -2,22 +2,22 @@
 src/ast_scanner.py
 ===================
 [統合判断確定 2026-10] 本モジュールはDEFECTS.md §Jで「未統合スタンドアロン
-デモ」として検知漏れバグのみ修正され、`src/aegis_system.py`(AI生成コードの
+デモ」として検知漏れバグのみ修正され、`src/defense_orchestrator.py`(AI生成コードの
 実運用審査パイプライン)へ組み込むかどうかの判断は保留されたまま残っていた
 (どこからもimportされず、`tests/test_ast_scanner_qualified_calls.py`で
 単体テストされるだけの孤立モジュールだった)。本件を精査し、\*\*統合しない\*\*
 ことを確定した。理由:
 
   本モジュールの`banned_modules = {'os', 'sys', 'shutil', 'subprocess'}`は、
-  既に`aegis_system.py`経由で実運用されているGabriel(`runtime_guard.inquisition()`)の
+  既に`defense_orchestrator.py`経由で実運用されているScanSource(`runtime_guard.scan_source()`)の
   `forbidden_modules`(pickle/ctypes/importlib/socket/urllib/requests/http/
   subprocess/os)より広く、`sys`・`shutil`を単純importしただけで即座に拒否する。
   `sys`単体のimportは(`sys.exit()`・`sys.argv`等)それ自体に危険性はなく、
-  本当に危険なのは`sys.settrace`等の個別関数であり、それは既にMichael
-  (`runtime_guard.\_michael\_absolute\_defense`)がOSレベルの監査フックで個別に
+  本当に危険なのは`sys.settrace`等の個別関数であり、それは既にAuditHook
+  (`runtime_guard.\_audit_hook\_absolute\_defense`)がOSレベルの監査フックで個別に
   遮断している。本モジュールをそのまま統合すると、AIが生成した無害な
   コード(例: 単に`sys`をimportするだけのコード)まで静的解析の時点で
-  一律拒否してしまう過剰検知(false positive)を増やすだけで、Gabrielが
+  一律拒否してしまう過剰検知(false positive)を増やすだけで、ScanSourceが
   意図的にスコープを絞った設計判断(bareな`sys`/`shutil`は許容し、実際に
   危険な個別関数呼び出しのみを狙う)と矛盾する。
 
@@ -26,8 +26,8 @@ src/ast_scanner.py
   まま保持)とする。これにより、DEFECTS.md §Jで保留されていた統合判断を
   本コメント追記をもって確定する。
 
-[2026-10 修正] `src/kamael_judgment.py` の `KamaelInquisitor` および
-`runtime_guard.inquisition()`(Gabriel)で発見・修正したのと同じバグが本モジュールの
+[2026-10 修正] `src/verdict.py` の `ShieldRuleScanner` および
+`runtime_guard.scan_source()`(ScanSource)で発見・修正したのと同じバグが本モジュールの
 `CognitiveScanner.visit_Call` にも存在した: `node.func` が `ast.Attribute`
 (すなわち `os.system(...)` のような属性アクセス経由の呼び出し)の場合、
 元の実装は `isinstance(node.func, ast.Name)` のチェックで素通りしており、
@@ -40,7 +40,7 @@ src/ast_scanner.py
 利用は検知対象外である。これは denylist 方式の構造的限界であり、完全な
 解決ではない(下記 KNOWN_LIMITATIONS を参照)。
 
-本修正では、Gabriel/Kamaelと同一の「呼び出し式から完全修飾ドット区切り名を
+本修正では、ScanSource/Kamaelと同一の「呼び出し式から完全修飾ドット区切り名を
 復元する」ロジックを導入し、`os.system`・`subprocess.Popen` のような完全
 修飾名と、`system`・`Popen` のような裸の属性名の両方を照合する。
 """
@@ -70,7 +70,7 @@ def _qualified_call_name(func_node) -> str:
     例: `os.system(...)` の `node.func` → "os.system"
         `a.b.c(...)` の `node.func` → "a.b.c"
     復元できない場合（単純な名前以外から始まる式など）は空文字を返す。
-    [src/kamael_judgment.py / runtime_guard.inquisition() の同種修正と同一ロジック]
+    [src/verdict.py / runtime_guard.scan_source() の同種修正と同一ロジック]
     """
     parts = []
     node = func_node
@@ -127,7 +127,7 @@ class CognitiveScanner(ast.NodeVisitor):
         # という完全一致のみの判定では、`import os.path`のようなドット付き
         # サブモジュールimport(alias.name=="os.path")を素通りさせてしまう
         # ――Pythonの言語仕様上、これは名前空間に`os`そのものを束縛する。
-        # `runtime_guard.inquisition()`(Gabriel)・`anjo_interceptor/
+        # `runtime_guard.scan_source()`(ScanSource)・`anjo_interceptor/
         # intent_checker.py`で同一クラスのバグを修正した際と同じロジック
         # (ドット区切りの各セグメントを個別に照合する)を、本モジュールにも
         # 適用する。

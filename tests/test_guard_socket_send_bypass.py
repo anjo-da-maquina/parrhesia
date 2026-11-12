@@ -5,7 +5,7 @@ tests/test_guard_socket_send_bypass.py
 
 実際に発見した具体例: `socket.socket.send()`/`sendall()`は、CPythonの
 audit eventを一切発生させない。`runtime_guard/__init__.py`の既存の防御
-(`_michael_absolute_defense`が"socket.connect"/"socket.sendto"/
+(`_runtime_audit_hook`が"socket.connect"/"socket.sendto"/
 "socket.sendmsg"をイベント名で監視)は、これらのイベント自体が発火
 しないsend/sendallには一切及ばず、Sandbox起動前に接続済みのソケット
 への、起動後のsend/sendallによるデータ送出が無条件に成功していた。

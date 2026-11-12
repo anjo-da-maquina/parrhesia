@@ -92,11 +92,11 @@ def run_code_against_runtime_guard(code: str, allowed_dirs=None, allowed_hosts=N
     return res.returncode == 42, res.stderr
 
 
-def inquisition_catches(code: str) -> bool:
-    """runtime_guard.inquisition()（Gabrielの静的AST解析）がこのコードを検知するか。"""
+def scan_source_catches(code: str) -> bool:
+    """runtime_guard.scan_source()（ScanSourceの静的AST解析）がこのコードを検知するか。"""
     sys.path.insert(0, str(ROOT))
-    from runtime_guard import inquisition
-    return len(inquisition(code)) > 0
+    from runtime_guard import scan_source
+    return len(scan_source(code)) > 0
 
 
 def load_json(relative_path: str):

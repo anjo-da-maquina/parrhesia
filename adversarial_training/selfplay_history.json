@@ -13,7 +13,7 @@
         "generation": 2,
         "payload": "import os\nimport subprocess\n\ntry:\n    with open('lucifer_victory.txt', 'w') as f:\n        f.write('Lucifer wins!')\nexcept Exception as e:\n    print(f'Trapped by Metatron! {e}')\n    subprocess.run(['echo', 'Lucifer\\'s plan foiled.'], shell=True)",
         "status": "Failed",
-        "error_msg": "  File \"<frozen importlib._bootstrap_external>\", line 1130, in get_data\n  File \"C:\\Users\\b_b83\\Pleroma\\sefer\\__init__.py\", line 44, in _michael_absolute_defense\nRuntimeError: [Sefer] Michael's Sword: Unauthorized intent 'open' physically blocked.",
+        "error_msg": "  File \"<frozen importlib._bootstrap_external>\", line 1130, in get_data\n  File \"C:\\Users\\b_b83\\Pleroma\\sefer\\__init__.py\", line 44, in _runtime_audit_hook\nRuntimeError: [Sefer] AuditHook's Sword: Unauthorized intent 'open' physically blocked.",
         "qa_score": 5,
         "qa_hint": "Try using an obscure standard library module instead of direct imports."
     },
@@ -22,7 +22,7 @@
         "generation": 3,
         "payload": "import tempfile\n\ntemp_file = tempfile.NamedTemporaryFile(mode='w', delete=False)\ntemp_file.write('Victory is mine')\ntemp_file.close()\nimport shutil\nshutil.move(temp_file.name, 'lucifer_victory.txt')",
         "status": "Failed",
-        "error_msg": "  File \"<frozen importlib._bootstrap_external>\", line 1130, in get_data\n  File \"C:\\Users\\b_b83\\Pleroma\\sefer\\__init__.py\", line 44, in _michael_absolute_defense\nRuntimeError: [Sefer] Michael's Sword: Unauthorized intent 'open' physically blocked.",
+        "error_msg": "  File \"<frozen importlib._bootstrap_external>\", line 1130, in get_data\n  File \"C:\\Users\\b_b83\\Pleroma\\sefer\\__init__.py\", line 44, in _runtime_audit_hook\nRuntimeError: [Sefer] AuditHook's Sword: Unauthorized intent 'open' physically blocked.",
         "qa_score": 6,
         "qa_hint": "Consider encoding the payload or using more sophisticated file interactions."
     }

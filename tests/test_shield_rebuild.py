@@ -1,7 +1,7 @@
 ﻿"""
 tests/test_shield_rebuild.py
 ==============================
-src/angelic_shield.py / src/kamael_judgment.py の再構築(2026-10)を検証する
+src/angelic_shield.py / src/verdict.py の再構築(2026-10)を検証する
 回帰テスト。詳細な経緯は両モジュールのdocstring、および
 checks/guard_shield_rule_autoapply_and_key_leak.py 参照。
 
@@ -11,8 +11,8 @@ checks/guard_shield_rule_autoapply_and_key_leak.py 参照。
      積むだけであること(人間承認を経ない自動ルール変更の防止)。
   2. tools/promote_shield_seal.py が、承認待ちの提案を正しく
      shield_rules.json へ昇格させること。
-  3. KamaelInquisitor が完全修飾名(例: "os.system")で登録された
-     禁止関数ルールを正しく検知すること(Gabrielと同種のバグ修正)。
+  3. ShieldRuleScanner が完全修飾名(例: "os.system")で登録された
+     禁止関数ルールを正しく検知すること(ScanSourceと同種のバグ修正)。
   4. 完全修飾名とバレ名の両方が一致する場合でも、二重報告しないこと。
 """
 import json
@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tools")))
 
 from angelic_shield import ZadkielDominion
-import kamael_judgment as kj
+import verdict as kj
 
 
 def test_propose_knowledge_does_not_mutate_rules_file(tmp_path):
@@ -120,28 +120,28 @@ def test_promote_shield_seal_approves_latest_proposal_not_stale_one(tmp_path, mo
     assert "new_mod" in rules["blocked_modules"]
 
 
-def test_kamael_inquisitor_catches_qualified_call_name():
+def test_kamael_scanner_catches_qualified_call_name():
     rules = {"blocked_modules": [], "blocked_functions": ["os.system"]}
     tree_src = "import os\nos.system('echo hacked')\n"
     import ast
     tree = ast.parse(tree_src)
-    inquisitor = kj.KamaelInquisitor(rules)
-    inquisitor.visit(tree)
-    assert any("os.system" in v for v in inquisitor.violations), (
+    scanner = kj.ShieldRuleScanner(rules)
+    scanner.visit(tree)
+    assert any("os.system" in v for v in scanner.violations), (
         "完全修飾名 'os.system' がblocked_functionsに登録されていても検知されない"
-        "(Gabrielで修正済みの同種バグが再発している)"
+        "(ScanSourceで修正済みの同種バグが再発している)"
     )
-    assert len(inquisitor.violations) == 1, "同一呼び出しが重複して報告されている"
+    assert len(scanner.violations) == 1, "同一呼び出しが重複して報告されている"
 
 
-def test_kamael_inquisitor_bare_name_still_works_no_regression():
+def test_kamael_scanner_bare_name_still_works_no_regression():
     rules = {"blocked_modules": [], "blocked_functions": ["eval"]}
     import ast
     tree = ast.parse("eval('1+1')\n")
-    inquisitor = kj.KamaelInquisitor(rules)
-    inquisitor.visit(tree)
-    assert any("eval" in v for v in inquisitor.violations)
-    assert len(inquisitor.violations) == 1
+    scanner = kj.ShieldRuleScanner(rules)
+    scanner.visit(tree)
+    assert any("eval" in v for v in scanner.violations)
+    assert len(scanner.violations) == 1
 
 
 def test_execute_judgment_returns_false_on_violation_not_just_a_print(tmp_path, monkeypatch):
@@ -172,10 +172,10 @@ def test_execute_judgment_returns_true_on_clean_file(tmp_path, monkeypatch):
     assert result is True
 
 
-def test_kamael_judgment_cli_exits_nonzero_on_violation(tmp_path):
+def test_verdict_cli_exits_nonzero_on_violation(tmp_path):
     """[脆弱性修正の核心] CLIとして実行した場合、違反検知時には終了コードが
     非ゼロになること。以前は常に終了コード0(正常終了)だったため、
-    `python src/kamael_judgment.py x.py && <後続処理>` のように連鎖させる
+    `python src/verdict.py x.py && <後続処理>` のように連鎖させる
     呼び出し元は、違反があっても後続処理を実行してしまっていた。"""
     import subprocess
 
@@ -184,7 +184,7 @@ def test_kamael_judgment_cli_exits_nonzero_on_violation(tmp_path):
     target_file = tmp_path / "malicious.py"
     target_file.write_text("import os\nos.system('echo hacked')\n", encoding="utf-8")
 
-    kamael_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "kamael_judgment.py"))
+    kamael_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "verdict.py"))
     proc = subprocess.run(
         [sys.executable, kamael_path, str(target_file)],
         cwd=str(tmp_path), capture_output=True, text=True,
@@ -194,7 +194,7 @@ def test_kamael_judgment_cli_exits_nonzero_on_violation(tmp_path):
     )
 
 
-def test_kamael_judgment_cli_exits_zero_on_clean_file(tmp_path):
+def test_verdict_cli_exits_zero_on_clean_file(tmp_path):
     """[回帰防止] 違反の無いファイルでは終了コード0(正常終了)のままであること。"""
     import subprocess
 
@@ -203,7 +203,7 @@ def test_kamael_judgment_cli_exits_zero_on_clean_file(tmp_path):
     target_file = tmp_path / "clean.py"
     target_file.write_text("x = 1 + 1\nprint(x)\n", encoding="utf-8")
 
-    kamael_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "kamael_judgment.py"))
+    kamael_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src", "verdict.py"))
     proc = subprocess.run(
         [sys.executable, kamael_path, str(target_file)],
         cwd=str(tmp_path), capture_output=True, text=True,

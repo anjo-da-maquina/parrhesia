@@ -11,8 +11,8 @@ runtime_guard/__init__.py の回帰テスト。DEFECTS.md §AG 参照。
      モジュール/関数を、人間が tools/promote_shield_seal.py で承認し
      shield_rules.json に反映する。
 
-どちらも、承認してもMichael(_michael_absolute_defense)やGabriel
-(inquisition())から一切読み込まれておらず、システムの実際の防御には
+どちらも、承認してもAuditHook(_runtime_audit_hook)やScanSource
+(scan_source())から一切読み込まれておらず、システムの実際の防御には
 何も反映されない「学習したつもりになっているだけ」の状態だった。
 本テストはその統合が正しく機能し、かつ既存の挙動を壊していないことを
 固定する。
@@ -84,7 +84,7 @@ def test_raziel_ledger_unapproved_unknown_event_is_not_blocked(tmp_path, monkeyp
 
 def test_raziel_ledger_entries_already_covered_by_existing_categories_do_not_regress(tmp_path, monkeypatch):
     """[回帰防止の核心] raziel_ledger.jsonの既定値には"os.remove"のような、
-    Michaelが既に条件付きチェック(allowed_dirs)で扱っているイベント名が
+    AuditHookが既に条件付きチェック(allowed_dirs)で扱っているイベント名が
     含まれる。これを本関数の先頭で無条件の絶対拒否にしてしまうと、
     AI自身のjail_workspace配下での正当なファイル操作まで一律遮断する
     重大な機能破壊になる。許可された領域内であれば従来通り許可される
@@ -106,13 +106,13 @@ def test_raziel_ledger_entries_already_covered_by_existing_categories_do_not_reg
 def test_shield_rules_qualified_function_is_blocked_as_critical(tmp_path, monkeypatch):
     """[脆弱性修正の回帰テスト] shield_rules.jsonで承認された
     blocked_modules × blocked_functions の組み合わせ(例: "dill.loads")は、
-    Gabrielのinquisition()でcritical判定されなければならない。"""
+    ScanSourceのinquisition()でcritical判定されなければならない。"""
     rules_path = tmp_path / "shield_rules.json"
     with open(rules_path, "w", encoding="utf-8") as f:
         json.dump({"blocked_modules": ["dill"], "blocked_functions": ["loads", "load"]}, f)
     _point_shield_rules_at(monkeypatch, rules_path)
 
-    findings = runtime_guard.inquisition("import dill\ndill.loads(b'evil')")
+    findings = runtime_guard.scan_source("import dill\ndill.loads(b'evil')")
     critical = [f for f in findings if f.severity == "critical"]
     assert any("dill.loads" in f.message for f in critical), (
         f"動的に承認されたルールが critical として検知されなかった: {findings}"
@@ -130,7 +130,7 @@ def test_shield_rules_unrelated_same_named_function_is_not_flagged(tmp_path, mon
         json.dump({"blocked_modules": ["dill"], "blocked_functions": ["loads", "load"]}, f)
     _point_shield_rules_at(monkeypatch, rules_path)
 
-    findings = runtime_guard.inquisition("import json\nx = json.loads('{}')")
+    findings = runtime_guard.scan_source("import json\nx = json.loads('{}')")
     assert findings == [], (
         f"修正前の欠陥が再発している: 無関係なjson.loads(...)まで誤検知された: {findings}"
     )
@@ -153,9 +153,9 @@ def test_always_passthrough_events_really_are_unenforceable_via_ledger(tmp_path,
             sys.audit(event, "dummy_arg")  # 例外が出なければ(=禁止できていない)成功
 
 
-def test_shield_rules_missing_file_does_not_break_inquisition(tmp_path, monkeypatch):
+def test_shield_rules_missing_file_does_not_break_scan_source(tmp_path, monkeypatch):
     """shield_rules.jsonが存在しない場合でも、既存の静的解析結果に影響を
     与えてはならない(フェイルセーフ・既存挙動の維持)。"""
     _point_shield_rules_at(monkeypatch, tmp_path / "does_not_exist.json")
-    findings = runtime_guard.inquisition("eval('1+1')")
+    findings = runtime_guard.scan_source("eval('1+1')")
     assert any(f.rule_id == "GAB-201" for f in findings)

@@ -5,7 +5,7 @@
 大文字小文字を無視して行われていたため、allowed_dirs と大文字小文字が
 異なるだけの「別の実ディレクトリ」(例: allowed_dirs=["jail_workspace"]に
 対し実際に存在する"JAIL_WORKSPACE"という完全に別のディレクトリ)への
-書き込み・破壊的操作が、Michaelの絶対防壁(sys.addaudithook)をすり抜けて
+書き込み・破壊的操作が、AuditHookの絶対防壁(sys.addaudithook)をすり抜けて
 許可されてしまう脆弱性があった(src/workspace_manager.py の WorkspaceJail、
 checks/_common.py の scan_for_leaked_secrets() で見つかったのと同種の
 「前方一致/緩い一致による境界判定の誤り」バイパス。DEFECTS.md §AA / §AB

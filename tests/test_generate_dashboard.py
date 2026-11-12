@@ -54,7 +54,7 @@ def test_dashboard_renders_summary_cards_from_real_looking_data(tmp_path: Path):
     )
 
     assert "<html" in html and "</html>" in html
-    # 総戦績2件、突破1件、Michaelの遮断3件、禁止イベント2件、承認待ち1件が反映されているか
+    # 総戦績2件、突破1件、AuditHookの遮断3件、禁止イベント2件、承認待ち1件が反映されているか
     assert ">2<" in html  # 総戦績
     assert "os.system" in html
     assert "subprocess.Popen" in html

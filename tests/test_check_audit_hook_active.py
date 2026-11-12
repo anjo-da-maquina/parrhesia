@@ -3,8 +3,8 @@ tests/test_check_audit_hook_active.py
 =====================================
 [新設 2026-11] checks/check_audit_hook_active.py の単体テスト。
 
-本天使(「ケルビムの境界」)は、`sys.addaudithook`によるMichael's Sword
-(_michael_absolute_defense)が実際に登録・機能していることを、カナリア
+本天使(「ケルビムの境界」)は、`sys.addaudithook`によるAuditHook's Sword
+(_runtime_audit_hook)が実際に登録・機能していることを、カナリア
 攻撃(`os.system('echo canary')`)を実行させて遮断されるかどうかで間接
 的に検証する。CPythonにはフックの登録状態を直接確認する手段が無いため、
 実際に遮断が機能することそのものを健全性チェックとして用いている。

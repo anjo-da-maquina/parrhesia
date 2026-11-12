@@ -5,12 +5,12 @@ tests/test_audit_adapters_static_analysis.py
 
 本天使(「サリエルの監視」)は、`adapters/`配下の外部ツール連携
 スクリプトが、禁止モジュールを直接importしていないかを
-`runtime_guard.inquisition()`(Gabrielの静的解析)で検証する。`critical`重大度
+`runtime_guard.scan_source()`(ScanSourceの静的解析)で検証する。`critical`重大度
 の違反がある場合のみFAILする設計である。天使群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
-`runtime_guard.inquisition`はmain()内でローカルimportされるモジュール属性
-であるため、`runtime_guard.inquisition`自体をmonkeypatchし、実際の静的解析
+`runtime_guard.scan_source`はmain()内でローカルimportされるモジュール属性
+であるため、`runtime_guard.scan_source`自体をmonkeypatchし、実際の静的解析
 ロジックを介さずに、本天使固有の「criticalな違反のみを収集して判定
 する」というラッパー判定ロジックを単独で検証する。
 `audit_adapters_static_analysis.ROOT`も一時ディレクトリへmonkeypatchし、
@@ -31,7 +31,7 @@ class _FakeFinding:
         self.message = message
 
 
-def _fake_inquisition_flagging(trigger_token, severity="critical"):
+def _fake_scan_source_flagging(trigger_token, severity="critical"):
     def _fake(code):
         if trigger_token in code:
             return [_FakeFinding(severity, f"{trigger_token}を検知")]
@@ -75,7 +75,7 @@ def test_fails_when_a_critical_violation_is_found(monkeypatch, tmp_path):
     (adapters_dir / "bad_adapter.py").write_text("import os\nTRIGGER_CRITICAL\n", encoding="utf-8")
     (adapters_dir / "good_adapter.py").write_text("x = 1\n", encoding="utf-8")
     monkeypatch.setattr(sfa, "ROOT", tmp_path)
-    monkeypatch.setattr(runtime_guard, "inquisition", _fake_inquisition_flagging("TRIGGER_CRITICAL"))
+    monkeypatch.setattr(runtime_guard, "scan_source", _fake_scan_source_flagging("TRIGGER_CRITICAL"))
     try:
         sfa.main()
         assert False, "FAILするはずのmain()がsys.exit(1)しなかった"
@@ -95,7 +95,7 @@ def test_passes_when_violation_severity_is_not_critical(monkeypatch, tmp_path):
     (adapters_dir / "adapter.py").write_text("TRIGGER_WARNING\n", encoding="utf-8")
     monkeypatch.setattr(sfa, "ROOT", tmp_path)
     monkeypatch.setattr(
-        runtime_guard, "inquisition", _fake_inquisition_flagging("TRIGGER_WARNING", severity="warning")
+        runtime_guard, "scan_source", _fake_scan_source_flagging("TRIGGER_WARNING", severity="warning")
     )
     buf = io.StringIO()
     with redirect_stdout(buf):

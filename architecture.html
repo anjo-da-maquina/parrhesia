@@ -11,8 +11,8 @@
             --border-color: #30363d;
             --text-main: #c9d1d9;
             --text-muted: #8b949e;
-            --michael-color: #f85149;
-            --gabriel-color: #58a6ff;
+            --audit_hook-color: #f85149;
+            --scan_source-color: #58a6ff;
             --raphael-color: #3fb950;
             --extension-color: #d2a8ff;
         }
@@ -94,12 +94,12 @@
             margin: 20px 0;
         }
         /* Specific Colors */
-        .michael h3 { color: var(--michael-color); }
-        .gabriel h3 { color: var(--gabriel-color); }
+        .audit_hook h3 { color: var(--audit_hook-color); }
+        .scan_source h3 { color: var(--scan_source-color); }
         .raphael h3 { color: var(--raphael-color); }
         .extension h3 { color: var(--extension-color); }
-        .michael .tech-stack { color: var(--michael-color); border: 1px solid var(--michael-color); }
-        .gabriel .tech-stack { color: var(--gabriel-color); border: 1px solid var(--gabriel-color); }
+        .audit_hook .tech-stack { color: var(--audit_hook-color); border: 1px solid var(--audit_hook-color); }
+        .scan_source .tech-stack { color: var(--scan_source-color); border: 1px solid var(--scan_source-color); }
         .raphael .tech-stack { color: var(--raphael-color); border: 1px solid var(--raphael-color); }
         .extension .tech-stack { color: var(--extension-color); border: 1px solid var(--extension-color); }
     </style>
@@ -115,19 +115,19 @@
         <div class="section-title">The Canon (Core Defense Layer — runtime_guard.Sandbox)</div>
 
         <div class="grid">
-            <!-- Gabriel -->
-            <div class="card gabriel">
+            <!-- ScanSource -->
+            <div class="card scan_source">
                 <div class="icon">📜</div>
-                <h3>Gabriel (AST Inquisition)</h3>
-                <p>Parses the Abstract Syntax Tree (AST) of AI-generated code before execution via <code>runtime_guard.inquisition()</code>. Detects and rejects banned imports and calls, including fully-qualified forms like <code>os.system(...)</code>.</p>
+                <h3>ScanSource (AST Scan)</h3>
+                <p>Parses the Abstract Syntax Tree (AST) of AI-generated code before execution via <code>runtime_guard.scan_source()</code>. Detects and rejects banned imports and calls, including fully-qualified forms like <code>os.system(...)</code>.</p>
                 <div class="tech-stack">ast.parse() pre-execution</div>
             </div>
 
-            <!-- Michael -->
-            <div class="card michael">
+            <!-- AuditHook -->
+            <div class="card audit_hook">
                 <div class="icon">⚔️</div>
-                <h3>Michael (OS Deep Hook)</h3>
-                <p>The last line of defense inside <code>runtime_guard.Sandbox</code> (function name in code: <code>_michael_absolute_defense</code> — the identifier predates this wording pass). Uses Python's native audit hooks to intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed. This is enforced in-process via <code>sys.addaudithook()</code>, not an OS-level sandbox — see <a href="./README.en.md#limitations--what-this-does-not-guarantee">Limitations</a>.</p>
+                <h3>AuditHook (OS Deep Hook)</h3>
+                <p>The last line of defense inside <code>runtime_guard.Sandbox</code> (function name in code: <code>_runtime_audit_hook</code> — the identifier predates this wording pass). Uses Python's native audit hooks to intercept destructive syscalls, fd-level write bypasses, and unauthorized network connections at runtime. Default-deny: unknown events are blocked unless explicitly allowed. This is enforced in-process via <code>sys.addaudithook()</code>, not an OS-level sandbox — see <a href="./README.en.md#limitations--what-this-does-not-guarantee">Limitations</a>.</p>
                 <div class="tech-stack">sys.addaudithook() runtime</div>
             </div>
 
@@ -142,7 +142,7 @@
 
         <div class="flow-arrow">⬇️️ Runtime Isolation for Executed Code</div>
 
-        <div class="section-title">AegisSystem (4-Layer Execution Guard)</div>
+        <div class="section-title">DefenseOrchestrator (4-Layer Execution Guard)</div>
 
         <div class="grid">
             <!-- IntentInterceptor -->
@@ -170,7 +170,7 @@
             </div>
         </div>
 
-        <div class="flow-arrow">⬇️️ Loop-Level Resilience (applied by the agent loop itself, before AegisSystem)</div>
+        <div class="flow-arrow">⬇️️ Loop-Level Resilience (applied by the agent loop itself, before DefenseOrchestrator)</div>
 
         <div class="section-title">Agent Loop Resilience</div>
 
@@ -179,7 +179,7 @@
             <div class="card extension">
                 <div class="icon">🔁</div>
                 <h3>FutilityGuard</h3>
-                <p>Detects an AI stuck repeating the same (action, target) with no progress — observed live when a local model retried a hallucinated path 5 times straight, burning the whole step budget on nothing. Not an attack defense; a resilience guard against wasted cycles, checked before the expensive Aegis/Sandalphon pass is even run.</p>
+                <p>Detects an AI stuck repeating the same (action, target) with no progress — observed live when a local model retried a hallucinated path 5 times straight, burning the whole step budget on nothing. Not an attack defense; a resilience guard against wasted cycles, checked before the expensive Defense/Sandalphon pass is even run.</p>
                 <div class="tech-stack">src/futility_guard.py</div>
             </div>
         </div>
@@ -196,7 +196,7 @@
                 <div class="tech-stack">GitHub Actions + pytest-independent checks</div>
             </div>
 
-            <div class="card michael">
+            <div class="card audit_hook">
                 <div class="icon">⚔️🤖</div>
                 <h3>Armageddon Engine (Self-Play Evolution)</h3>
                 <p><strong>Lucifer</strong> (red-team AI) forges new attack mutations against Sandbox; <strong>Metatron</strong> (blue-team QA) scores each breach and proposes a new ban rule. Proposals are never applied directly — they're queued to <code>runtime_guard/raziel_ledger_pending.json</code> and require explicit human approval via <code>tools/promote_ledger_seal.py</code> before reaching the live ban list.</p>

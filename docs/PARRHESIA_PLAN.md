@@ -232,9 +232,9 @@ docstringが明記する通りB章の検出器限定であり、E章(verify/)・
   振る舞いを変えるものではない)。
 - 全ての変更は、branch → merge --no-ff → main → push → 実機GitHub
   Actions CIでの確認、という既存の規律をそのまま継続している。
-- Dockerによる隔離実行の必須化(`src/aegis_system.py`の
+- Dockerによる隔離実行の必須化(`src/defense_orchestrator.py`の
   `require_docker_sandbox`、`checks/guard_docker_sandbox_enforcement_decay.py`
-  が監査)自体はAegisSystem/docker_sandbox_executor(旧名sandalphon_jail)側の
+  が監査)自体はDefenseOrchestrator/docker_sandbox_executor(旧名sandalphon_jail)側の
   既存機能であり、Parrhesia側の対応は「E章のindependent_rerun/canary_injectionが、
   呼び出し側からDocker隔離実行のラッパーをcommandとして渡せる形になっているか」に
   限定される。[2026-11-04 更新] この2モジュールは特定の隔離実行機構に

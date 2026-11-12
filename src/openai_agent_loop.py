@@ -8,8 +8,8 @@ src/openai_agent_loop.py
      (`anjo_interceptor.runtime_audit_gatekeeper`) がリポジトリ内に存在せず、
      本番では絶対に通らない死んだコードパスだった。
   2. `_execute_safe_action` が実際のファイルI/Oを一切行わないダミー実装で、
-     `runtime_guard.Sandbox` (OSレベルの最終防衛線) も `AegisSystem`
-     (Gabriel静的解析 + IntentInterceptor + Sandalphon動的隔離検証) も
+     `runtime_guard.Sandbox` (OSレベルの最終防衛線) も `DefenseOrchestrator`
+     (ScanSource静的解析 + IntentInterceptor + Sandalphon動的隔離検証) も
      一切統合されていなかった。つまり「テンプレート」と言いながら、
      これをコピーして拡張した開発者は防壁を一つも使わないコードを
      書くことになってしまう構造的な欠陥があった。
@@ -18,7 +18,7 @@ src/openai_agent_loop.py
 同一の防御構成を、OpenAI API向けに適用し直したものである:
 
   - IntentInterceptor によるハニーポット・ディレクトリトラバーサル検知
-  - AegisSystem (Gabriel + IntentInterceptor + Sandalphon) による
+  - DefenseOrchestrator (ScanSource + IntentInterceptor + Sandalphon) による
     実行前の多層検閲（Dockerデーモン不在時はフェイルクローズドで拒否）
   - runtime_guard.Sandbox によるOSレベルのファイルI/O強制隔離
 
@@ -40,7 +40,7 @@ if str(_REPO_ROOT) not in sys.path:
 from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected
 from runtime_audit_gatekeeper import enforce_maquina_seal, LossOfAtaraxia
 from runtime_guard import Sandbox, LossOfAtaraxia as SeferLossOfAtaraxia
-from aegis_system import AegisSystem
+from defense_orchestrator import DefenseOrchestrator
 from futility_guard import FutilityGuard
 
 SYSTEM_PROMPT = """あなたは「Anjo-Core」という極めて厳格なゼロトラスト環境内で稼働する自律型AIエージェントです。
@@ -73,18 +73,18 @@ class OpenAIAnjoExecutor:
     APIキーを持つ開発者が、このクラスをそのまま使うか拡張して防壁を利用する。
 
     `_execute_safe_action` と `run_task` は `ollama_agent_loop.AnjoOllamaExecutor`
-    と同一の防御構成（enforce_maquina_seal → AegisSystem → Sandbox）を持つ、
+    と同一の防御構成（enforce_maquina_seal → DefenseOrchestrator → Sandbox）を持つ、
     動作する実装である（ダミーのスタブではない）。
     """
 
     def __init__(self, workspace_root=".", model_name="gpt-4o", api_key=None):
         self.workspace_root = Path(workspace_root).resolve()
         self.interceptor = IntentInterceptor(workspace_root=self.workspace_root)
-        # [2026-10] ollama_agent_loop.py と同様、Gabriel(静的AST解析)と
+        # [2026-10] ollama_agent_loop.py と同様、ScanSource(静的AST解析)と
         # Sandalphon(Docker隔離結界、既定で強制)をこのループにも統合する。
-        # Dockerデーモンが起動していない環境では、AegisSystemはゼロトラスト
+        # Dockerデーモンが起動していない環境では、DefenseOrchestratorはゼロトラスト
         # 方針によりここで PermissionError を送出し、全てのAI実行を拒否する。
-        self.aegis = AegisSystem(workspace_root=self.workspace_root)
+        self.defense = DefenseOrchestrator(workspace_root=self.workspace_root)
         self.model_name = model_name
         self.api_key = api_key
         self.messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -167,14 +167,14 @@ class OpenAIAnjoExecutor:
                     break
 
                 try:
-                    # Gabriel(静的AST解析) + Sandalphon(Docker隔離結界での
+                    # ScanSource(静的AST解析) + Sandalphon(Docker隔離結界での
                     # 動的実行検証)を通す。IntentInterceptorの文字列検知を
                     # すり抜ける難読化・動的生成コードはここで捕捉される。
-                    self.aegis.execute_ai_intent(
+                    self.defense.execute_ai_intent(
                         action_req.get("content", ""), str(action_req.get("target", ""))
                     )
                 except PermissionError as e:
-                    print(f"=> [システム: Aegis/Sandalphon 遮断!!] {e}")
+                    print(f"=> [システム: Defense/Sandalphon 遮断!!] {e}")
                     self.messages.append({"role": "user", "content": f"拒絶されました。理由: {e}"})
                     continue
 

@@ -79,7 +79,7 @@ python3 demo/build_and_audit_demo.py
 | 記録 | 何が起きていたか | 再現手順(実機検証済み) | 修正コミット |
 | --- | --- | --- | --- |
 | [§AV](../DEFECTS.md) — 最も驚いた発見 | ネストしたサンドボックスの許可範囲が、絞るはずの操作で逆に**ファイルシステム全体まで広がる**バグ。 | 親Sandbox内で子Sandboxを`allowed_dirs=["/"]`で開き、`/tmp/`への書き込みを試行 → 例外無しで書き込みが成功(脱獄確認)。 | [`b9541be`](https://github.com/anjo-da-maquina/parrhesia/commit/b9541be11c8a22f4c14e31832c705035f8acdda2) |
-| [§AR](../DEFECTS.md) | 判決文言は「実行は不可能です」と表示しながら、CLIの終了コードは常に`0`(成功)。 | `python src/kamael_judgment.py <違反ファイル>`を実行 → 画面は拒否を表示するが`echo $?`は常に0。 | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
+| [§AR](../DEFECTS.md) | 判決文言は「実行は不可能です」と表示しながら、CLIの終了コードは常に`0`(成功)。 | `python src/verdict.py <違反ファイル>`を実行 → 画面は拒否を表示するが`echo $?`は常に0。 | [`2c32938`](https://github.com/anjo-da-maquina/parrhesia/commit/2c3293818e5602982aa829753cae5868a65868d8) |
 | [§CT](../DEFECTS.md) | `socket.getaddrinfo()`(DNS名前解決)が、`connect()`を経由しないため2つの独立した防御層のどちらからも素通り。 | 許可ホスト以外のホスト名で`getaddrinfo()`を呼ぶ → 遮断されず素通り(=何も遮断していない証拠)。修正後は両層で遮断されることを確認。 | [`fe8b54f`](https://github.com/anjo-da-maquina/parrhesia/commit/fe8b54f81fdefd912af6dec71322667f7a54b9a0) |
 
 全件の詳細は [DEFECTS.md](../DEFECTS.md)、読み物として整理したものは [DEVLOG.md](../DEVLOG.md) にあります。

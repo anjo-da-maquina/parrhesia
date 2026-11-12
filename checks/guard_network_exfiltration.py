@@ -45,7 +45,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # 経路になっていることを発見した。本ファイルの`forbidden`集合に
 # "socket.getaddrinfo"を追加した修正の、継続的な再検証を本天使に追加
 # する。独立した別の防御層である`runtime_guard/__init__.py`の
-# `_michael_absolute_defense`も、同じ理由で"socket.getaddrinfo"を
+# `_runtime_audit_hook`も、同じ理由で"socket.getaddrinfo"を
 # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外し、専用のallowed_hosts検査
 # を新設する同種の修正を別途行った(DEFECTS.md §CT参照)。
 #
@@ -55,7 +55,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # `getnameinfo()`("socket.getnameinfo")も同じDNS exfiltration経路に
 # なり得るが、本ファイルの`forbidden`集合に一度も含まれていなかった
 # ことを発見した。独立した別の防御層`runtime_guard/__init__.py`の
-# `_michael_absolute_defense`は、引数からホスト名/アドレスを抽出する
+# `_runtime_audit_hook`は、引数からホスト名/アドレスを抽出する
 # 汎用ロジックを既に備えていたため、これらは§CTより前から自動的に
 # 保護されていた(本件はruntime_audit_gatekeeper側のみの欠陥)。
 

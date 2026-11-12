@@ -28,7 +28,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # [正直な注記: 本検査の過程で発見した別の欠陥(§CO追記)] 本件の調査中、
 # `allowed_hosts`を指定してSandboxを起動していても、ソケットの生成その
 # もの(`socket.socket(...)`)が、ホスト情報を一切持たない
-# "socket.__new__"というaudit eventを`_michael_absolute_defense`の
+# "socket.__new__"というaudit eventを`_runtime_audit_hook`の
 # 「2. ソケット通信検査」に誤って引っかけられ、常に無条件拒否されて
 # いた(fail-closed方向の誤検知で、セキュリティホールではないが、
 # allowed_hosts機能そのものが事実上使えなくなっていた)ことも発見した。
@@ -516,7 +516,7 @@ CHECKS = [
     ("runtime_guard._guarded_socket_sendall: 事前接続バイパス遮断(§CO)", _check_sendall_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_socket_send: 許可ホストへの正当な新規接続の誤検知防止(§CO)", _check_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
     ("runtime_guard._guarded_socket_send: Sandbox未使用時の誤検知防止(§CO)", _check_send_without_sandbox_is_unaffected),
-    ("runtime_guard._michael_absolute_defense: 許可外ホストへの新規connect遮断(§CO追記の回帰防止)", _check_new_connect_to_disallowed_host_is_still_blocked),
+    ("runtime_guard._runtime_audit_hook: 許可外ホストへの新規connect遮断(§CO追記の回帰防止)", _check_new_connect_to_disallowed_host_is_still_blocked),
     ("runtime_guard._guarded_ssl_socket_send: TLS事前接続バイパス遮断(§CP)", _check_tls_send_to_presealed_socket_is_blocked),
     ("runtime_guard._guarded_ssl_socket_send: 許可ホストへの正当な新規TLS接続の誤検知防止(§CP)", _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked),
     ("runtime_guard._guarded_ssl_socket_write: TLS事前接続バイパス遮断・write()経路(§CR)", _check_tls_write_to_presealed_socket_is_blocked),

@@ -21,24 +21,24 @@ except BaseException as e:
     res = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
     return res
 
-def test_michael_whitelist_open_write_blocked():
+def test_audit_hook_whitelist_open_write_blocked():
     code = "open('unauthorized.txt', 'w').close()"
     res = run_in_sandbox(code, allowed_dirs=[])
     assert "Tripwire" in res.stderr or "Unauthorized write access" in res.stderr
 
-def test_michael_whitelist_open_write_allowed():
+def test_audit_hook_whitelist_open_write_allowed():
     with tempfile.TemporaryDirectory() as tmpdir:
         safe_dir = tmpdir.replace("\\", "\\\\")
         code = f"open('{safe_dir}/authorized.txt', 'w').close()"
         res = run_in_sandbox(code, allowed_dirs=[tmpdir])
         assert res.returncode == 0
 
-def test_michael_whitelist_socket_blocked():
+def test_audit_hook_whitelist_socket_blocked():
     code = "import socket; s = socket.socket(); s.connect(('203.0.113.1', 80))"
     res = run_in_sandbox(code, allowed_hosts=["api.openai.com"])
     assert "Unauthorized network connection" in res.stderr or "Tripwire" in res.stderr
 
-def test_michael_hard_deny_settrace():
+def test_audit_hook_hard_deny_settrace():
     code = "import sys; sys.settrace(lambda *args: None)"
     res = run_in_sandbox(code)
     assert "Hard-denied event" in res.stderr or "Tripwire" in res.stderr

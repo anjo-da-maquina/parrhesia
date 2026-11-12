@@ -26,21 +26,21 @@ sys.path.insert(0, str(ROOT / "src"))
 
 @pytest.fixture
 def limiter_env(tmp_path, monkeypatch):
-    # google.generativeai / ollama / aegis_system 等のimportに失敗しても
+    # google.generativeai / ollama / defense_orchestrator 等のimportに失敗しても
     # EconomicDefenseLimiter自体はこれらに依存しないため、モジュール全体の
     # importではなく、クラス定義だけを切り出して読み込む。
     import importlib
     import types
 
     # secure_oracle_feed.py はモジュールレベルで google.generativeai・ollama・
-    # aegis_system・angelic_evolution をimportしており、このテスト環境には
+    # defense_orchestrator・angelic_evolution をimportしており、このテスト環境には
     # 存在しない可能性がある。それらをスタブ化してから本体をimportする。
-    stub_names = ["ollama", "google", "google.generativeai", "aegis_system", "angelic_evolution"]
+    stub_names = ["ollama", "google", "google.generativeai", "defense_orchestrator", "angelic_evolution"]
     saved = {}
     for name in stub_names:
         saved[name] = sys.modules.get(name)
         sys.modules[name] = types.ModuleType(name)
-    sys.modules["aegis_system"].AegisSystem = type("AegisSystem", (), {"__init__": lambda self: None})
+    sys.modules["defense_orchestrator"].DefenseOrchestrator = type("DefenseOrchestrator", (), {"__init__": lambda self: None})
     sys.modules["angelic_evolution"].EvolvingAngel = type("EvolvingAngel", (), {"__init__": lambda self: None})
 
     try:

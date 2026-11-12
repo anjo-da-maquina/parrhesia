@@ -12,7 +12,7 @@ src/angelic_shield.py
      (RazielCherubimは外部API呼び出し、ZadkielDominionはJSONファイル
      読み書きのみ)、audit hookを仕掛ける意味自体がそもそも薄かった。
      本当にOSレベルの保護が必要な箇所(AIが生成したコードの実行)は、
-     `src/aegis_system.py` の `AegisSystem` と `runtime_guard.Sandbox` が担う。
+     `src/defense_orchestrator.py` の `DefenseOrchestrator` と `runtime_guard.Sandbox` が担う。
      本ファイルはそれらの代替ではないため、誤解を招く表示を撤去した。
 
   2. `ZadkielDominion.assimilate_knowledge()` が、Gemini(LLM)の生出力を

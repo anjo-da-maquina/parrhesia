@@ -18,7 +18,7 @@ audit eventを発生させる)のいずれも、この`forbidden`集合とは一
 `unlink`・`fork`・`execve`等、forbidden集合が遮断しようとしている
 操作のほぼ全てに無検査で到達できてしまう。
 
-独立した別の防御層である`runtime_guard/__init__.py`の`_michael_absolute_defense`
+独立した別の防御層である`runtime_guard/__init__.py`の`_runtime_audit_hook`
 は、個々のイベント名の列挙ではなく`event.startswith("ctypes.")`という
 名前空間ごとのデフォルト拒否を既に備えており、この欠陥の対象では
 ないことを実機で確認した(実際に試し、既存の未変更のコードで

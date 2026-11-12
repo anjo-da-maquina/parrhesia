@@ -1,5 +1,5 @@
 ﻿"""
-[テスト追加 2026-10] Gabriel(runtime_guard.inquisition)のforbidden_funcs照合バグの
+[テスト追加 2026-10] ScanSource(runtime_guard.scan_source)のforbidden_funcs照合バグの
 回帰テスト。
 
 forbidden_funcs には "os.system" / "subprocess.Popen" のようなドット付き
@@ -9,21 +9,21 @@ forbidden_funcs には "os.system" / "subprocess.Popen" のようなドット付
 `os.system('rm -rf /')` のような直接呼び出しは、importの"high"判定のみに
 留まり、"critical"としては一度も検知されていなかった（実機検証済み）。
 """
-from runtime_guard import inquisition
+from runtime_guard import scan_source
 
 
 def test_os_system_direct_call_is_critical():
-    findings = inquisition("import os\nos.system('rm -rf /')")
+    findings = scan_source("import os\nos.system('rm -rf /')")
     assert any(f.severity == "critical" and "os.system" in f.message for f in findings), findings
 
 
 def test_subprocess_popen_direct_call_is_critical():
-    findings = inquisition("import subprocess\nsubprocess.Popen(['rm', '-rf', '/'])")
+    findings = scan_source("import subprocess\nsubprocess.Popen(['rm', '-rf', '/'])")
     assert any(f.severity == "critical" and "subprocess.Popen" in f.message for f in findings), findings
 
 
 def test_bare_eval_still_critical_no_regression():
-    findings = inquisition("eval('1+1')")
+    findings = scan_source("eval('1+1')")
     assert any(f.severity == "critical" and "eval" in f.message for f in findings), findings
 
 
@@ -34,6 +34,6 @@ def test_aliased_import_evasion_is_a_documented_known_limitation():
     将来この回避が『知らないうちに』塞がれた/塞がれていないことを
     検出するためのドキュメント的テストである（どちらの結果でも失敗しない）。
     """
-    findings = inquisition("import os as o\no.system('rm -rf /')")
+    findings = scan_source("import os as o\no.system('rm -rf /')")
     # importそのものは forbidden_modules によりモジュール名レベルで検知される
     assert any(f.severity == "high" and "os" in f.message for f in findings), findings

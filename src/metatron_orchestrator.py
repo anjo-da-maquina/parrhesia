@@ -28,18 +28,18 @@ except ModuleNotFoundError as e:
 # 統合しない(教材として保持するのみ)と既に確定していた。本ファイルは後から
 # 新設された際、まさにその禁止されていた統合を自ら行ってしまっていた。
 # さらに、AI生成ペイロードの実行時の通信遮断そのものは、`EvolvingAngel.
-# defend_and_execute()`が呼ぶ`AegisSystem.execute_ai_intent()`内で、既に
+# defend_and_execute()`が呼ぶ`DefenseOrchestrator.execute_ai_intent()`内で、既に
 # Dockerコンテナの`--network none`によってOSレベルで提供されている
 # (`src/docker_sandbox_executor.py`)。CassielsVeilの結界はそれより弱い追加の一層
 # でしかなく、ここでの展開は保護の上積みなしに正規の学習通信を壊すだけ
 # だったため、統合をやめた。
 
-class GabrielRevelation:
+class ScanSourceRevelation:
     def generate_report(self, cycle_id, intel, payload, defense_result):
         print("\n[ガブリエル] 攻防の記録を編纂し、神託（レポート）を作成中...")
         report_dir = Path("revelations")
         report_dir.mkdir(exist_ok=True)
-        report_path = report_dir / f"gabriel_revelation_{cycle_id}.md"
+        report_path = report_dir / f"scan_source_revelation_{cycle_id}.md"
         
         try:
             intel_dict = json.loads(intel)
@@ -72,7 +72,7 @@ class MetatronOrchestrator:
         self.raziel = RazielIntelligence()
         self.samael = SamaelWeaponization()
         self.angel = EvolvingAngel()
-        self.gabriel = GabrielRevelation()
+        self.scan_source = ScanSourceRevelation()
 
     def execute_holy_war(self, cycles=1):
         print("=== [Anjo-Core] メタトロンの統括（完全自動化防衛ループ） ===")
@@ -100,7 +100,7 @@ class MetatronOrchestrator:
                 defense_result = f"✅ 迎撃成功: {e}"
                 print(f"\n=> {defense_result}")
 
-            self.gabriel.generate_report(cycle_id, intel, payload, defense_result)
+            self.scan_source.generate_report(cycle_id, intel, payload, defense_result)
             
             print(f"--- サイクル {cycle_id} 完了 ---\n")
             time.sleep(1)

@@ -224,7 +224,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
     from runtime_guard import Sandbox, LossOfAtaraxia
 
     # Sandbox起動前に、実際のTCPループバック接続を確立する
-    # (socket.connect自体はmichaelの深層保護で遮断されるため、
+    # (socket.connect自体はaudit_hookの深層保護で遮断されるため、
     #  ガードが有効になる前に接続を済ませておく必要がある)。
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))

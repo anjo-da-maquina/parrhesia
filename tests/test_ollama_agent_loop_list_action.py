@@ -4,7 +4,7 @@
 
 背景: "list" アクションは元々 src/final_agent_loop.py (AutonomousAssistant)
 という、ollama_agent_loop.pyとは別に並行して存在していた「もう一つの実運用
-ループ」実装にのみ存在していた。同じAegisSystem/Sandboxをラップするループが
+ループ」実装にのみ存在していた。同じDefenseOrchestrator/Sandboxをラップするループが
 2系統並行して存在することは、修正が片方にしか入らず他方が取り残されるリスク
 を生むため、唯一の実運用ループ(ollama_agent_loop.py)に一本化し、
 final_agent_loop.pyは削除した(DEFECTS.md §M参照)。本テストは、統合後も

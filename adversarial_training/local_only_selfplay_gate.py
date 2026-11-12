@@ -163,7 +163,7 @@ def execute_armageddon():
         else:
             print("\n[🛡️] SEFER HELD THE LINE [🛡️]")
             error_lines = result.stderr.strip().split("\n")
-            last_error = "\n".join(error_lines[-3:]) if result.stderr else "Blocked by Gabriel."
+            last_error = "\n".join(error_lines[-3:]) if result.stderr else "Blocked by ScanSource."
 
             print("[Metatron QA] Evaluating Lucifer's failed mutation...")
             qa_feedback = metatron_qa_evaluate(payload_code, last_error)

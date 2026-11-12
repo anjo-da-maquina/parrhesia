@@ -3,7 +3,7 @@
 promoteするための回帰テスト。
 
 実機にOllama/Dockerが無い環境(本テスト実行環境を含む)では、
-`AegisSystem.execute_ai_intent` はSandalphon(Docker)段でフェイルクローズド
+`DefenseOrchestrator.execute_ai_intent` はSandalphon(Docker)段でフェイルクローズド
 に`PermissionError`を送出する。これは「防御が機能している」ことの証左であり、
 `MetatronOrchestrator.execute_holy_war`は本来これを捕捉して
 「✅ 迎撃成功」として扱うべきだが、修正前は
@@ -46,7 +46,7 @@ from intelligence_cycle import RazielIntelligence
 def test_analyze_aidd_artifact_does_not_require_docker_or_ai_review(tmp_path, monkeypatch):
     """
     [回帰] 修正前は、このメソッド内の信頼済み内部書き込みが
-    AegisSystem.execute_ai_intent(AI生成コード審査パイプライン)を通ってお
+    DefenseOrchestrator.execute_ai_intent(AI生成コード審査パイプライン)を通ってお
     り、Docker不在の環境(フェイルクローズド)で無関係なPermissionErrorを
     送出していた。信頼済みの内部書き込みはパスのジェイル越脱検証
     (secure_resolve)だけで十分であり、Dockerの有無に依存してはならない。
@@ -58,5 +58,5 @@ def test_analyze_aidd_artifact_does_not_require_docker_or_ai_review(tmp_path, mo
     intel_json = raziel.analyze_aidd_artifact()
 
     assert intel_json  # JSON文字列が返る
-    report_path = raziel.aegis.jail.secure_resolve("raziel_aidd_report.json")
+    report_path = raziel.defense.jail.secure_resolve("raziel_aidd_report.json")
     assert report_path.exists(), "偵察レポートが隔離領域内に書き込まれているべき"

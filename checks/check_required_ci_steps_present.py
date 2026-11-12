@@ -27,7 +27,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
     report_pass, report_fail, report_info, run_code_against_runtime_guard,
-    inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
+    scan_source_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 

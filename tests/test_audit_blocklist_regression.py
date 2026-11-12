@@ -3,16 +3,16 @@ tests/test_audit_blocklist_regression.py
 =====================================
 [新設 2026-11] checks/audit_blocklist_regression.py の単体テスト。
 
-本天使(「ジョフィエルの灯」)は、`runtime_guard.inquisition()`の禁止モジュール/
+本天使(「ジョフィエルの灯」)は、`runtime_guard.scan_source()`の禁止モジュール/
 関数リストが、既知のベースライン(`BASELINE_FORBIDDEN_MODULES`・
 `BASELINE_FORBIDDEN_FUNCS`)より静かに弱体化(縮小)していないかを、
-`runtime_guard.inquisition`の実際のソースコードをテキストとして静的走査する
+`runtime_guard.scan_source`の実際のソースコードをテキストとして静的走査する
 ことで検証する(意味論的ドリフト検知)。天使群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
-`main()`は`inspect.getsource(runtime_guard.inquisition)`を直接呼ぶため、標準
+`main()`は`inspect.getsource(runtime_guard.scan_source)`を直接呼ぶため、標準
 ライブラリの`inspect.getsource`自体を一時的にmonkeypatchし、実際の
-`runtime_guard.inquisition`の実装を介さずに、本天使固有の「ベースラインとの
+`runtime_guard.scan_source`の実装を介さずに、本天使固有の「ベースラインとの
 差分判定」ロジックのみを単独で検証する。
 """
 import sys
@@ -26,7 +26,7 @@ import inspect as inspect_module
 def _fake_source_containing(tokens, quote="'"):
     """与えられたトークン群(モジュール名・関数名)を文字列リテラルとして
     含む、架空のinquisition()ソースコード文字列を組み立てる。"""
-    lines = ["def inquisition(code):"]
+    lines = ["def scan_source(code):"]
     for tok in tokens:
         lines.append(f"    if {quote}{tok}{quote} in code: raise PermissionError()")
     lines.append("    return code")
@@ -37,7 +37,7 @@ FULL_BASELINE_TOKENS = list(js.BASELINE_FORBIDDEN_MODULES) + list(js.BASELINE_FO
 
 
 def test_real_repository_passes():
-    """[実機の裏付け] 現時点のruntime_guard.inquisition()には、ベースラインの
+    """[実機の裏付け] 現時点のruntime_guard.scan_source()には、ベースラインの
     禁止モジュール/関数が全て含まれているため、本天使はPASSを報告
     する。"""
     import io

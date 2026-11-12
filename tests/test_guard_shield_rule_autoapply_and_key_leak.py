@@ -4,14 +4,14 @@ tests/test_guard_shield_rule_autoapply_and_key_leak.py
 [新設 2026-11] checks/guard_shield_rule_autoapply_and_key_leak.py の単体テスト。
 
 本天使(「ザドキエルの勅令」)は、外部脅威インテリジェンス取り込み機構
-(src/angelic_shield.py・src/kamael_judgment.py)の再構築が、以下5点の
+(src/angelic_shield.py・src/verdict.py)の再構築が、以下5点の
 修正を保ったままであることを静的に検証する:
   A. LLM生出力をshield_rules.jsonへ直接反映せず、人間承認待ちキュー
      (shield_rules_pending.json)に積むのみであること。
   B. tools/promote_shield_seal.pyによる人間承認の昇格経路が存在する
      こと。
   C. GEMINI_API_KEYをos.environ.pop()で即時消去していること。
-  D. KamaelInquisitorが完全修飾名(例: "os.system")でも照合すること。
+  D. ShieldRuleScannerが完全修飾名(例: "os.system")でも照合すること。
   E. 誤解を招く独自audit hookの重複実装(metatrons_seal)が復活して
      いないこと。
 
@@ -41,7 +41,7 @@ VALID_SHIELD_TEXT = (
 )
 
 VALID_JUDGMENT_TEXT = (
-    "class KamaelInquisitor:\n"
+    "class ShieldRuleScanner:\n"
     "    def _qualified_call_name(self, frame):\n"
     "        return 'os.system'\n"
 )
@@ -64,7 +64,7 @@ def _write_fixtures(root, shield_text=VALID_SHIELD_TEXT, judgment_text=VALID_JUD
     if include_shield:
         (src_dir / "angelic_shield.py").write_text(shield_text, encoding="utf-8")
     if include_judgment:
-        (src_dir / "kamael_judgment.py").write_text(judgment_text, encoding="utf-8")
+        (src_dir / "verdict.py").write_text(judgment_text, encoding="utf-8")
     if include_promote:
         (tools_dir / "promote_shield_seal.py").write_text(promote_text, encoding="utf-8")
 
@@ -91,7 +91,7 @@ def test_real_repository_passes():
 
 
 def test_fails_when_required_file_is_missing(monkeypatch, tmp_path):
-    """angelic_shield.py・kamael_judgment.py・promote_shield_seal.pyの
+    """angelic_shield.py・verdict.py・promote_shield_seal.pyの
     いずれかが存在しない場合、正しくFAILする。"""
     _write_fixtures(tmp_path, include_promote=False)
     _expect_fail(monkeypatch, tmp_path)
@@ -136,8 +136,8 @@ def test_fails_when_api_key_is_not_popped(monkeypatch, tmp_path):
 
 
 def test_fails_when_qualified_call_name_check_is_missing(monkeypatch, tmp_path):
-    """[核心・D] KamaelInquisitorが完全修飾関数名(_qualified_call_name)
-    を照合していない場合、正しくFAILする(runtime_guard.inquisition()と同じ
+    """[核心・D] ShieldRuleScannerが完全修飾関数名(_qualified_call_name)
+    を照合していない場合、正しくFAILする(runtime_guard.scan_source()と同じ
     ドット付き禁止名の検知漏れの再発防止)。"""
     bad_judgment = VALID_JUDGMENT_TEXT.replace("_qualified_call_name", "_call_name")
     _write_fixtures(tmp_path, judgment_text=bad_judgment)
@@ -153,7 +153,7 @@ def test_fails_when_duplicate_audit_hook_is_revived_in_shield(monkeypatch, tmp_p
 
 
 def test_fails_when_duplicate_audit_hook_is_revived_in_judgment(monkeypatch, tmp_path):
-    """同様に、kamael_judgment.py側にmetatrons_sealが復活している場合も
+    """同様に、verdict.py側にmetatrons_sealが復活している場合も
     正しくFAILする。"""
     bad_judgment = VALID_JUDGMENT_TEXT + "\n    def metatrons_seal(self):\n        pass\n"
     _write_fixtures(tmp_path, judgment_text=bad_judgment)

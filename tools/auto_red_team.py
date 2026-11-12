@@ -1,7 +1,7 @@
 import base64
 import binascii
 import traceback
-from runtime_guard import inquisition, awaken, Sandbox, LossOfAtaraxia
+from runtime_guard import scan_source, awaken, Sandbox, LossOfAtaraxia
 
 # 防壁を起動
 awaken()
@@ -29,8 +29,8 @@ templates = [
 ]
 
 success_count = 0
-blocked_by_gabriel = 0
-blocked_by_michael = 0
+blocked_by_scan_source = 0
+blocked_by_audit_hook = 0
 
 print("[*] Generating and launching obfuscated payloads...\n")
 
@@ -42,20 +42,20 @@ for mod_str in obfuscate_string("os"):
             
             try:
                 # 第一防壁：ガブリエルの静的解析を突破できるか？
-                # [脆弱性修正 2026-10 §AX] 以前は `inquisition(payload)` の
+                # [脆弱性修正 2026-10 §AX] 以前は `scan_source(payload)` の
                 # 戻り値(検知結果のFindingリスト)を一度も確認せず、ただ呼ぶ
-                # だけで次の行に進んでいた。`inquisition()` は違反を検知して
+                # だけで次の行に進んでいた。`scan_source()` は違反を検知して
                 # も例外を送出せず、Findingのリストを返すだけの純粋関数である
-                # (src/aegis_system.py の execute_ai_intent() 等、実運用の
+                # (src/defense_orchestrator.py の execute_ai_intent() 等、実運用の
                 # 呼び出し側は戻り値から critical な Finding を自分で判定して
                 # いる)。そのため直後の `except PermissionError:` は一度も
-                # 発火し得ない死んだコードであり、Gabrielの判定結果は実質的に
+                # 発火し得ない死んだコードであり、ScanSourceの判定結果は実質的に
                 # 常に無視されていた(実機検証済み: 48件全ての難読化ペイロード
-                # が、Gabrielに検知されたかどうかに関わらず素通りしていた)。
-                findings = inquisition(payload)
+                # が、ScanSourceに検知されたかどうかに関わらず素通りしていた)。
+                findings = scan_source(payload)
                 critical = [f for f in findings if f.severity == "critical"]
                 if critical:
-                    blocked_by_gabriel += 1
+                    blocked_by_scan_source += 1
                     continue
 
                 try:
@@ -72,7 +72,7 @@ for mod_str in obfuscate_string("os"):
                     # `runtime_guard.LossOfAtaraxia`(`BaseException`を直接継承し、
                     # `Exception`経由ではない)であり、`RuntimeError`では
                     # ないため、修正前の`except RuntimeError as e: if
-                    # "Michael's Sword" in str(e):`は型・文言の両方が
+                    # "AuditHook's Sword" in str(e):`は型・文言の両方が
                     # 誤っており、本物の遮断が起きても一度も捕捉できない
                     # 死んだコードだった。実機検証済み: 修正前のコードを
                     # 実行すると、48件全ての難読化ペイロードが
@@ -88,7 +88,7 @@ for mod_str in obfuscate_string("os"):
                     success_count += 1
 
                 except LossOfAtaraxia:
-                    blocked_by_michael += 1
+                    blocked_by_audit_hook += 1
                 except Exception:
                     pass  # 攻撃自体の構文エラーなどは無視
 
@@ -98,9 +98,9 @@ for mod_str in obfuscate_string("os"):
 print("\n========================================")
 print(" 🛡️ RED TEAM ATTACK RESULTS 🛡️")
 print("========================================")
-print(f"Total Attacks Generated : {blocked_by_gabriel + blocked_by_michael + success_count}")
-print(f"Blocked by Gabriel      : {blocked_by_gabriel} (AST解析で瞬殺)")
-print(f"Blocked by Michael      : {blocked_by_michael} (難読化を暴き、実行時に斬首)")
+print(f"Total Attacks Generated : {blocked_by_scan_source + blocked_by_audit_hook + success_count}")
+print(f"Blocked by ScanSource      : {blocked_by_scan_source} (AST解析で瞬殺)")
+print(f"Blocked by AuditHook      : {blocked_by_audit_hook} (難読化を暴き、実行時に斬首)")
 print(f"Successful Bypasses     : {success_count} (防壁突破)")
 print("========================================")
 

@@ -2,7 +2,7 @@
 [テスト追加 2026-10] src/ast_scanner.py の CognitiveScanner が抱えていた
 検知漏れの回帰テスト。
 
-tests/test_gabriel_qualified_call_names.py (Gabriel) /
+tests/test_scan_source_qualified_call_names.py (ScanSource) /
 tests/test_shield_rebuild.py (Kamael) と同種のバグ:
 `visit_Call` が `node.func` を `ast.Name` としてしか判定しておらず、
 `builtins.eval(...)` のような属性アクセス経由の呼び出しは

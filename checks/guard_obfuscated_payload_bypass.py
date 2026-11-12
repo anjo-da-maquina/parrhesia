@@ -2,14 +2,14 @@
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
     report_pass, report_fail, report_info, run_code_against_runtime_guard,
-    inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
+    scan_source_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "guard_obfuscated_payload_bypass - ペイロード防御監査: 難読化された攻撃パターンがGabriel(静的)かMichael(動的) のいずれかで必ず捕捉されることを検証する…"
+NAME = "guard_obfuscated_payload_bypass - ペイロード防御監査: 難読化された攻撃パターンがScanSource(静的)かAuditHook(動的) のいずれかで必ず捕捉されることを検証する…"
 
 
-# ペイロード防御監査: 難読化された攻撃パターンがGabriel(静的)かMichael(動的)
+# ペイロード防御監査: 難読化された攻撃パターンがScanSource(静的)かAuditHook(動的)
 # のいずれかで必ず捕捉されることを検証する（両方素通りした場合のみ失敗）。
 OBFUSCATED_ATTACKS = [
     "getattr(__import__('os'), 'system')('echo hacked')",
@@ -20,7 +20,7 @@ OBFUSCATED_ATTACKS = [
 def main():
     bypasses = []
     for code in OBFUSCATED_ATTACKS:
-        caught_statically = inquisition_catches(code)
+        caught_statically = scan_source_catches(code)
         blocked_dynamically, _ = run_code_against_runtime_guard(code)
         if not caught_statically and not blocked_dynamically:
             bypasses.append(code)

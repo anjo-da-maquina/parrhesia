@@ -1,7 +1,7 @@
 """
-tests/test_michael_mmap_fd_bypass_guard.py
+tests/test_audit_hook_mmap_fd_bypass_guard.py
 =============================================
-[新設 2026-10 §CB] runtime_guard/__init__.py の _michael_absolute_defense() が
+[新設 2026-10 §CB] runtime_guard/__init__.py の _runtime_audit_hook() が
 "mmap.__new__" 監査イベントを一度も検査していなかった欠陥の回帰テスト。
 
 発見した具体的な攻撃: Sandboxコンテキストに「入る前」に、allowed_dirs

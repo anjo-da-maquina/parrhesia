@@ -1,5 +1,5 @@
 ﻿"""
-src/kamael_judgment.py
+src/verdict.py
 ========================
 [再構築 2026-10] angelic_shield.py と同じ欠陥を共有していたため作り直した。
 
@@ -9,12 +9,12 @@ src/kamael_judgment.py
      ことは何の追加保護にもならず、「保護されている」という誤った印象を
      与えるだけの表示だった(angelic_shield.py モジュールdocstring参照)。
 
-  2. `runtime_guard.inquisition()`(Gabriel)で発見・修正したのと同じバグが
-     `KamaelInquisitor.visit_Call` にも存在した: `node.func.attr` は
+  2. `runtime_guard.scan_source()`(ScanSource)で発見・修正したのと同じバグが
+     `ShieldRuleScanner.visit_Call` にも存在した: `node.func.attr` は
      `os.system(...)` のような呼び出しのバレ属性名(`"system"`)しか
      取得できず、`shield_rules.json` の `blocked_functions` に
      `"os.system"` のような完全修飾名で登録されたルールには一致しなかった。
-     Gabrielの修正(DEFECTS.md §E)と同じ手法で、呼び出し式から完全修飾
+     ScanSourceの修正(DEFECTS.md §E)と同じ手法で、呼び出し式から完全修飾
      ドット区切り名を復元し、バレ名・完全修飾名の両方を照合するように
      修正した。既知の限界(別名importでの回避)も同様に残る。
 
@@ -34,7 +34,7 @@ def _qualified_call_name(func_node) -> str:
     例: `os.system(...)` の `node.func` → "os.system"
         `a.b.c(...)` の `node.func` → "a.b.c"
     復元できない場合（単純な名前以外から始まる式など）は空文字を返す。
-    [runtime_guard.inquisition() の同種修正(DEFECTS.md §E)と同一のロジック]
+    [runtime_guard.scan_source() の同種修正(DEFECTS.md §E)と同一のロジック]
     """
     parts = []
     node = func_node
@@ -47,7 +47,7 @@ def _qualified_call_name(func_node) -> str:
     return ""
 
 
-class KamaelInquisitor(ast.NodeVisitor):
+class ShieldRuleScanner(ast.NodeVisitor):
     def __init__(self, rules):
         self.rules = rules
         self.violations = []
@@ -97,7 +97,7 @@ def execute_judgment(target_file) -> bool:
     メッセージを表示するだけだった。CLIとして呼び出した場合の終了コードは
     違反の有無にかかわらず常に0(成功)であり、本スクリプトの呼び出し元が
     終了コードで合否判定しようとすると(例: シェルスクリプトで
-    `python src/kamael_judgment.py x.py && python x.py` のように連鎖させる)、
+    `python src/verdict.py x.py && python x.py` のように連鎖させる)、
     違反があっても後続処理は常に実行されてしまう構造的な欠陥だった。
     表示文言が主張する「実行不可能」という強制力と、実際の挙動(常に
     正常終了)が一致していない、という本セッションで繰り返し発見している
@@ -125,12 +125,12 @@ def execute_judgment(target_file) -> bool:
 
     try:
         tree = ast.parse(source_code)
-        inquisitor = KamaelInquisitor(rules)
-        inquisitor.visit(tree)
+        scanner = ShieldRuleScanner(rules)
+        scanner.visit(tree)
 
-        if inquisitor.violations:
+        if scanner.violations:
             print("\n[判決: 異端検知] 以下の致命的な防壁ルール違反が見つかりました:")
-            for v in inquisitor.violations:
+            for v in scanner.violations:
                 print(f"  - {v}")
             print("\n=> [結果: 異端確定] このファイルは防壁ルールに違反しています。")
             return False

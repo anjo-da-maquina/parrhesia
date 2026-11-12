@@ -45,7 +45,7 @@ def test_does_not_flag_when_secure_resolve_is_the_assignment_itself():
         "class C:\n"
         "    def f(self, req):\n"
         "        try:\n"
-        "            target = self.aegis.jail.secure_resolve(req.get('target', '.'))\n"
+        "            target = self.defense.jail.secure_resolve(req.get('target', '.'))\n"
         "        except PermissionError as e:\n"
         "            raise SeferLossOfAtaraxia(str(e))\n"
         "        with Sandbox():\n"
@@ -69,13 +69,13 @@ def test_does_not_flag_when_sanitizer_called_between_join_and_use():
 
 def test_known_false_positive_fixed_literal_trailing_segment_is_excluded():
     """[実装中の自己レッドチームで発見・即時修正の固定] 当初の実装は、
-    `ROOT / "src" / "aegis_system.py"`のように、`/`結合の右辺(最後の
+    `ROOT / "src" / "defense_orchestrator.py"`のように、`/`結合の右辺(最後の
     要素)が完全な固定文字列リテラルである場合まで誤検知していた
     (checks/guard_docker_sandbox_enforcement_decay.pyで実際に3件の偽陽性を確認)。外部入力が
     混入する余地のない、完全に固定されたパスは検知対象から除外する。"""
     text = (
         "def f():\n"
-        "    p = ROOT / 'src' / 'aegis_system.py'\n"
+        "    p = ROOT / 'src' / 'defense_orchestrator.py'\n"
         "    return p.read_text()\n"
     )
     assert hpg.find_unsanitized_path_joins(text) == []

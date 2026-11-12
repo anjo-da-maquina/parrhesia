@@ -205,7 +205,7 @@ jobs:
         run: python checks/check_disk_and_log_capacity.py
       - name: 12.5. 拡張テンプレート防壁統合監査 (Template Integration Audit)
         # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。src/openai_agent_loop.py
-        # (拡張用テンプレート)がSandbox/AegisSystemの実防壁統合を保った
+        # (拡張用テンプレート)がSandbox/DefenseOrchestratorの実防壁統合を保った
         # ままであることを検証するスクリプトが、CIワークフローに一度も
         # 追加されていなかった。
         run: python checks/audit_agent_template_integration.py
@@ -252,7 +252,7 @@ jobs:
         if: success()
         run: python checks/audit_log_format_integrity.py
       - name: 20.5. Docker強制サンドボックス化の退行監査 (Mandatory Sandbox Regression Audit)
-        # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。AegisSystemのDocker隔離
+        # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。DefenseOrchestratorのDocker隔離
         # 結界(Sandalphon)が、既定でフェイルクローズドな強制のまま実運用
         # ループに統合され続けているかを静的検証するスクリプトが、CI
         # ワークフローに一度も追加されていなかった。
@@ -362,7 +362,7 @@ jobs:
         if: success()
         run: python checks/guard_network_exfiltration.py
       - name: 22.83. mmapによるfd事前オープン迂回検知 (mmap Write Bypass Audit)
-        # [新設 2026-10 §CB] sefer/__init__.pyの_michael_absolute_defense
+        # [新設 2026-10 §CB] sefer/__init__.pyの_runtime_audit_hook
         # ("ミカエルの絶対防衛")は、"mmap.__new__"監査イベントを一度も
         # 検査していなかった。既存の「fd事前オープン対策」はos.write系
         # (write/pwrite/writev/pwritev)の4系統のみをラップしており、
@@ -552,7 +552,7 @@ jobs:
         # `_guarded_socket_sendall`を新設し、`getpeername()`で接続先
         # ホストを解決して`allowed_hosts`と照合する選別的な許可(§CNの
         # os.sendfileとは異なり、無条件拒否ではなく既存の
-        # `_michael_absolute_defense`と同じ方針)で修正した。調査中、
+        # `_runtime_audit_hook`と同じ方針)で修正した。調査中、
         # "socket.__new__"が`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれて
         # おらず、`allowed_hosts`を指定していてもソケット生成自体が常に
         # 無条件拒否される別の誤検知(fail-closed方向、セキュリティ

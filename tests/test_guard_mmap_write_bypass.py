@@ -3,7 +3,7 @@ tests/test_guard_mmap_write_bypass.py
 ====================================
 [新設 2026-10 §CB] checks/guard_mmap_write_bypass.py の単体テスト。
 
-実際に発見した具体例: `runtime_guard/__init__.py`の`_michael_absolute_defense`は
+実際に発見した具体例: `runtime_guard/__init__.py`の`_runtime_audit_hook`は
 "mmap.__new__"監査イベントを一度も検査していなかったため、Sandboxに
 入る前に確保した書き込み用fdを`mmap.mmap(fd, length, access=...)`で
 マップし、スライス代入で書き込むだけで、os.write系の既存対策を
@@ -68,14 +68,14 @@ def test_battery_detects_reintroduced_regression(monkeypatch):
         return False, "allowed_dirs外へのmmap書き込みが遮断されなかった(模擬)"
 
     patched_checks = [
-        ("runtime_guard._michael_absolute_defense: mmap access=方式の書き込み遮断", _vulnerable_check),
-        ("runtime_guard._michael_absolute_defense: 匿名mmapの誤検知防止", smg._check_anonymous_mmap_is_not_falsely_blocked),
+        ("runtime_guard._runtime_audit_hook: mmap access=方式の書き込み遮断", _vulnerable_check),
+        ("runtime_guard._runtime_audit_hook: 匿名mmapの誤検知防止", smg._check_anonymous_mmap_is_not_falsely_blocked),
     ]
     monkeypatch.setattr(smg, "CHECKS", patched_checks)
 
     failures = smg.run_battery()
     assert len(failures) == 1
-    assert failures[0][0] == "runtime_guard._michael_absolute_defense: mmap access=方式の書き込み遮断"
+    assert failures[0][0] == "runtime_guard._runtime_audit_hook: mmap access=方式の書き込み遮断"
 
 
 def test_checker_exception_is_reported_as_a_failure(monkeypatch):

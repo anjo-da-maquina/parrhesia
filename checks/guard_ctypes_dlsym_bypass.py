@@ -22,7 +22,7 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # 操作のほぼ全てに、無検査で到達できてしまう。
 #
 # 独立した別の防御層である`runtime_guard/__init__.py`の
-# `_michael_absolute_defense`は、個々のイベント名の列挙ではなく
+# `_runtime_audit_hook`は、個々のイベント名の列挙ではなく
 # `event.startswith("ctypes.")`という名前空間ごとのデフォルト拒否を
 # 既に備えており、この欠陥の対象ではないことを実機で確認した
 # (既存の未変更のコードのままで"ctypes.dlsym"が正しく遮断される
@@ -167,7 +167,7 @@ CHECKS = [
     ("runtime_audit_gatekeeper.ultimate_audit_hook: ctypes.pythonapi経由の遮断", _check_pythonapi_symbol_resolution_is_blocked),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 新規ctypes.CDLL(None) dlopenの遮断", _check_fresh_cdll_dlopen_is_blocked),
     ("runtime_audit_gatekeeper.ultimate_audit_hook: 非封鎖時の誤検知防止", _check_pythonapi_still_works_when_unsealed),
-    ("runtime_guard._michael_absolute_defense: 既存の名前空間デフォルト拒否による保護の裏付け", _check_runtime_guard_already_protected_without_modification),
+    ("runtime_guard._runtime_audit_hook: 既存の名前空間デフォルト拒否による保護の裏付け", _check_runtime_guard_already_protected_without_modification),
 ]
 
 

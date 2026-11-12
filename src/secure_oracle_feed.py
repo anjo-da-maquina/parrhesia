@@ -14,7 +14,7 @@ except ImportError:
     sys.exit(1)
 
 try:
-    from aegis_system import AegisSystem
+    from defense_orchestrator import DefenseOrchestrator
     from angelic_evolution import EvolvingAngel
 except ModuleNotFoundError:
     print("[エラー] 必要な防壁モジュールが見つかりません。")
@@ -82,7 +82,7 @@ class EconomicDefenseLimiter:
 
 class SecureOracleFeed:
     def __init__(self):
-        self.aegis = AegisSystem()
+        self.defense = DefenseOrchestrator()
         self.angel = EvolvingAngel()
         self.limiter = EconomicDefenseLimiter()
         

@@ -6,7 +6,7 @@ Parrhesia(旧名Pleroma) 防衛ダッシュボード生成ツール
 傾向を一目で把握する手段が無かった:
 
   - adversarial_training/selfplay_history.json(旧名tartarus/akashic_records.json) — Armageddon Engine(Lucifer vs Metatron)の戦績
-  - runtime_guard/audit_chain.jsonl          — Michaelが実際に遮断したイベントの監査ログ
+  - runtime_guard/audit_chain.jsonl          — AuditHookが実際に遮断したイベントの監査ログ
   - runtime_guard/raziel_ledger.json         — 現在有効な禁止イベント一覧
   - runtime_guard/raziel_ledger_pending.json / shield_rules_pending.json /
     provisioning_pending.json        — 人間承認待ちの各種提案
@@ -225,7 +225,7 @@ def build_dashboard(
       <div class="value" style="color:var(--good)">{100 - breach_rate:.0f}%</div>
     </div>
     <div class="card">
-      <div class="label">Michaelの実遮断件数</div>
+      <div class="label">AuditHookの実遮断件数</div>
       <div class="value">{total_blocked}</div>
     </div>
     <div class="card">
@@ -248,7 +248,7 @@ def build_dashboard(
   </div>
 
   <div class="section">
-    <h2>Michaelが実際に遮断したイベントの種類別件数</h2>
+    <h2>AuditHookが実際に遮断したイベントの種類別件数</h2>
     {event_chart}
   </div>
 

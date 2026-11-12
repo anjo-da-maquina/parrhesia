@@ -92,7 +92,7 @@ def _is_naive_path_join_assign(node):
     代入先の変数名、またはそうでなければNone。
 
     [実装中の自己レッドチームで発見・即時修正] 当初は右辺の形を一切
-    問わなかったため、`ROOT / "src" / "aegis_system.py"`のような、
+    問わなかったため、`ROOT / "src" / "defense_orchestrator.py"`のような、
     完全に固定されたリテラル文字列のみによる(攻撃者が制御できる要素が
     一切無い)パス結合まで誤検知していた(checks/guard_docker_sandbox_enforcement_decay.pyで
     実際に3件の偽陽性を確認)。これは本物のバグ(src/ollama_agent_loop.py

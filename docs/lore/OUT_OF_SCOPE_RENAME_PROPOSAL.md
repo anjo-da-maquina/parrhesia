@@ -18,18 +18,18 @@
 - 実体は3つの役割を持つ:
   1. `sefer/__init__.py` の `Sandbox` クラス — `allowed_dirs`/`allowed_hosts`/`restrict_reads`を
      指定してネスト可能な「許可範囲」を宣言するコンテキストマネージャ。
-  2. 同ファイルの `_michael_absolute_defense`(`sys.addaudithook`に登録される監査フック本体)
+  2. 同ファイルの `_runtime_audit_hook`(`sys.addaudithook`に登録される監査フック本体)
      — ファイル書き込み・ソケット通信・mmap・fd経由書き込み等、約10種の脱獄経路を実機検証の上で遮断する。
-  3. 同ファイルの `inquisition()`(AST静的解析による危険コード検出、`Finding`データクラスを返す)。
+  3. 同ファイルの `scan_source()`(AST静的解析による危険コード検出、`Finding`データクラスを返す)。
   4. `sefer/audit_chain.py` の `SignedAuditChain`(HMAC-SHA256鍵付きハッシュ連鎖の監査ログ)。
-- コード内コメントでは「Michael」という天使名で各防御ロジックを指している箇所が複数残っている
-  (`sefer/__init__.py`内の`_michael_absolute_defense`という関数名自体が天使名)。
+- コード内コメントでは「AuditHook」という天使名で各防御ロジックを指している箇所が複数残っている
+  (`sefer/__init__.py`内の`_runtime_audit_hook`という関数名自体が天使名)。
 
 ### 提案名
 `runtime_guard`(パッケージ名・PyPI配布名として)
 
 理由: 実行時(`sys.addaudithook`)に常駐して脱獄経路を遮断する防御基盤という実際の役割をそのまま表す。
-`Sandbox`→`ScopedPolicy`、`inquisition()`→`scan_source()`、`_michael_absolute_defense`→
+`Sandbox`→`ScopedPolicy`、`scan_source()`→`scan_source()`、`_runtime_audit_hook`→
 `_runtime_audit_hook` のような内部名の追随改名も合わせて検討可能(ただし関数名改名は別途影響調査が必要)。
 
 ### 影響範囲(高リスク)
@@ -79,7 +79,7 @@
   `run_in_sandalphon(code, timeout)` が実体。
 - 2026-10の修正で、それまで「CLIから手動で呼ぶだけの独立ツールで、AI実行経路からは一度も
   呼ばれていなかった(=Docker隔離は任意のおまけ)」という設計上の欠陥を修正し、
-  `aegis_system.py` から**強制的(mandatory)な動的検証**として呼ばれるようになった。
+  `defense_orchestrator.py` から**強制的(mandatory)な動的検証**として呼ばれるようになった。
 - **重要**: 既にリネーム済みの `checks/guard_seccomp_syscall.py`・`checks/guard_container_capabilities.py`・
   `checks/guard_docker_sandbox_enforcement_decay.py` は、この `sandalphon_jail` の**実行結果を検査する**
   側(監査役)であり、`sandalphon_jail`自体(実行主体)とは明確に別物。改名時にこの非対称性
@@ -94,7 +94,7 @@
 以下15ファイルで `sandalphon_jail` という識別子が参照されている(grep確認済み):
 - `src/sandalphon_jail.py` (本体)
 - `src/metatron_orchestrator.py`
-- `src/aegis_system.py`
+- `src/defense_orchestrator.py`
 - `src/cassiels_veil.py`
 - `.github/workflows/regression_checks_ci.yml`
 - `DEFECTS.md`

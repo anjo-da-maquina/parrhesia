@@ -31,7 +31,7 @@ _LAST_TIMESTAMP = datetime.min
 # 一切の検査をせずに即座にreturnしてしまい、`subprocess.Popen`等の
 # 禁止操作が完全に素通りしてしまうことを実機検証済み(メインスレッドでは
 # 正しく遮断される同じ操作が、子スレッドでは無検査で実行できてしまう
-# ことを確認)。`runtime_guard/__init__.py`のMichael側は元々`_active_stack`を
+# ことを確認)。`runtime_guard/__init__.py`のAuditHook側は元々`_active_stack`を
 # プロセス全体で共有するグローバルなリストとして実装しており、本件は
 # それとは逆に、共有すべき状態を誤ってスレッドローカル化してしまって
 # いたことが原因だった(`runtime_guard/__init__.py`参照)。封鎖フラグをプロセス
@@ -175,7 +175,7 @@ def _register_audit_hook_once():
         # 「等価経路によるブロックリスト回避」)。
         #
         # 独立した別の防御層である`runtime_guard/__init__.py`の
-        # `_michael_absolute_defense`は、個々のイベント名の列挙ではなく
+        # `_runtime_audit_hook`は、個々のイベント名の列挙ではなく
         # `event.startswith("ctypes.")`という名前空間ごとのデフォルト
         # 拒否(4. デフォルト拒否)を備えているため、"ctypes.dlsym"も
         # "ctypes.dlopen"も最初から自動的に遮断されており、この欠陥の
@@ -194,7 +194,7 @@ def _register_audit_hook_once():
         # 欠陥――禁止したい意図(接続不要でのデータ送信)は同じなのに、
         # 別のAPI名を使うだけで素通りしてしまう――が、"sendto"を塞いだ
         # 直後にその隣にある"sendmsg"には及んでいなかった。独立した別の
-        # 防御層である`runtime_guard/__init__.py`の`_michael_absolute_defense`は、
+        # 防御層である`runtime_guard/__init__.py`の`_runtime_audit_hook`は、
         # 個々のイベント名の列挙ではなく`"socket" in event`という名前空間
         # ごとのデフォルト拒否を備えているため、"socket.sendmsg"も最初から
         # 自動的に遮断されており、この欠陥の対象ではないことを実機で確認
@@ -214,7 +214,7 @@ def _register_audit_hook_once():
         # 例外無しに成立し、このサンドボックス自身のDNS到達性の欠如に
         # よるOSErrorでのみ失敗すること(=本フックが何も遮断していない
         # こと)を確認した。独立した別の防御層である`runtime_guard/__init__.py`の
-        # `_michael_absolute_defense`も、同じ理由でこれまで
+        # `_runtime_audit_hook`も、同じ理由でこれまで
         # "socket.getaddrinfo"を無条件に通過させていた(DEFECTS.md §CT、
         # 本ファイルの修正はそちらとは独立した同種の修正)。本ファイルは
         # allowed_hosts方式を持たないブラント(接続先を問わず一律遮断)な
@@ -231,7 +231,7 @@ def _register_audit_hook_once():
         # forbidden集合に一度も含まれていなかったことを発見した(実機で
         # `set_runtime_sealed(True)`の状態でも`socket.gethostbyname()`
         # が例外無しに成立することを確認済み)。独立した別の防御層である
-        # `runtime_guard/__init__.py`の`_michael_absolute_defense`は、これらの
+        # `runtime_guard/__init__.py`の`_runtime_audit_hook`は、これらの
         # イベント名に対する個別の列挙ではなく、引数からホスト名/アドレス
         # を抽出する汎用ロジック(「2. ソケット通信検査」)を既に備えて
         # いたため、§CTより前から自動的に保護されていたことを実機で確認

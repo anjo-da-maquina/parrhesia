@@ -6,7 +6,7 @@
 欠陥番号の進み方(A=1, ..., Z=26, AA=27, AB=28, ..., AZ=52, BA=53, ...)
 と合っていなかったため、二度と手集計で誤らないようにする目的で作成。
 
-このプロジェクトの「## 2.」節(Gabriel/Michael/Raphaelの説明)もA/B/Cの
+このプロジェクトの「## 2.」節(ScanSource/AuditHook/Raphaelの説明)もA/B/Cの
 見出しを使っているが、これは欠陥記録ではないため、本スクリプトは
 「## 5. 既知の限界」以降に出現する見出しだけを対象とする。
 """
@@ -37,7 +37,7 @@ def main():
         lines = f.readlines()
 
     # 「## 5. 既知の限界」以降だけを対象にする(それより前の「## 2.」節の
-    # A/B/C見出しはGabriel/Michael/Raphaelの説明であり、欠陥記録ではない)。
+    # A/B/C見出しはScanSource/AuditHook/Raphaelの説明であり、欠陥記録ではない)。
     start = None
     for i, line in enumerate(lines):
         if re.match(r"^\\?##\s*5\.", line):

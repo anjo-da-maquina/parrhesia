@@ -93,7 +93,7 @@ def build_forge_script(payload_code: str, pleroma_dir: Path, tartarus_dir: Path)
         # --- LUCIFER'S PAYLOAD ---
         <payload_code がそのまま続く>
 
-    `runtime_guard._michael_absolute_defense`(監査フック本体)は、冒頭で
+    `runtime_guard._runtime_audit_hook`(監査フック本体)は、冒頭で
     `if not _is_guard_active(): return`を行う。`_is_guard_active()`は
     `runtime_guard._active_stack`(`with Sandbox(...):`に入っている間だけ積まれる)
     が空でないかを見るものであり、`awaken()`は`sys.addaudithook()`で
@@ -141,7 +141,7 @@ def validate_banned_event(banned_event: str):
 
     [脆弱性修正 2026-10 §BJ] 以前は`CRITICAL_INFRASTRUCTURE`(自己免疫疾患
     ガード)に含まれない限り、形式(VALID_EVENT_NAME_RE)が妥当なら無条件で
-    有効と判定していた。しかし`runtime_guard._michael_absolute_defense`は、
+    有効と判定していた。しかし`runtime_guard._runtime_audit_hook`は、
     `runtime_guard.ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に含まれるイベント名
     (例: "socket.getaddrinfo")を、ソケット検査・デフォルト拒否のいずれの
     分岐でも常に無条件で`pass`して`return`する設計になっている。つまり

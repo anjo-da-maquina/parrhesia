@@ -5,7 +5,7 @@ tests/test_guard_docker_sandbox_enforcement_decay.py
 
 本天使(「サンダルフォンの勅令」)は、「Docker/OSレベルの強制サンド
 ボックス化」が、静的検閲のみの張りぼてに戻されていないかを、
-`src/aegis_system.py`・`src/docker_sandbox_executor.py`・
+`src/defense_orchestrator.py`・`src/docker_sandbox_executor.py`・
 `src/ollama_agent_loop.py`の内容を直接文字列検査することで静的に
 検証する(§BCで新設)。天使群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。本天使が検査する項目は
@@ -23,8 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "checks"))
 import guard_docker_sandbox_enforcement_decay as sdc
 
-VALID_AEGIS_TEXT = (
-    "class AegisSystem:\n"
+VALID_ORCHESTRATOR_TEXT = (
+    "class DefenseOrchestrator:\n"
     "    def __init__(self, require_docker_sandbox: bool = True):\n"
     "        pass\n"
     "    def execute(self):\n"
@@ -41,16 +41,16 @@ VALID_DOCKER_SANDBOX_TEXT = (
 )
 
 VALID_OLLAMA_LOOP_TEXT = (
-    "from src.aegis_system import AegisSystem\n"
-    "AegisSystem().execute_ai_intent(code)\n"
+    "from src.defense_orchestrator import DefenseOrchestrator\n"
+    "DefenseOrchestrator().execute_ai_intent(code)\n"
 )
 
 
-def _write_fixtures(root, aegis_text=VALID_AEGIS_TEXT, sandalphon_text=VALID_DOCKER_SANDBOX_TEXT,
+def _write_fixtures(root, orchestrator_text=VALID_ORCHESTRATOR_TEXT, sandalphon_text=VALID_DOCKER_SANDBOX_TEXT,
                      ollama_text=VALID_OLLAMA_LOOP_TEXT, include_ollama_loop=True):
     src_dir = root / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
-    (src_dir / "aegis_system.py").write_text(aegis_text, encoding="utf-8")
+    (src_dir / "defense_orchestrator.py").write_text(orchestrator_text, encoding="utf-8")
     (src_dir / "docker_sandbox_executor.py").write_text(sandalphon_text, encoding="utf-8")
     if include_ollama_loop:
         (src_dir / "ollama_agent_loop.py").write_text(ollama_text, encoding="utf-8")
@@ -79,11 +79,11 @@ def test_real_repository_passes():
 
 
 def test_fails_when_required_file_is_missing(monkeypatch, tmp_path):
-    """`aegis_system.py`・`docker_sandbox_executor.py`のいずれかが存在しない
+    """`defense_orchestrator.py`・`docker_sandbox_executor.py`のいずれかが存在しない
     場合、正しくFAILする。"""
     src_dir = tmp_path / "src"
     src_dir.mkdir()
-    (src_dir / "aegis_system.py").write_text(VALID_AEGIS_TEXT, encoding="utf-8")
+    (src_dir / "defense_orchestrator.py").write_text(VALID_ORCHESTRATOR_TEXT, encoding="utf-8")
     # docker_sandbox_executor.pyを意図的に作らない
     _expect_fail(monkeypatch, tmp_path)
 
@@ -91,24 +91,24 @@ def test_fails_when_required_file_is_missing(monkeypatch, tmp_path):
 def test_fails_when_docker_sandbox_flag_is_absent(monkeypatch, tmp_path):
     """[核心] `require_docker_sandbox`というフラグ自体が無い場合、
     正しくFAILする。"""
-    _write_fixtures(tmp_path, aegis_text=VALID_AEGIS_TEXT.replace("require_docker_sandbox", "something_else"))
+    _write_fixtures(tmp_path, orchestrator_text=VALID_ORCHESTRATOR_TEXT.replace("require_docker_sandbox", "something_else"))
     _expect_fail(monkeypatch, tmp_path)
 
 
 def test_fails_when_default_is_not_true(monkeypatch, tmp_path):
     """[核心・フェイルオープン検知] `require_docker_sandbox`の既定値が
     `True`になっていない場合、正しくFAILする(§BCの核心の退行防止)。"""
-    bad_text = VALID_AEGIS_TEXT.replace(
+    bad_text = VALID_ORCHESTRATOR_TEXT.replace(
         "require_docker_sandbox: bool = True", "require_docker_sandbox: bool = False"
     )
-    _write_fixtures(tmp_path, aegis_text=bad_text)
+    _write_fixtures(tmp_path, orchestrator_text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 
 
 def test_fails_when_run_in_docker_sandbox_is_not_called(monkeypatch, tmp_path):
     """[核心] `run_in_docker_sandbox`の呼び出しが無い(静的検閲のみの張り
     ぼて)場合、正しくFAILする。"""
-    _write_fixtures(tmp_path, aegis_text=VALID_AEGIS_TEXT.replace("run_in_docker_sandbox", "something_else"))
+    _write_fixtures(tmp_path, orchestrator_text=VALID_ORCHESTRATOR_TEXT.replace("run_in_docker_sandbox", "something_else"))
     _expect_fail(monkeypatch, tmp_path)
 
 
@@ -116,15 +116,15 @@ def test_fails_when_fail_closed_implementation_is_missing(monkeypatch, tmp_path)
     """[核心] Dockerデーモン不在時のフェイルクローズド実装
     (`docker_available`・`PermissionError`)が見つからない場合、正しく
     FAILする。"""
-    bad_text = VALID_AEGIS_TEXT.replace("PermissionError", "SomeOtherError")
-    _write_fixtures(tmp_path, aegis_text=bad_text)
+    bad_text = VALID_ORCHESTRATOR_TEXT.replace("PermissionError", "SomeOtherError")
+    _write_fixtures(tmp_path, orchestrator_text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 
 
 def test_fails_when_timeout_handling_is_missing(monkeypatch, tmp_path):
     """[核心] タイムアウト検知(`timed_out`)の実装が見つからない場合、
     正しくFAILする。"""
-    _write_fixtures(tmp_path, aegis_text=VALID_AEGIS_TEXT.replace("timed_out", "something_else"))
+    _write_fixtures(tmp_path, orchestrator_text=VALID_ORCHESTRATOR_TEXT.replace("timed_out", "something_else"))
     _expect_fail(monkeypatch, tmp_path)
 
 
@@ -140,9 +140,9 @@ def test_fails_when_sandalphon_daemon_check_is_missing(monkeypatch, tmp_path):
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_ollama_loop_does_not_use_aegis_system(monkeypatch, tmp_path):
+def test_fails_when_ollama_loop_does_not_use_defense_orchestrator(monkeypatch, tmp_path):
     """[核心] 唯一の実運用ループ(`ollama_agent_loop.py`)が実際に
-    `AegisSystem`経由で検証していない場合、正しくFAILする。"""
+    `DefenseOrchestrator`経由で検証していない場合、正しくFAILする。"""
     _write_fixtures(tmp_path, ollama_text="def run(code):\n    exec(code)\n")
     _expect_fail(monkeypatch, tmp_path)
 

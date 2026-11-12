@@ -7,7 +7,7 @@ tests/test_audit_agent_template_integration.py
 (`src/openai_agent_loop.py`)が、「拡張用の雛形」と称しながら防壁を
 一つも統合しない張りぼてに戻されていないかを静的に検証する(思考統制
 監査)。具体的には、(A)存在しない死んだフォールバックimportが実行
-コードとして復活していないか、(B)runtime_guard.Sandbox/aegis_system.AegisSystem
+コードとして復活していないか、(B)runtime_guard.Sandbox/defense_orchestrator.DefenseOrchestrator
 が実際に統合され使用されているか、(C)enforce_maquina_seal(証明書
 ゲート)が維持されているか、を検証する。天使群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
@@ -31,11 +31,11 @@ VALID_TEMPLATE_TEXT = (
     "フォールバックimportが死んだコードパスだった(説明のみ、実コードではない)。\n"
     '"""\n'
     "from runtime_guard import Sandbox\n"
-    "from aegis_system import AegisSystem\n"
+    "from defense_orchestrator import DefenseOrchestrator\n"
     "\n"
     "class OpenAIAgentLoop:\n"
     "    def __init__(self):\n"
-    "        self.aegis = AegisSystem()\n"
+    "        self.defense = DefenseOrchestrator()\n"
     "\n"
     "    def enforce_maquina_seal(self):\n"
     "        pass\n"
@@ -45,7 +45,7 @@ VALID_TEMPLATE_TEXT = (
     "            pass\n"
     "\n"
     "    def run_task(self, code):\n"
-    "        self.aegis.execute_ai_intent(code)\n"
+    "        self.defense.execute_ai_intent(code)\n"
 )
 
 
@@ -66,7 +66,7 @@ def _expect_fail(monkeypatch, root):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、OpenAI拡張テンプレートが
-    死んだフォールバックimportを持たず、Sandbox/AegisSystemによる実
+    死んだフォールバックimportを持たず、Sandbox/DefenseOrchestratorによる実
     防壁統合を保っているため、本天使はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
@@ -126,10 +126,10 @@ def test_fails_when_sandbox_is_not_imported(monkeypatch, tmp_path):
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_aegis_system_is_not_imported(monkeypatch, tmp_path):
-    """[核心・B] aegis_system.AegisSystemがimportされていない場合、
+def test_fails_when_defense_orchestrator_is_not_imported(monkeypatch, tmp_path):
+    """[核心・B] defense_orchestrator.DefenseOrchestratorがimportされていない場合、
     正しくFAILする。"""
-    bad_text = VALID_TEMPLATE_TEXT.replace("from aegis_system import AegisSystem", "")
+    bad_text = VALID_TEMPLATE_TEXT.replace("from defense_orchestrator import DefenseOrchestrator", "")
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 
@@ -143,9 +143,9 @@ def test_fails_when_sandbox_context_is_not_actually_used(monkeypatch, tmp_path):
 
 
 def test_fails_when_execute_ai_intent_is_not_called(monkeypatch, tmp_path):
-    """[核心・B] run_taskがAegisSystem.execute_ai_intentによる事前検閲
+    """[核心・B] run_taskがDefenseOrchestrator.execute_ai_intentによる事前検閲
     を経由していない場合、正しくFAILする。"""
-    bad_text = VALID_TEMPLATE_TEXT.replace("self.aegis.execute_ai_intent(code)", "pass")
+    bad_text = VALID_TEMPLATE_TEXT.replace("self.defense.execute_ai_intent(code)", "pass")
     _write_fixture(tmp_path, text=bad_text)
     _expect_fail(monkeypatch, tmp_path)
 

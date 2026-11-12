@@ -155,7 +155,7 @@ _HARD_DENY_EVENTS = {
     "marshal.loads", "pickle.find_class"
 }
 
-# [脆弱性修正 2026-10 §BJ] `_michael_absolute_defense`の2(ソケット検査)・
+# [脆弱性修正 2026-10 §BJ] `_runtime_audit_hook`の2(ソケット検査)・
 # 4(デフォルト拒否)は、以下のイベント名を常に無条件で通過させる
 # (`pass`してこのブロック自体を`return`で抜ける)。これらは
 # `runtime_guard/raziel_ledger.json`(Razielの台帳、Armageddonの自己対戦が発見し
@@ -175,7 +175,7 @@ ALWAYS_PASSTHROUGH_AUDIT_EVENTS = frozenset({
     # [脆弱性修正 2026-11 §CT] "socket.getaddrinfo"は以前ここに含まれて
     # いたが、DNS解決そのものがデータ持ち出し経路になり得ることを実機で
     # 確認したため除外し、専用のallowed_hosts検査を新設した
-    # (`_michael_absolute_defense`の「1.5」参照、DEFECTS.md §CT参照)。
+    # (`_runtime_audit_hook`の「1.5」参照、DEFECTS.md §CT参照)。
     "socket.socket", "socket.__init__",
     # [脆弱性修正 2026-10 §CO追記] "socket.socket"/"socket.__init__"は、
     # このコメントが書かれた時点で想定していたイベント名だったと見られるが、
@@ -201,13 +201,13 @@ VALID_EVENT_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9
 # [脆弱性修正 2026-10] `adversarial_training/local_only_selfplay_gate.py`(旧名`tartarus/armageddon.py`、Lucifer vs Sefer自己対戦)が
 # 発見し、`tools/promote_ledger_seal.py`で人間が明示的に承認した新たな禁止
 # イベント(`runtime_guard/raziel_ledger.json`の`banned_events`)は、これまで
-# `_michael_absolute_defense`から一切読み込まれておらず、承認してもシステム
+# `_runtime_audit_hook`から一切読み込まれておらず、承認してもシステム
 # の実際の防御には何ら反映されない「学習したつもりになっているだけ」の状態
 # だった(`checks/audit_ledger_schema.py`はファイルのスキーマ検証のみで、実際に
 # 読み込まれ enforce されているかは検証していなかった)。
 #
 # [設計上の制約・安全性の確認] 本番の`runtime_guard/raziel_ledger.json`には既定で
-# "os.remove"・"os.rmdir"・"os.rename"・"socket.connect"のように、Michael
+# "os.remove"・"os.rmdir"・"os.rename"・"socket.connect"のように、AuditHook
 # が既に個別の条件付きチェック(allowed_dirs/allowed_hosts。下記の各`return`
 # 文)で扱っているイベント名が含まれている。これらを本関数の先頭で無条件の
 # 絶対拒否として扱うと、AI自身のjail_workspace配下での正当なファイル操作や、
@@ -249,7 +249,7 @@ def _load_dynamic_banned_events() -> frozenset:
 
 _hook_state = threading.local()
 
-def _michael_absolute_defense(event: str, args: tuple):
+def _runtime_audit_hook(event: str, args: tuple):
     if getattr(_hook_state, 'in_hook', False):
         return
 
@@ -465,11 +465,11 @@ def _load_dynamic_shield_rules() -> tuple:
     """
     [脆弱性修正 2026-10] `tools/promote_shield_seal.py`で人間が承認した
     外部脅威インテリジェンス(`shield_rules.json`の`blocked_modules`/
-    `blocked_functions`)は、これまでGabriel(`inquisition()`)から一切
+    `blocked_functions`)は、これまでScanSource(`scan_source()`)から一切
     読み込まれておらず、承認してもシステムの実際の検閲には何ら反映されない
     「学習したつもりになっているだけ」の状態だった(`checks/guard_shield_rule_autoapply_and_key_leak.py`
     は承認ワークフロー自体の構造検証のみで、実際にenforceされているかは
-    検証していなかった。`runtime_guard/raziel_ledger.json`がMichael側から一切
+    検証していなかった。`runtime_guard/raziel_ledger.json`がAuditHook側から一切
     読まれていなかった件と同種の欠陥。本ファイル内の対になる修正も参照)。
 
     [安全な適用方法] `blocked_functions`(例: "loads", "load", "Unpickler")を
@@ -511,7 +511,7 @@ def _load_dynamic_shield_rules() -> tuple:
     return modules, funcs
 
 
-def inquisition(source_code: str, context: dict = None) -> List[Finding]:
+def scan_source(source_code: str, context: dict = None) -> List[Finding]:
     findings: List[Finding] = []
     if not isinstance(source_code, str):
         return [Finding("GAB-001", "critical", 0, "Invalid input.")]
@@ -762,7 +762,7 @@ def _guarded_os_copy_file_range(src, dst, count, offset_src=None, offset_dst=Non
 # fd・接続は、起動後も検査を素通りする」という同じ前提openedバイパスの
 # 構造を見落としていた――実機で確認したところ、Sandbox起動**前**に
 # connect()しておいたソケットは、起動**後**に`.send()`/`.sendall()`で
-# データを送出しても、`_michael_absolute_defense`は一度も呼ばれず
+# データを送出しても、`_runtime_audit_hook`は一度も呼ばれず
 # (そもそも監査イベントが発火しないため)、無条件に成功した。これは
 # §CNのsendfileより影響が大きい――sendfileより遥かに一般的に使われる
 # 「ソケットへの通常のデータ送信」そのものが、無検査だったことになる。
@@ -771,7 +771,7 @@ def _guarded_os_copy_file_range(src, dst, count, offset_src=None, offset_dst=Non
 # 正当な用途が想定されない」として無条件拒否を選んだが、本件のsend/
 # sendallは**ソケット通信そのものの正規の手段**であり、Sandbox起動後に
 # 許可されたホスト(allowed_hosts)へ接続して送信する、という正当な
-# フローを壊してはならない。そのため、既存の`_michael_absolute_defense`
+# フローを壊してはならない。そのため、既存の`_runtime_audit_hook`
 # の「2. ソケット通信検査」が`connect`/`sendto`/`sendmsg`に対して行って
 # いるのと同じ方針――`getpeername()`で接続先ホストを解決し、
 # `allowed_hosts`ポリシーと照合する選別的な許可――を、ここでも採用する。
@@ -899,7 +899,7 @@ def _create_awaken():
         nonlocal _awakened
         if _awakened:
             return
-        sys.addaudithook(_michael_absolute_defense)
+        sys.addaudithook(_runtime_audit_hook)
         os.write = _guarded_os_write
         if _ORIG_OS_WRITEV:
             os.writev = _guarded_os_writev

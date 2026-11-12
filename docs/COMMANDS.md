@@ -53,7 +53,7 @@ python tools/promote_shield_seal.py --reject  "<vulnerability_name>"
 
 承認済みの `shield_rules.json` に対して、対象ファイルを静的に審問する。
 ```
-python src/kamael_judgment.py <対象ファイル>
+python src/verdict.py <対象ファイル>
 ```
 
 ## 🛡 絶対防壁の健全性証明（テストスイート）
@@ -71,7 +71,7 @@ python checks/guard_precommit_secret_leak.py
 ```
 
 ## 📊 防衛ダッシュボードの生成
-Armageddon Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`tartarus/akashic_records.json`)、Michaelが実際に
+Armageddon Engineの戦績(`adversarial_training/selfplay_history.json`、旧名`tartarus/akashic_records.json`)、AuditHookが実際に
 遮断したイベントの監査ログ(`runtime_guard/audit_chain.jsonl`)、現在の禁止イベント
 一覧、各種人間承認待ちキューの件数を、1枚の自己完結したHTMLにまとめて
 可視化する。外部ライブラリ・CDNへの依存なし(オフラインで閲覧可能)。
@@ -94,7 +94,7 @@ notepad runtime_guard/raziel_ledger.json
 ```
 
 ## 🤖 実運用エージェントループ（ローカルLLMにタスクを実行させる）
-`runtime_guard.Sandbox`・`AegisSystem`（Gabriel + IntentInterceptor + Sandalphon）・
+`runtime_guard.Sandbox`・`DefenseOrchestrator`（ScanSource + IntentInterceptor + Sandalphon）・
 `runtime_audit_gatekeeper`の全防御層を統合した参照実装。いずれも`jail_workspace/`
 内のみで動作する隔離デモタスクを同梱している。
 
@@ -126,14 +126,14 @@ agent.run_task("タスクの指示内容")
 
 ## 🌀 メタトロンの統括（完全自動化防衛ループ、`revelations/`へレポート出力）
 ラジエル(偵察)→サマエル(ローカルOllamaによる攻撃コード生成)→天使(Blue Team、
-Gabriel静的解析+Sandalphon動的隔離検証)→ガブリエル(Markdownレポート生成)の
+ScanSource静的解析+Sandalphon動的隔離検証)→ガブリエル(Markdownレポート生成)の
 一連を1サイクルとして自動実行する。実行には**Ollama**(デフォルトモデル`llama3.1`)
 と**Dockerデーモン**の両方が必要(Sandalphon層が実行前にコンテナ内で動的検証するため)。
 
 ```
 python src/metatron_orchestrator.py
 ```
-実行結果は`revelations/gabriel_revelation_<サイクルID>.md`に記録される。デフォルトは
+実行結果は`revelations/scan_source_revelation_<サイクルID>.md`に記録される。デフォルトは
 1サイクルのみ。複数サイクル回す場合はコード側で
 `MetatronOrchestrator().execute_holy_war(cycles=N)`を呼ぶ。
 

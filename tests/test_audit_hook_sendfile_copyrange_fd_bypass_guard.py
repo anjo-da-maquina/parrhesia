@@ -1,5 +1,5 @@
 """
-tests/test_michael_sendfile_copyrange_fd_bypass_guard.py
+tests/test_audit_hook_sendfile_copyrange_fd_bypass_guard.py
 =============================================
 [新設 2026-10 §CD] runtime_guard/__init__.py のfd事前オープンバイパス対策
 (os.write/os.pwrite/os.writev/os.pwritev のみをラップしていた)が、

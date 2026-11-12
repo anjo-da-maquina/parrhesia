@@ -80,9 +80,9 @@ def test_actual_removal_of_required_run_step_is_detected(guard_env):
 jobs:
   regression-checks-audit:
     steps:
-      - name: michael
+      - name: audit_hook
         run: python checks/guard_sandbox_core_attack_battery.py
-      - name: gabriel
+      - name: scan_source
         run: python checks/guard_precommit_secret_leak.py
 """)
     with pytest.raises(SystemExit) as exc_info:
@@ -97,9 +97,9 @@ def test_all_three_required_steps_present_passes(guard_env):
 jobs:
   regression-checks-audit:
     steps:
-      - name: michael
+      - name: audit_hook
         run: python checks/guard_sandbox_core_attack_battery.py
-      - name: gabriel
+      - name: scan_source
         run: python checks/guard_precommit_secret_leak.py
       - name: raziel
         run: python checks/audit_ledger_schema.py

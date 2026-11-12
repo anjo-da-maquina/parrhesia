@@ -12,27 +12,27 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 
 | 層 | 何を防ぐか | 検証方法 |
 | --- | --- | --- |
-| **Gabriel**(`runtime_guard.inquisition`) | AIが生成したコード片の、既知の危険パターン(difficult patterns)を静的AST解析で事前検知 | 単体テスト |
+| **ScanSource**(`runtime_guard.scan_source`) | AIが生成したコード片の、既知の危険パターン(difficult patterns)を静的AST解析で事前検知 | 単体テスト |
 | **IntentInterceptor** | ディレクトリトラバーサル・ハニーポット的な意図検知 | 単体テスト |
 | **Sefer / Sandbox** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(DEFECTS.md §CD・§CE等) |
 | **Maquina Gatekeeper** | Pythonレベルでのプロセス起動・ネットワーク通信の遮断(`subprocess`・`os.fork`・`socket`系APIの監視) | 単体テスト |
 | **Sandalphon**(Docker隔離結界) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、DEFECTS.md §CF〜§CL) |
 | **Angels**(~50体のCIチェック) | 上記すべての層が「後退していないか」を、pushごとに自動で再検証 | `.github/workflows/regression_checks_ci.yml`(GitHub Actions上で実行) |
 
-これらは単体で完結した機能ではなく、**AegisSystem(`src/aegis_system.py`)が1〜4層を統合し、既定で「Dockerによる動的検証を必ず経由させる」ゼロトラスト方針を強制する**ことで初めて、設計通りの保証になります。
+これらは単体で完結した機能ではなく、**DefenseOrchestrator(`src/defense_orchestrator.py`)が1〜4層を統合し、既定で「Dockerによる動的検証を必ず経由させる」ゼロトラスト方針を強制する**ことで初めて、設計通りの保証になります。
 
 ## 3. 本製品の保証が成立するために、利用者の環境が満たさなければならない前提
 
 ここが本ドキュメントの核心です。以下のいずれかが欠けると、上記「検証済み」の保証は成立しません。
 
 1. **Dockerデーモンが起動し、実際に到達可能であること。**
-   `AegisSystem`は既定(`require_docker_sandbox=True`)で、Dockerが使えない場合は**フェイルクローズド**(コードの実行を無条件に拒否)で設計されています――これは意図的な安全側の設計であり、「Dockerが無いから検証をスキップして実行してしまう」というフェイルオープンにはなりません(`src/aegis_system.py`のモジュールdocstring・`execute_ai_intent()`参照)。
+   `DefenseOrchestrator`は既定(`require_docker_sandbox=True`)で、Dockerが使えない場合は**フェイルクローズド**(コードの実行を無条件に拒否)で設計されています――これは意図的な安全側の設計であり、「Dockerが無いから検証をスキップして実行してしまう」というフェイルオープンにはなりません(`src/defense_orchestrator.py`のモジュールdocstring・`execute_ai_intent()`参照)。
    ただし、**`require_docker_sandbox=False`を明示的に渡すことは技術的に可能**です。これはテスト・デバッグ専用として明記されていますが、利用者が本番コードでこれを(理解せずに、あるいは「動かないから」という理由で)渡してしまえば、Sandalphon層の保証は丸ごと失われます。公開時には、この引数の意味を目立つ場所で警告する必要があります。
 
 2. **ホストのLinuxカーネルがseccomp/libseccompをサポートしていること、かつアーキテクチャがx86_64であること。**
    `src/docker_sandbox/seccomp-profile.json`(旧名`src/sandalphon/seccomp-profile.json`)の`architectures`は`SCMP_ARCH_X86_64`のみを宣言しています。実機検証(GitHub Actions・このセッションのサンドボックス)もすべてx86_64上でのみ行われています。**ARM系ホスト(Apple Silicon・AWS Graviton等)での動作・安全性は、この時点では未検証です。** Dockerが`--platform`指定なしでarm64版のベースイメージを自動的に取得した場合、このseccompプロファイルが正しく機能するか(あるいは安全側に失敗するか)は、実際にその環境で検証するまで断定できません。
 
-3. **呼び出し側が、実際にAIが生成したコードの実行経路を`AegisSystem.execute_ai_intent()` → `runtime_guard.Sandbox`の中に通していること。**
+3. **呼び出し側が、実際にAIが生成したコードの実行経路を`DefenseOrchestrator.execute_ai_intent()` → `runtime_guard.Sandbox`の中に通していること。**
    Parrhesiaは「AIがコードを実行する」という行為そのものを強制的に横取りする仕組みではありません。利用者が自分のエージェントループの中で、この経路を呼ばずに直接`exec()`や`subprocess`を呼んでしまえば、Parrhesiaの防御は一切適用されません。これは製品の欠陥ではなく、**ライブラリとして組み込む側の責任**です。
 
 4. **継続的な自動検証(Angels)は、GitHub Actions上での運用を前提にしています。**

@@ -4,7 +4,7 @@ src/futility_guard.py
 [新設 2026-10] 実機検証(ユーザーによる src/ollama_agent_loop.py の実行)で、
 ローカルLLMが存在しない架空のパスへの"read"を5ステップ連続で繰り返し、
 何も得られないまま上限ステップ数(max_steps)を使い切る挙動が実際に観測
-された。各ステップ単体は正常に完結しており(Gabriel/IntentInterceptor/
+された。各ステップ単体は正常に完結しており(ScanSource/IntentInterceptor/
 Sandalphon/Sandboxのいずれも異常なく処理を完了させている)、危険な操作
 でもないため、既存のどの防御層にも引っかからない。
 

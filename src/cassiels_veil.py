@@ -16,7 +16,7 @@ class CassielsVeil:
          実運用ループ(src/ollama_agent_loop.py等)が依存する、ローカル
          Ollamaサーバーへの通信(socket経由)まで一緒に遮断してしまい、
          システム自体が機能不能になる。
-      2. AI生成コードの動的実行は、既に`src/aegis_system.py`経由で
+      2. AI生成コードの動的実行は、既に`src/defense_orchestrator.py`経由で
          Dockerコンテナの`--network none`によってOSレベルで通信遮断
          されている(src/docker_sandbox_executor.py)。本クラスの手法は
          プロセス単体のパッチに過ぎず、Dockerのネットワーク名前空間

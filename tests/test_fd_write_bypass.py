@@ -1,5 +1,5 @@
 ﻿"""
-[脆弱性修正 2026-10] 回帰テスト: fd事前オープンによる Michael's Sword 回避。
+[脆弱性修正 2026-10] 回帰テスト: fd事前オープンによる AuditHook's Sword 回避。
 
 CPython の sys.addaudithook には os.write / os.pwrite / os.writev に
 対応する監査イベントが存在しないため、Sandbox コンテキストへ入る前に

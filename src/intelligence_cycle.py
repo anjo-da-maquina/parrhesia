@@ -7,7 +7,7 @@ src/intelligence_cycle.py
 
   1. `from angelic_evolution import EvolvingAngel` — インポートされてい
      たが、本ファイル内のどのクラス・関数からも一度も参照されていなかった
-     (`RazielIntelligence`はAegisSystemのみ、`SamaelWeaponization`は
+     (`RazielIntelligence`はDefenseOrchestratorのみ、`SamaelWeaponization`は
      CollarProtocolのみを使う)。`src/metatron_orchestrator.py`側が
      `EvolvingAngel`を独自に`angelic_evolution`から直接importしており、
      本ファイル経由での再importは最初から不要だった可能性が高い。
@@ -31,7 +31,7 @@ import ollama
 import time
 
 try:
-    from aegis_system import AegisSystem
+    from defense_orchestrator import DefenseOrchestrator
     from deadmans_switch import CollarProtocol
 except ModuleNotFoundError:
     print("[エラー] 必要な防壁モジュールが見つかりません。")
@@ -41,7 +41,7 @@ os.environ["ANJO_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
 
 class RazielIntelligence:
     def __init__(self):
-        self.aegis = AegisSystem()
+        self.defense = DefenseOrchestrator()
 
     def analyze_aidd_artifact(self):
         print("\n[ラジエルの目] 秘密の天使が、外部AIDD（生成AI）の成果物を解析中...")
@@ -61,7 +61,7 @@ class RazielIntelligence:
         report_target = "raziel_aidd_report.json"
         # [2026-10 修正] これは我々自身(Raziel)が生成した信頼済みの内部レポート
         # であり、AIが生成した未検証コードではない。したがって
-        # AegisSystem.execute_ai_intent()(Gabriel静的解析 + Sandalphon/Docker
+        # DefenseOrchestrator.execute_ai_intent()(ScanSource静的解析 + Sandalphon/Docker
         # 動的検証を含むAI生成コード審査パイプライン全体)を通す必要はない。
         # 修正前は固定文字列 "print('safe_recon_save')" をここに通していたが、
         # これは実質的に無意味な審査であるにもかかわらず、Dockerデーモンが
@@ -70,7 +70,7 @@ class RazielIntelligence:
         # (実機検証済み)。パスのジェイル越脱防止は secure_resolve 単体で
         # 十分であり、これは AI 生成コードではなく信頼済みの内部書き込みの
         # パス検証として適切な層である。
-        safe_path = self.aegis.jail.secure_resolve(report_target)
+        safe_path = self.defense.jail.secure_resolve(report_target)
         
         with open(safe_path, "w", encoding="utf-8") as f:
             json.dump(recon_data, f, ensure_ascii=False, indent=2)

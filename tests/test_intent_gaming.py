@@ -129,7 +129,7 @@ def interceptor():
     try:
         interceptor_instance.cleanse_phantom_prisons()
     except RuntimeError:
-        pass  # Sefer: Michael's Sword blocks os.remove, which is expected.
+        pass  # Sefer: AuditHook's Sword blocks os.remove, which is expected.
 
 def test_markdown_json_extraction(interceptor):
     """【新規】AIがMarkdownブロックでJSONを囲んで出力しても正しく抽出・評価されるか"""

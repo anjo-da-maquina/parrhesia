@@ -2,7 +2,7 @@
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _common import (
     report_pass, report_fail, report_info, run_code_against_runtime_guard,
-    inquisition_catches, load_json, sha256_of_dir, load_state, save_state,
+    scan_source_catches, load_json, sha256_of_dir, load_state, save_state,
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
@@ -13,10 +13,10 @@ NAME = "check_core_module_integration - 機能要件E2E監査: 重要モジュ�
 # 基本的な公開APIが期待通りに動作することをE2Eで検証する。
 def main():
     sys.path.insert(0, str(ROOT))
-    from runtime_guard import inquisition, Sandbox, LossOfAtaraxia
-    findings = inquisition("import os\nos.system('x')")
+    from runtime_guard import scan_source, Sandbox, LossOfAtaraxia
+    findings = scan_source("import os\nos.system('x')")
     if not findings:
-        report_fail(NAME, "inquisition()が既知の危険コードを検知できませんでした。")
+        report_fail(NAME, "scan_source()が既知の危険コードを検知できませんでした。")
 
     try:
         from anjo_interceptor.intent_checker import IntentInterceptor, SpecificationGamingDetected

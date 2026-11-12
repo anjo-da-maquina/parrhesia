@@ -5,9 +5,9 @@ import sys
 import re
 
 try:
-    from aegis_system import AegisSystem
+    from defense_orchestrator import DefenseOrchestrator
 except ModuleNotFoundError:
-    print("[エラー] AegisSystemが見つかりません。")
+    print("[エラー] DefenseOrchestratorが見つかりません。")
     sys.exit(1)
 
 # [脆弱性修正 2026-10 §BG] src/adversarial_evolution.py の §BB と全く同じバグが
@@ -24,7 +24,7 @@ from adversarial_evolution import execute_payload_under_sandbox
 
 class EvolvingAngel:
     def __init__(self):
-        self.aegis = AegisSystem()
+        self.defense = DefenseOrchestrator()
         self.dynamic_banned_patterns = set()
 
     def learn_threat(self, payload: str, max_retries=3):
@@ -70,11 +70,11 @@ class EvolvingAngel:
 
     def defend_and_execute(self, payload: str, target: str):
         """
-        [脆弱性修正 2026-10 §BG] 以前は`self.aegis.execute_ai_intent()`が例外
+        [脆弱性修正 2026-10 §BG] 以前は`self.defense.execute_ai_intent()`が例外
         を投げずに戻った時点で、呼び出し元(`src/metatron_orchestrator.py`の
         `execute_holy_war()`)に単に`True`を返していた。しかし
-        `execute_ai_intent()`自身のdocstring(`src/aegis_system.py`)が明記す
-        る通り、これはGabriel・IntentInterceptor・Dockerの隔離結界内での
+        `execute_ai_intent()`自身のdocstring(`src/defense_orchestrator.py`)が明記す
+        る通り、これはScanSource・IntentInterceptor・Dockerの隔離結界内での
         使い捨てドライランのみを行う*事前検閲*であり、実際のファイルI/O・
         コード実行は呼び出し側が`runtime_guard.Sandbox`の中で行う責務として明示的に
         残されている(src/adversarial_evolution.pyの§BBと全く同じ構造)。
@@ -83,8 +83,8 @@ class EvolvingAngel:
         ペイロードに対して、呼び出し元が無条件に「防壁を突破された(致命的
         敗北)」と断定していた。これは実際には、§BBで実機検証済みの
         `open(path, "w").write(...)`のようなペイロード(importも禁止関数名
-        も使わないため、Gabriel/IntentInterceptor/Dockerドライランのいずれ
-        も素通りする)に対し、本当はMichael(SandboxのOS監査フック)が確実に
+        も使わないため、ScanSource/IntentInterceptor/Dockerドライランのいずれ
+        も素通りする)に対し、本当はAuditHook(SandboxのOS監査フック)が確実に
         遮断するにもかかわらず、`src/metatron_orchestrator.py`の実運用防衛
         ループが「防壁突破」という偽の敗北を`revelations/`配下のレポートに
         記録し続けてしまう欠陥だった。§BBとは逆方向(偽の勝利ではなく偽の
@@ -92,7 +92,7 @@ class EvolvingAngel:
         同じバグの系統である。
 
         本修正では、事前検閲を通過した後、必ず`execute_payload_under_
-        sandbox()`で実際にSandbox配下で実行する。Michaelが遮断した場合は
+        sandbox()`で実際にSandbox配下で実行する。AuditHookが遮断した場合は
         `PermissionError`に包んで呼び出し元の既存の`except Exception`分岐
         (「迎撃成功」)に流す。
         """
@@ -102,12 +102,12 @@ class EvolvingAngel:
             if pattern in payload:
                 raise PermissionError(f"[進化型認知的防壁] 動的に学習した脅威パターン '{pattern}' を検知し、粉砕しました。")
 
-        self.aegis.execute_ai_intent(payload, target)
+        self.defense.execute_ai_intent(payload, target)
 
         try:
             execute_payload_under_sandbox(payload)
         except LossOfAtaraxia as e:
-            raise PermissionError(f"[進化型認知的防壁: Michaelの剣] Sandboxの監査フックが実行時に遮断しました: {e}")
+            raise PermissionError(f"[進化型認知的防壁: AuditHookの剣] Sandboxの監査フックが実行時に遮断しました: {e}")
 
         return True
 

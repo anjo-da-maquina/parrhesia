@@ -6,7 +6,7 @@ tests/test_check_equivalent_syntax_bypass.py
 §11.9フェーズF(ブロックリスト回避・等価構文迂回の一般化)。実際に
 `anjo_interceptor/intent_checker.py`で発見・修正した`import os.path`
 によるブロックリスト回避(§BW)を、リポジトリに存在する3つの
-ブロックリスト型AST静的解析器(Gabriel・IntentInterceptor・
+ブロックリスト型AST静的解析器(ScanSource・IntentInterceptor・
 CognitiveScanner)に対して継続的に再現・検証する天使の、自己レッド
 チームの結果を固定する。
 """
