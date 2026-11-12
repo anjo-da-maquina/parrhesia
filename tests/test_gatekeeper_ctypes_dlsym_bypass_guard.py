@@ -30,6 +30,7 @@ audit eventを発生させる)のいずれも、この`forbidden`集合とは一
 
 対応: `forbidden`集合に"ctypes.dlopen"・"ctypes.dlsym"を追加した。
 """
+import importlib.util
 import os
 import subprocess
 import sys
@@ -37,12 +38,19 @@ import tempfile
 
 import pytest
 
-_RSA_UNAVAILABLE_XFAIL = pytest.mark.xfail(
+# [設計修正 2026-11 §DA] このファイルのテストは、子プロセスとして
+# runtime_audit_gatekeeper.py をimportさせる。同モジュールは常に`import rsa`
+# を要求するため、rsa未インストールの環境では必ず失敗することが事前に
+# 分かっている(実行してみないと分からない偶発的な失敗ではない)。
+# xfail(strict=False)による後ろ向きの回避をやめ、rsaが無いと分かっている
+# 場合は最初からskipする設計に変更した。CI(rsaあり)では全件が素直に
+# passedになり、サンドボックスでは理由の明記されたskippedになる。
+_RSA_UNAVAILABLE_SKIP = pytest.mark.skipif(
+    importlib.util.find_spec("rsa") is None,
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "runtime_audit_gatekeeper.py imports it at module level inside the "
     "subprocess this test spawns; not a code defect, see GRIMOIRE.md known "
-    "environment gaps",
-    strict=False,
+    "environment gaps (§DA)",
 )
 
 
@@ -52,7 +60,7 @@ def _run(script: str) -> subprocess.CompletedProcess:
     return subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, env=env)
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_pythonapi_symbol_resolution_is_blocked_while_sealed():
     """[核心・実機で発見した脆弱性] 封鎖されている間、`ctypes.pythonapi`
     からのシンボル解決自体(専用audit event "ctypes.dlsym")が遮断され、
@@ -84,7 +92,7 @@ finally:
         assert os.path.exists(victim), "victim file was deleted despite the block"
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_fresh_cdll_dlopen_is_blocked_while_sealed():
     """[核心・実機で発見した脆弱性] 封鎖されている間、既にimport済みの
     `ctypes`から新たに`ctypes.CDLL(None)`でlibcハンドルを取得する操作
@@ -108,7 +116,7 @@ finally:
     assert res.returncode == 0, f"stdout={res.stdout}\nstderr={res.stderr}"
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_pythonapi_resolution_still_works_when_not_sealed():
     """[誤検知防止] 封鎖されていない間は、`ctypes.pythonapi`からの
     シンボル解決・呼び出しが引き続き正常に動作することを確認する。"""

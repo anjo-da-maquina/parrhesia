@@ -7,6 +7,7 @@ scan_staged_changes() を呼び出す。モックではなく実際のgitコマ�
 出力を解析する実装のため、実機でのgit diff出力形式への依存を
 実際に検証することが重要。
 """
+import os
 import subprocess
 import sys
 import tempfile
@@ -18,11 +19,31 @@ if str(TOOLS) not in sys.path:
     sys.path.insert(0, str(TOOLS))
 
 
+def _isolated_git_env() -> dict:
+    """[欠陥修正 2026-11 §CY] このテストが作る一時gitリポジトリは、実行者の
+    グローバル/システムのgit設定(例: `commit.gpgsign = true`)を無条件に
+    継承してしまい、`commit.gpgsign = true`を設定している第三者の環境では
+    `git commit`が署名鍵を要求して失敗する、という「テストがユーザーの
+    git設定に依存する」実在のバグがあった(このサンドボックスでも、署名用
+    シンボリックリンクが欠けた状態で同じ失敗が実際に再現した)。
+    `GIT_CONFIG_GLOBAL`/`GIT_CONFIG_SYSTEM`を空ファイルに向けることで、
+    このテストが使うgit呼び出し全体を実行者の設定から完全に隔離する。"""
+    env = dict(os.environ)
+    env["GIT_CONFIG_GLOBAL"] = os.devnull
+    env["GIT_CONFIG_SYSTEM"] = os.devnull
+    return env
+
+
 def _make_temp_git_repo() -> Path:
     d = Path(tempfile.mkdtemp())
-    subprocess.run(["git", "init", "-q"], cwd=str(d), check=True)
-    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=str(d), check=True)
-    subprocess.run(["git", "config", "user.name", "Test"], cwd=str(d), check=True)
+    env = _isolated_git_env()
+    subprocess.run(["git", "init", "-q"], cwd=str(d), check=True, env=env)
+    subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=str(d), check=True, env=env)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=str(d), check=True, env=env)
+    # 空の GIT_CONFIG_GLOBAL/SYSTEM で署名鍵要求自体を発生させなくするのに加え、
+    # リポジトリ自身のローカル設定でも明示的にcommit.gpgsignを無効化しておく
+    # (多重の防御。どちらか一方が将来変わっても壊れないようにする)。
+    subprocess.run(["git", "config", "commit.gpgsign", "false"], cwd=str(d), check=True, env=env)
     return d
 
 
@@ -47,7 +68,7 @@ def test_benign_staged_file_passes():
     repo = _make_temp_git_repo()
     try:
         (repo / "ok.py").write_text("print('hello world')\n", encoding="utf-8")
-        subprocess.run(["git", "add", "ok.py"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "ok.py"], cwd=str(repo), check=True, env=_isolated_git_env())
         res = _run_scan_in_repo(repo)
         assert res.returncode == 0, f"stdout={res.stdout} stderr={res.stderr}"
     finally:
@@ -61,7 +82,7 @@ def test_staged_aws_key_is_blocked():
         (repo / "config.py").write_text(
             "AWS_KEY = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'\n", encoding="utf-8"
         )
-        subprocess.run(["git", "add", "config.py"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "config.py"], cwd=str(repo), check=True, env=_isolated_git_env())
         res = _run_scan_in_repo(repo)
         assert res.returncode == 1, f"AWSキーらしきパターンが検知されませんでした。stdout={res.stdout} stderr={res.stderr}"
         assert "config.py" in res.stdout
@@ -77,7 +98,7 @@ def test_staged_private_key_pem_is_blocked():
             "-----BEGIN " + "RSA PRIVATE KEY" + "-----\nMIIBogIBAAJ...\n-----END " + "RSA PRIVATE KEY" + "-----\n",
             encoding="utf-8",
         )
-        subprocess.run(["git", "add", "key.pem"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "key.pem"], cwd=str(repo), check=True, env=_isolated_git_env())
         res = _run_scan_in_repo(repo)
         assert res.returncode == 1, f"PEM秘密鍵が検知されませんでした。stdout={res.stdout} stderr={res.stderr}"
     finally:
@@ -105,7 +126,7 @@ def test_tests_directory_fixture_is_not_blocked_but_same_content_elsewhere_still
         (repo / "tests" / "test_some_fixture.py").write_text(
             "AWS_KEY_LOOKALIKE = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'\n", encoding="utf-8"
         )
-        subprocess.run(["git", "add", "tests/test_some_fixture.py"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "tests/test_some_fixture.py"], cwd=str(repo), check=True, env=_isolated_git_env())
         res = _run_scan_in_repo(repo)
         assert res.returncode == 0, (
             f"tests/配下のテストフィクスチャが誤ってブロックされました。"
@@ -115,7 +136,7 @@ def test_tests_directory_fixture_is_not_blocked_but_same_content_elsewhere_still
         (repo / "config.py").write_text(
             "AWS_KEY_LOOKALIKE = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'\n", encoding="utf-8"
         )
-        subprocess.run(["git", "add", "config.py"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "config.py"], cwd=str(repo), check=True, env=_isolated_git_env())
         res2 = _run_scan_in_repo(repo)
         assert res2.returncode == 1, (
             "tests/配下を除外した結果、tests/配下でない全く同じ内容の本物の漏洩まで"
@@ -135,12 +156,12 @@ def test_preexisting_secret_in_unchanged_lines_is_not_reflagged():
     try:
         secret_file = repo / "legacy_secret.py"
         secret_file.write_text("AWS_KEY = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'\nVERSION = 1\n", encoding="utf-8")
-        subprocess.run(["git", "add", "legacy_secret.py"], cwd=str(repo), check=True)
-        subprocess.run(["git", "commit", "-q", "-m", "legacy commit with secret (pre-existing)"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "legacy_secret.py"], cwd=str(repo), check=True, env=_isolated_git_env())
+        subprocess.run(["git", "commit", "-q", "-m", "legacy commit with secret (pre-existing)"], cwd=str(repo), check=True, env=_isolated_git_env())
 
         # 秘密情報の行には触れず、無関係な行だけを変更してステージする
         secret_file.write_text("AWS_KEY = '" + "AKIA" + "ABCDEFGHIJKLMNOP" + "'\nVERSION = 2\n", encoding="utf-8")
-        subprocess.run(["git", "add", "legacy_secret.py"], cwd=str(repo), check=True)
+        subprocess.run(["git", "add", "legacy_secret.py"], cwd=str(repo), check=True, env=_isolated_git_env())
 
         res = _run_scan_in_repo(repo)
         assert res.returncode == 0, (

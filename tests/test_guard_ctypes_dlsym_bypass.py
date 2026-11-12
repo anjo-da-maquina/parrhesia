@@ -14,6 +14,7 @@ tests/test_guard_ctypes_dlsym_bypass.py
 は名前空間ごとのデフォルト拒否を既に備えており対象外であることも
 併せて検証する。
 """
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -22,16 +23,25 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "angels"))
 import guard_ctypes_dlsym_bypass as cdg
 
-_RSA_UNAVAILABLE_XFAIL = pytest.mark.xfail(
+# [設計修正 2026-11 §DA] このテストが呼ぶ cdg.run_battery() 等は、実際には
+# 子プロセスを起動して runtime_audit_gatekeeper.py を import させる。その
+# モジュールは常に `import rsa` を要求するため、rsa未インストールの環境
+# (このサンドボックス等)では必ず失敗する。これは「実行してみて初めて
+# わかる偶発的な失敗」ではなく、「rsaがあるかどうかで結果が完全に決まる、
+# 事前に分かっている前提条件」である。xfail(strict=False)で「失敗しても
+# CIを赤くしない」という後ろ向きの回避をするのではなく、rsaが無いことが
+# 分かっている場合は最初からskipすることで、CI(rsaあり)では全件が素直に
+# passedになり、サンドボックスでは理由の明記されたskippedになる。
+_RSA_UNAVAILABLE_SKIP = pytest.mark.skipif(
+    importlib.util.find_spec("rsa") is None,
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "runtime_audit_gatekeeper.py imports it at module level inside the "
     "subprocess this test spawns; not a code defect, see GRIMOIRE.md known "
-    "environment gaps",
-    strict=False,
+    "environment gaps (§DA)",
 )
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_real_repository_battery_passes():
     """[実機の裏付け] 修正後の実装が、全ての既知の状況を正しく処理する
     ことを確認する(§CEの修正の回帰防止)。"""
@@ -39,7 +49,7 @@ def test_real_repository_battery_passes():
     assert failures == [], f"検知に失敗した項目があります: {failures}"
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_main_reports_pass_on_real_repository():
     import io
     from contextlib import redirect_stdout
@@ -50,19 +60,19 @@ def test_main_reports_pass_on_real_repository():
     assert "✅ PASS" in buf.getvalue()
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_check_pythonapi_symbol_resolution_is_blocked_directly():
     success, detail = cdg._check_pythonapi_symbol_resolution_is_blocked()
     assert success is True, detail
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_check_fresh_cdll_dlopen_is_blocked_directly():
     success, detail = cdg._check_fresh_cdll_dlopen_is_blocked()
     assert success is True, detail
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_check_pythonapi_still_works_when_unsealed_directly():
     success, detail = cdg._check_pythonapi_still_works_when_unsealed()
     assert success is True, detail
@@ -73,7 +83,7 @@ def test_check_runtime_guard_already_protected_without_modification_directly():
     assert success is True, detail
 
 
-@_RSA_UNAVAILABLE_XFAIL
+@_RSA_UNAVAILABLE_SKIP
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CE修正前の、ctypes.dlopen/dlsym
     を一切検査しない実装に戻した場合、本天使が正しく「遮断されなかっ

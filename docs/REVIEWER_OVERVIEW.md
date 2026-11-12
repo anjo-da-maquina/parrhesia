@@ -2,29 +2,42 @@
 
 [トップに戻る](../README.md) | [English version](./REVIEWER_OVERVIEW.en.md)
 
-**この文書の立場について、最初に明示します。** 以下の記述には3種類あります。
-(1) GitHub Actions上の実際のCI実行ログから引用した、ネットワーク制限の無い環境での
-検証結果。(2) ユーザー自身のパソコン(Windows)で実際に実行した、実機での検証結果。
-(3) このドキュメントの作成に使っているサンドボックス環境自体では検証できていない
-内容(その都度、どれに当たるかを明記します)。「すべて実行して確認した」という
-一括した言い切りはしません。
+## 要約(3行)+ 自分で再現する
 
-## 0. 先に: このツールが検出できないこと(3行)
+**Parrhesia**は、AIコーディングエージェントが書いたコミットの**差分そのもの**から、
+「テストの削除」「スキップマーカーの追加」等5種類の具体的な「ズル」を検出するツール
+キットです。さらに自分自身の防御コードも同じ方法で監査し、これまでに105件の欠陥を
+発見・修正・記録してきました(§3)。この概要自体も、外部レビューの指摘を受けて
+2回書き直しています(§6の作業記録参照)。
+
+```bash
+git clone https://github.com/anjo-da-maquina/parrhesia.git && cd parrhesia
+python3 demo/build_and_audit_demo.py
+```
+ネットワーク接続も、終了後に残る状態も不要です。
+
+**この文書の立場について。** 以下の記述には3種類あります。(1) GitHub Actions上の
+実際のCI実行ログから引用した、ネットワーク制限の無い環境での検証結果。(2) ユーザー
+自身のパソコン(Windows)で実際に実行した、実機での検証結果。(3) このドキュメントの
+作成に使っているサンドボックス環境自体では検証できていない内容(その都度、どれに
+当たるかを明記します)。「すべて実行して確認した」という一括した言い切りはしません。
+
+## 0. このツールが検出できないこと(3行)
 
 - 文章上の主張(「全エッジケースを検証済み」等)が事実かどうかの判定(別モデル・
   人間レビューが必要な別の仕組み)。
 - 正当なコミットに対する誤検知率の、大規模サンプルでの実測(現状は陰性対照1件のみ)。
 - このツール自身の運用(証明書管理等)が、プロジェクトが掲げる原則を常に守っている
-  という保証。実際、1件の既知の矛盾があります(§2参照)。
+  という保証。実際、過去に1件の既知の矛盾を自分で見つけています(§2.1、現在は修正済み)。
 
 ## 1. 用語集(初見の読者向け)
 
 | このリポジトリでの呼び方 | 平易に言うと |
 | --- | --- |
 | **angels/**(天使) | 約55本のCIチェック。「過去に見つけた欠陥が再発していないか」を、push毎に機械的に再検証する回帰テスト群。 |
-| **GRIMOIRE.md** | 見つけた欠陥すべての生の記録(§A〜§CXの通し番号)。1件ごとに発見経緯・原因・修正・検証方法を書いた、エンジニアリング日誌。 |
+| **GRIMOIRE.md** | 見つけた欠陥すべての生の記録(§A〜§DAの通し番号)。1件ごとに発見経緯・原因・修正・検証方法を書いた、エンジニアリング日誌。 |
 | **Sanctuary / Sanctum** | AI生成コードを実行する際の、ファイルアクセス制限・ネットワーク遮断などの隔離機構(サンドボックス)の社内呼称。 |
-| **§A〜§CX** | GRIMOIRE.md内の個別の欠陥記録につけた通し番号(アルファベット式)。例: §AVは32番目、§CXは101番目の記録。 |
+| **§A〜§DA** | GRIMOIRE.md内の個別の欠陥記録につけた通し番号(アルファベット式、A=1・Z=26・AA=27・AZ=52・BA=53...)。例: §AVは48番目、§CXは102番目の記録。番号はこの集計スクリプトで自動検証している: [`tools/count_grimoire_entries.py`](../tools/count_grimoire_entries.py)。 |
 
 ## 2. このプロジェクトは何をするものか
 
@@ -41,27 +54,33 @@
 - 詳細: [README.md](../README.md) / [English README](../README.en.md)
 - 実際に動く再現デモとその結果: [docs/CASE_STUDY.md](./CASE_STUDY.md)
 
-### 2.1 既知の自己矛盾(隠さず記録しています)
+### 2.1 既知の自己矛盾を見つけ、実際に修正した実例
 
 このツールキットは「ゼロトラスト」を掲げていますが、証明書(`ataraxia_certificate.json`)
-を毎週自動更新する補助スクリプト(`tools/renew_certificate.ps1`/`.sh`)は、本来人間が
-帯外(別経路)で確認してから承認するはずの手順を、自動承認にすり替えてしまっています。
-実際に実行すると、信頼の起点(公開鍵)の指紋が実行ごとに入れ替わる様子がログに残ります。
+を毎週自動更新する補助スクリプト(`tools/renew_certificate.ps1`/`.sh`)が、本来人間が
+帯外(別経路)で確認してから承認するはずの手順を、当初は自動承認にすり替えてしまって
+いました。実際に実行すると、信頼の起点(公開鍵)の指紋が実行ごとに入れ替わる様子が
+ログに残っていました。
 
 これは隠すのではなく、**自分自身で見つけた欠陥として** [GRIMOIRE.md §CX](../GRIMOIRE.md)
-に記録し、[docs/BOUNDARY.md](./BOUNDARY.md)の既知の限界にも追記しました。恒久的な
-修正(帯外確認を自動化の外に残す、または単一デバイス限定を技術的に強制する)は、
-この文書を書いている時点では未着手です。評価者がこのツールの誠実さの一貫性を判断する
-上で、最も確認すべき点だと考え、冒頭近くに記載しています。
+に記録しました。その後、外部レビューから「発見・記録だけでなく、実際に修正まで進めれば
+一番強い証拠になる」という指摘を受け、`tools/promote_provisioning_seal.py`に
+`--check-rotation`(提案された鍵が、現在信頼されている鍵と同一か=単なる期限延長かを
+機械的に判定する機能)を新設し、同一の場合のみ自動承認・異なる場合(本物の鍵の入れ替え)
+は自動承認を停止して人間の帯外確認を必須のまま要求する設計に、実際に直しました
+([GRIMOIRE.md §CZ](../GRIMOIRE.md)、回帰テスト4件を新規追加)。発見から修正までの全経緯
+を隠さず両方のGRIMOIREエントリに残し、[docs/BOUNDARY.md](./BOUNDARY.md)にも反映しています。
 
 ## 3. どうやって欠陥を見つけ続けているか
 
 `angels/`以下のCIチェックが、過去に見つかった欠陥の再発を機械的に検知し続ける仕組みに
-なっています。GRIMOIRE.mdの記録は、実際に数えた結果、本稿執筆時点で**101件
-(§A〜§CX)**です(DEVLOG.mdの読み物版は81件時点のまま更新されておらず、その旨を
-DEVLOG.md側にも明記しました)。
+なっています。GRIMOIRE.mdの記録は、見出しを自動集計するスクリプト
+([`tools/count_grimoire_entries.py`](../tools/count_grimoire_entries.py)、手集計ではなく
+プログラムによる検証)で確認した結果、本稿執筆時点で**105件(§A〜§DA、欠番・重複なし)**
+です(DEVLOG.mdの読み物版は81件時点のまま更新されておらず、その旨をDEVLOG.md側にも
+明記しました)。
 
-101件を振り返ると、欠陥は大きく3パターンに分類できます:
+105件を振り返ると、欠陥は大きく3パターンに分類できます:
 
 1. **別の名前のAPIで同じ迂回ができる** — 例: `import os`だけを禁止していたコードが
    `import os.path`で回避できた。
@@ -84,26 +103,36 @@ DEVLOG.md側にも明記しました)。
 
 ### CI(ネットワーク制限なし)での結果
 
+<!-- CI-RESULT-PLACEHOLDER: 本節は、このレビュー対応一式をpushした直後の
+     real CI実行結果で更新する。手集計・推測の値は書かない。 -->
 ```
-commit:  f83a17a
-run:     Sanctuary CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43173405996
-結論:    success(失敗コメント0件)
-結果:    828 passed, 2 xfailed, 11 xpassed, 2 warnings in 43.59s
+commit:  (push後に実際のコミットハッシュへ更新)
+run:     (push後に実際のGitHub Actions実行URLへ更新)
+結論:    (push後に更新)
+結果:    (push後に更新)
 ```
 
-`xpassed`(xfail指定していたテストが実際に通った)が11件出るのは意図的な設計です。
-その11件は`rsa`という鍵生成ライブラリに依存するテスト(例:
-`tests/test_guard_ctypes_dlsym_bypass.py`・`tests/test_gatekeeper_ctypes_dlsym_bypass_guard.py`・
-`tests/test_thread_safety_maquina_seal.py`・`tests/test_openai_agent_loop_template.py`内の
-各1〜4件)で、この文書を作業しているサンドボックスはPyPIに接続できず`rsa`をインストール
-できないため、そちらでは`pytest.mark.xfail(strict=False)`付きで失敗を許容しています。
-CI(ネットワーク制限なし、`rsa`が実際に入る)では普通に通るため、`xpassed`として報告され、
-`strict=False`のためCIは赤くなりません。**この11件は「サンドボックスでは検証できないが、
-CI環境では実際に正しく動いている」という環境差の記録であり、「xpassedが多いほど良い」
-という意味ではありません**——第三者の環境でも`rsa`をインストールして実行すれば、この
-11件は通常の`passed`として扱われます。
+このセクションは、2026-10のレビュー対応で`xpassed`方式から`skipif`方式に設計を変更した
+ため、CIでは`rsa`依存のテストが`xpassed`としてではなく通常の`passed`として現れる
+はずです(§4.1参照)。実際の数値は、push後のCI実行で確認してから本節を更新します
+(確認前の推測は書きません)。
 
-残る`2 xfailed`は`rsa`とは無関係です: `tests/test_orchestrator.py::test_orchestrator_initialization`
+#### 4.1 設計変更: `xfail(strict=False)` → `skipif`
+
+以前は、`rsa`(鍵生成ライブラリ)に依存するテストについて、「rsaが無い環境では失敗
+してもCIを赤くしない」という`pytest.mark.xfail(strict=False)`を使っていました。この
+設計では、CI(`rsa`が実際にインストールされる環境)で該当テストが`xpassed`として
+11件報告され、「なぜ失敗が許容されているのか」という説明が常に必要になっていました。
+
+外部レビューの指摘を受け、「rsaがあるかどうかは実行前から分かっている前提条件であり、
+実行してみて初めて分かる偶発的な失敗ではない」という点を踏まえ、`pytest.mark.skipif`
+方式に変更しました([GRIMOIRE.md §DA](../GRIMOIRE.md))。これにより:
+- CI(`rsa`あり)では、該当テストは通常通り実行され、`passed`になります(`xpassed`という
+  特殊な状態ではなくなります)。
+- `rsa`が無い環境(このサンドボックス等)では、理由が明記された`skipped`になります。
+
+残る`2 xfailed`(`rsa`とは無関係)は変更していません:
+`tests/test_orchestrator.py::test_orchestrator_initialization`
 (理由: "Orchestrator API is pending implementation")と、
 `tests/test_sandbox.py::test_docker_sandbox_isolation`
 (理由: "DockerSandbox implementation is pending")——いずれも、該当API自体がまだ実装
@@ -117,29 +146,32 @@ CI環境では実際に正しく動いている」という環境差の記録で
 (実際に`python3 -m pytest`を実行し、exit code 4・0件実行を確認)。
 
 この問題は本レビューを受けて実際に修正しました(`tests/conftest.py`をtry/exceptで保護し、
-`rsa`に直接依存する数ファイルに`pytest.importorskip("rsa")`を追加)。修正後、同じ
-サンドボックスで再度実行した結果は以下の通りです(実際に実行して確認、推測ではありません):
+`rsa`に直接依存する数ファイルに`pytest.importorskip("rsa")`を追加)。その後、同じ
+レビューで指摘された2件の実欠陥(git署名設定への依存§CY、xfail→skipif設計§DA)も
+修正済みです。現在、同じサンドボックスで再度実行した結果は以下の通りです(実際に
+実行して確認、推測ではありません):
 
 ```
 $ python3 -m pytest -q
-825 passed, 1 failed, 1 skipped, 14 xfailed, 62 warnings in 28.26s
+830 passed, 11 skipped, 4 xfailed, 62 warnings in 27.18s
 ```
 
-- **1 failed**: `tests/test_pre_commit_secret_scan.py::test_preexisting_secret_in_unchanged_lines_is_not_reflagged`。
-  原因はコードの欠陥ではなく、このサンドボックス特有の既知の不具合(git署名用の
-  シンボリックリンク`/tmp/code-sign`が時々消える)で、git commitがこのテストの中でのみ
-  失敗するもの。実際に`/tmp/code-sign`が存在しないことを確認済み。
-- **1 skipped**: `tests/test_audit_hook_registration_fails_closed.py`(`rsa`依存、
-  明確な理由付きでスキップ)。
-- **14 xfailed**: `rsa`依存の既知の環境制約(大半)+ §CXとは別件の、本物の証明書期限切れ
-  に起因するもの1件。
+- **0 failed**: 以前観測されていた`test_preexisting_secret_in_unchanged_lines_is_not_reflagged`
+  の1件(git署名用シンボリックリンク`/tmp/code-sign`の欠落が原因)は、実行者のグローバル
+  git設定(`commit.gpgsign`)への依存そのものを取り除いたことで解消しました
+  ([GRIMOIRE.md §CY](../GRIMOIRE.md))。`commit.gpgsign = true`を設定した隔離済み環境を
+  実際に用意し、修正前は5件中4件が失敗し修正後は全件成功することを確認済みです。
+- **11 skipped**: `rsa`依存の既知の環境制約(§DAのskipif設計変更により、10件が
+  `xfailed`から移動)+ `tests/test_audit_hook_registration_fails_closed.py`の1件。
+- **4 xfailed**: §CXとは別件の、本物の証明書期限切れに起因するもの1件、`rsa`依存だが
+  サブプロセス判定の対象外のもの数件、および前述の2件(Orchestrator/DockerSandbox未実装)。
 
 ## 5. このプロジェクトを実際に動かしてきた人間とAIエージェントの作業プロセス
 
 このプロジェクトの開発は、人間(リポジトリ所有者)とClaude(Anthropic製のAIエージェント)
 が協働で行っています。署名コミット・CI実行の都度確認・過去の規約違反の正直な開示・
-証明書自動化スクリプトの実機デバッグ(3段階の修正サイクル)など、具体的な作業記録は
-別ファイルにまとめています。
+証明書自動化スクリプトの実機デバッグ(3段階の修正サイクル)・この概要文書自体への
+2回の赤入れ対応など、具体的な作業記録は別ファイルにまとめています。
 
 → [docs/worklog/ai-agent-notes.md](./worklog/ai-agent-notes.md)
 
@@ -150,10 +182,10 @@ $ python3 -m pytest -q
 | [README.md](../README.md) / [README.en.md](../README.en.md) | プロジェクト概要・使い方・脅威モデル・設計方針 |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | 実際に動くデモの再現手順と結果(5/5検出、初回は2/5だった失敗の記録も含む) |
 | [DEVLOG.md](../DEVLOG.md) | 81件時点の欠陥発見を読み物として再構成したもの(最新件数はGRIMOIRE.md参照) |
-| [GRIMOIRE.md](../GRIMOIRE.md) | §A〜§CX、101件の生の記録(最も詳細) |
+| [GRIMOIRE.md](../GRIMOIRE.md) | §A〜§DA、105件の生の記録(最も詳細) |
 | [docs/FAQ.md](./FAQ.md) | 差別化・制限事項などへのQ&A |
 | [docs/WHY.md](./WHY.md) | なぜAIエージェントを信頼せず監査するのか、という設計思想 |
-| [docs/BOUNDARY.md](./BOUNDARY.md) | このプロジェクトが「できること/できないこと」の境界線(§CXの既知の矛盾も記載) |
+| [docs/BOUNDARY.md](./BOUNDARY.md) | このプロジェクトが「できること/できないこと」の境界線(§CX/§CZの経緯も記載) |
 | [docs/worklog/ai-agent-notes.md](./worklog/ai-agent-notes.md) | AIエージェント自身の作業プロセスの詳細記録 |
 
 ## 7. 自分で再現する

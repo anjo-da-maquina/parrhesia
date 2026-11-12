@@ -42,6 +42,7 @@ test_provisioning_approval_flow.py)が必要とする`newkeys`/`sign`等も
 """
 import hashlib
 import os
+import subprocess
 import sys
 import threading
 import types
@@ -49,6 +50,23 @@ import types
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
+def _real_rsa_importable_in_fresh_subprocess() -> bool:
+    """[設計修正 2026-11 §DA] このファイル自身は、本物の`rsa`が無い環境
+    向けに疑似実装を`sys.modules["rsa"]`へ注入する(直後のブロック)ため、
+    `importlib.util.find_spec("rsa")`をこのプロセス内で直接呼ぶと、疑似
+    実装には`__spec__`が無く例外になるか、疑似実装の存在そのものに
+    紛らわされて正しく判定できない。`test_fork_then_exec_combo_is_unreachable_while_sealed`
+    は疑似実装の注入を経由しない**新しいサブプロセス**でrsaをimportする
+    ため、判定も同じ条件(新しいサブプロセスで本物のrsaがimportできるか)
+    で行う必要がある。"""
+    result = subprocess.run(
+        [sys.executable, "-c", "import rsa"],
+        capture_output=True,
+    )
+    return result.returncode == 0
+
 
 if "rsa" not in sys.modules:
     _fake_rsa = types.ModuleType("rsa")
@@ -277,12 +295,12 @@ def test_os_forkpty_is_blocked_while_sealed():
         mg.set_sanctuary_sealed(False)
 
 
-@pytest.mark.xfail(
+@pytest.mark.skipif(
+    not _real_rsa_importable_in_fresh_subprocess(),
     reason="rsa module unavailable in this sandbox (PyPI unreachable) — "
     "this test spawns a fresh subprocess that imports runtime_audit_gatekeeper "
-    "directly (no stub available there); not a code defect, see GRIMOIRE.md "
-    "known environment gaps",
-    strict=False,
+    "directly (no stub available there, unlike the rest of this file); not a "
+    "code defect, see GRIMOIRE.md known environment gaps (§DA)",
 )
 def test_fork_then_exec_combo_is_unreachable_while_sealed():
     """

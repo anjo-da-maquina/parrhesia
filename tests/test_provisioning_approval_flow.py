@@ -305,6 +305,141 @@ def test_list_pending_handles_no_open_items(tmp_path, monkeypatch, capsys):
     assert "承認待ちの提案はありません。" in out
 
 
+def test_check_rotation_reports_match_when_proposed_key_equals_current(tmp_path, monkeypatch):
+    """[欠陥修正 2026-11 §CX/§CZ] 無人の自動更新(tools/renew_certificate.ps1/.sh)が
+    『今回の提案は、現在信頼されている鍵の単純な期限延長(=同一鍵)か、それとも
+    信頼の起点そのものの入れ替え(ローテーション)か』を機械的に判定できることを
+    確認する。鍵が同一なら"MATCH"で、自動承認して安全であることが分かる。"""
+    import promote_provisioning_seal as pps
+
+    pending_file = tmp_path / "provisioning_pending.json"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
+
+    same_pem = "-----BEGIN RSA PUBLIC KEY-----\nSAMEKEYBOTHSIDES\n-----END RSA PUBLIC KEY-----"
+    gatekeeper_file.write_text(f'MAQUINA_PUBLIC_KEY_PEM = """{same_pem}"""\n', encoding="utf-8")
+    pending = [{
+        "payload": {"client_id": "renewing-client", "hardware_fingerprint": "FP", "valid_until": "2027-01-01T00:00:00Z"},
+        "public_key_pem": same_pem, "signature": "sig",
+        "requested_at": "2026-11-12T00:00:00Z", "status": "PENDING_HUMAN_REVIEW",
+    }]
+    pending_file.write_text(json.dumps(pending), encoding="utf-8")
+
+    monkeypatch.setattr(pps, "PENDING_PATH", pending_file)
+    monkeypatch.setattr(pps, "GATEKEEPER_PATH", gatekeeper_file)
+
+    status, proposed_fp, current_fp = pps.check_rotation("renewing-client")
+    assert status == "MATCH"
+    assert proposed_fp == current_fp
+
+
+def test_check_rotation_reports_rotation_when_proposed_key_differs_from_current(tmp_path, monkeypatch):
+    """[欠陥修正 2026-11 §CX/§CZ] 鍵が異なる(本物のローテーション)場合は
+    "ROTATION"を返し、無人の自動化がここを自動承認してはならないことを示す。
+    これが、GRIMOIRE.md §CXで発見した『自動化が人間の帯外確認を無効化していた』
+    欠陥に対する、実際の技術的な修正の核心部分である。"""
+    import promote_provisioning_seal as pps
+
+    pending_file = tmp_path / "provisioning_pending.json"
+    gatekeeper_file = tmp_path / "runtime_audit_gatekeeper.py"
+
+    current_pem = "-----BEGIN RSA PUBLIC KEY-----\nCURRENTLYTRUSTEDKEYDATA\n-----END RSA PUBLIC KEY-----"
+    proposed_pem = "-----BEGIN RSA PUBLIC KEY-----\nBRANDNEWDIFFERENTKEYDATA\n-----END RSA PUBLIC KEY-----"
+    gatekeeper_file.write_text(f'MAQUINA_PUBLIC_KEY_PEM = """{current_pem}"""\n', encoding="utf-8")
+    pending = [{
+        "payload": {"client_id": "rotating-client", "hardware_fingerprint": "FP", "valid_until": "2027-01-01T00:00:00Z"},
+        "public_key_pem": proposed_pem, "signature": "sig",
+        "requested_at": "2026-11-12T00:00:00Z", "status": "PENDING_HUMAN_REVIEW",
+    }]
+    pending_file.write_text(json.dumps(pending), encoding="utf-8")
+
+    monkeypatch.setattr(pps, "PENDING_PATH", pending_file)
+    monkeypatch.setattr(pps, "GATEKEEPER_PATH", gatekeeper_file)
+
+    status, proposed_fp, current_fp = pps.check_rotation("rotating-client")
+    assert status == "ROTATION"
+    assert proposed_fp != current_fp
+
+
+def test_check_rotation_reports_not_found_for_unknown_client(tmp_path, monkeypatch):
+    import promote_provisioning_seal as pps
+
+    pending_file = tmp_path / "provisioning_pending.json"
+    pending_file.write_text(json.dumps([]), encoding="utf-8")
+    monkeypatch.setattr(pps, "PENDING_PATH", pending_file)
+
+    status, proposed_fp, current_fp = pps.check_rotation("nobody")
+    assert status == "NOT_FOUND"
+    assert proposed_fp is None and current_fp is None
+
+
+def test_cli_check_rotation_exit_codes(tmp_path):
+    """[欠陥修正 2026-11 §CX/§CZ、実機CLI検証] `tools/renew_certificate.ps1`/`.sh`は
+    サブプロセスの終了コードだけを見て「自動承認してよいか」を判断する(呼び出し元
+    のシェル/PowerShellはPythonの戻り値を直接見られないため)。本テストは、実際の
+    `promote_provisioning_seal.py`を本物のサブプロセスとして`python3 ... --check-rotation`
+    で起動し、MATCH=0・ROTATION=2・NOT_FOUND=1という終了コードの契約が壊れていない
+    ことを、モックではなく実機のプロセス起動で確認する。
+
+    `PLEROMA_DIR = Path(__file__).parent.parent`(スクリプト自身の位置から相対的に
+    runtime_audit_gatekeeper.py・runtime_guard/provisioning_pending.jsonを探す設計)
+    を利用し、一時ディレクトリにtools/・runtime_guard/の同じ配置を複製することで、
+    実リポジトリの現在の状態(本物のpending.json・本物の信頼されている鍵)を
+    一切変更せずに検証する。"""
+    import shutil
+    import subprocess
+
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    src_script = os.path.join(repo_root, "tools", "promote_provisioning_seal.py")
+
+    fake_repo = tmp_path / "fake_repo"
+    (fake_repo / "tools").mkdir(parents=True)
+    (fake_repo / "runtime_guard").mkdir(parents=True)
+    shutil.copy(src_script, fake_repo / "tools" / "promote_provisioning_seal.py")
+
+    current_pem = "-----BEGIN RSA PUBLIC KEY-----\nCLIMATCHCASE\n-----END RSA PUBLIC KEY-----"
+    rotated_pem = "-----BEGIN RSA PUBLIC KEY-----\nCLIROTATIONCASE\n-----END RSA PUBLIC KEY-----"
+    (fake_repo / "runtime_audit_gatekeeper.py").write_text(
+        f'MAQUINA_PUBLIC_KEY_PEM = """{current_pem}"""\n', encoding="utf-8"
+    )
+
+    def _set_pending(client_id, pubkey_pem):
+        pending = [{
+            "payload": {"client_id": client_id, "hardware_fingerprint": "FP", "valid_until": "2027-01-01T00:00:00Z"},
+            "public_key_pem": pubkey_pem, "signature": "sig",
+            "requested_at": "2026-11-12T00:00:00Z", "status": "PENDING_HUMAN_REVIEW",
+        }]
+        (fake_repo / "runtime_guard" / "provisioning_pending.json").write_text(
+            json.dumps(pending), encoding="utf-8"
+        )
+
+    script = str(fake_repo / "tools" / "promote_provisioning_seal.py")
+
+    # MATCH: 同一鍵 → 終了コード0
+    _set_pending("match-client", current_pem)
+    res = subprocess.run(
+        [sys.executable, script, "--check-rotation", "match-client"],
+        capture_output=True, text=True,
+    )
+    assert res.returncode == 0, f"MATCHのはずが終了コード{res.returncode}。stdout={res.stdout} stderr={res.stderr}"
+    assert "MATCH" in res.stdout
+
+    # ROTATION: 異なる鍵 → 終了コード2
+    _set_pending("rotation-client", rotated_pem)
+    res = subprocess.run(
+        [sys.executable, script, "--check-rotation", "rotation-client"],
+        capture_output=True, text=True,
+    )
+    assert res.returncode == 2, f"ROTATIONのはずが終了コード{res.returncode}。stdout={res.stdout} stderr={res.stderr}"
+    assert "ROTATION" in res.stdout
+
+    # NOT_FOUND: 該当する提案が無い → 終了コード1
+    res = subprocess.run(
+        [sys.executable, script, "--check-rotation", "no-such-client"],
+        capture_output=True, text=True,
+    )
+    assert res.returncode == 1, f"NOT_FOUNDのはずが終了コード{res.returncode}。stdout={res.stdout} stderr={res.stderr}"
+
+
 def test_promote_provisioning_seal_reject_does_not_touch_gatekeeper(tmp_path, monkeypatch):
     import provisioning_agent as pa
     import promote_provisioning_seal as pps

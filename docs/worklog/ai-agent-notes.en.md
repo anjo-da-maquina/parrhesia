@@ -65,17 +65,24 @@ results. The cycle ended with the user's own machine showing the complete,
 real log — key proposal, review, approval, and certificate issuance — all the
 way through.
 
-The deeper design problem in this same automation — that it skips the human
-approval step it's supposed to rely on — is tracked separately as a disclosed
-defect in [GRIMOIRE.md §CX](../../GRIMOIRE.md).
+The deeper design problem this same automation originally had — that it
+skipped the human approval step it's supposed to rely on — was tracked as a
+disclosed defect in [GRIMOIRE.md §CX](../../GRIMOIRE.md) and has since actually
+been fixed, [GRIMOIRE.md §CZ](../../GRIMOIRE.md) (detailed in the second round
+of red-lining below).
 
-## Red-lining this document itself (incorporating reviewer feedback)
+## Red-lining this document itself (incorporating feedback from an external AI assistant, twice)
 
-This overview, including this file, was rewritten after receiving an actual
-reviewer's red-line comments. Specifically:
+This overview, including this file, was rewritten twice after receiving
+informal red-line feedback from an **external AI assistant (not an actual
+evaluator at a prospective employer)**. For a document whose whole selling
+point is honesty, misstating who the reviewer was would defeat the purpose, so
+this is stated plainly.
+
+### First round of fixes
 
 - The certificate-automation behavior, which looked inconsistent with the
-  project's "zero-trust" claim, was neither hidden nor glossed over — it is now
+  project's "zero-trust" claim, was neither hidden nor glossed over — it was
   recorded as a self-found defect, [GRIMOIRE.md §CX](../../GRIMOIRE.md).
 - A placeholder-looking CI run reference was replaced with a real URL, and the
   commit each number came from is now stated explicitly.
@@ -89,6 +96,40 @@ reviewer's red-line comments. Specifically:
   contradicted a later section disclosing sandbox-unverified work; the document
   now explicitly separates what was confirmed in CI from what was confirmed on
   the user's own machine.
+
+### Second round of fixes (after even more specific feedback)
+
+- **The defect numbering itself was actually wrong**: "§AV is the 32nd entry,
+  §CX is the 101st" turned out to be mis-counted — the real alphabetic
+  sequence number (A=1, Z=26, AA=27, ...) puts §AV at 48th and §CX at 102nd.
+  Hand-counting was dropped entirely in favor of quoting only the output of a
+  counting script
+  ([`tools/count_grimoire_entries.py`](../../tools/count_grimoire_entries.py)).
+- **Misstated reviewer identity**: this worklog had incorrectly said it
+  received "red-line comments from an actual evaluator"; corrected to
+  "informal feedback from an external AI assistant" (as stated at the top of
+  this section).
+- **The sandbox's one failing test turned out to be a general defect, not just
+  a sandbox quirk**: the failure attributed to a missing git-signing symlink
+  was actually caused by the test depending on the executor's global git
+  config (`commit.gpgsign`) — a real defect that would reproduce in any
+  third party's environment with that setting. This was actually reproduced
+  (4 of 5 tests failing in an isolated environment with
+  `commit.gpgsign = true`), fixed, and re-verified (all 5 passing)
+  ([GRIMOIRE.md §CY](../../GRIMOIRE.md)).
+- **The xpassed design itself was revisited, not just re-explained**: rather
+  than merely wording the 11 `xpassed` results more carefully, the design was
+  changed from `xfail(strict=False)` to `pytest.mark.skipif`, eliminating the
+  unnecessary `xpassed` state on CI altogether
+  ([GRIMOIRE.md §DA](../../GRIMOIRE.md)).
+- **The §CX contradiction was actually fixed, not just found**: the "cert
+  renewal bypasses human out-of-band confirmation" contradiction recorded in
+  §CX was fixed with a `--check-rotation` mechanism that auto-approves only
+  when the key is unchanged, and refuses to auto-approve a real rotation
+  ([GRIMOIRE.md §CZ](../../GRIMOIRE.md)).
+- **The document's structure was reorganized**: dropped the "what this cannot
+  detect"-first opening in favor of a 3-line summary ("what this tool does,
+  what it found") plus a reproduce-it-yourself command at the very top.
 
 This red-lining is recorded here too, rather than silently folded in, for the
 same reason as everything else in this document.

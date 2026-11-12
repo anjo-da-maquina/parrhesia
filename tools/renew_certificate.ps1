@@ -45,12 +45,32 @@ try {
     python tools\promote_provisioning_seal.py --list
 
     Write-Host ""
-    Write-Host "== 4/4: 承認して、新しい証明書を発行 =="
-    python tools\promote_provisioning_seal.py --approve $ClientId
+    Write-Host "== 4/4: 鍵のローテーションでないことを確認してから承認 =="
+    # [欠陥修正 2026-11 §CZ] 以前はここで無条件に --approve を呼んでおり、
+    # 「人間による帯外確認」を前提とする承認フロー(§BY)を無人の自動化が
+    # 素通りしてしまっていた(GRIMOIRE.md §CX)。--check-rotation で
+    # 「今回の提案は、現在信頼されている鍵と同一か(=単なる有効期限の延長)」
+    # だけを機械的に判定し、同一の場合のみ自動承認する。鍵そのものが変わる
+    # (本物のローテーション)場合は、ここで停止し、人間に手動承認を委ねる。
+    python tools\promote_provisioning_seal.py --check-rotation $ClientId
+    $RotationCheckExit = $LASTEXITCODE
 
-    Write-Host ""
-    Write-Host "完了しました。ataraxia_certificate.json が新しく発行されています。"
-    Write-Host "注意: 新しい証明書も発行から7日間しか有効ではありません(既定値)。"
+    if ($RotationCheckExit -eq 0) {
+        python tools\promote_provisioning_seal.py --approve $ClientId
+        Write-Host ""
+        Write-Host "完了しました。ataraxia_certificate.json が新しく発行されています。"
+        Write-Host "注意: 新しい証明書も発行から7日間しか有効ではありません(既定値)。"
+    } elseif ($RotationCheckExit -eq 2) {
+        Write-Host ""
+        Write-Host "[停止] 信頼の起点(公開鍵)が変わる提案です。安全のため自動承認を停止しました。"
+        Write-Host "上記の指紋を別経路(電話等)で確認したうえで、手動で次を実行してください:"
+        Write-Host "  python tools\promote_provisioning_seal.py --approve $ClientId"
+        exit 2
+    } else {
+        Write-Host ""
+        Write-Host "[エラー] 承認待ちの提案を確認できませんでした(終了コード $RotationCheckExit)。"
+        exit $RotationCheckExit
+    }
 }
 finally {
     try { Stop-Transcript | Out-Null } catch {}

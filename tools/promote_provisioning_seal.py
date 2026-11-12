@@ -123,6 +123,34 @@ def _find_pending(client_id):
     return pending, matches
 
 
+def check_rotation(client_id):
+    """[欠陥修正 2026-11 §CZ] 無人の自動更新(例: `tools/renew_certificate.ps1`/`.sh`)が
+    `--approve`を無条件に呼ぶと、`list_pending()`自身が明記している「信頼の起点を
+    別の鍵へ丸ごと入れ替える操作には、人間による帯外確認が必要」という前提を、
+    自動化が無視してしまう(§CX)。
+
+    本関数は、承認待ちの提案の公開鍵指紋が「現在信頼されている鍵の指紋と
+    同一か」だけを判定する。同一であれば、これは鍵のローテーションではなく
+    「同じ鍵のまま有効期限だけを延長する」操作であり、承認してもゼロトラスト
+    の前提(信頼の起点は人間が確認した単一の鍵のまま)を壊さない。一方、
+    指紋が異なる場合は本物のローテーションであり、無人の自動化がここを
+    無条件に通過することは許されない――人間が別経路で指紋を照合し、
+    手動で`--approve`を実行する必要がある。
+
+    戻り値: "MATCH"(同一鍵、自動承認して安全) / "ROTATION"(鍵が変わる、
+    自動承認してはならない) / "NOT_FOUND"(該当する提案が無い)。
+    """
+    pending, matches = _find_pending(client_id)
+    if not matches:
+        return "NOT_FOUND", None, None
+    entry = matches[-1]
+    proposed_fp = _pubkey_fingerprint(entry["public_key_pem"])
+    current_fp = _currently_trusted_fingerprint()
+    if proposed_fp == current_fp:
+        return "MATCH", proposed_fp, current_fp
+    return "ROTATION", proposed_fp, current_fp
+
+
 def approve(client_id):
     """
     [脆弱性修正 2026-10 §BK] 以前は同一client_idに複数の承認待ち提案が
@@ -193,11 +221,24 @@ def reject(client_id):
 
 
 if __name__ == "__main__":
+    import sys
+
     parser = argparse.ArgumentParser(description="Provisioning 承認プロモーションツール")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--list", action="store_true")
     group.add_argument("--approve", metavar="CLIENT_ID")
     group.add_argument("--reject", metavar="CLIENT_ID")
+    group.add_argument(
+        "--check-rotation",
+        metavar="CLIENT_ID",
+        help=(
+            "[§CX/§CZ対策] この提案が鍵のローテーション(信頼の起点の変更)かどうかを"
+            "判定だけ行い、何も変更しない。無人の自動更新スクリプトが、本当に安全な"
+            "場合(同一鍵の有効期限延長)だけ自動承認し、ローテーションの場合は"
+            "必ず人間の帯外確認に委ねるために使う。終了コード: 0=MATCH(自動承認可)、"
+            "2=ROTATION(自動承認してはならない)、1=NOT_FOUND。"
+        ),
+    )
     args = parser.parse_args()
 
     if args.list:
@@ -206,3 +247,23 @@ if __name__ == "__main__":
         approve(args.approve)
     elif args.reject:
         reject(args.reject)
+    elif args.check_rotation:
+        status, proposed_fp, current_fp = check_rotation(args.check_rotation)
+        if status == "NOT_FOUND":
+            print(f"[エラー] 承認待ちの提案に '{args.check_rotation}' は見つかりませんでした。")
+            sys.exit(1)
+        elif status == "MATCH":
+            print(f"[MATCH] 現在信頼されている鍵と同一です(指紋: {proposed_fp})。自動承認して問題ありません。")
+            sys.exit(0)
+        else:  # ROTATION
+            print(
+                "[ROTATION] 信頼の起点(公開鍵)がこれまでと異なります"
+                f"(現在: {current_fp} / 提案: {proposed_fp})。"
+            )
+            print(
+                "この承認は鍵のローテーションに相当するため、無人の自動化では承認できません。"
+                "提案元のデバイス操作者と、この指紋を別経路(電話等)で照合した上で、"
+                "人間が 'python tools/promote_provisioning_seal.py --approve "
+                f"{args.check_rotation}' を手動で実行してください。"
+            )
+            sys.exit(2)
