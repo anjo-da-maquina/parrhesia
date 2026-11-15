@@ -10,7 +10,7 @@ tests/test_guard_mmap_write_bypass.py
 完全に迂回して任意パスへ書き込めた。"mmap."を`monitored_namespaces`
 に含め、fd経由で解決した実体パスのみに基づいて判定する(access値は
 `prot=`/`flags=`方式では信頼できないため一切使わない)修正の、
-継続的な再検証を本天使が担う。自己レッドチームの結果(`git stash`で
+継続的な再検証を本検査が担う。自己レッドチームの結果(`git stash`で
 修正前の状態に戻すと正しくFAILし、復元すると正しくPASSすることを
 確認済み)を回帰テストとして固定する。
 """
@@ -62,7 +62,7 @@ def test_check_mmap_write_inside_allowed_dirs_is_not_falsely_blocked_directly():
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CB修正前の、"mmap.__new__"を
-    一切検査しない実装に戻した場合、本天使が正しく「遮断されなかった」
+    一切検査しない実装に戻した場合、本検査が正しく「遮断されなかった」
     として検知することを、実際に確認する。"""
     def _vulnerable_check():
         return False, "allowed_dirs外へのmmap書き込みが遮断されなかった(模擬)"

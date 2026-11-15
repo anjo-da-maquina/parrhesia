@@ -9,7 +9,7 @@ tests/test_guard_process_spawn.py
 集合に含めていたが、同じ目的を達成できる`os.fork()`は、専用の別の
 audit event"os.fork"を発火させるため、これらのいずれにも一致せず
 封鎖中でも完全に素通りしていた。forbidden集合に"os.fork"/"os.forkpty"
-を追加した修正の、継続的な再検証を本天使が担う。自己レッドチームの
+を追加した修正の、継続的な再検証を本検査が担う。自己レッドチームの
 結果(`git stash`で修正前の状態に戻すと正しくFAILし、復元すると正しく
 PASSすることを確認済み)を回帰テストとして固定する。
 """
@@ -48,7 +48,7 @@ def test_check_fork_is_allowed_when_unsealed_directly():
 
 
 def test_check_forkpty_is_blocked_while_sealed_directly():
-    """[新設 2026-11] 以前のコメントで正直に「os.forkpty()は本天使の
+    """[新設 2026-11] 以前のコメントで正直に「os.forkpty()は本検査の
     直接検証に含めていない」と記していた課題を解消する。os.fork()とは
     別のaudit eventを発火する別の具体的APIが、実際に同じ修正で遮断
     されることを直接確認する。"""
@@ -64,7 +64,7 @@ def test_check_forkpty_is_allowed_when_unsealed_directly():
 def test_battery_detects_reintroduced_forkpty_regression(monkeypatch):
     """[核心・自己レッドチームの固定・2026-11] `runtime_audit_gatekeeper.py`の
     `forbidden`集合から"os.forkpty"が(将来の変更で)再び外れた場合、
-    本天使が正しく「遮断されなかった」として検知することを、実際に
+    本検査が正しく「遮断されなかった」として検知することを、実際に
     `forbidden`集合からこのエントリを一時的に取り除いて再現して確認済み
     (取り除いた状態では本テストと同じ失敗を実機で確認し、復元すると
     PASSに戻ることを確認した)。"""
@@ -85,7 +85,7 @@ def test_battery_detects_reintroduced_forkpty_regression(monkeypatch):
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CC修正前の、"os.fork"を一度も
-    検査しない実装に戻した場合、本天使が正しく「遮断されなかった」
+    検査しない実装に戻した場合、本検査が正しく「遮断されなかった」
     として検知することを、実際に確認する。"""
     def _vulnerable_check():
         return False, "封鎖中にos.fork()によるプロセス生成が遮断されなかった(模擬)"
