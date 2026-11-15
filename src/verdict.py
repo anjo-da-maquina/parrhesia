@@ -55,15 +55,15 @@ class ShieldRuleScanner(ast.NodeVisitor):
     def visit_Import(self, node):
         for alias in node.names:
             if alias.name in self.rules.get("blocked_modules", []):
-                self.violations.append(f"異端モジュール '{alias.name}' のインポート (行: {node.lineno})")
+                self.violations.append(f"禁止モジュール '{alias.name}' のインポート (行: {node.lineno})")
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
         if node.module in self.rules.get("blocked_modules", []):
-            self.violations.append(f"異端モジュール '{node.module}' からのインポート (行: {node.lineno})")
+            self.violations.append(f"禁止モジュール '{node.module}' からのインポート (行: {node.lineno})")
         for alias in node.names:
             if alias.name in self.rules.get("blocked_functions", []):
-                self.violations.append(f"異端関数 '{alias.name}' の直接インポート (行: {node.lineno})")
+                self.violations.append(f"禁止関数 '{alias.name}' の直接インポート (行: {node.lineno})")
         self.generic_visit(node)
 
     def visit_Call(self, node):
@@ -72,10 +72,10 @@ class ShieldRuleScanner(ast.NodeVisitor):
 
         if isinstance(node.func, ast.Name):
             if node.func.id in blocked_functions:
-                self.violations.append(f"異端関数 '{node.func.id}' の実行呼び出し (行: {node.lineno})")
+                self.violations.append(f"禁止関数 '{node.func.id}' の実行呼び出し (行: {node.lineno})")
         elif isinstance(node.func, ast.Attribute):
             if node.func.attr in blocked_functions:
-                self.violations.append(f"異端属性/メソッド '{node.func.attr}' の呼び出し (行: {node.lineno})")
+                self.violations.append(f"禁止属性/メソッド '{node.func.attr}' の呼び出し (行: {node.lineno})")
 
         # [2026-10] 完全修飾名(例: "os.system")での照合を追加。
         # バレ名照合と重複する場合は二重報告を避ける。
@@ -83,7 +83,7 @@ class ShieldRuleScanner(ast.NodeVisitor):
             node.func.id if isinstance(node.func, ast.Name) else None,
             node.func.attr if isinstance(node.func, ast.Attribute) else None,
         ):
-            self.violations.append(f"異端関数 '{qualified_name}' の実行呼び出し (行: {node.lineno})")
+            self.violations.append(f"禁止関数 '{qualified_name}' の実行呼び出し (行: {node.lineno})")
 
         self.generic_visit(node)
 
@@ -92,7 +92,7 @@ def execute_judgment(target_file) -> bool:
     """対象ファイルを審査する。戻り値は「潔白(違反なし)であればTrue」。
 
     [脆弱性修正 2026-10] 以前の実装は、違反を検知した場合でも
-    「実行は不可能です。カマエルが対象を破棄します。」という、実際には
+    「実行は不可能です。対象を破棄します。」という、実際には
     何も強制していない(sys.exit()もraiseもファイル削除も行わない)
     メッセージを表示するだけだった。CLIとして呼び出した場合の終了コードは
     違反の有無にかかわらず常に0(成功)であり、本スクリプトの呼び出し元が
@@ -111,7 +111,7 @@ def execute_judgment(target_file) -> bool:
     フローを設けるべきであり、既存の表示文言を達成するためだけに
     安易にファイル削除を追加することはしない)。
     """
-    print(f"=== [能天使カマエルの異端審問] '{target_file}' を解剖する ===")
+    print(f"=== [審査] '{target_file}' を解剖する ===")
     rules_file = Path("shield_rules.json")
     if not rules_file.exists():
         print("\n[判決: 審査不能] shield_rules.json が見つかりません。")
@@ -129,10 +129,10 @@ def execute_judgment(target_file) -> bool:
         scanner.visit(tree)
 
         if scanner.violations:
-            print("\n[判決: 異端検知] 以下の致命的な防壁ルール違反が見つかりました:")
+            print("\n[判決: 違反検知] 以下の致命的な防壁ルール違反が見つかりました:")
             for v in scanner.violations:
                 print(f"  - {v}")
-            print("\n=> [結果: 異端確定] このファイルは防壁ルールに違反しています。")
+            print("\n=> [結果: 違反確定] このファイルは防壁ルールに違反しています。")
             return False
         else:
             print("\n[判決: 潔白] 違反は見つかりませんでした。")
