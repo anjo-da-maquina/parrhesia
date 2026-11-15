@@ -33,7 +33,7 @@ def main():
         if IS_UNVERIFIED_CLOUD:
             report_pass(NAME, f"未承認クラウド環境のため証明書失効は想定内の正常状態です（{valid_until_str}に失効）。")
             return
-        report_fail(NAME, f"証明書の有効期限が既に切れています({valid_until_str})。鍵の更新(Shamir's Seal)が必要です。")
+        report_fail(NAME, f"証明書の有効期限が既に切れています({valid_until_str})。鍵の更新が必要です。")
 
     if remaining_days < WARN_DAYS:
         report_info(NAME, f"⚠️ 証明書の残り有効期間が{remaining_days:.1f}日です。更新を推奨します。")
