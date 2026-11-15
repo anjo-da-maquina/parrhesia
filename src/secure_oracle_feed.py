@@ -83,7 +83,7 @@ class EconomicDefenseLimiter:
 class SecureOracleFeed:
     def __init__(self):
         self.defense = DefenseOrchestrator()
-        self.angel = OllamaSelfplayRound()
+        self.ollama_round = OllamaSelfplayRound()
         self.limiter = EconomicDefenseLimiter()
         
         # 【法則1: APIキーの物理的隔離と窃取防止】
@@ -154,12 +154,12 @@ class SecureOracleFeed:
             print("=> [怪物] 猛毒を消化し、新兵器を吐き出しました。")
             
             # 【法則4: 絶対的ゲートキーパーの維持】
-            # 天使による解析と、parrhesia-seal による最終的な空間隔離・環境証明の判定
-            self.angel.defend_and_execute(payload_content, "toxic_weapon.py")
+            # Blue Teamによる解析と、parrhesia-seal による最終的な空間隔離・環境証明の判定
+            self.ollama_round.defend_and_execute(payload_content, "toxic_weapon.py")
             print("\n=> [警告] 新兵器が要塞に持ち込まれました！")
             
         except Exception as e:
-            print(f"\n=> [絶対防壁・天使の同化完了] {e}")
+            print(f"\n=> [絶対防壁・検証完了] {e}")
             print("=> [戦果] 外界の猛毒（データポイズニング）を受け入れながらも、絶対防壁により被害を封じ込め、安全に免疫化しました。")
             print("APIキーは窃取されず、システムリソースも保護されています。要塞の完全性は保たれました。")
 

@@ -9,7 +9,7 @@ try:
     from intelligence_cycle import ThreatIntelGatherer, PayloadWeaponization
     from ollama_selfplay_round import OllamaSelfplayRound
 except ModuleNotFoundError as e:
-    print(f"[エラー] 必要な天使モジュールが見つかりません: {e}")
+    print(f"[エラー] 必要なモジュールが見つかりません: {e}")
     sys.exit(1)
 
 # [脆弱性修正 2026-10 §AW] 以前はここで `from network_block_demo import NetworkBlockDemo`
@@ -36,7 +36,7 @@ except ModuleNotFoundError as e:
 
 class SelfplayReportGenerator:
     def generate_report(self, cycle_id, intel, payload, defense_result):
-        print("\n[ガブリエル] 攻防の記録を編纂し、神託（レポート）を作成中...")
+        print("\n[SelfplayReportGenerator] 攻防の記録を編纂し、レポートを作成中...")
         report_dir = Path("reports")
         report_dir.mkdir(exist_ok=True)
         report_path = report_dir / f"scan_source_revelation_{cycle_id}.md"
@@ -51,50 +51,50 @@ class SelfplayReportGenerator:
         report_content = f"""# 🛡️ Parrhesia 統合防衛レポート (Cycle: {cycle_id})
 *生成日時: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 
-## 👁️ ラジエルの偵察 (Intelligence)
+## 👁️ ThreatIntelGathererの偵察 (Intelligence)
 外部システム(AIDD)から以下の脆弱性情報を抽出しました。
 {intel_formatted}
 
-## 🐍 サマエルの毒牙 (Weaponization)
-報告書を喰らった怪物が生成した難読化ペイロード（抜粋）:
+## 🐍 PayloadWeaponizationの生成物 (Weaponization)
+脆弱性情報から生成された難読化ペイロード（抜粋）:
 {payload[:300]}...
 
-## ⚔️ 天使の防壁 (Defense & Evolution)
-認知的防壁（ASTスキャン）とDockerの隔離結界（通信遮断・動的検証）、そして絶対的護符である parrhesia-seal の監視下で行われた迎撃結果:
+## ⚔️ Blue Teamの防壁 (Defense & Evolution)
+認知的防壁（ASTスキャン）とDockerの隔離結界（通信遮断・動的検証）、そして parrhesia-seal の監視下で行われた迎撃結果:
 **戦果:** {defense_result}
 """
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(report_content)
-        print(f"=> [ガブリエル] 啓示の書を '{report_path}' に記録しました。")
+        print(f"=> [SelfplayReportGenerator] レポートを '{report_path}' に記録しました。")
 
 class SelfplayOrchestrator:
     def __init__(self):
         self.threat_intel = ThreatIntelGatherer()
         self.weaponization = PayloadWeaponization()
-        self.angel = OllamaSelfplayRound()
+        self.ollama_round = OllamaSelfplayRound()
         self.scan_source = SelfplayReportGenerator()
 
     def run_selfplay_cycles(self, cycles=1):
-        print("=== [Parrhesia] メタトロンの統括（完全自動化防衛ループ） ===")
-        print("[システム] 神の代理人が要塞の全機能を掌握しました。これより自律進化を開始します。\n")
+        print("=== [Parrhesia] SelfplayOrchestratorの統括（完全自動化防衛ループ） ===")
+        print("[システム] SelfplayOrchestratorが要塞の全機能を掌握しました。これより自律進化を開始します。\n")
         
         for i in range(1, cycles + 1):
             cycle_id = f"{i:03d}"
-            print(f"--- [メタトロン] 進化サイクル 第 {cycle_id} 階層 ---")
+            print(f"--- [SelfplayOrchestrator] 進化サイクル 第 {cycle_id} 階層 ---")
             
             intel = self.threat_intel.analyze_aidd_artifact()
             
             try:
                 payload = self.weaponization.craft_poison(intel)
             except Exception as e:
-                print(f"[システムエラー] サマエルの崩壊: {e}")
+                print(f"[システムエラー] PayloadWeaponizationの失敗: {e}")
                 continue
             
             defense_result = ""
             try:
-                print("\n[メタトロン] サマエルの毒を天使(Blue Team)に解剖させます...")
-                self.angel.defend_and_execute(payload, f"selfplay_strike_{cycle_id}.py")
-                defense_result = "❌ 致命的敗北: サマエルの毒が防壁を突破しました。"
+                print("\n[SelfplayOrchestrator] 生成ペイロードをBlue Teamに解析させます...")
+                self.ollama_round.defend_and_execute(payload, f"selfplay_strike_{cycle_id}.py")
+                defense_result = "❌ 致命的敗北: 生成ペイロードが防壁を突破しました。"
                 print(f"=> {defense_result}")
             except Exception as e:
                 defense_result = f"✅ 迎撃成功: {e}"
