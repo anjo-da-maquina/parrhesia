@@ -1,5 +1,5 @@
 """
-[脆弱性修正 2026-10 §BC] 「天使(checks/*.py)の配線漏れ」の回帰テスト。
+[脆弱性修正 2026-10 §BC] 「検査(checks/*.py)の配線漏れ」の回帰テスト。
 
 `checks/audit_package_boundary_isolation.py`は、「ライセンス証明書機構(runtime_audit_gatekeeper)
 の公開配布からの分離」を静的に検証する正しいロジックを持つスクリプトとして
@@ -10,7 +10,7 @@
 を確認した。
 
 本テストは、この特定のファイルだけでなく、`checks/`配下の全スクリプトに対して
-同じ検証を行う汎用的な回帰テストである。これにより、将来誰かが新しい天使
+同じ検証を行う汎用的な回帰テストである。これにより、将来誰かが新しい検査
 スクリプトを追加した際に、CIへの配線を忘れても機械的に検知できる。
 """
 import sys
@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ANGELS_DIR = REPO_ROOT / "checks"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 
-# _common.py は他の天使スクリプトから import される共有ヘルパーであり、
+# _common.py は他の検査スクリプトから import される共有ヘルパーであり、
 # それ自体がCIのrun:ステップとして単独実行されることは想定されていない。
 _NOT_STANDALONE_STEPS = {"_common.py"}
 
@@ -43,7 +43,7 @@ def _is_literal_always_false(if_value) -> bool:
     return s.lower() in {"false", "0", ""}
 
 
-def _collect_referenced_angel_scripts() -> set:
+def _collect_referenced_check_scripts() -> set:
     """全ワークフローファイルのrun:ステップの文字列を構造的に解析し、
     "checks/<ファイル名>.py" という形で実際に実行されているスクリプト名
     の集合を返す。
@@ -51,7 +51,7 @@ def _collect_referenced_angel_scripts() -> set:
     [脆弱性修正 2026-10 §BU] 以前は、ステップの`if:`条件を一切見ずに
     `run:`文字列に"checks/<ファイル名>.py"が含まれているかだけで判定して
     いたため、ステップに`if: false`(常に偽になる条件)を追加するだけで、
-    当該の天使をCI上で実質的に無効化できるにもかかわらず、本テストは
+    当該の検査をCI上で実質的に無効化できるにもかかわらず、本テストは
     「配線済み」と誤って判定し続けてしまう(実機で実際に再現して確認した
     自己言及的な欠陥)という欠陥があった。常に偽になる`if:`条件を持つ
     ステップは「配線されている」とみなさないよう修正する。"""
@@ -71,7 +71,7 @@ def _collect_referenced_angel_scripts() -> set:
     return referenced
 
 
-def test_every_angels_script_is_referenced_by_some_ci_workflow():
+def test_every_check_script_is_referenced_by_some_ci_workflow():
     """[修正の核心] checks/*.pyの各スクリプトが、いずれかのワークフロー
     ファイルのrun:ステップから実際にpython checks/<name>.pyとして実行
     されていることを確認する(コメントや他のキーに名前が残っているだけ
@@ -80,7 +80,7 @@ def test_every_angels_script_is_referenced_by_some_ci_workflow():
         p.name for p in ANGELS_DIR.glob("*.py")
         if p.name not in _NOT_STANDALONE_STEPS
     }
-    referenced = _collect_referenced_angel_scripts()
+    referenced = _collect_referenced_check_scripts()
     missing = sorted(all_scripts - referenced)
     assert missing == [], (
         f"CIワークフローのどのrun:ステップからも呼び出されていない"
@@ -92,15 +92,15 @@ def test_audit_package_boundary_isolation_is_specifically_wired_in():
     """[回帰防止・具体例] 本件で実際に見つかった欠落ファイルを名指しで
     固定する。将来この特定のファイルが再び外れた場合にも、上の汎用テスト
     だけでなくここでも検知できるようにする。"""
-    referenced = _collect_referenced_angel_scripts()
+    referenced = _collect_referenced_check_scripts()
     assert "audit_package_boundary_isolation.py" in referenced
 
 
 def test_step_disabled_via_literal_if_false_is_not_counted_as_wired(monkeypatch, tmp_path):
     """[核心・§BU・実機で再現して発見した自己言及的な欠陥] CIワークフロー
-    上のある天使のステップに`if: false`を追加するだけで、本来CI上で
+    上のある検査のステップに`if: false`を追加するだけで、本来CI上で
     実行されなくなる(=実質的に無効化される)にもかかわらず、修正前の
-    `_collect_referenced_angel_scripts()`は`run:`文字列に名前が残っている
+    `_collect_referenced_check_scripts()`は`run:`文字列に名前が残っている
     ことだけを見て「配線済み」と誤判定し続けていた。これは監査システム
     自身(本テスト)に対する最も単純な無効化攻撃であり、実際にリポジトリの
     ワークフローファイルを複製して`if: false`を注入し、再現して確認した
@@ -119,7 +119,7 @@ def test_step_disabled_via_literal_if_false_is_not_counted_as_wired(monkeypatch,
         encoding="utf-8",
     )
     monkeypatch.setattr(self_mod, "WORKFLOWS_DIR", wf_dir)
-    referenced = self_mod._collect_referenced_angel_scripts()
+    referenced = self_mod._collect_referenced_check_scripts()
     assert "check_log_flush_before_exit.py" not in referenced, (
         "if: false で無効化されたステップが、配線済みとして誤って検知されている。"
     )
@@ -143,5 +143,5 @@ def test_step_with_normal_condition_is_still_counted_as_wired(monkeypatch, tmp_p
         encoding="utf-8",
     )
     monkeypatch.setattr(self_mod, "WORKFLOWS_DIR", wf_dir)
-    referenced = self_mod._collect_referenced_angel_scripts()
+    referenced = self_mod._collect_referenced_check_scripts()
     assert "check_log_flush_before_exit.py" in referenced
