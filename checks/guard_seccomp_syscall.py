@@ -33,7 +33,7 @@ NAME = "guard_seccomp_syscall - システムコール監査: seccomp-profile.jso
 # 行い、真の default-deny 方式(allowlist)へ移行することを、正直な
 # 未着手の課題として残す。
 #
-# 本天使は3段階の検証を行う: (A) プロファイルJSON自体の静的な健全性
+# 本検査は3段階の検証を行う: (A) プロファイルJSON自体の静的な健全性
 # (denylistの中核項目が後退していないか)、(B) `run_in_docker_sandbox()`
 # が実際にこのプロファイルを`docker run`へ渡しているかの静的確認、
 # (C) Dockerを一切使わず、libseccomp(C ABI)への直接ctypes呼び出しで
@@ -270,7 +270,7 @@ def main():
     results["get_mempolicy"] = "blocked" if (rc == -1 and err == EPERM) else f"NOT_BLOCKED:rc={rc},errno={err}"
 
     results["getpid"] = "OK" if os.getpid() > 0 else "UNEXPECTED"
-    tmpf = f"/tmp/dominions_raw_check_benign_{os.getpid()}.txt"
+    tmpf = f"/tmp/seccomp_raw_check_benign_{os.getpid()}.txt"
     with open(tmpf, "w") as f:
         f.write("benign write still works")
     with open(tmpf) as f:
@@ -479,7 +479,7 @@ def _check_docker_dynamic_if_possible() -> tuple:
     if not result["executed"]:
         return "INCONCLUSIVE", f"コンテナの実行自体に到達できませんでした: {result}"
     if "FORK_BLOCKED" in result["stdout"]:
-        return "PASS", "実際のSandalphonコンテナ内で、os.fork()がseccompプロファイルにより遮断されることを確認しました。"
+        return "PASS", "実際のDockerSandboxコンテナ内で、os.fork()がseccompプロファイルにより遮断されることを確認しました。"
     if "FORK_SUCCEEDED" in result["stdout"]:
         return "FAIL", f"seccompプロファイルを適用したにもかかわらず、コンテナ内でos.fork()が成功してしまいました(回帰): {result}"
     return "FAIL", f"想定した出力が得られませんでした: {result}"
@@ -493,7 +493,7 @@ def main():
 
     ok, detail = _check_docker_run_references_profile()
     if not ok:
-        report_fail(NAME, f"Sandalphon隔離結界がseccompプロファイルを参照していません(§CGの回帰): {detail}")
+        report_fail(NAME, f"DockerSandbox隔離結界がseccompプロファイルを参照していません(§CGの回帰): {detail}")
         return
 
     status, detail = _check_raw_kernel_enforcement()
@@ -516,7 +516,7 @@ def main():
 
     docker_status, docker_detail = _check_docker_dynamic_if_possible()
     if docker_status == "FAIL":
-        report_fail(NAME, f"実際のSandalphonコンテナ内でseccompプロファイルが機能していません: {docker_detail}")
+        report_fail(NAME, f"実際のDockerSandboxコンテナ内でseccompプロファイルが機能していません: {docker_detail}")
         return
 
     if docker_status == "INCONCLUSIVE":
@@ -530,7 +530,7 @@ def main():
 
     report_pass(
         NAME,
-        f"seccompプロファイルのdenylist・Sandalphonからの参照・生カーネルへの直接ロード・execveによる"
+        f"seccompプロファイルのdenylist・DockerSandboxからの参照・生カーネルへの直接ロード・execveによる"
         f"コンテナ起動相当の自己置換・実際のコンテナ内実行の全てで、fork/socket/ptrace/mount等の危険な"
         f"システムコールが遮断されつつ、コンテナの起動そのものに必要なexecveと良性の操作は引き続き"
         f"正常に動作することを確認しました。",
