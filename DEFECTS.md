@@ -368,9 +368,11 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 §Qで名称修正のみに留め、ユーザー判断待ちとして報告していた「内容全体を現行アーキテクチャに合わせて書き直すか」について、ユーザー承認を得て実施した。
 
-\*\*事実確認\*\*: 修正前の`architecture.html`は、Raphael/Gabriel/Michaelの3カード構成の「Canon」節に続けて、`rubric.json`・`homilies/`という外部プラグイン機構を中心に説明する「Local Doctrines」節を持っていた。しかし`rubric.json`・`homilies/`はリポジトリ内に実体が存在せず(§Qで確認済み)、どの`.py`ファイルからも参照されていない構想段階の記述だった。Gabriel(`sefer.inquisition()`によるASTスキャン)とMichael(`sys.addaudithook`ベースの`\_michael\_absolute\_defense`)の説明内容自体は現行の`sefer/\_\_init\_\_.py`の実装と一致していたが、Raphaelの説明(「環境監視」)は実際には`sefer`パッケージの外にある別モジュール`maquina\_gatekeeper.py`(RSA署名+ハードウェア指紋による証明書ゲート、§Oで人間承認フローに修正済み)の役割に近く、不正確だった。また`src/aegis\_system.py`(`AegisSystem`、4層構成の実行ガード)と`checks/`配下の約34件のCI検査スクリプト、`tartarus/armageddon.py`のLucifer/Metatron自己対戦サイクルは、いずれも現行実装の中核でありながら本ドキュメントに一切記載が無かった。
+\*\*事実確認\*\*: 修正前の`architecture.html`は、証明書ゲート/ScanSource/AuditHookの3カード構成の「Canon」節に続けて、`rubric.json`・`homilies/`という外部プラグイン機構を中心に説明する「Local Doctrines」節を持っていた。しかし`rubric.json`・`homilies/`はリポジトリ内に実体が存在せず(§Qで確認済み)、どの`.py`ファイルからも参照されていない構想段階の記述だった。ScanSource(`runtime\_guard.scan\_source()`によるASTスキャン)とAuditHook(`sys.addaudithook`ベースの`\_runtime\_audit\_hook`)の説明内容自体は現行の`runtime\_guard/\_\_init\_\_.py`の実装と一致していたが、証明書ゲートの説明(「環境監視」)は実際には`runtime\_guard`パッケージの外にある別モジュール`runtime\_audit\_gatekeeper.py`(RSA署名+ハードウェア指紋による証明書ゲート、§Oで人間承認フローに修正済み)の役割に近く、不正確だった。また`src/defense\_orchestrator.py`(`DefenseOrchestrator`、4層構成の実行ガード)と`checks/`配下の約34件のCI検査スクリプト、`adversarial\_training/local\_only\_selfplay\_gate.py`のRedTeamAI/SelfplayOrchestrator自己対戦サイクルは、いずれも現行実装の中核でありながら本ドキュメントに一切記載が無かった。
 
-\*\*修正\*\*: `<body>`内容を3節構成に書き直した。(1)「The Canon (Core Absolute Defense — sefer.Sandbox)」: Gabriel・Michaelは実装と一致していたため`sefer.inquisition()`・`\_michael\_absolute\_defense`への言及を補強する形で維持し、Raphaelは`maquina\_gatekeeper.py`の役割(ライセンス・環境シール)として再定義、§Oの人間承認フローへの言及も追加した。(2)「AegisSystem (4-Layer Execution Guard)」: IntentInterceptor(`anjo\_interceptor/`、ハニーポット・パストラバーサル検知)・WorkspaceJail(`secure\_resolve()`によるパス封じ込め)・Sandalphon(`--network none`のDockerジェイル)の3カードを新設し、存在しなかった「Local Doctrines」節を置き換えた。(3)「The Angels (Blue-Team CI Audit Layer)」: `checks/`配下の約34件の検査スクリプトと、Lucifer/Metatronによる自己対戦進化サイクル(提案は`tools/promote\_ledger\_seal.py`による人間承認を経るまで適用されない、既存の人間承認ゲートパターンと一致)を新設した。既存のCSSクラス(`card raphael`/`gabriel`/`michael`/`extension`、`.icon`・`.tech-stack`)のみを再利用し、新規CSSの追加は行っていない。
+\*\*修正\*\*: `<body>`内容を3節構成に書き直した。(1)「The Canon (Core Absolute Defense — runtime\_guard.Sandbox)」: ScanSource・AuditHookは実装と一致していたため`runtime\_guard.scan\_source()`・`\_runtime\_audit\_hook`への言及を補強する形で維持し、証明書ゲートは`runtime\_audit\_gatekeeper.py`の役割(ライセンス・環境シール)として再定義、§Oの人間承認フローへの言及も追加した。(2)「DefenseOrchestrator (4-Layer Execution Guard)」: IntentInterceptor(`agent\_interceptor/`、ハニーポット・パストラバーサル検知)・WorkspaceJail(`secure\_resolve()`によるパス封じ込め)・Docker隔離層(`--network none`のDockerジェイル)の3カードを新設し、存在しなかった「Local Doctrines」節を置き換えた。(3)「The Checks (Blue-Team CI Audit Layer)」: `checks/`配下の約34件の検査スクリプトと、RedTeamAI/SelfplayOrchestratorによる自己対戦進化サイクル(提案は`tools/promote\_ledger\_seal.py`による人間承認を経るまで適用されない、既存の人間承認ゲートパターンと一致)を新設した。既存のCSSクラス(`card raphael`/`gabriel`/`michael`/`extension`、`.icon`・`.tech-stack`)のみを再利用し、新規CSSの追加は行っていない。
+
+\*\*2026-11 追記\*\*: その後、`architecture.html`自体に残っていた`raphael`/`sandalphon`というCSSクラス名・見出し文言も中立化し、現在は`cert_gate`(証明書ゲート)・`docker_jail`(Dockerサンドボックスジェイル)という名称になっている(`gabriel`/`michael`は既にこの修正以前に`scan_source`/`audit_hook`へ改名済みだった)。
 
 \*\*検証\*\*: `html.parser`による開始/終了タグの対応チェックで構文的に整形が崩れていないことを確認した。`MANIFEST.in`の`exclude architecture.html`は内容変更の影響を受けないため変更不要であることを確認した。`mini\_pytest.py`実行結果は本修正前と同一の`PASS=78 XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)であり、本ファイルを直接参照するテストが無いことと整合する想定通りの結果だった。
 
@@ -380,23 +382,23 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 ユーザーから「さらに増築できるところはないか」との依頼を受けて棚卸しを行い、実装済みだが未ドキュメント化だった機能の補完と、`mini\_pytest.py`実行結果に残っていた既存ERROR2件の原因調査を行った。
 
-\*\*追記: `src/ollama\_agent\_loop.py`・`src/openai\_agent\_loop.py`の起動手順\*\*。両ファイルとも実装自体は既に完成しており(Sandbox/AegisSystem/maquina\_gatekeeperの全防御層を統合済み)、`README.md`にアーキテクチャの説明はあったが、`COMMANDS.md`にはこれらを実際に動かすコマンドの記載が一切無かった。`ollama\_agent\_loop.py`は`python src/ollama\_agent\_loop.py`で直接実行可能、`openai\_agent\_loop.py`は`\_\_main\_\_`を持たないテンプレートクラスのため呼び出し側コードの例を示した。両方ともDockerデーモンの起動が前提(Sandalphon層がコンテナ内で動的実行検証を行うため、デーモン不在時はフェイルクローズで全実行を拒否する)である旨も明記した。
+\*\*追記: `src/ollama\_agent\_loop.py`・`src/openai\_agent\_loop.py`の起動手順\*\*。両ファイルとも実装自体は既に完成しており(Sandbox/DefenseOrchestrator/runtime\_audit\_gatekeeperの全防御層を統合済み)、`README.md`にアーキテクチャの説明はあったが、`COMMANDS.md`にはこれらを実際に動かすコマンドの記載が一切無かった。`ollama\_agent\_loop.py`は`python src/ollama\_agent\_loop.py`で直接実行可能、`openai\_agent\_loop.py`は`\_\_main\_\_`を持たないテンプレートクラスのため呼び出し側コードの例を示した。両方ともDockerデーモンの起動が前提(Docker隔離層がコンテナ内で動的実行検証を行うため、デーモン不在時はフェイルクローズで全実行を拒否する)である旨も明記した。
 
 \*\*調査: `mini\_pytest.py`実行結果の既存ERROR2件の原因\*\*(いずれも本リポジトリのバグではなく、検証環境側の制約であることを確認。修正は行っていない):
 \- `tests/test\_openai\_agent\_loop\_template.py`: `ModuleNotFoundError: No module named 'rsa'`。`rsa==4.9`は`requirements.txt`に正しく記載されているが、本検証環境はネットワークが遮断されており(`pip install`が名前解決エラーで失敗)インストールできない。リポジトリ側の不備ではなく環境側の制約。
 \- `tests/test\_runtime_seal.py`: `TypeError: _Mark.xfail() got an unexpected keyword argument 'condition'`。テスト本体の`@pytest.mark.xfail(condition=..., raises=..., strict=...)`は実際のpytestが正式サポートする標準的な書き方であり誤りではない。本検証環境に実pytestをインストールできないため代用している自作シム`mini\_pytest.py`(本リポジトリの一部ではない)が`condition`引数を実装していないために発生するエラーで、リポジトリ側の不備ではない。
 
-\*\*調査: `sefer.Sandbox`の`restrict\_reads`デフォルト値をTrueに変更すべきか\*\*(ユーザーへの提案として自分で出していた検討事項)。実際に本番相当のエージェントループである`src/ollama\_agent\_loop.py`・`src/openai\_agent\_loop.py`はいずれも既に呼び出し時に明示的に`restrict\_reads=True`を指定しており、ライブラリ側のデフォルト値(`False`、後方互換のため)が実際の防御レベルに影響する呼び出し箇所は現状存在しないことを確認した(`checks/\_common.py`の検査用サブプロセステンプレートも`restrict\_reads`を指定しない汎用ハーネスであり、読み取り制限の検証自体を目的としていないため対象外)。また`tests/test\_read\_restriction.py`はデフォルト`False`での後方互換動作を正式な期待結果として検証している。実運用側には防御漏れが無く、デフォルト値の変更は後方互換テストの意図的な破壊になるため、\*\*変更は行わなかった\*\*。
+\*\*調査: `runtime\_guard.Sandbox`の`restrict\_reads`デフォルト値をTrueに変更すべきか\*\*(ユーザーへの提案として自分で出していた検討事項)。実際に本番相当のエージェントループである`src/ollama\_agent\_loop.py`・`src/openai\_agent\_loop.py`はいずれも既に呼び出し時に明示的に`restrict\_reads=True`を指定しており、ライブラリ側のデフォルト値(`False`、後方互換のため)が実際の防御レベルに影響する呼び出し箇所は現状存在しないことを確認した(`checks/\_common.py`の検査用サブプロセステンプレートも`restrict\_reads`を指定しない汎用ハーネスであり、読み取り制限の検証自体を目的としていないため対象外)。また`tests/test\_read\_restriction.py`はデフォルト`False`での後方互換動作を正式な期待結果として検証している。実運用側には防御漏れが無く、デフォルト値の変更は後方互換テストの意図的な破壊になるため、\*\*変更は行わなかった\*\*。
 
 
 
-\### V. `COMMANDS.md`に`metatron\_orchestrator.py`(完全自動化防衛ループ「聖戦」)の起動手順を追記
+\### V. `COMMANDS.md`に`selfplay\_orchestrator.py`(完全自動化防衛ループ)の起動手順を追記
 
 §Uと同じ趣旨の棚卸しの続きとして、もう一つ未ドキュメント化だった実装済み機能を発見し補完した。
 
-\*\*追記内容\*\*: `src/metatron\_orchestrator.py`の`MetatronOrchestrator.execute\_holy\_war()`は、ラジエル(`intelligence\_cycle.RazielIntelligence`、偵察)→サマエル(`intelligence\_cycle.SamaelWeaponization`、ローカルOllamaによる攻撃コード生成)→天使(`angelic\_evolution.EvolvingAngel`、Blue Team=Gabriel静的解析+Sandalphon動的隔離検証)→ガブリエル(`GabrielRevelation`、Markdownレポート生成)を1サイクルとして自動実行する、実装済みの完全自動化防衛ループである。`if \_\_name\_\_ == "\_\_main\_\_"`から直接実行可能(`python src/metatron\_orchestrator.py`)だが、`COMMANDS.md`・`README.md`のいずれにもこの起動方法の記載が無かった。実行には(§Uのollama\_agent\_loop同様)Ollamaと稼働中のDockerデーモンの両方が必要であること、結果が`revelations/gabriel\_revelation\_<サイクルID>.md`に出力されることを明記した。
+\*\*追記内容\*\*: `src/selfplay\_orchestrator.py`の`SelfplayOrchestrator.run\_selfplay\_cycles()`は、ThreatIntelGatherer(`intelligence\_cycle.ThreatIntelGatherer`、偵察)→PayloadWeaponization(`intelligence\_cycle.PayloadWeaponization`、ローカルOllamaによる攻撃コード生成)→Blue Team(`ollama\_selfplay\_round.OllamaSelfplayRound`、ScanSource静的解析+Docker動的隔離検証)→SelfplayReportGenerator(Markdownレポート生成)を1サイクルとして自動実行する、実装済みの完全自動化防衛ループである。`if \_\_name\_\_ == "\_\_main\_\_"`から直接実行可能(`python src/selfplay\_orchestrator.py`)だが、`COMMANDS.md`・`README.md`のいずれにもこの起動方法の記載が無かった。実行には(§Uのollama\_agent\_loop同様)Ollamaと稼働中のDockerデーモンの両方が必要であること、結果が`reports/scan\_source\_revelation\_<サイクルID>.md`に出力されることを明記した。
 
-\*\*確認\*\*: `deadmans\_switch.CollarProtocol`が要求する環境変数`ANJO\_COLLAR\_SEAL`は、呼び出し元の`intelligence\_cycle.py`モジュール読み込み時に自動設定される(`os.environ["ANJO\_COLLAR\_SEAL"] = "VALID\_MYTHOS\_SEAL\_999"`)ため、利用者が追加で設定する必要はないことを確認した。
+\*\*確認\*\*: `deadmans\_switch.CollarProtocol`が要求する環境変数`AGENT\_COLLAR\_SEAL`は、呼び出し元の`intelligence\_cycle.py`モジュール読み込み時に自動設定される(`os.environ["AGENT\_COLLAR\_SEAL"] = "VALID\_MYTHOS\_SEAL\_999"`)ため、利用者が追加で設定する必要はないことを確認した。
 
 ドキュメントのみの追記のため、`mini\_pytest.py`実行結果は変更前と同一の`PASS=78 XFAIL=2 FAIL=0 ERROR=2`であることを確認した。
 
@@ -406,7 +408,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 ユーザーの実機検証(`python src/ollama\_agent\_loop.py`の実行)に付随して行った、検知ルールの棚卸しの中で発見した実バグ。過剰検知(false positive)であり、セキュリティホールではないが、機能そのものが使用不能になっていた。
 
-\*\*事実確認\*\*: `src/ollama\_agent\_loop.py`の`_execute\_safe\_action`は`"list"`アクションを正式に実装しており(§Mで`final\_agent\_loop.py`から統合)、システムプロンプト中の出力フォーマットにも`"action": "read" | "write" | "list"`と明記されている。しかし`anjo\_interceptor/intent\_checker.py`の`IntentInterceptor.allowed\_actions`は`{"read", "write"}`のままで、`"list"`が含まれていなかった。`run\_task()`のループでは実行前に必ず`IntentInterceptor.evaluate\_action()`を通すため、AIが`"list"`を申請すると、実装が存在するにもかかわらず常に「[暴走検知] 未許可のアクション 'list' を検知しました」として遮断され、事実上使用不能だった。実機で`interceptor.evaluate\_action(json.dumps({"action": "list", "target": "."}))`を実行し、`SpecificationGamingDetected`が発生することを確認して再現した。
+\*\*事実確認\*\*: `src/ollama\_agent\_loop.py`の`_execute\_safe\_action`は`"list"`アクションを正式に実装しており(§Mで`final\_agent\_loop.py`から統合)、システムプロンプト中の出力フォーマットにも`"action": "read" | "write" | "list"`と明記されている。しかし`agent\_interceptor/intent\_checker.py`の`IntentInterceptor.allowed\_actions`は`{"read", "write"}`のままで、`"list"`が含まれていなかった。`run\_task()`のループでは実行前に必ず`IntentInterceptor.evaluate\_action()`を通すため、AIが`"list"`を申請すると、実装が存在するにもかかわらず常に「[暴走検知] 未許可のアクション 'list' を検知しました」として遮断され、事実上使用不能だった。実機で`interceptor.evaluate\_action(json.dumps({"action": "list", "target": "."}))`を実行し、`SpecificationGamingDetected`が発生することを確認して再現した。
 
 \*\*修正\*\*: `allowed\_actions`に`"list"`を追加した。`"list"`の実際の安全性(ディレクトリトラバーサル対策等)は、既存の`WorkspaceJail.secure\_resolve()`(§Mで確認済み、`tests/test\_ollama\_agent\_loop\_list\_action.py`で担保済み)が別途担っており、`IntentInterceptor`側で追加の検証を行う必要はないため、他のロジックは変更していない。
 
@@ -414,13 +416,13 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 
 
-\### X. `sefer/audit\_chain.jsonl`(Michaelの実監査ログ)が`.gitignore`対象外でGit管理されていた不備を修正
+\### X. `runtime\_guard/audit\_chain.jsonl`(AuditHookの実監査ログ)が`.gitignore`対象外でGit管理されていた不備を修正
 
 可視化ダッシュボードの作成に着手する前段として、データ元となるファイル群を点検した際に発見した。§Qで`zk\_audit\_report.xml`について見つけたのと同種の見落としが、別のファイルにも残っていた。
 
-\*\*事実確認\*\*: `sefer/audit\_chain.jsonl`は、`sefer.\_log\_violation\_to\_chain()`(Michaelが実際にイベントを遮断した際に呼ばれる)が都度追記する、ハッシュ連鎖による改ざん検知付きの実監査ログである。`zk\_audit\_trail.json`(`maquina\_gatekeeper.ZKAuditTrail`が書き込む、同種の実行時生成ログ)は`.gitignore`で正しく除外されていたが、`sefer/audit\_chain.jsonl`は除外対象になっておらずGit管理下に置かれていた。Sandboxの遮断挙動を検証する大半のテスト(`test\_runtime_seal.py`・`test\_sandbox.py`等)が実際に遮断イベントを発生させるため、`mini\_pytest.py`を実行するたびに本ファイルが汚染され、これまで毎回`git checkout --`で手動で元に戻す必要があった。
+\*\*事実確認\*\*: `runtime\_guard/audit\_chain.jsonl`は、`runtime\_guard.\_log\_violation\_to\_chain()`(AuditHookが実際にイベントを遮断した際に呼ばれる)が都度追記する、ハッシュ連鎖による改ざん検知付きの実監査ログである。`zk\_audit\_trail.json`(`runtime\_audit\_gatekeeper.ZKAuditTrail`が書き込む、同種の実行時生成ログ)は`.gitignore`で正しく除外されていたが、`runtime\_guard/audit\_chain.jsonl`は除外対象になっておらずGit管理下に置かれていた。Sandboxの遮断挙動を検証する大半のテスト(`test\_runtime_seal.py`・`test\_sandbox.py`等)が実際に遮断イベントを発生させるため、`mini\_pytest.py`を実行するたびに本ファイルが汚染され、これまで毎回`git checkout --`で手動で元に戻す必要があった。
 
-\*\*修正\*\*: `.gitignore`に`sefer/audit\_chain.jsonl`を追加し、`git rm --cached`でGit管理のみ外した(ローカルファイルは残置)。あわせて、同じ「人間承認待ちキュー」のパターンに属する`shield\_rules\_pending.json`・`provisioning\_pending.json`(既に`raziel\_ledger\_pending.json`は対象だったが、この2つが対象外のまま漏れていた)も`.gitignore`に追加し、将来`git add -A`等で誤ってコミットされる事故を未然に防いだ(現時点ではまだGit管理下に入っていないため実害は無かったが、再発防止の予防的修正)。
+\*\*修正\*\*: `.gitignore`に`runtime\_guard/audit\_chain.jsonl`を追加し、`git rm --cached`でGit管理のみ外した(ローカルファイルは残置)。あわせて、同じ「人間承認待ちキュー」のパターンに属する`shield\_rules\_pending.json`・`provisioning\_pending.json`(既に`proposed\_rule\_queue.json`は対象だったが、この2つが対象外のまま漏れていた)も`.gitignore`に追加し、将来`git add -A`等で誤ってコミットされる事故を未然に防いだ(現時点ではまだGit管理下に入っていないため実害は無かったが、再発防止の予防的修正)。
 
 ドキュメントのみ・Git管理設定のみの変更のため、`mini\_pytest.py`実行結果は変更前と同一の`PASS=79 XFAIL=2 FAIL=0 ERROR=2`であることを確認した。
 
@@ -428,13 +430,13 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \### Y. 防衛ダッシュボード(`tools/generate\_dashboard.py`)を新設
 
-ユーザーからの「記録室を作る(可視化・ダッシュボード)」という依頼に基づき新設した。これまでArmageddon Engineの戦績・Michaelの実遮断ログ・現在の禁止イベント一覧・各種人間承認待ちキューは、個別に`cat`するしかなく、全体の傾向を一目で把握する手段が無かった。
+ユーザーからの「記録室を作る(可視化・ダッシュボード)」という依頼に基づき新設した。これまでSelfplay Engineの戦績・AuditHookの実遮断ログ・現在の禁止イベント一覧・各種人間承認待ちキューは、個別に`cat`するしかなく、全体の傾向を一目で把握する手段が無かった。
 
 \*\*実装\*\*: `tools/generate\_dashboard.py`が以下を読み取り、単一の自己完結したHTML(`dashboard.html`、外部CDN等への依存なし・オフライン閲覧可能)にまとめる。
-\- `tartarus/akashic\_records.json` — Armageddon Engine(Lucifer vs Metatron)の戦績。総戦績数・突破された回数・防御成功率・QAスコアの推移(簡易SVGグラフ)・直近20件の戦闘記録表
-\- `sefer/audit\_chain.jsonl` — Michaelが実際に遮断したイベントの監査ログ。総遮断件数・イベント種別ごとの件数(簡易SVGグラフ)
-\- `sefer/raziel\_ledger.json` — 現在有効な禁止イベント一覧
-\- `sefer/raziel\_ledger\_pending.json`・`shield\_rules\_pending.json`・`provisioning\_pending.json` — キュー別の人間承認待ち件数
+\- `adversarial\_training/selfplay\_history.json` — Selfplay Engine(RedTeamAI vs SelfplayOrchestrator)の戦績。総戦績数・突破された回数・防御成功率・QAスコアの推移(簡易SVGグラフ)・直近20件の戦闘記録表
+\- `runtime\_guard/audit\_chain.jsonl` — AuditHookが実際に遮断したイベントの監査ログ。総遮断件数・イベント種別ごとの件数(簡易SVGグラフ)
+\- `runtime\_guard/pending\_rule\_ledger.json` — 現在有効な禁止イベント一覧
+\- `runtime\_guard/proposed\_rule\_queue.json`・`shield\_rules\_pending.json`・`provisioning\_pending.json` — キュー別の人間承認待ち件数
 
 いずれのデータファイルも「存在しない場合」(初回実行時や、該当する防衛サイクルを一度も回していない場合)を例外を出さずに「データがありません」等で表示できるよう設計した。`build\_dashboard()`は各データファイルのパスを明示的に注入できるようにし、実データに依存せずテストできる構造にした。
 
@@ -448,13 +450,13 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 ユーザーからの「新しい門を作る(新規防御機能の追加)」という依頼に基づく。当初は別のAIプロバイダ(Claude等)向けの新しい実行ループファイルの新設も検討したが、DEFECTS.md §Mで「新しい実運用ループを作る前に既存の`ollama\_agent\_loop.py`/`openai\_agent\_loop.py`の拡張を検討すること」という方針を既に記録済みであり、新規ファイルの増殖は過去に実際に問題を起こした構造的リスクそのものだったため、新規ループファイルは作らず、既存の両ループに新しい防御層を追加する方針に変更した。
 
-\*\*着想\*\*: ユーザー自身による実機検証(`python src/ollama\_agent\_loop.py`の実行)で、ローカルLLM(llama3.1)が存在しない架空のパス(`/path/to/database/config/file`)への`"read"`を5ステップ連続で繰り返し、何も得られないまま`max\_steps`を使い切って終了する挙動が実際に観測された。各ステップ単体はGabriel・IntentInterceptor・Sandalphon・Sandboxのいずれにも異常なく処理を完了しており(危険な操作でもないため)、既存のどの防御層にも引っかからない「無駄な繰り返し」だった。これはSandalphonの実行タイムアウト(1回の実行が長すぎることへの防御)とは異なる観点の問題である。
+\*\*着想\*\*: ユーザー自身による実機検証(`python src/ollama\_agent\_loop.py`の実行)で、ローカルLLM(llama3.1)が存在しない架空のパス(`/path/to/database/config/file`)への`"read"`を5ステップ連続で繰り返し、何も得られないまま`max\_steps`を使い切って終了する挙動が実際に観測された。各ステップ単体はScanSource・IntentInterceptor・Docker隔離層・Sandboxのいずれにも異常なく処理を完了しており(危険な操作でもないため)、既存のどの防御層にも引っかからない「無駄な繰り返し」だった。これはDocker隔離層の実行タイムアウト(1回の実行が長すぎることへの防御)とは異なる観点の問題である。
 
-\*\*実装\*\*: `src/futility\_guard.py`を新設し、`FutilityGuard`クラスを両ループ(`ollama\_agent\_loop.py`・`openai\_agent\_loop.py`)で共有する(同じ修正を2箇所に別々に実装すると、§Mで実際に発生したのと同種の「片方にしか修正が入らず他方が取り残される」リスクを再現するため、共有モジュールとした)。同じ`(action, target)`の組み合わせが既定で2回を超えて繰り返された場合(3回目)、「[システム: 空転検知]」としてループを早期終了する。判定対象は`action`/`target`のみで、`content`(AIが生成する補助的なコード片)は意図的に対象外とした(実機検証で、AIが同じaction/targetに対し毎回微妙に異なるcontentを生成し続ける挙動が確認されたため)。判定はAegis/Sandalphonの呼び出し\*\*前\*\*に行うため、空転が検知された場合はDockerの起動すら発生せず、無駄なリソース消費も削減される。
+\*\*実装\*\*: `src/futility\_guard.py`を新設し、`FutilityGuard`クラスを両ループ(`ollama\_agent\_loop.py`・`openai\_agent\_loop.py`)で共有する(同じ修正を2箇所に別々に実装すると、§Mで実際に発生したのと同種の「片方にしか修正が入らず他方が取り残される」リスクを再現するため、共有モジュールとした)。同じ`(action, target)`の組み合わせが既定で2回を超えて繰り返された場合(3回目)、「[システム: 空転検知]」としてループを早期終了する。判定対象は`action`/`target`のみで、`content`(AIが生成する補助的なコード片)は意図的に対象外とした(実機検証で、AIが同じaction/targetに対し毎回微妙に異なるcontentを生成し続ける挙動が確認されたため)。判定はDefenseOrchestrator/Docker隔離層の呼び出し\*\*前\*\*に行うため、空転が検知された場合はDockerの起動すら発生せず、無駄なリソース消費も削減される。
 
 \*\*テスト\*\*: `tests/test\_futility\_guard.py`(単体: カウンタロジック)、`tests/test\_futility\_guard\_integration.py`(統合: 固定応答のOllamaスタブで`run\_task()`が実際に`max\_steps=5`を使い切る前に3ステップで早期終了することを検証。Dockerデーモン不要)を新設した。`mini\_pytest.py`実行結果は`PASS=87`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-\*\*ドキュメント\*\*: §Tで全面書き直したばかりの`architecture.html`に「Agent Loop Resilience」節を新設し、`FutilityGuard`がAegisSystemの一部ではなく、エージェントループ自身がAegisSystem呼び出し\*\*前\*\*に適用する別レイヤーであることを明記した(不正確な記述を防ぐため)。
+\*\*ドキュメント\*\*: §Tで全面書き直したばかりの`architecture.html`に「Agent Loop Resilience」節を新設し、`FutilityGuard`がDefenseOrchestratorの一部ではなく、エージェントループ自身がDefenseOrchestrator呼び出し\*\*前\*\*に適用する別レイヤーであることを明記した(不正確な記述を防ぐため)。
 
 
 

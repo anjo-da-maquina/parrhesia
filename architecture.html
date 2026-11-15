@@ -13,7 +13,7 @@
             --text-muted: #8b949e;
             --audit_hook-color: #f85149;
             --scan_source-color: #58a6ff;
-            --raphael-color: #3fb950;
+            --cert_gate-color: #3fb950;
             --extension-color: #d2a8ff;
         }
         body {
@@ -96,11 +96,11 @@
         /* Specific Colors */
         .audit_hook h3 { color: var(--audit_hook-color); }
         .scan_source h3 { color: var(--scan_source-color); }
-        .raphael h3 { color: var(--raphael-color); }
+        .cert_gate h3 { color: var(--cert_gate-color); }
         .extension h3 { color: var(--extension-color); }
         .audit_hook .tech-stack { color: var(--audit_hook-color); border: 1px solid var(--audit_hook-color); }
         .scan_source .tech-stack { color: var(--scan_source-color); border: 1px solid var(--scan_source-color); }
-        .raphael .tech-stack { color: var(--raphael-color); border: 1px solid var(--raphael-color); }
+        .cert_gate .tech-stack { color: var(--cert_gate-color); border: 1px solid var(--cert_gate-color); }
         .extension .tech-stack { color: var(--extension-color); border: 1px solid var(--extension-color); }
     </style>
 </head>
@@ -131,10 +131,10 @@
                 <div class="tech-stack">sys.addaudithook() runtime</div>
             </div>
 
-            <!-- Raphael / runtime_audit_gatekeeper -->
-            <div class="card raphael">
+            <!-- Certificate gate / runtime_audit_gatekeeper -->
+            <div class="card cert_gate">
                 <div class="icon">👁️</div>
-                <h3>Raphael (License &amp; Environment Seal)</h3>
+                <h3>Certificate Gate (License &amp; Environment Seal)</h3>
                 <p>A separate layer (<code>runtime_audit_gatekeeper.py</code>) that gates execution on a hardware-fingerprinted, RSA-signed certificate (<code>ataraxia_certificate.json</code>) and refuses to operate in an unverified cloud CI environment. Certificates are no longer self-issued: a proposal is queued and must be explicitly approved by a human via <code>tools/promote_provisioning_seal.py</code>.</p>
                 <div class="tech-stack">RSA signature + hardware fingerprint</div>
             </div>
@@ -161,10 +161,10 @@
                 <div class="tech-stack">Path prefix validation</div>
             </div>
 
-            <!-- Sandalphon -->
+            <!-- Docker sandbox jail -->
             <div class="card extension">
                 <div class="icon">📦</div>
-                <h3>Sandalphon (Docker Jail)</h3>
+                <h3>Docker Sandbox Jail</h3>
                 <p>OS-level dynamic execution verification: AI-generated code actually runs inside a Docker container with <code>--network none</code>, the last and mandatory layer against obfuscated or dynamically-generated attacks that static analysis can't see.</p>
                 <div class="tech-stack">Docker --network none</div>
             </div>
@@ -179,7 +179,7 @@
             <div class="card extension">
                 <div class="icon">🔁</div>
                 <h3>FutilityGuard</h3>
-                <p>Detects an AI stuck repeating the same (action, target) with no progress — observed live when a local model retried a hallucinated path 5 times straight, burning the whole step budget on nothing. Not an attack defense; a resilience guard against wasted cycles, checked before the expensive Defense/Sandalphon pass is even run.</p>
+                <p>Detects an AI stuck repeating the same (action, target) with no progress — observed live when a local model retried a hallucinated path 5 times straight, burning the whole step budget on nothing. Not an attack defense; a resilience guard against wasted cycles, checked before the expensive Defense/Docker-jail pass is even run.</p>
                 <div class="tech-stack">src/futility_guard.py</div>
             </div>
         </div>
