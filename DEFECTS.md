@@ -472,11 +472,11 @@ jail.secure_resolve("../jail_workspace_EVIL/secret.txt")
 # => 修正前: 遮断されず /tmp/xxx/jail_workspace_EVIL/secret.txt を返してしまう
 ```
 
-このクラスは`"list"`アクションの境界保護(§M参照)や`AegisSystem`(`src/aegis\_system.py`)自体が依拠する、ワークスペース隔離の核となる機構であるにもかかわらず、長期間この脆弱な判定方法のまま見過ごされていた。一方で`sefer/\_\_init\_\_.py`(Sandbox/Michael側)は、同種の判定に既に`Path.is\_relative\_to()`を正しく使っており、`WorkspaceJail`だけがこの古い脆弱な実装のまま取り残されていたことも確認した。
+このクラスは`"list"`アクションの境界保護(§M参照)や`DefenseOrchestrator`(`src/defense\_orchestrator.py`)自体が依拠する、ワークスペース隔離の核となる機構であるにもかかわらず、長期間この脆弱な判定方法のまま見過ごされていた。一方で`runtime\_guard/\_\_init\_\_.py`(Sandbox/AuditHook側)は、同種の判定に既に`Path.is\_relative\_to()`を正しく使っており、`WorkspaceJail`だけがこの古い脆弱な実装のまま取り残されていたことも確認した。
 
 \*\*修正\*\*: `str(...).startswith(str(...))`を、`requested\_path != self.base\_dir and not requested\_path.is\_relative\_to(self.base\_dir)`というパスオブジェクトとしての厳密な判定に置き換えた。`!= self.base\_dir`の除外は、`target\_path="."`(牢獄そのものへのアクセス。`"list"`アクション等で正当に使われる)を誤って遮断しないための配慮。
 
-\*\*テスト\*\*: `tests/test\_workspace\_jail.py`を新設し、(1)正常なアクセスの許可、(2)古典的な`"../../../etc/passwd"`型トラバーサルの遮断、(3)今回発見した「前方一致バイパス」(兄弟ディレクトリへの脱走)の遮断、(4)牢獄自身への正当なアクセスの許可、の4パターンを固定した。`mini\_pytest.py`実行結果は`PASS=91`(新規+4)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)で、既存の`"list"`アクション・`AegisSystem`の挙動が壊れていないことも確認した。
+\*\*テスト\*\*: `tests/test\_workspace\_jail.py`を新設し、(1)正常なアクセスの許可、(2)古典的な`"../../../etc/passwd"`型トラバーサルの遮断、(3)今回発見した「前方一致バイパス」(兄弟ディレクトリへの脱走)の遮断、(4)牢獄自身への正当なアクセスの許可、の4パターンを固定した。`mini\_pytest.py`実行結果は`PASS=91`(新規+4)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)で、既存の`"list"`アクション・`DefenseOrchestrator`の挙動が壊れていないことも確認した。
 
 
 
@@ -484,7 +484,7 @@ jail.secure_resolve("../jail_workspace_EVIL/secret.txt")
 
 §AAで`WorkspaceJail`に見つけた脆弱性パターン(文字列の前方一致のみによる境界判定)が、リポジトリ内の他の場所にも残っていないか`grep`で横断的に点検した結果、もう一箇所で発見した。
 
-\*\*事実確認\*\*: `checks/\_common.py`の`scan\_for\_leaked\_secrets()`(CI上でシークレット漏洩を検知する`checks/gabriel\_canary.py`が使用)は、スキャン除外対象のディレクトリ(`EXCLUDED\_SECRET\_SCAN\_DIRS = {"dummy\_secrets", ".git", "\_\_pycache\_\_", "sefer/.angel\_state", "revelations"}`)との一致判定を`rel.startswith(ex)`という文字列の前方一致のみで行っていた。これは末尾の区切り文字を要求しないため、`"dummy\_secrets\_backup/real\_leaked\_key.env"`のように、除外対象の名前と前方一致するだけの別ディレクトリに置かれた本物のシークレットも、スキャン自体が一切行われずに素通りしてしまう欠陥だった(実機で再現を確認)。これは`WorkspaceJail`の脆弱性とは逆方向(過剰な除外によるセキュリティ機能自体の無効化)だが、根本原因は同一(末尾区切り文字を要求しない文字列前方一致)である。
+\*\*事実確認\*\*: `checks/\_common.py`の`scan\_for\_leaked\_secrets()`(CI上でシークレット漏洩を検知する`checks/guard\_precommit\_secret\_leak.py`が使用)は、スキャン除外対象のディレクトリ(`EXCLUDED\_SECRET\_SCAN\_DIRS = {"dummy\_secrets", ".git", "\_\_pycache\_\_", "runtime\_guard/.angel\_state", "reports"}`)との一致判定を`rel.startswith(ex)`という文字列の前方一致のみで行っていた。これは末尾の区切り文字を要求しないため、`"dummy\_secrets\_backup/real\_leaked\_key.env"`のように、除外対象の名前と前方一致するだけの別ディレクトリに置かれた本物のシークレットも、スキャン自体が一切行われずに素通りしてしまう欠陥だった(実機で再現を確認)。これは`WorkspaceJail`の脆弱性とは逆方向(過剰な除外によるセキュリティ機能自体の無効化)だが、根本原因は同一(末尾区切り文字を要求しない文字列前方一致)である。
 
 \*\*修正\*\*: `rel == ex or rel.startswith(ex + "/")`という、完全一致またはそのディレクトリ配下(区切り文字付き)であることを要求する判定に修正した。テスト容易性のため`scan\_for\_leaked\_secrets()`に`root`引数を追加し(既定はリポジトリ本体の`ROOT`)、一時ディレクトリ上の架空のファイル構成で検証できるようにした。
 
@@ -499,9 +499,9 @@ Tartarusのエンジンは、起動直後に `uuid.getnode()` を用いてホス
 これにより、この神界の箱庭（Pleroma）がGit経由などで他者の手に渡っても、闘技場は決して開かれず、ルシフェルは即座に自壊する。この闘争は、創造主の監視下でのみ許される神聖な儀式として保たれる。
 
 
-\### AC. `sefer/\_\_init\_\_.py`の`\_is\_path\_allowed()`に、大文字小文字を無視した文字列比較による境界バイパス脆弱性を発見・修正
+\### AC. `runtime\_guard/\_\_init\_\_.py`の`\_is\_path\_allowed()`に、大文字小文字を無視した文字列比較による境界バイパス脆弱性を発見・修正
 
-ユーザーからの3度目の「更なる進化を」という依頼を受け、§AA・§AB で見つけた「境界判定の緩さ」というバグの系譜を追って、今度はMichaelの絶対防壁（`sys.addaudithook`によるOSレベルの実行時監視、`sefer/\_\_init\_\_.py`の`\_michael\_absolute\_defense()`）そのものの内部を精査した結果、同じ系譜に属する新たな脆弱性を発見した。
+ユーザーからの3度目の「更なる進化を」という依頼を受け、§AA・§AB で見つけた「境界判定の緩さ」というバグの系譜を追って、今度はAuditHookの絶対防壁（`sys.addaudithook`によるOSレベルの実行時監視、`runtime\_guard/\_\_init\_\_.py`の`\_runtime\_audit\_hook()`）そのものの内部を精査した結果、同じ系譜に属する新たな脆弱性を発見した。
 
 \*\*事実確認\*\*: `\_is\_path\_allowed(target\_path, allowed\_dirs)`は、まず`Path.is\_relative\_to()`による正しい判定を試みるが、それが`False`の場合に\*\*フォールバックの文字列比較\*\*へ進む。このフォールバックが`str(target).lower()`・`str(resolved\_d).lower()`という\*\*大文字小文字を無視した\*\*比較になっていた。これは、`allowed\_dirs`に指定したディレクトリと大文字小文字が異なるだけの、\*\*実在する完全に別のディレクトリ\*\*への書き込み・削除等の破壊的操作を許可してしまう欠陥である。Linuxのような大文字小文字を区別するファイルシステム上で、実機にて以下を再現・確認した:
 
@@ -516,13 +516,13 @@ with Sandbox(allowed_dirs=["/home/claude/pleroma/jail_workspace_repro"]):
 
 \*\*修正\*\*: フォールバック文字列比較から`.lower()`を除去し、大文字小文字は元の文字列のまま厳密に比較するよう修正した。パス区切り文字の正規化のみは維持した。
 
-\*\*テスト\*\*: `tests/test\_michael\_is\_path\_allowed.py`を新設し、(1)許可ディレクトリ配下への正当なアクセスの許可、(2)許可ディレクトリそのものへのアクセスの許可、(3)許可ディレクトリ外への通常のアクセスの遮断、(4)今回発見した「大文字小文字違いバイパス」(許可ディレクトリと大文字小文字が異なるだけの別の実ディレクトリ)の遮断、の4パターンを固定した。`mini\_pytest.py`実行結果は`PASS=98`(新規+4)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)で、`WorkspaceJail`・`AegisSystem`等の既存挙動が壊れていないことも確認した。
+\*\*テスト\*\*: `tests/test\_audit\_hook\_is\_path\_allowed.py`を新設し、(1)許可ディレクトリ配下への正当なアクセスの許可、(2)許可ディレクトリそのものへのアクセスの許可、(3)許可ディレクトリ外への通常のアクセスの遮断、(4)今回発見した「大文字小文字違いバイパス」(許可ディレクトリと大文字小文字が異なるだけの別の実ディレクトリ)の遮断、の4パターンを固定した。`mini\_pytest.py`実行結果は`PASS=98`(新規+4)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)で、`WorkspaceJail`・`DefenseOrchestrator`等の既存挙動が壊れていないことも確認した。
 
 \### AD. `maquina\_gatekeeper.py`の「深層保護」(`ultimate\_audit\_hook`)が、子スレッド経由で完全にバイパス可能だった脆弱性を発見・修正
 
-ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、`sefer/\_\_init\_\_.py`(Michael/Sandbox)の次に、ライセンス証明書ゲートである`maquina\_gatekeeper.py`を精査した結果、§AA〜§ACとは異なる種類の、より深刻な「保護層の完全な無効化」脆弱性を発見した。
+ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、`runtime\_guard/\_\_init\_\_.py`(AuditHook/Sandbox)の次に、ライセンス証明書ゲートである`maquina\_gatekeeper.py`を精査した結果、§AA〜§ACとは異なる種類の、より深刻な「保護層の完全な無効化」脆弱性を発見した。
 
-\*\*事実確認\*\*: `enforce\_maquina\_seal`デコレータは、証明書検証に成功すると`set\_runtime_seal\_sealed(True)`で「封鎖」状態に入り、デコレータ本体の処理が終わるまでの間、`sys.addaudithook`で登録された`ultimate\_audit\_hook`が`subprocess.Popen`・`os.system`・`os.exec`等の危険操作を遮断する「深層保護」が働く設計になっていた。しかし封鎖ステータスの実体である`\_thread\_state`は`threading.local()`(スレッドごとに独立)で実装されていた。`ultimate\_audit\_hook`自身は`sys.addaudithook`によりプロセス全体(全スレッド)で呼び出されるにもかかわらず、その中の`is\_runtime_seal\_sealed()`判定がスレッドローカルであるため、封鎖済みのスレッドの中で新たなスレッドを一つ生成するだけで、その子スレッドでは`is\_runtime_seal\_sealed()`が常に`False`(`threading.local()`の既定値)を返し、`ultimate\_audit\_hook`が検査そのものを一切行わずに即座にreturnしてしまう。実機で以下を再現・確認した:
+\*\*事実確認\*\*: `enforce\_maquina\_seal`デコレータは、証明書検証に成功すると`set\_runtime\_sealed(True)`で「封鎖」状態に入り、デコレータ本体の処理が終わるまでの間、`sys.addaudithook`で登録された`ultimate\_audit\_hook`が`subprocess.Popen`・`os.system`・`os.exec`等の危険操作を遮断する「深層保護」が働く設計になっていた。しかし封鎖ステータスの実体である`\_thread\_state`は`threading.local()`(スレッドごとに独立)で実装されていた。`ultimate\_audit\_hook`自身は`sys.addaudithook`によりプロセス全体(全スレッド)で呼び出されるにもかかわらず、その中の`is\_runtime\_sealed()`判定がスレッドローカルであるため、封鎖済みのスレッドの中で新たなスレッドを一つ生成するだけで、その子スレッドでは`is\_runtime\_sealed()`が常に`False`(`threading.local()`の既定値)を返し、`ultimate\_audit\_hook`が検査そのものを一切行わずに即座にreturnしてしまう。実機で以下を再現・確認した:
 
 ```python
 mg.set_runtime_sealed(True)
@@ -532,17 +532,17 @@ def evil_in_child_thread():
     subprocess.Popen(["echo", "ESCAPED_VIA_THREAD"], ...)  # => 遮断されず実行されてしまう
 ```
 
-`enforce\_maquina\_seal`デコレータは`\_GLOBAL\_SANCTUARY\_LOCK`により呼び出し自体をプロセス全体で直列化しているため、複数スレッドが同時に独立した封鎖状態を持つ正当な理由はそもそも存在しない。むしろ`sefer/\_\_init\_\_.py`側の`\_active\_stack`(Michaelの絶対防壁の状態管理)は元々プロセス全体で共有するグローバルなリストとして実装されており、本件はそれとは逆に、本来共有すべき状態を誤ってスレッドローカル化してしまっていたことが原因だった。
+`enforce\_maquina\_seal`デコレータは`\_GLOBAL\_RUNTIME\_LOCK`により呼び出し自体をプロセス全体で直列化しているため、複数スレッドが同時に独立した封鎖状態を持つ正当な理由はそもそも存在しない。むしろ`runtime\_guard/\_\_init\_\_.py`側の`\_active\_stack`(AuditHookの絶対防壁の状態管理)は元々プロセス全体で共有するグローバルなリストとして実装されており、本件はそれとは逆に、本来共有すべき状態を誤ってスレッドローカル化してしまっていたことが原因だった。
 
-\*\*修正\*\*: 封鎖ステータスを`threading.local()`から、ロックで保護したプロセス全体共有のグローバル変数(`\_is\_runtime_seal\_sealed\_global`)に変更した。これにより、どのスレッドで封鎖しても、その封鎖状態は全スレッドから一貫して観測され、`ultimate\_audit\_hook`の検査を子スレッド経由で回避することはできなくなった。
+\*\*修正\*\*: 封鎖ステータスを`threading.local()`から、ロックで保護したプロセス全体共有のグローバル変数(`\_is\_runtime\_sealed\_global`)に変更した。これにより、どのスレッドで封鎖しても、その封鎖状態は全スレッドから一貫して観測され、`ultimate\_audit\_hook`の検査を子スレッド経由で回避することはできなくなった。
 
 \*\*テスト\*\*: `tests/test\_thread\_safety\_maquina\_seal.py`を新設し、(1)封鎖状態が子スレッドにも共有されること、(2)封鎖中は子スレッドからの禁止操作(`subprocess.Popen`)も遮断されること、(3)封鎖していない通常時は本フックによる誤検知が起きないこと、の3パターンを固定した。本物の`rsa`パッケージがこのサンドボックス環境のegressポリシー上インストールできないため、`tests/test\_provisioning\_approval\_flow.py`と同一の疑似実装パターンで`maquina\_gatekeeper.py`の`import rsa`を満たしている(ファイル名は`test\_openai\_agent\_loop\_template.py`より辞書順で後になるよう選定し、既存の「本物のrsaが無いことによるERROR」という既知の環境起因の挙動(§U参照)に影響を与えないようにした)。`mini\_pytest.py`実行結果は`PASS=101`(新規+3)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-\### AE. `sefer/audit\_chain.py`の`SignedAuditChain`が、名前の通り「署名付き」ではなく実際には無鍵のハッシュ連鎖に過ぎず、改ざん検知が無力化できる脆弱性を発見・修正
+\### AE. `runtime\_guard/audit\_chain.py`の`SignedAuditChain`が、名前の通り「署名付き」ではなく実際には無鍵のハッシュ連鎖に過ぎず、改ざん検知が無力化できる脆弱性を発見・修正
 
 ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、§AD(`maquina\_gatekeeper.py`の深層保護バイパス)の次に、監査証跡そのものの信頼性を精査した結果、これまでとは異なる種類の脆弱性を発見した。これまでの§AA〜§ADは「防壁の抜け道」だったが、本件は「侵入された後の証拠そのものを消せてしまう」という、事後対応(フォレンジック)を無力化する脆弱性である。
 
-\*\*事実確認\*\*: `sefer/audit\_chain.py`の`SignedAuditChain`クラスは、クラス名が「署名付き監査チェーン」と名乗り、`checks/zadkiel\_astrolabe.py`のコメントにも「署名付き監査チェーン」と明記されているにもかかわらず、実際にはSHA-256による単純なハッシュ連鎖(各エントリのハッシュを前エントリのハッシュに連結してハッシュ化するだけ)に過ぎず、秘密鍵や公開鍵署名など、いかなる暗号学的な「署名」も使っていなかった。これは「意図しない破損の検知」には有効だが、「ログファイルへの書き込み権限を持つ攻撃者による意図的な改ざん」には何の防御にもならない。実機で以下を再現・確認した:
+\*\*事実確認\*\*: `runtime\_guard/audit\_chain.py`の`SignedAuditChain`クラスは、クラス名が「署名付き監査チェーン」と名乗り、`checks/audit\_signed\_chain\_integrity.py`のコメントにも「署名付き監査チェーン」と明記されているにもかかわらず、実際にはSHA-256による単純なハッシュ連鎖(各エントリのハッシュを前エントリのハッシュに連結してハッシュ化するだけ)に過ぎず、秘密鍵や公開鍵署名など、いかなる暗号学的な「署名」も使っていなかった。これは「意図しない破損の検知」には有効だが、「ログファイルへの書き込み権限を持つ攻撃者による意図的な改ざん」には何の防御にもならない。実機で以下を再現・確認した:
 
 ```python
 chain.record("AI_ACTION", {...})
@@ -555,111 +555,111 @@ chain.record("AI_ACTION", {...})
 #    (つまり「侵入された証拠」を跡形もなく消せてしまう)
 ```
 
-`sefer/\_\_init\_\_.py`の`\_log\_violation\_to\_chain()`も、本クラスとは独立に同じフォーマットのハッシュ連鎖ロジックを二重実装しており、片方だけ修正すると両者のフォーマットが食い違い`verify\_integrity()`自体が壊れるリスクも確認した。
+`runtime\_guard/\_\_init\_\_.py`の`\_log\_violation\_to\_chain()`も、本クラスとは独立に同じフォーマットのハッシュ連鎖ロジックを二重実装しており、片方だけ修正すると両者のフォーマットが食い違い`verify\_integrity()`自体が壊れるリスクも確認した。
 
-この脆弱性が直接悪用できるのは「すでに`sefer.Sandbox`の外側(ホスト側、あるいは§AA〜§ADのような未知の脱走経路を突いた後)で任意のファイル書き込み権限を得た攻撃者」に限られる(`sefer/audit\_chain.jsonl`自体は通常`allowed\_dirs`の外にあり、Sandbox配下の未信頼コードからの直接書き込みはMichaelの絶対防壁により遮断されるため)。しかし、本フレームワーク全体が前提とする脅威モデルは「Sandbox配下に閉じ込めた未信頼AIコードの脱走防止」であり、万一将来何らかの未知の脱走経路が使われた場合に、侵入の証拠そのものを完全に消せてしまうというのは、監査証跡の存在意義そのものを損なう重大な設計上の欠陥と判断した。
+この脆弱性が直接悪用できるのは「すでに`runtime\_guard.Sandbox`の外側(ホスト側、あるいは§AA〜§ADのような未知の脱走経路を突いた後)で任意のファイル書き込み権限を得た攻撃者」に限られる(`runtime\_guard/audit\_chain.jsonl`自体は通常`allowed\_dirs`の外にあり、Sandbox配下の未信頼コードからの直接書き込みはAuditHookの絶対防壁により遮断されるため)。しかし、本フレームワーク全体が前提とする脅威モデルは「Sandbox配下に閉じ込めた未信頼AIコードの脱走防止」であり、万一将来何らかの未知の脱走経路が使われた場合に、侵入の証拠そのものを完全に消せてしまうというのは、監査証跡の存在意義そのものを損なう重大な設計上の欠陥と判断した。
 
-\*\*修正\*\*: 各エントリのハッシュを、無鍵のSHA-256から、ローカルに自動生成・保管する秘密鍵(`sefer/.audit\_signing\_key`、初回生成時のみ0600権限で作成)を用いたHMAC-SHA256に変更した。鍵ファイルを読めない攻撃者は、チェーンの整合性を保ったまま既存エントリの改ざん・削除・偽装を行えなくなる。また`\_log\_violation\_to\_chain()`の独自実装を廃止し、`SignedAuditChain.record()`への委譲に一本化して二重実装の食い違いリスクを解消した。あわせて、文字列の`==`によるハッシュ比較を`hmac.compare\_digest()`による定数時間比較に変更した(タイミング攻撃への理論的な弱さの解消)。`key\_path`省略時の既定値を`log\_path`と同じディレクトリ基準にすることで、テストが実リポジトリの鍵ファイルを汚染しないようにもした。
+\*\*修正\*\*: 各エントリのハッシュを、無鍵のSHA-256から、ローカルに自動生成・保管する秘密鍵(`runtime\_guard/.audit\_signing\_key`、初回生成時のみ0600権限で作成)を用いたHMAC-SHA256に変更した。鍵ファイルを読めない攻撃者は、チェーンの整合性を保ったまま既存エントリの改ざん・削除・偽装を行えなくなる。また`\_log\_violation\_to\_chain()`の独自実装を廃止し、`SignedAuditChain.record()`への委譲に一本化して二重実装の食い違いリスクを解消した。あわせて、文字列の`==`によるハッシュ比較を`hmac.compare\_digest()`による定数時間比較に変更した(タイミング攻撃への理論的な弱さの解消)。`key\_path`省略時の既定値を`log\_path`と同じディレクトリ基準にすることで、テストが実リポジトリの鍵ファイルを汚染しないようにもした。
 
 \*\*残存する限界(誠実に明記する)\*\*: 本修正は「Sandbox配下でサンドボックス化された未信頼コードによる改ざん」への対策であり、鍵ファイル自体を読み書きできるホストOS上の特権(root等、サンドボックスの外側)を持つ攻撃者までは防げない。それは本フレームワークが前提とする脅威モデルの範囲外であり、外部の改ざん不可能な監査サービスやHSM等、別のアーキテクチャでしか解決できない限界であることを、誤解を避けるためここに明記する。
 
-\*\*テスト\*\*: `tests/test\_audit\_chain.py`に2件追加し、(1)鍵ファイルを持たない別インスタンスでは正規のチェーンでも検証に失敗すること、(2)§AEの核心となる「VIOLATION行の削除+鍵なしでのチェーン再計算」という具体的な攻撃手口が、修正後は検知されること、を固定した(既存の2テストも維持)。`checks/zadkiel\_astrolabe.py`を実行し、実際のCI向け検査スクリプトが新方式でも正しく動作することも確認した。`mini\_pytest.py`実行結果は`PASS=103`(新規+2)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test\_audit\_chain.py`に2件追加し、(1)鍵ファイルを持たない別インスタンスでは正規のチェーンでも検証に失敗すること、(2)§AEの核心となる「VIOLATION行の削除+鍵なしでのチェーン再計算」という具体的な攻撃手口が、修正後は検知されること、を固定した(既存の2テストも維持)。`checks/audit\_signed\_chain\_integrity.py`を実行し、実際のCI向け検査スクリプトが新方式でも正しく動作することも確認した。`mini\_pytest.py`実行結果は`PASS=103`(新規+2)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-なお、本修正によりハッシュ計算方式が変わるため、このサンドボックス環境でこれまでのテスト実行により生成されていた旧方式(無鍵SHA-256)の`sefer/audit\_chain.jsonl`(Git管理対象外のローカル専用ファイル)は、新方式では検証に失敗するようになる。実害のある本番監査ログではなく本セッションのテスト実行で生成された一時データのみだったため、削除してクリーンな状態からHMAC方式での記録を開始した。
+なお、本修正によりハッシュ計算方式が変わるため、このサンドボックス環境でこれまでのテスト実行により生成されていた旧方式(無鍵SHA-256)の`runtime\_guard/audit\_chain.jsonl`(Git管理対象外のローカル専用ファイル)は、新方式では検証に失敗するようになる。実害のある本番監査ログではなく本セッションのテスト実行で生成された一時データのみだったため、削除してクリーンな状態からHMAC方式での記録を開始した。
 
 \### AF. §Jで保留されていた`src/ast\_scanner.py`の統合判断を確定(非統合・保持)
 
-ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、`src/aegis\_system.py`(AI生成コードの実運用審査パイプライン)が実際に何を検閲しているかを精査する過程で、`src/ast\_scanner.py`の`CognitiveScanner`が、どこからもimportされず`tests/test\_ast\_scanner\_qualified\_calls.py`で単体テストされるだけの孤立モジュールであることに気づいた。DEFECTS.md §Jで「検知漏れバグは修正したが、実運用パイプラインへの統合判断は保留」と記録されたまま、その後の§K・§L(他の未統合スタンドアロンデモの統合/削除判断)でも扱われずに残っていた未決事項だった。
+ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、`src/defense\_orchestrator.py`(AI生成コードの実運用審査パイプライン)が実際に何を検閲しているかを精査する過程で、`src/ast\_scanner.py`の`CognitiveScanner`が、どこからもimportされず`tests/test\_ast\_scanner\_qualified\_calls.py`で単体テストされるだけの孤立モジュールであることに気づいた。DEFECTS.md §Jで「検知漏れバグは修正したが、実運用パイプラインへの統合判断は保留」と記録されたまま、その後の§K・§L(他の未統合スタンドアロンデモの統合/削除判断)でも扱われずに残っていた未決事項だった。
 
-\*\*検討\*\*: 本モジュールの`banned\_modules = {'os', 'sys', 'shutil', 'subprocess'}`は、既に`aegis\_system.py`経由で実運用されているGabriel(`sefer.inquisition()`)の`forbidden\_modules`(pickle/ctypes/importlib/socket/urllib/requests/http/subprocess/os)より広く、`sys`・`shutil`の単純importだけで即座に拒否する。しかし`sys`単体のimport(`sys.exit()`・`sys.argv`等)自体には危険性がなく、本当に危険なのは`sys.settrace`等の個別関数呼び出しであり、それは既にMichael(`sefer.\_michael\_absolute\_defense`)がOSレベルの監査フックで個別に遮断している。Gabrielが意図的に`sys`/`shutil`の単純importまでは禁止対象に含めない設計になっているのは、まさにこの過剰検知を避けるための判断であり、`ast\_scanner.py`をそのまま統合すると、AIが生成した無害なコード(単に`sys`をimportするだけ等)まで一律拒否してしまう構造的な後退になる。
+\*\*検討\*\*: 本モジュールの`banned\_modules = {'os', 'sys', 'shutil', 'subprocess'}`は、既に`defense\_orchestrator.py`経由で実運用されているScanSource(`runtime\_guard.scan\_source()`)の`forbidden\_modules`(pickle/ctypes/importlib/socket/urllib/requests/http/subprocess/os)より広く、`sys`・`shutil`の単純importだけで即座に拒否する。しかし`sys`単体のimport(`sys.exit()`・`sys.argv`等)自体には危険性がなく、本当に危険なのは`sys.settrace`等の個別関数呼び出しであり、それは既にAuditHook(`runtime\_guard.\_runtime\_audit\_hook`)がOSレベルの監査フックで個別に遮断している。ScanSourceが意図的に`sys`/`shutil`の単純importまでは禁止対象に含めない設計になっているのは、まさにこの過剰検知を避けるための判断であり、`ast\_scanner.py`をそのまま統合すると、AIが生成した無害なコード(単に`sys`をimportするだけ等)まで一律拒否してしまう構造的な後退になる。
 
-\*\*判断\*\*: 実運用パイプラインへは統合しない。§Lの`cassiels\_veil.py`(別の設計思想を示す教材として統合せず保持)と同じ扱いとし、`src/ast\_scanner.py`のdocstringに本判断の経緯と理由を明記した。これにより、どこからもimportされない孤立モジュールが「現在も有効な防壁の一部であるかのような外観」を保ち続け、将来の開発者(あるいは別のAIセッション)を誤解させるリスクを解消した。テストファイルの削除は行わず、既存のテストカバレッジはそのまま維持する(§Lの`cassiels\_veil.py`と同様、動作検証済みの代替設計として保持する価値があるため)。`mini\_pytest.py`実行結果は変化なし(`PASS=103 XFAIL=2 FAIL=0 ERROR=2`)。
+\*\*判断\*\*: 実運用パイプラインへは統合しない。§Lの`network\_block\_demo.py`(別の設計思想を示す教材として統合せず保持)と同じ扱いとし、`src/ast\_scanner.py`のdocstringに本判断の経緯と理由を明記した。これにより、どこからもimportされない孤立モジュールが「現在も有効な防壁の一部であるかのような外観」を保ち続け、将来の開発者(あるいは別のAIセッション)を誤解させるリスクを解消した。テストファイルの削除は行わず、既存のテストカバレッジはそのまま維持する(§Lの`network\_block\_demo.py`と同様、動作検証済みの代替設計として保持する価値があるため)。`mini\_pytest.py`実行結果は変化なし(`PASS=103 XFAIL=2 FAIL=0 ERROR=2`)。
 
-\### AG. 「学習したつもりになっているだけ」— `raziel\_ledger.json`/`shield\_rules.json`が人間承認後も実際の防御(Michael/Gabriel)に一切反映されていなかった構造的欠陥を発見・修正
+\### AG. 「学習したつもりになっているだけ」— `pending\_rule\_ledger.json`/`shield\_rules.json`が人間承認後も実際の防御(AuditHook/ScanSource)に一切反映されていなかった構造的欠陥を発見・修正
 
 ユーザーからの3度目の「更なる進化を」という依頼を受けた棚卸しの続きで、§AFの`ast\_scanner.py`統合判断の精査中、「このシステムは攻撃から学習して進化する」という本フレームワークの核心的な謳い文句そのものが、実際には機能していないことに気づいた。これはこれまでの§AA〜§AEのような「個別の防壁の抜け道」とは異なり、\*\*2つの「学習」ワークフロー全体が実質的な置物(デコレーション)に過ぎなかった\*\*という、より根本的な発見である。
 
 \*\*事実確認\*\*: 本フレームワークには2つの「人間承認を経て防壁を強化する」パイプラインが存在する。
 
-1. `tartarus/armageddon.py`(Lucifer vs Sefer自己対戦)がMetatronを通じて新たな脱走経路を発見 → 人間が`tools/promote\_ledger\_seal.py --approve`で承認 → `sefer/raziel\_ledger.json`の`banned\_events`に追加。
-2. `angelic\_shield.py`(外部LLM脅威インテリジェンス)が危険なモジュール/関数を発見 → 人間が`tools/promote\_shield\_seal.py --approve`で承認 → `shield\_rules.json`の`blocked\_modules`/`blocked\_functions`に追加。
+1. `adversarial\_training/local\_only\_selfplay\_gate.py`(RedTeamAI vs RuntimeGuard自己対戦)がSelfplayOrchestratorを通じて新たな脱走経路を発見 → 人間が`tools/promote\_ledger\_seal.py --approve`で承認 → `runtime\_guard/pending\_rule\_ledger.json`の`banned\_events`に追加。
+2. `shield\_rule\_sync.py`(外部LLM脅威インテリジェンス)が危険なモジュール/関数を発見 → 人間が`tools/promote\_shield\_seal.py --approve`で承認 → `shield\_rules.json`の`blocked\_modules`/`blocked\_functions`に追加。
 
-両方とも、承認された内容を検証するCI向け「天使」(`checks/raziel\_auditor.py`・`checks/zadkiel\_shield\_decree.py`)は存在するが、それらは\*\*ファイルのスキーマ・ワークフローの構造的な健全性のみ\*\*を検証しており、「実際にMichael(`sefer.\_michael\_absolute\_defense`、OSレベルの実行時防壁)やGabriel(`sefer.inquisition()`、静的AST解析)がこのファイルを読み込んで判断に使っているか」は一切検証していなかった。実際に全文検索で確認した結果、`raziel\_ledger.json`・`shield\_rules.json`のいずれも、`sefer/\_\_init\_\_.py`からは一度も参照されていなかった。つまり、「Armageddonで新しい攻撃を発見し、人間が承認して防壁ルールを更新した」としても、\*\*次にAIが同じ攻撃を試みたときに、その学習結果は何の役にも立たず素通りしてしまう\*\*状態だった。これは個別の脆弱性バイパスよりも深刻で、本フレームワークの「進化」という中核的な価値提案そのものが機能していなかったことを意味する。
+両方とも、承認された内容を検証するCI向けスクリプト(`checks/audit\_ledger\_schema.py`・`checks/guard\_shield\_rule\_autoapply\_and\_key\_leak.py`)は存在するが、それらは\*\*ファイルのスキーマ・ワークフローの構造的な健全性のみ\*\*を検証しており、「実際にAuditHook(`runtime\_guard.\_runtime\_audit\_hook`、OSレベルの実行時防壁)やScanSource(`runtime\_guard.scan\_source()`、静的AST解析)がこのファイルを読み込んで判断に使っているか」は一切検証していなかった。実際に全文検索で確認した結果、`pending\_rule\_ledger.json`・`shield\_rules.json`のいずれも、`runtime\_guard/\_\_init\_\_.py`からは一度も参照されていなかった。つまり、「Selfplayで新しい攻撃を発見し、人間が承認して防壁ルールを更新した」としても、\*\*次にAIが同じ攻撃を試みたときに、その学習結果は何の役にも立たず素通りしてしまう\*\*状態だった。これは個別の脆弱性バイパスよりも深刻で、本フレームワークの「進化」という中核的な価値提案そのものが機能していなかったことを意味する。
 
-\*\*修正にあたっての安全性の確認(重要)\*\*: `raziel\_ledger.json`の既定値には`"os.remove"`・`"os.rename"`・`"socket.connect"`のように、Michaelが既に個別の条件付きチェック(`allowed\_dirs`/`allowed\_hosts`)で扱っているイベント名が含まれている。これらを無条件の絶対拒否として組み込むと、AI自身の`jail\_workspace`配下での正当なファイル操作や、ローカルOllamaサーバーへの正当な接続まで一律遮断する重大な機能破壊になることを実機で確認した。同様に、`shield\_rules.json`の`blocked\_functions`(`"loads"`・`"load"`等)を裸の名前のまま追加すると、`json.loads(...)`のような全く無害な呼び出しまでcritical判定で一律ブロックする過剰検知になることも確認した。
+\*\*修正にあたっての安全性の確認(重要)\*\*: `pending\_rule\_ledger.json`の既定値には`"os.remove"`・`"os.rename"`・`"socket.connect"`のように、AuditHookが既に個別の条件付きチェック(`allowed\_dirs`/`allowed\_hosts`)で扱っているイベント名が含まれている。これらを無条件の絶対拒否として組み込むと、AI自身の`jail\_workspace`配下での正当なファイル操作や、ローカルOllamaサーバーへの正当な接続まで一律遮断する重大な機能破壊になることを実機で確認した。同様に、`shield\_rules.json`の`blocked\_functions`(`"loads"`・`"load"`等)を裸の名前のまま追加すると、`json.loads(...)`のような全く無害な呼び出しまでcritical判定で一律ブロックする過剰検知になることも確認した。
 
 \*\*修正\*\*:
-- Michael側: `\_michael\_absolute\_defense`の既存の各条件付きチェック(open/os.open/dest構造的ops/rename/socket/デフォルト拒否)がすべて`return`で処理し終えた\*\*後\*\*に到達する最終チェックとして、`raziel\_ledger.json`の`banned\_events`を読み込み絶対拒否する処理を追加した。これにより、既存カテゴリで既にカバーされているイベント(os.remove等)は従来通りの条件付き挙動を維持したまま、どのカテゴリにも該当しない\*\*未知の新しい脱走経路\*\*だけを新たに絶対拒否できるようにした。
-- Gabriel側: `inquisition()`に`shield\_rules.json`の`blocked\_modules`を既存の`forbidden\_modules`(severity: high、非ブロッキング)に追加し、`blocked\_functions`は`blocked\_modules`との直積(例: `"dill.loads"`)としてのみ完全修飾名で`forbidden\_funcs`(severity: critical)に追加するようにした。裸の名前では照合しないため、`json.loads`等の無関係な同名関数を誤検知しない。
+- AuditHook側: `\_runtime\_audit\_hook`の既存の各条件付きチェック(open/os.open/dest構造的ops/rename/socket/デフォルト拒否)がすべて`return`で処理し終えた\*\*後\*\*に到達する最終チェックとして、`pending\_rule\_ledger.json`の`banned\_events`を読み込み絶対拒否する処理を追加した。これにより、既存カテゴリで既にカバーされているイベント(os.remove等)は従来通りの条件付き挙動を維持したまま、どのカテゴリにも該当しない\*\*未知の新しい脱走経路\*\*だけを新たに絶対拒否できるようにした。
+- ScanSource側: `scan\_source()`に`shield\_rules.json`の`blocked\_modules`を既存の`forbidden\_modules`(severity: high、非ブロッキング)に追加し、`blocked\_functions`は`blocked\_modules`との直積(例: `"dill.loads"`)としてのみ完全修飾名で`forbidden\_funcs`(severity: critical)に追加するようにした。裸の名前では照合しないため、`json.loads`等の無関係な同名関数を誤検知しない。
 - 両方とも、ファイルのmtimeをキャッシュキーとして使い、audit hookの頻繁な呼び出しごとに毎回ファイルを読み直す性能劣化を避けつつ、人間の承認がプロセス再起動不要で即座に反映されるようにした。
 
-\*\*テスト\*\*: `tests/test\_learned\_rules\_enforcement.py`を新設し、(1)raziel\_ledgerで承認された未知のイベントが絶対拒否されること、(2)承認されていない未知のイベントは従来通り素通りすること、(3)既存カテゴリで既にカバーされているイベント(os.remove等)に回帰が起きないこと、(4)shield\_rulesで承認された完全修飾関数(dill.loads)がcriticalとして検知されること、(5)無関係な同名関数(json.loads)が誤検知されないこと、(6)shield\_rules.json不在時にフェイルセーフに動作すること、の6パターンを固定した。`checks/zadkiel\_astrolabe.py`・`checks/zadkiel\_shield\_decree.py`・`checks/raziel\_auditor.py`を実行し、実際のCI向け検査スクリプトが新方式でも正しく動作することも確認した。`mini\_pytest.py`実行結果は`PASS=109`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test\_learned\_rules\_enforcement.py`を新設し、(1)pending\_rule\_ledgerで承認された未知のイベントが絶対拒否されること、(2)承認されていない未知のイベントは従来通り素通りすること、(3)既存カテゴリで既にカバーされているイベント(os.remove等)に回帰が起きないこと、(4)shield\_rulesで承認された完全修飾関数(dill.loads)がcriticalとして検知されること、(5)無関係な同名関数(json.loads)が誤検知されないこと、(6)shield\_rules.json不在時にフェイルセーフに動作すること、の6パターンを固定した。`checks/audit\_signed\_chain\_integrity.py`・`checks/guard\_shield\_rule\_autoapply\_and\_key\_leak.py`・`checks/audit\_ledger\_schema.py`を実行し、実際のCI向け検査スクリプトが新方式でも正しく動作することも確認した。`mini\_pytest.py`実行結果は`PASS=109`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-なお、テスト実装上の注意として、`sefer`モジュールは`sys.addaudithook`/`os.write`をプロセス全体へ副作用として適用するため、`importlib.reload()`すると`os.write`の多重ラップによる無限再帰を引き起こすことを実機で発見した(テスト実装中に`tests/test\_read\_restriction.py`で`RecursionError`として再現)。本番コードに影響する脆弱性ではないが、テストの書き方として記録しておく: 本モジュールを検証する際はreloadせず、`monkeypatch.setattr()`でパス定数とキャッシュ辞書を直接差し替えること。
+なお、テスト実装上の注意として、`runtime\_guard`モジュールは`sys.addaudithook`/`os.write`をプロセス全体へ副作用として適用するため、`importlib.reload()`すると`os.write`の多重ラップによる無限再帰を引き起こすことを実機で発見した(テスト実装中に`tests/test\_read\_restriction.py`で`RecursionError`として再現)。本番コードに影響する脆弱性ではないが、テストの書き方として記録しておく: 本モジュールを検証する際はreloadせず、`monkeypatch.setattr()`でパス定数とキャッシュ辞書を直接差し替えること。
 
 \### AH. maquina\_gatekeeper.py の`ZKAuditTrail` — 「ゼロ知識証明」を名乗る鍵無しハッシュ連鎖と、実質的に死んでいた改ざん検知 (2026-10)
 
-\*\*発見\*\*: §AEで`sefer/audit_chain.py`の`SignedAuditChain`を修正した後、同種の「名前だけの暗号機構」が別の場所にも存在することを疑い、`maquina_gatekeeper.py`を再精査した。`ZKAuditTrail.verify_and_record()`には、互いに補強し合う形の欠陥が二つ重なっていた。
+\*\*発見\*\*: §AEで`runtime_guard/audit_chain.py`の`SignedAuditChain`を修正した後、同種の「名前だけの暗号機構」が別の場所にも存在することを疑い、`maquina_gatekeeper.py`を再精査した。`ZKAuditTrail.verify_and_record()`には、互いに補強し合う形の欠陥が二つ重なっていた。
 
 \*\*欠陥1(鍵無し・改ざん耐性ゼロ)\*\*: "current\_hash"は§AE修正前の`SignedAuditChain`と全く同じ、秘密鍵を使わない単純なSHA-256だった。ファイルへの書き込み権限を持つ攻撃者は、任意のブロック(侵入記録等)を削除し、残りのチェーンを先頭から秘密鍵なしに再計算して書き直すだけで、改ざんを一切検知されずに証拠を消せた。
 
 \*\*欠陥2(検証そのものが実質的に死んでいた)\*\*: これは§AEより一段深刻だった。旧実装の改ざん検知は、ファイル末尾の"current\_hash"を、プロセス起動時に固定値"0000...0"へ初期化される\*\*モジュールグローバル変数\*\*`_LAST_KNOWN_HASH`と比較するだけで、ファイルの先頭から検証し直す処理が一切無かった。そして本フレームワークの実運用において、`enforce_maquina_seal`で保護される関数(`src/ollama_agent_loop.py`・`src/openai_agent_loop.py`)は、たとえるなら「警備員が毎回、前任者の記憶を一切引き継がない新人として配置に着く」ように、\*\*プロセスごとに毎回新規起動\*\*されるCLIとして呼ばれる。つまり新規プロセスが最初に`verify_and_record`を呼んだ瞬間、`_LAST_KNOWN_HASH`は必ず"0000...0"のままであり、旧実装の比較条件`_LAST_KNOWN_HASH != "0000...0"`は常にFalseになる。結果として、\*\*ファイルの内容がどれだけ改ざんされていても、改ざん検知コードはプロセスの生涯で一度も実際に機能する機会が無かった\*\*(実機検証済み: チェーン全体を鍵無しで書き換えた状態で新規プロセスに相当する呼び出しを行っても、例外は一切発生しなかった)。
 
-さらに、新しいブロックに付与される"zk\_proof"フィールドは`"Verified by Anjo da máquina"`という固定文字列に過ぎず、いかなる証明の生成・検証ロジックも存在しなかった。クラス名が"ZK"(Zero-Knowledge)を名乗りながら、実態はゼロ知識証明とは何の関係も無い固定文字列だった。たとえるなら、警備室の壁に「この建物は難攻不落の金庫で守られています」という貼り紙だけがあり、実際には金庫そのものが存在しない状態である。
+さらに、新しいブロックに付与される"zk\_proof"フィールドは`"Verified by Parrhesia"`という固定文字列に過ぎず、いかなる証明の生成・検証ロジックも存在しなかった。クラス名が"ZK"(Zero-Knowledge)を名乗りながら、実態はゼロ知識証明とは何の関係も無い固定文字列だった。たとえるなら、警備室の壁に「この建物は難攻不落の金庫で守られています」という貼り紙だけがあり、実際には金庫そのものが存在しない状態である。
 
-\*\*修正\*\*: `sefer/audit_chain.py`(§AE)と同一パターンで、ローカル専用の秘密鍵(`.zk_audit_signing_key`、初回自動生成・0600権限)で鍵付けしたHMAC-SHA256に変更した。さらに、プロセスのグローバル変数に依存する設計そのものを廃止し、`verify_and_record()`を呼ぶたびに\*\*ファイルに保存されているチェーン全体を先頭から鍵付きHMACで再検証する\*\*`_verify_full_chain()`を新設した。これにより、どのプロセスが最初に呼び出しても、ファイル自体に残る改ざんの痕跡を確実に検知できるようになった(欠陥2の根本的な解決)。
+\*\*修正\*\*: `runtime_guard/audit_chain.py`(§AE)と同一パターンで、ローカル専用の秘密鍵(`.zk_audit_signing_key`、初回自動生成・0600権限)で鍵付けしたHMAC-SHA256に変更した。さらに、プロセスのグローバル変数に依存する設計そのものを廃止し、`verify_and_record()`を呼ぶたびに\*\*ファイルに保存されているチェーン全体を先頭から鍵付きHMACで再検証する\*\*`_verify_full_chain()`を新設した。これにより、どのプロセスが最初に呼び出しても、ファイル自体に残る改ざんの痕跡を確実に検知できるようになった(欠陥2の根本的な解決)。
 
 ハッシュの入力は、ファイルに実際に永続化されているフィールド(previous\_hash, timestamp, action)のみに限定した。旧実装はargs/kwargsもハッシュ入力に含めていたが、それらはブロックに保存されないため、そもそも後から再計算して検証することが構造的に不可能であり、検証できないものをハッシュに混ぜることは、検証している体裁を整えるだけの見せかけでしかないと判断した。"zk\_proof"フィールドは、誤解を招く固定文字列から、実際に行っている処理(鍵付きHMAC-SHA256連鎖であり、真のゼロ知識証明ではないこと)を誠実に説明する注記に変更した。
 
 \*\*残存する限界(誠実に明記する)\*\*: §AEと同様、本機構は鍵ファイル(`.zk_audit_signing_key`)を読めない攻撃者による改ざんを防ぐものであり、ホストOS上で鍵ファイル自体を読み書きできる特権(root等、本フレームワークの脅威モデルの範囲外)を持つ攻撃者までは防げない。
 
-\*\*テスト\*\*: `tests/test_zk_audit_trail_chain_integrity.py`を新設し、(1)正常系での記録、(2)複数回記録時のチェーン連結、(3)あるブロックを削除し鍵無しSHA-256で再計算した改ざんが検知されること(§AEと同種の核心テスト)、(4)プロセス起動直後(グローバル状態が改ざんを一切記憶していない状態)を模した呼び出しでも改ざんが検知されること(欠陥2の回帰テスト)、(5)"zk\_proof"フィールドが固定文字列の見せかけから誠実な注記に変わっていること、(6)秘密鍵ファイルが0600権限で生成されること、の6パターンを固定した。`checks/metatron_scripture_seal.py`・`checks/raguel_template.py`(`maquina_gatekeeper.py`を検証するCI向けスクリプト)を実行し、本修正後も正しく動作することを確認した。`mini_pytest.py`実行結果は`PASS=115`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test_zk_audit_trail_chain_integrity.py`を新設し、(1)正常系での記録、(2)複数回記録時のチェーン連結、(3)あるブロックを削除し鍵無しSHA-256で再計算した改ざんが検知されること(§AEと同種の核心テスト)、(4)プロセス起動直後(グローバル状態が改ざんを一切記憶していない状態)を模した呼び出しでも改ざんが検知されること(欠陥2の回帰テスト)、(5)"zk\_proof"フィールドが固定文字列の見せかけから誠実な注記に変わっていること、(6)秘密鍵ファイルが0600権限で生成されること、の6パターンを固定した。`checks/audit_package_boundary_isolation.py`・`checks/audit_agent_template_integration.py`(`maquina_gatekeeper.py`を検証するCI向けスクリプト)を実行し、本修正後も正しく動作することを確認した。`mini_pytest.py`実行結果は`PASS=115`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-\### AI. src/uriel\_phoenix.py `UrielPhoenix` — 不可逆な破壊的操作(焦土作戦)に経路の安全装置が無かった (2026-10)
+\### AI. src/incident\_reset\_tool.py `IncidentResetTool` — 不可逆な破壊的操作(焦土作戦)に経路の安全装置が無かった (2026-10)
 
-\*\*発見\*\*: `UrielPhoenix`(以前は固定パス専用の`__main__`デモ)を実運用のインシデント対応ツール`tools/incident_reset.py`として一般化した際、`core_dir`/`talisman`を任意のパスとして指定できるようになったが、`shutil.rmtree()`・`Path.unlink()`という不可逆な破壊的操作に対する経路の安全性検証が一切追加されていなかった。たとえるなら、\*\*「自動消火システムに、炎上している部屋を指定するノブを付けたが、そのノブが建物全体の送電網そのものも指せてしまう」\*\*状態である。本ツールは「致命的な侵入が確定した後」という、操作者が最も動揺し、最も判断ミスをしやすい状況で人間が手で呼び出すツールであり、`--core-dir /`・`--core-dir ~`のような入力ミス、あるいは単純な誤タイプを確認プロンプトで一度`y`と答えるだけで、ファイルシステムのルートやホームディレクトリ、あるいは`/etc`のような極めて浅い(被害範囲が破滅的に広い)システム標準ディレクトリを丸ごと削除できてしまう構造的な欠陥があった。
+\*\*発見\*\*: `IncidentResetTool`(以前は固定パス専用の`__main__`デモ)を実運用のインシデント対応ツール`tools/incident_reset.py`として一般化した際、`core_dir`/`talisman`を任意のパスとして指定できるようになったが、`shutil.rmtree()`・`Path.unlink()`という不可逆な破壊的操作に対する経路の安全性検証が一切追加されていなかった。たとえるなら、\*\*「自動消火システムに、炎上している部屋を指定するノブを付けたが、そのノブが建物全体の送電網そのものも指せてしまう」\*\*状態である。本ツールは「致命的な侵入が確定した後」という、操作者が最も動揺し、最も判断ミスをしやすい状況で人間が手で呼び出すツールであり、`--core-dir /`・`--core-dir ~`のような入力ミス、あるいは単純な誤タイプを確認プロンプトで一度`y`と答えるだけで、ファイルシステムのルートやホームディレクトリ、あるいは`/etc`のような極めて浅い(被害範囲が破滅的に広い)システム標準ディレクトリを丸ごと削除できてしまう構造的な欠陥があった。
 
-\*\*修正\*\*: `src/uriel_phoenix.py`に`_ensure_safe_destructive_target()`を新設し、`scorched_earth_and_rebirth()`の冒頭、すなわち実際の`rmtree()`/`unlink()`を呼ぶ前に、`core_dir`・`talisman`の両方について以下を検証するようにした: (1)解決後のパスがファイルシステムのルート(Windowsのドライブルート含む)そのものでないこと、(2)解決後のパスがホームディレクトリそのものでないこと、(3)解決後のパスの深さ(ルートからの階層数)が極端に浅くないこと(既定の閾値: 2階層未満を拒否)。意図的に浅いパスを対象にする特殊用途のために、`allow_shallow_path=True`(CLIでは`--allow-shallow-path`)による明示的な脱出口も用意した(既定は安全側のFalse)。`tools/incident_reset.py`側では、確認プロンプトに「操作者が入力した文字列」ではなく「実際に削除される解決済みの絶対パス」を表示するよう変更し、相対パスの指定ミスにも削除前に気付けるようにした。
+\*\*修正\*\*: `src/incident_reset_tool.py`に`_ensure_safe_destructive_target()`を新設し、`scorched_earth_and_rebirth()`の冒頭、すなわち実際の`rmtree()`/`unlink()`を呼ぶ前に、`core_dir`・`talisman`の両方について以下を検証するようにした: (1)解決後のパスがファイルシステムのルート(Windowsのドライブルート含む)そのものでないこと、(2)解決後のパスがホームディレクトリそのものでないこと、(3)解決後のパスの深さ(ルートからの階層数)が極端に浅くないこと(既定の閾値: 2階層未満を拒否)。意図的に浅いパスを対象にする特殊用途のために、`allow_shallow_path=True`(CLIでは`--allow-shallow-path`)による明示的な脱出口も用意した(既定は安全側のFalse)。`tools/incident_reset.py`側では、確認プロンプトに「操作者が入力した文字列」ではなく「実際に削除される解決済みの絶対パス」を表示するよう変更し、相対パスの指定ミスにも削除前に気付けるようにした。
 
-なお、この安全装置はpytestの`tmp_path`のような十分に深いテスト用一時ディレクトリには一切影響しない(深さの閾値を十分に満たすため)。既存の`tests/test_uriel_phoenix_reset.py`の5件は無変更のまま全てPASSし続けることを確認済み。
+なお、この安全装置はpytestの`tmp_path`のような十分に深いテスト用一時ディレクトリには一切影響しない(深さの閾値を十分に満たすため)。既存の`tests/test_incident_reset_tool_reset.py`の5件は無変更のまま全てPASSし続けることを確認済み。
 
-\*\*テスト\*\*: `tests/test_uriel_phoenix_safety_guardrail.py`を新設し、(1)ファイルシステムのルートが拒否されること、(2)ホームディレクトリが拒否されること、(3)浅いパス(実在しない架空のパスで検証)が既定で拒否されること、(4)`allow_shallow_path=True`で明示的に解除できること、(5)既存の正常系(十分に深いtmp_path)が無影響であること、(6)talismanも同様に検証されること、の6パターンを固定した。CLIから`python tools/incident_reset.py --core-dir / --yes`を実際に実行し、`rmtree`に到達する前に拒否されることを実機で確認した。`mini_pytest.py`実行結果は`PASS=121`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test_incident_reset_tool_safety_guardrail.py`を新設し、(1)ファイルシステムのルートが拒否されること、(2)ホームディレクトリが拒否されること、(3)浅いパス(実在しない架空のパスで検証)が既定で拒否されること、(4)`allow_shallow_path=True`で明示的に解除できること、(5)既存の正常系(十分に深いtmp_path)が無影響であること、(6)talismanも同様に検証されること、の6パターンを固定した。CLIから`python tools/incident_reset.py --core-dir / --yes`を実際に実行し、`rmtree`に到達する前に拒否されることを実機で確認した。`mini_pytest.py`実行結果は`PASS=121`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
 \### AJ. adapters/excel\_to\_yaml\_parser.py・adapters/external\_qa\_wrapper.py — CIに残っていた「名前だけの検査」2件 (2026-10)
 
 \*\*発見\*\*: `checks/_common.py`のdocstringには、§刷新前の`checks/*.py`の大半(33ファイル中28ファイル)が`print('... initialized. Zero-Trust audit passed.')`のみの中身のないプレースホルダーだったという記録が残っている。この記録を踏まえ、`checks/`以外のCI実行対象である`adapters/`配下も同じ観点で確認したところ、`excel_to_yaml_parser.py`と`external_qa_wrapper.py`の2ファイルが、全く同じ2行のプレースホルダー(`import os, sys` / `print(f'... Zero-Trust audit passed.')`)のまま放置されていることが分かった。
 
-たとえるなら、\*\*「検品ラインに『検品済み』のスタンプだけが置かれていて、実際には製品を一度も検品していない」\*\*状態である。`.github/workflows/regression_checks_ci.yml`を確認すると、この2つは実際にCIのステップ「3.8. 外部要件の抽出 (Excel to YAML Parser)」「18. 外部QAツールの実行 (External QA Adapter)」として組み込まれており、他の26個の天使ステップと並んで、あたかも実質的な検査が行われ合格したかのように毎回報告していた。しかし実際には、Excelファイルを一度も読んでおらず、外部のQAツールを一度も実行していない。
+たとえるなら、\*\*「検品ラインに『検品済み』のスタンプだけが置かれていて、実際には製品を一度も検品していない」\*\*状態である。`.github/workflows/regression_checks_ci.yml`を確認すると、この2つは実際にCIのステップ「3.8. 外部要件の抽出 (Excel to YAML Parser)」「18. 外部QAツールの実行 (External QA Adapter)」として組み込まれており、他の26個の検査ステップと並んで、あたかも実質的な検査が行われ合格したかのように毎回報告していた。しかし実際には、Excelファイルを一度も読んでおらず、外部のQAツールを一度も実行していない。
 
-さらに強い状況証拠として、CIの「3. 供物の準備 (Install Dependencies)」ステップでは`openpyxl`(Excel読み込み)と`playwright`(ブラウザ自動化。かつ`playwright install chromium --with-deps`で実際にヘッドレスブラウザまでインストールしている)が明示的にインストールされているにもかかわらず、リポジトリ内のどのスクリプトもこの2つのライブラリを一度も使用していなかった(`grep -rl playwright`・`grep -rl openpyxl`いずれもゼロ件、本修正前)。インストールされているのに誰も使っていない依存関係は、「実装するはずだったが実装されなかった機能」が存在することの明確な痕跡である。
+さらに強い状況証拠として、CIの「3. 依存関係のインストール (Install Dependencies)」ステップでは`openpyxl`(Excel読み込み)と`playwright`(ブラウザ自動化。かつ`playwright install chromium --with-deps`で実際にヘッドレスブラウザまでインストールしている)が明示的にインストールされているにもかかわらず、リポジトリ内のどのスクリプトもこの2つのライブラリを一度も使用していなかった(`grep -rl playwright`・`grep -rl openpyxl`いずれもゼロ件、本修正前)。インストールされているのに誰も使っていない依存関係は、「実装するはずだったが実装されなかった機能」が存在することの明確な痕跡である。
 
 \*\*修正\*\*: 両ファイルに、名前が示す役割に対応した実質的な処理を実装した。
 
-  - `excel_to_yaml_parser.py`: リポジトリルートの`requirements.xlsx`(1行目をヘッダ行とする表形式の外部要件シート)が存在する場合、実際に`openpyxl`で読み込み、各行をヘッダ名をキーとするレコードとして`sefer/external_requirements.yaml`へYAML化する。空セル・完全に空の行は適切に省略する。`requirements.xlsx`がまだ投入されていない現状(これが実際の状態)では、他の天使スクリプトと同じ「対象が存在しない場合は正直にスキップを報告する」パターンに従い、偽の成功を名乗らず「検査対象なし」として正常終了する。
+  - `excel_to_yaml_parser.py`: リポジトリルートの`requirements.xlsx`(1行目をヘッダ行とする表形式の外部要件シート)が存在する場合、実際に`openpyxl`で読み込み、各行をヘッダ名をキーとするレコードとして`runtime_guard/external_requirements.yaml`へYAML化する。空セル・完全に空の行は適切に省略する。`requirements.xlsx`がまだ投入されていない現状(これが実際の状態)では、他の検査スクリプトと同じ「対象が存在しない場合は正直にスキップを報告する」パターンに従い、偽の成功を名乗らず「検査対象なし」として正常終了する。
 
-  - `external_qa_wrapper.py`: `architecture.html`(`checks/ophanim_thousand_eyes.py`が静的に検査している対象と同一ファイル)を、実際に`Playwright`のヘッドレスChromiumでレンダリングし、(1)JavaScriptの未捕捉例外(pageerror)、(2)コンソールのerrorレベルのログ、の両方を動的に検知する。`ophanim_thousand_eyes.py`の静的解析(ファイルの中身を読むだけ)を、実際にブラウザでコードを実行する動的検証で補完する多層防御になっている。対象ファイルが存在しない場合は同様に「検査対象なし」として正直に報告する。
+  - `external_qa_wrapper.py`: `architecture.html`(`checks/guard_html_external_script_injection.py`が静的に検査している対象と同一ファイル)を、実際に`Playwright`のヘッドレスChromiumでレンダリングし、(1)JavaScriptの未捕捉例外(pageerror)、(2)コンソールのerrorレベルのログ、の両方を動的に検知する。`guard_html_external_script_injection.py`の静的解析(ファイルの中身を読むだけ)を、実際にブラウザでコードを実行する動的検証で補完する多層防御になっている。対象ファイルが存在しない場合は同様に「検査対象なし」として正直に報告する。
 
 \*\*テスト\*\*: `tests/test_adapters_excel_to_yaml_parser.py`(3件)・`tests/test_adapters_external_qa_wrapper.py`(4件)を新設した。前者は、対象ファイル不在時に偽の成功を名乗らないこと・実際のExcelファイルが正しくYAML化されること・完全に空の行が省略されることを固定。後者は、対象ファイル不在時の正直な報告・正常なHTMLの合格・意図的に埋め込んだJavaScript未捕捉例外とconsole.errorの両方が実際に検知されることを固定した(旧実装では検知不可能だったことを、実際にブラウザで実行させて確認している)。実機で`cp architecture.html`を破壊的なスクリプト付きで一時的に書き換え、実際にFAILすることを手動でも確認した上で原状復帰した。`mini_pytest.py`実行結果は`PASS=128`(新規+7)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
-\### AK. anjo\_interceptor/intent\_checker.py `IntentInterceptor` — 絶対パス指定による「意図検閲」層の脱走検知漏れ (2026-10)
+\### AK. agent\_interceptor/intent\_checker.py `IntentInterceptor` — 絶対パス指定による「意図検閲」層の脱走検知漏れ (2026-10)
 
-\*\*発見\*\*: `src/ollama_agent_loop.py`の実運用パイプラインを再精査した際、`AnjoOllamaExecutor._execute_safe_action`が`target = self.workspace_root / action_req.get("target")`という形でパスを結合していることに着目した。Pythonの`pathlib.Path.__truediv__`には、右辺が絶対パスの場合に左辺を無視してそのまま右辺を返すという仕様がある(例: `Path("/jail") / "/etc/passwd"` は `Path("/jail/etc/passwd")` にはならず `Path("/etc/passwd")` になる)。つまりAIが`{"action": "write", "target": "/etc/passwd", ...}`のように絶対パスを指定するだけで、`workspace_root`による境界は計算上無視される。
+\*\*発見\*\*: `src/ollama_agent_loop.py`の実運用パイプラインを再精査した際、`OllamaAgentExecutor._execute_safe_action`が`target = self.workspace_root / action_req.get("target")`という形でパスを結合していることに着目した。Pythonの`pathlib.Path.__truediv__`には、右辺が絶対パスの場合に左辺を無視してそのまま右辺を返すという仕様がある(例: `Path("/jail") / "/etc/passwd"` は `Path("/jail/etc/passwd")` にはならず `Path("/etc/passwd")` になる)。つまりAIが`{"action": "write", "target": "/etc/passwd", ...}`のように絶対パスを指定するだけで、`workspace_root`による境界は計算上無視される。
 
 さらに調べると、この入力が最初に通過する`IntentInterceptor.evaluate_action()`の"write"分岐は、".."連鎖の相対パストラバーサルと、`protected_dirs`に一致する先頭ディレクトリ名のみを検査しており、絶対パスそのものに対する封じ込め検証が一切無かった。"read"分岐はさらに手薄で、ハニーポットのファイル名一致以外、封じ込め検証そのものが最初から存在しなかった。たとえるなら、\*\*「入国審査(IntentInterceptor)が、パスポートの行き先欄が『国内』かどうかだけを見ていて、『海外』と書かれたパスポートをそもそも確認する欄が無かった」\*\*状態である。
 
-実機で検証した結果、幸いにも現行の実運用パイプラインでは致命的な脱走には至らない。最終防衛線である`sefer.Sandbox`のOS監査フック(`_michael_absolute_defense`)が、計算されたパスがどうであれ、実際に発行される`open()`等のシステムコールの引数(実際の絶対パス)を直接検査しているため、`workspace_root`の境界外への書き込みは実際にはそこで遮断される(実機再現コードで確認済み: `self.workspace_root / "/tmp/.../escape_test.txt"`という脆弱な結合を経由させても、`Sandbox`のコンテキスト内での書き込みは`LossOfAtaraxia`で正しく遮断された)。
+実機で検証した結果、幸いにも現行の実運用パイプラインでは致命的な脱走には至らない。最終防衛線である`runtime_guard.Sandbox`のOS監査フック(`_runtime_audit_hook`)が、計算されたパスがどうであれ、実際に発行される`open()`等のシステムコールの引数(実際の絶対パス)を直接検査しているため、`workspace_root`の境界外への書き込みは実際にはそこで遮断される(実機再現コードで確認済み: `self.workspace_root / "/tmp/.../escape_test.txt"`という脆弱な結合を経由させても、`Sandbox`のコンテキスト内での書き込みは`LossOfAtaraxia`で正しく遮断された)。
 
 しかし`IntentInterceptor`自身は、その設計上の役割(ディレクトリトラバーサルやサンドボックス外への干渉を検知する「意図検閲」レイヤー)を果たせていなかった。本セッションで§AC・§AD・§AE等、`Sandbox`やその周辺の「最終防衛線」ですら複数の抜け道が実際に見つかっている以上、外側の層が内側の層の抜け道に対する安全網を一切持たない状態を放置するのは、この実装全体が掲げる「多層防御」の思想に反する。
 
 \*\*修正\*\*: `src/workspace_manager.py`の`WorkspaceJail.secure_resolve()`と同一の堅牢な封じ込め判定(`Path.resolve()` + `Path.is_relative_to()`)を実装した`_assert_contained_within_workspace()`を新設し、"read"・"write"の両分岐の先頭で呼び出すようにした。この判定は、結合の結果が絶対パスの右辺によってworkspace\_rootを無視してしまうケースでも、解決後の最終パスを見て正しく検知できる。
 
-\*\*テスト\*\*: `tests/test_intent_interceptor_absolute_path_escape.py`を新設し、(1)絶対パスへのwriteの脱走検知、(2)絶対パスへのreadの脱走検知(旧実装では封じ込め検証そのものが存在しなかった)、(3)pathlibの絶対パス結合仕様そのものの固定(前提知識の回帰防止)、(4)(5)workspace\_root配下への正常なread/writeが引き続き許可されること(回帰防止)、(6)既存の".."トラバーサル検知に影響がないこと、の6パターンを固定した。既存の`tests/test_intent_gaming.py`(14件)・`tests/test_agent_loop_sandbox_integration.py`・`tests/test_aegis_sandalphon_mandatory.py`は無変更のまま全てPASSし続けることを確認済み。`mini_pytest.py`実行結果は`PASS=134`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test_intent_interceptor_absolute_path_escape.py`を新設し、(1)絶対パスへのwriteの脱走検知、(2)絶対パスへのreadの脱走検知(旧実装では封じ込め検証そのものが存在しなかった)、(3)pathlibの絶対パス結合仕様そのものの固定(前提知識の回帰防止)、(4)(5)workspace\_root配下への正常なread/writeが引き続き許可されること(回帰防止)、(6)既存の".."トラバーサル検知に影響がないこと、の6パターンを固定した。既存の`tests/test_intent_gaming.py`(14件)・`tests/test_agent_loop_sandbox_integration.py`・`tests/test_defense_orchestrator_docker_sandbox_mandatory.py`は無変更のまま全てPASSし続けることを確認済み。`mini_pytest.py`実行結果は`PASS=134`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
 \### AL. tools/purify\_tests.py — 名前と内容が一致しない、完全に孤立した死んだコードの削除 (2026-10)
 
-\*\*発見\*\*: `tools/`配下の棚卸しの一環として`purify_tests.py`(「テスト浄化」を意味する名前)を精査したところ、ファイル名と内容が全く一致していないことが分かった。中身は`テストの浄化`とは何の関係もなく、`tartarus/armageddon.py`の冒頭にある`COMMANDER_HASH`キルスイッチ(`_verify_creators_air`相当のロジック、MACアドレスのハッシュが一致しなければ`sys.exit(666)`で自壊する)と、終わらない攻撃生成の無限ループ(`eternal_crusade`)の、未完成な初期草稿のコピーだった。
+\*\*発見\*\*: `tools/`配下の棚卸しの一環として`purify_tests.py`(「テスト浄化」を意味する名前)を精査したところ、ファイル名と内容が全く一致していないことが分かった。中身は`テストの浄化`とは何の関係もなく、`adversarial_training/local_only_selfplay_gate.py`の冒頭にある`COMMANDER_HASH`キルスイッチ(起動時のMACアドレスハッシュ検証に相当するロジック、ハッシュが一致しなければ`sys.exit(666)`で自壊する)と、終わらない攻撃生成の無限ループ(`eternal_crusade`)の、未完成な初期草稿のコピーだった。
 
-決定的な証拠が3つある。(1) `COMMANDER_HASH`の値が、実際に稼働している`tartarus/armageddon.py`のような64文字の実ハッシュではなく、`"ここに先ほど取得した64文字のハッシュを貼り付けてください"`という日本語のプレースホルダー文字列のままだった。つまりこのファイルを万一誰かが`__main__`として実行しても、ハッシュ比較は原理的に一致しえず、即座に`sys.exit(666)`で自壊するだけの、何の機能も果たさないコードだった。(2) リポジトリ全体を検索しても、`import tools.purify_tests`や`python tools/purify_tests.py`のような参照は、CIワークフロー・ドキュメント・他のスクリプトのいずれにも一件も存在しなかった。(3) `tartarus/armageddon.py`には同種のロジックが正式に実装され、既にGRIMOIRE記録済みの脆弱性修正(requestsの遅延import化)まで施された、きちんと保守されているバージョンが存在する。
+決定的な証拠が3つある。(1) `COMMANDER_HASH`の値が、実際に稼働している`adversarial_training/local_only_selfplay_gate.py`のような64文字の実ハッシュではなく、`"ここに先ほど取得した64文字のハッシュを貼り付けてください"`という日本語のプレースホルダー文字列のままだった。つまりこのファイルを万一誰かが`__main__`として実行しても、ハッシュ比較は原理的に一致しえず、即座に`sys.exit(666)`で自壊するだけの、何の機能も果たさないコードだった。(2) リポジトリ全体を検索しても、`import tools.purify_tests`や`python tools/purify_tests.py`のような参照は、CIワークフロー・ドキュメント・他のスクリプトのいずれにも一件も存在しなかった。(3) `adversarial_training/local_only_selfplay_gate.py`には同種のロジックが正式に実装され、既に記録済みの脆弱性修正(requestsの遅延import化)まで施された、きちんと保守されているバージョンが存在する。
 
 たとえるなら、\*\*「"掃除道具入れ"と書かれた棚を開けたら、何年も前に作ろうとして放置された、別の部屋の試作品の鍵が入っていた」\*\*状態である。実害を及ぼすものではなかったが(前述の通り、実行されても即座に自壊するだけ)、何の説明も参照もない孤立したコードが残っていることは、将来の開発者やAI自身を混乱させ、「`purify_tests.py`とは何をするものか」という誤った推測を招く。ユーザーからの「いらないものは削除して大丈夫です」という恒久的な許可に基づき、本ファイルを削除した。
 
