@@ -8,7 +8,7 @@ os.write/os.pwrite/os.writev/os.pwritevの4系統のみをラップしていた�
 `os.sendfile()`と`os.copy_file_range()`はいずれもCPythonのaudit event
 を一切発生させないカーネル直接転送APIであり、完全に素通りしていた。
 この2関数自体をos.write系と同じ方針でラップする修正の、継続的な
-再検証を本天使が担う。自己レッドチームの結果(修正前の状態に戻すと
+再検証を本検査が担う。自己レッドチームの結果(修正前の状態に戻すと
 正しくFAILし、復元すると正しくPASSすることを確認済み)を回帰テスト
 として固定する。
 """
@@ -75,7 +75,7 @@ def test_check_sendfile_to_socket_without_sandbox_is_unaffected_directly():
 def test_battery_detects_reintroduced_sendfile_socket_regression(monkeypatch):
     """[核心・自己レッドチームの固定・§CN] `runtime_guard/__init__.py`の
     `_check_fd_not_socket_for_sendfile`が(将来の変更で)再び呼ばれなく
-    なった場合、本天使が正しく「遮断されなかった」として検知すること
+    なった場合、本検査が正しく「遮断されなかった」として検知すること
     を、実際にgit stashでこの退行を再現して確認済み(修正前は本テスト
     と同じ失敗を実機で確認し、修正後はPASSに戻ることを確認した)。"""
     def _vulnerable_check():
@@ -96,7 +96,7 @@ def test_battery_detects_reintroduced_sendfile_socket_regression(monkeypatch):
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CD修正前の、os.sendfile/
-    os.copy_file_rangeを一切ラップしない実装に戻した場合、本天使が
+    os.copy_file_rangeを一切ラップしない実装に戻した場合、本検査が
     正しく「遮断されなかった」として検知することを、実際に確認する。"""
     def _vulnerable_check():
         return False, "allowed_dirs外へのsendfile書き込みが遮断されなかった(模擬)"
@@ -149,7 +149,7 @@ def test_check_os_write_without_sandbox_is_unaffected_directly():
 def test_battery_detects_reintroduced_os_write_socket_regression(monkeypatch):
     """[核心・自己レッドチームの固定・§CQ] `runtime_guard/__init__.py`の
     `_guarded_os_write`が(将来の変更で)再び`_check_fd_not_socket`を
-    呼ばなくなった場合、本天使が正しく「遮断されなかった」として検知
+    呼ばなくなった場合、本検査が正しく「遮断されなかった」として検知
     することを、実際にgit stashでこの退行を再現して確認済み(修正前は
     本テストと同じ失敗を実機で確認し、修正後はPASSに戻ることを確認
     した)。"""

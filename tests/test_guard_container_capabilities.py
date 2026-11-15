@@ -33,7 +33,7 @@ def test_static_check_passes_on_real_repository():
 
 def test_static_check_detects_missing_cap_drop_regression(tmp_path, monkeypatch):
     """[核心・自己レッドチームの固定] §CF修正前の、3オプションを一切
-    付与していない実装に戻した場合、本天使が正しく検知することを確認
+    付与していない実装に戻した場合、本検査が正しく検知することを確認
     する。"""
     fake_root = tmp_path
     (fake_root / "src").mkdir()
@@ -100,7 +100,7 @@ def test_dynamic_check_is_inconclusive_when_image_build_fails(monkeypatch):
 
 def test_dynamic_check_detects_capability_not_actually_dropped_regression(monkeypatch):
     """[核心・自己レッドチームの固定] 何らかの退行で剥奪が機能しておらず
-    os.setuid(0)が実際に成功してしまった場合、本天使が正しくFAILを
+    os.setuid(0)が実際に成功してしまった場合、本検査が正しくFAILを
     報告することを確認する(コンテナの起動自体をモックして、ロジック
     単体の正しさを検証する)。"""
     import docker_sandbox_executor as sj

@@ -26,7 +26,7 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # `event.startswith("ctypes.")`という名前空間ごとのデフォルト拒否を
 # 既に備えており、この欠陥の対象ではないことを実機で確認した
 # (既存の未変更のコードのままで"ctypes.dlsym"が正しく遮断される
-# ことを確認済み)。本天使は、runtime_audit_gatekeeper.py側の修正
+# ことを確認済み)。本検査は、runtime_audit_gatekeeper.py側の修正
 # ("ctypes.dlopen"・"ctypes.dlsym"をforbidden集合に追加)を継続的に
 # 再検証し、同時にruntime_guard側が(本修正を加えていない既存のコードの
 # ままで)同じ攻撃に対して既に保護されていることも裏付けとして
@@ -36,7 +36,7 @@ NAME = "guard_ctypes_dlsym_bypass - 封鎖されている間、ctypes.pythonapi�
 # 新たにシンボルを解決・新たなハンドルを取得する」というパターンを
 # 塞ぐものである。Sandboxに入る『前』に関数ポインタ自体を解決・
 # 変数に保存しておけば、その後の呼び出し自体は新たなaudit eventを
-# 一切発生させないため(実機で確認済み)、本修正・本天使のいずれも
+# 一切発生させないため(実機で確認済み)、本修正・本検査のいずれも
 # これには及ばない。これは本防御方式(audit hookベースの検査)
 # 自体の限界であり、恒久対策にはOSレベルのサンドボックスが必要で
 # ある。
@@ -53,7 +53,7 @@ def _run(script: str) -> subprocess.CompletedProcess:
 def _check_pythonapi_symbol_resolution_is_blocked() -> tuple:
     """封鎖されている間、ctypes.pythonapiからのシンボル解決自体が
     遮断され、ファイルが一切変更されないことを確認する。"""
-    fd, victim = tempfile.mkstemp(prefix="chamuel_mg_victim_")
+    fd, victim = tempfile.mkstemp(prefix="dlsym_mg_victim_")
     os.close(fd)
     with open(victim, "wb") as f:
         f.write(b"original content, untouched so far............")
@@ -134,7 +134,7 @@ def _check_runtime_guard_already_protected_without_modification() -> tuple:
     """[裏付け] 独立した別の防御層(runtime_guard/__init__.py)は、本修正を
     一切加えていない既存のコードのままで、同じ攻撃を既存の名前空間
     デフォルト拒否によって正しく遮断することを確認する。"""
-    fd, victim = tempfile.mkstemp(prefix="chamuel_runtime_guard_victim_")
+    fd, victim = tempfile.mkstemp(prefix="dlsym_runtime_guard_victim_")
     os.close(fd)
     with open(victim, "wb") as f:
         f.write(b"original content, untouched so far............")
@@ -144,7 +144,7 @@ import ctypes, os, sys
 from runtime_guard import Sandbox, LossOfAtaraxia
 
 try:
-    with Sandbox(allowed_dirs=["/tmp/chamuel_nonexistent_jail"]):
+    with Sandbox(allowed_dirs=["/tmp/dlsym_nonexistent_jail"]):
         c_unlink = ctypes.pythonapi.unlink
         c_unlink.argtypes = [ctypes.c_char_p]
         c_unlink({victim!r}.encode())

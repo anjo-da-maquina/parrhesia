@@ -86,7 +86,7 @@ def test_check_runtime_guard_already_protected_without_modification_directly():
 @_RSA_UNAVAILABLE_SKIP
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CE修正前の、ctypes.dlopen/dlsym
-    を一切検査しない実装に戻した場合、本天使が正しく「遮断されなかっ
+    を一切検査しない実装に戻した場合、本検査が正しく「遮断されなかっ
     た」として検知することを、実際に確認する。"""
     def _vulnerable_check():
         return False, "ctypes.pythonapi経由の攻撃が遮断されなかった(模擬)"

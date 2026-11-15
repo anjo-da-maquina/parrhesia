@@ -24,7 +24,7 @@ NAME = "guard_kernel_socket_transfer - 検査用の被害ファイルと攻撃�
 # [一般化の方針] これも本セッションで繰り返し発見している「意図は
 # 同じ(fd事前オープンによる書き込み制限の迂回)だが、別のAPIを使う
 # だけで素通りする」という構造の欠陥であり、§BW(import os.path)・
-# §CA(socket.sendto)・§CB(mmap)と同種である。本天使は、実装詳細を
+# §CA(socket.sendto)・§CB(mmap)と同種である。本検査は、実装詳細を
 # 静的に解析するのではなく、実際にSandboxを起動し、既知の具体的な
 # 迂回手口(sendfile/copy_file_rangeによるfd事前オープン書き込み)を
 # 実行して、正しく遮断されることを継続的に検証する回帰連戦である。
@@ -40,7 +40,7 @@ NAME = "guard_kernel_socket_transfer - 検査用の被害ファイルと攻撃�
 # ジェクトのメモリを直接書き換えるような極めて脆い手段を除く)。これは
 # 「osモジュールの関数をPython層でラップする」という本防御方式自体の
 # 限界であり、恒久対策にはOSレベルのサンドボックス(seccomp等)が必要
-# である。本天使はこの既知の限界を再検証するものではなく、sendfile/
+# である。本検査はこの既知の限界を再検証するものではなく、sendfile/
 # copy_file_rangeという「修正可能だった」経路が実際に塞がれているかを
 # 検証するものである。
 
@@ -50,11 +50,11 @@ sys.path.insert(0, str(ROOT))
 def _victim_pair(victim_content: bytes, payload_content: bytes):
     """検査用の被害ファイルと攻撃元ファイルを作り、そのパスを返す。
     呼び出し側が削除責任を持つ。"""
-    vfd, vpath = tempfile.mkstemp(prefix="sachiel_victim_")
+    vfd, vpath = tempfile.mkstemp(prefix="kerneltransfer_victim_")
     os.close(vfd)
     with open(vpath, "wb") as f:
         f.write(victim_content)
-    pfd, ppath = tempfile.mkstemp(prefix="sachiel_payload_")
+    pfd, ppath = tempfile.mkstemp(prefix="kerneltransfer_payload_")
     os.close(pfd)
     with open(ppath, "wb") as f:
         f.write(payload_content)
@@ -73,7 +73,7 @@ def _check_sendfile_write_is_blocked() -> tuple:
         src_fd = os.open(ppath, os.O_RDONLY)
         try:
             try:
-                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/kerneltransfer_nonexistent_jail"]):
                     os.sendfile(dst_fd, src_fd, 0, 19)
                 return False, "os.sendfileによる書き込みが遮断されなかった"
             except LossOfAtaraxia:
@@ -108,7 +108,7 @@ def _check_copy_file_range_write_is_blocked() -> tuple:
         src_fd = os.open(ppath, os.O_RDONLY)
         try:
             try:
-                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/kerneltransfer_nonexistent_jail"]):
                     os.copy_file_range(src_fd, dst_fd, 25)
                 return False, "os.copy_file_rangeによる書き込みが遮断されなかった"
             except LossOfAtaraxia:
@@ -206,7 +206,7 @@ def _check_copy_file_range_inside_allowed_dirs_is_not_falsely_blocked() -> tuple
 # ソケットへ、Sandbox起動**後**にos.sendfileでファイル内容を送出する
 # 攻撃が例外無しで成功し、受信側で実際にファイル内容を受信できることを
 # 確認した(本物の情報持ち出し)。`_check_fd_not_socket_for_sendfile`を
-# 新設してこの経路を明示的に拒否する修正の、継続的な再検証を本天使が
+# 新設してこの経路を明示的に拒否する修正の、継続的な再検証を本検査が
 # 担う。
 #
 # [正直な注記: 本検査の限界] `os.copy_file_range`はLinuxカーネル側の
@@ -235,7 +235,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
     conn, _ = srv.accept()
 
     secret = b"secret-file-content-to-exfiltrate"
-    vfd, vpath = tempfile.mkstemp(prefix="sachiel_secret_")
+    vfd, vpath = tempfile.mkstemp(prefix="kerneltransfer_secret_")
     os.write(vfd, secret)
     os.close(vfd)
 
@@ -243,7 +243,7 @@ def _check_sendfile_to_socket_is_blocked_end_to_end() -> tuple:
         src_fd = os.open(vpath, os.O_RDONLY)
         try:
             try:
-                with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+                with Sandbox(allowed_dirs=["/tmp/kerneltransfer_nonexistent_jail"]):
                     os.sendfile(cli.fileno(), src_fd, 0, len(secret))
                 return False, "os.sendfileによるソケットへの送出が遮断されなかった"
             except LossOfAtaraxia:
@@ -287,7 +287,7 @@ def _check_sendfile_to_socket_without_sandbox_is_unaffected() -> tuple:
     conn, _ = srv.accept()
 
     payload = b"non-sealed legit sendfile"
-    vfd, vpath = tempfile.mkstemp(prefix="sachiel_legit_")
+    vfd, vpath = tempfile.mkstemp(prefix="kerneltransfer_legit_")
     os.write(vfd, payload)
     os.close(vfd)
 
@@ -347,7 +347,7 @@ def _check_os_write_to_presealed_socket_is_blocked_end_to_end() -> tuple:
     secret = b"secret-via-os-write-on-socket-fd"
     try:
         try:
-            with Sandbox(allowed_dirs=["/tmp/sachiel_nonexistent_jail"]):
+            with Sandbox(allowed_dirs=["/tmp/kerneltransfer_nonexistent_jail"]):
                 os.write(cli.fileno(), secret)
             return False, "os.writeによるソケットfdへの書き込みが遮断されなかった"
         except LossOfAtaraxia:
