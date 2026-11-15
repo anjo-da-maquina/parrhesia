@@ -18,9 +18,9 @@ git config core.hooksPath hooks
 `checks/guard_precommit_secret_leak.py` が別途担う）。
 
 ## ⚔️ 闘争と進化（アリーナ運用）
-闘技場を起動し、ルシファー（攻撃AI・堕天使）とメタトロン（防衛・QA）を3戦戦わせる。
+闘技場を起動し、RedTeamAI（攻撃AI）とSelfplayOrchestrator（防衛・QA）を3戦戦わせる。
 闘争結果は自動的に `adversarial_training/selfplay_history.json`(旧名`local_arena/selfplay_history.json`)に記録され、次回起動時に自動浄化される。
-メタトロンが提案する新しい禁止ルールは、直接は反映されず `runtime_guard/proposed_rule_queue.json`
+SelfplayOrchestratorが提案する新しい禁止ルールは、直接は反映されず `runtime_guard/proposed_rule_queue.json`
 に人間承認待ちとしてキューイングされる。
 
 ```
@@ -34,9 +34,9 @@ python tools/promote_ledger_seal.py --approve <event名>
 python tools/promote_ledger_seal.py --reject  <event名>
 ```
 
-## 🔭 外部脅威インテリジェンス取り込み（Merkabah）
+## 🔭 外部脅威インテリジェンス取り込み
 Gemini APIキーを `GEMINI_API_KEY` 環境変数に設定した上で、外界の脅威情報を取得し
-防壁ルールの更新を提案させる。Selfplayと同様、ラジエル（Gemini）の出力は
+防壁ルールの更新を提案させる。Selfplayと同様、ThreatIntelGatherer（Gemini）の出力は
 人間承認なしに `shield_rules.json` へは反映されず、`runtime_guard/shield_rules_pending.json`
 に提案としてキューイングされるのみ。
 
@@ -62,7 +62,7 @@ RuntimeGuard（実行時監査）のすべての機能が正常に稼働して�
 python -B -m pytest -p no:cacheprovider --assert=plain tests/ -v
 ```
 
-## 👼 天使（checks/）の個別実行
+## 🛡️ checks/ の個別実行
 CIが実行する約30件の実質的な検査スクリプトを、ローカルで個別に実行して確認できる。
 ```
 python checks/guard_sandbox_core_attack_battery.py
@@ -83,23 +83,23 @@ python tools/generate_dashboard.py
 上書きされる)。ブラウザで直接開いて確認できる。
 
 ## 📜 記憶とルールの確認
-前回の闘技場の全記録（メタトロンのQAスコアやヒントを含む）をコンソールに出力して確認する。
+前回の闘技場の全記録（SelfplayOrchestratorのQAスコアやヒントを含む）をコンソールに出力して確認する。
 ```
 cat adversarial_training/selfplay_history.json
 ```
 
-現在ミカエルが絶対禁止としているイベントのリスト（動的ルール帳）を開く。
+現在AuditHookが絶対禁止としているイベントのリスト（動的ルール帳）を開く。
 ```
 notepad runtime_guard/pending_rule_ledger.json
 ```
 
 ## 🤖 実運用エージェントループ（ローカルLLMにタスクを実行させる）
-`runtime_guard.Sandbox`・`DefenseOrchestrator`（ScanSource + IntentInterceptor + Sandalphon）・
+`runtime_guard.Sandbox`・`DefenseOrchestrator`（ScanSource + IntentInterceptor + Docker隔離層）・
 `runtime_audit_gatekeeper`の全防御層を統合した参照実装。いずれも`jail_workspace/`
 内のみで動作する隔離デモタスクを同梱している。
 
 **前提条件（両方とも必要）**:
-1. Dockerデーモンが起動していること（Sandalphon層がDockerコンテナ内で
+1. Dockerデーモンが起動していること（Docker隔離層がDockerコンテナ内で
    AIの出力コードを動的実行検証するため。デーモン不在時はゼロトラスト
    方針によりフェイルクローズ=即PermissionErrorで全実行を拒否する）
 2. Ollama版を使う場合は、事前に対象モデルを`ollama pull llama3.1`等で
@@ -124,11 +124,11 @@ agent.run_task("タスクの指示内容")
 `openai`パッケージは`run_task()`実行時に初めてimportされるため、未インストールでも
 本ファイルをimportするだけなら例外は発生しない。
 
-## 🌀 メタトロンの統括（完全自動化防衛ループ、`reports/`へレポート出力）
-ラジエル(偵察)→サマエル(ローカルOllamaによる攻撃コード生成)→天使(Blue Team、
-ScanSource静的解析+Sandalphon動的隔離検証)→ガブリエル(Markdownレポート生成)の
+## 🌀 SelfplayOrchestratorの統括（完全自動化防衛ループ、`reports/`へレポート出力）
+ThreatIntelGatherer(偵察)→PayloadWeaponization(ローカルOllamaによる攻撃コード生成)→checks/(Blue Team、
+ScanSource静的解析+Docker動的隔離検証)→SelfplayReportGenerator(Markdownレポート生成)の
 一連を1サイクルとして自動実行する。実行には**Ollama**(デフォルトモデル`llama3.1`)
-と**Dockerデーモン**の両方が必要(Sandalphon層が実行前にコンテナ内で動的検証するため)。
+と**Dockerデーモン**の両方が必要(Docker隔離層が実行前にコンテナ内で動的検証するため)。
 
 ```
 python src/selfplay_orchestrator.py
@@ -170,7 +170,7 @@ python tools/build_public_release.py
 ✅ 検査合格と表示された場合のみ、`dist/runtime_guard-*.tar.gz` を公開配布してよい。
 
 ## 🚑 緊急プロトコル（自己免疫疾患の治療）
-メタトロンの過学習により `open` などのシステム基盤が禁止され、テストが動かなくなった場合に、
+SelfplayOrchestratorの過学習により `open` などのシステム基盤が禁止され、テストが動かなくなった場合に、
 ルール帳を初期のクリーンな状態に強制リセットする。
 
 PowerShell:

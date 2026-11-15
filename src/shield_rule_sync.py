@@ -3,7 +3,7 @@ src/shield_rule_sync.py
 =======================
 [再構築 2026-10] セルフレビューで以下3点の欠陥が発覚したため作り直した。
 
-  1. 独自実装の `metatrons_seal`(sys.addaudithook)が、OSレベルの実行保護を
+  1. 独自実装の簡易監視フック(sys.addaudithook)が、OSレベルの実行保護を
      提供しているかのような体裁("人と機械の境界は守護されています")で
      表示されていたが、実態は `runtime_guard.Sandbox` よりはるかに弱い簡易実装
      だった(保護対象の判定が `"parrhesia-seal_2" in target_file` という
