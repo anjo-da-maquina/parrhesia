@@ -20,19 +20,19 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # 同じなのに、別のAPIを使うだけで素通りしてしまう――だが、本件は
 # AST静的解析ではなく`sys.addaudithook`ベースのランタイム監査フックが
 # 対象であるため、`checks/check_equivalent_syntax_bypass.py`の対象には
-# 含まれていなかった。本天使は、個々のイベント名の列挙を解析するのでは
+# 含まれていなかった。本検査は、個々のイベント名の列挙を解析するのでは
 # なく、実際に`ultimate_audit_hook`を登録し、封鎖状態で既知のネットワーク
 # 送信手段(UDPの`socket.sendto()`)を実際に発火させて、正しく遮断される
 # ことを継続的に検証する回帰連戦である。
 #
-# [正直な注記: 本検査の限界] (1) 本天使が検証するのは「UDPの
+# [正直な注記: 本検査の限界] (1) 本検査が検証するのは「UDPの
 # socket.sendto()による接続不要の送信」という既知の具体的な経路のみで
 # あり、将来Pythonが新たに追加する別のネットワークAPI(現時点では未知)
 # には自動的には及ばない。(2) TCP経由の`send`/`sendall`はPythonの
 # audit event仕様上そもそも専用のイベントを持たず、必ず事前の`connect`
-# (= forbidden集合で既に遮断されている)を要するため、本天使の検査対象
+# (= forbidden集合で既に遮断されている)を要するため、本検査の検査対象
 # には含めていない(実機で確認済みの、検査不要と判断した境界)。
-# (3) 本天使が検証する深層保護は、本リポジトリ全体のゼロトラスト
+# (3) 本検査が検証する深層保護は、本リポジトリ全体のゼロトラスト
 # アーキテクチャの一層(defense in depth)に過ぎず、唯一の防衛線では
 # ない――Docker等によるOSレベルのネットワーク隔離(`--network none`)が
 # 一次防衛線であることは、本ファイルより前の`network_block_demo`関連の
@@ -43,7 +43,7 @@ NAME = "guard_network_exfiltration - 封鎖中にUDPのsendto()が正しく遮�
 # DNS名前解決そのものが、機密データをサブドメインラベルに符号化して
 # 外部(攻撃者が管理する権威DNSサーバー)へ送出できる「DNS exfiltration」
 # 経路になっていることを発見した。本ファイルの`forbidden`集合に
-# "socket.getaddrinfo"を追加した修正の、継続的な再検証を本天使に追加
+# "socket.getaddrinfo"を追加した修正の、継続的な再検証を本検査に追加
 # する。独立した別の防御層である`runtime_guard/__init__.py`の
 # `_runtime_audit_hook`も、同じ理由で"socket.getaddrinfo"を
 # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`から除外し、専用のallowed_hosts検査
