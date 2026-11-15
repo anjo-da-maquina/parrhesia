@@ -1676,7 +1676,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **正直な設計方針の開示**: 本件はこのサンドボックス自身の制約(ネットワーク許可一覧)を回避する仕組みではない――このサンドボックスからの到達不能性自体は変わらず、今後もこのサンドボックスから`gh run view --log`等を直接呼ぶことはできない。本件が解決するのは、「GitHub Actionsのランナー自身に、自分の失敗を自分で記録させる」という、全く別の経路の確保である。これにより、将来同種の失敗が発生した際、ユーザーに実際のログ確認を依頼する代わりに、コミットコメントを直接読むことで自力で原因調査を継続できるようになる。
 
-**一般化**: 本件固有の新しい天使は追加しない――既存の§BQパターンの、観測性インフラとしての一般化である。将来、本リポジトリに新しいCIワークフローが追加される場合、失敗時のログ可視化の仕組みを最初から組み込むべきであるという教訓として記録する。また、本件が暴いた教訓そのもの(下記「実装中に自分で発見・即時訂正した誤り」)は、GitHub Actions上で`gh`を使ったシェルスクリプトを書く際の一般的な注意点として、本リポジトリ全体に適用される。
+**一般化**: 本件固有の新しい検査は追加しない――既存の§BQパターンの、観測性インフラとしての一般化である。将来、本リポジトリに新しいCIワークフローが追加される場合、失敗時のログ可視化の仕組みを最初から組み込むべきであるという教訓として記録する。また、本件が暴いた教訓そのもの(下記「実装中に自分で発見・即時訂正した誤り」)は、GitHub Actions上で`gh`を使ったシェルスクリプトを書く際の一般的な注意点として、本リポジトリ全体に適用される。
 
 **実装中に自分で発見・即時訂正した誤り(正直な自己開示・計4回の実機ラウンドにわたる)**:
 
@@ -1688,7 +1688,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 3. **3回目: `gh api`自身の端末エスケープシーケンス保護**。`set +e`の修正後、ついに自分のエラーハンドリングが実機で初めて実際に実行され、コミットコメントとして具体的な失敗理由(「the response contains terminal escape sequences; pass --allow-escape-sequences to output it anyway」)が得られた――`gh api`が、ジョブログに含まれるANSIエスケープシーケンス(pytestの色付き出力等)を誤って端末へ出力してしまう事故を防ぐための安全機構だった。しかし`gh api --help`を確認したところ、このフラグ自体が`gh api`サブコマンドには存在しなかった(`--allow-escape-sequences`は`gh run view`側のフラグ)。つまり`gh api`経由でこのエンドポイントの生ログを取得する方法自体が、この状況では原理的に存在しなかった。対応として、このエンドポイントの呼び出しのみ`gh api`を使わず、`GH_TOKEN`をBearer認証ヘッダーとする直接の`curl`呼び出しに置き換えた。`curl`は応答バイト列をそのままファイルへ書き出すだけで、`gh`のような端末エスケープシーケンス保護を一切行わないため、この問題を構造的に回避できる。
 
-4. **4回目: ついに実機で、実際のジョブログ内容がコミットコメントに正しく投稿されることを確認した。** `curl`化したコミットを実機でpushし、コミットコメントの内容を実際に確認したところ、`gehenna_void_entropy.py`実行以降の実際のステップ名・タイムスタンプ・PASS/FAIL出力を含む、本物のジョブログの末尾が正しく投稿されていた。ここでようやく、「GitHub Actionsのランナー自身に、自分の失敗を自分で記録させる」という本件の設計意図が、机上の設計としてだけでなく、実機で正しく機能することを確認できた。
+4. **4回目: ついに実機で、実際のジョブログ内容がコミットコメントに正しく投稿されることを確認した。** `curl`化したコミットを実機でpushし、コミットコメントの内容を実際に確認したところ、`checks/hook_ci_failure_incident_report.py`実行以降の実際のステップ名・タイムスタンプ・PASS/FAIL出力を含む、本物のジョブログの末尾が正しく投稿されていた。ここでようやく、「GitHub Actionsのランナー自身に、自分の失敗を自分で記録させる」という本件の設計意図が、机上の設計としてだけでなく、実機で正しく機能することを確認できた。
 
 **実装中の自己レッドチーム(計4回)**: 上記1〜4の各回で、`regression-checks-audit`ジョブに一時的な「意図的に`exit 1`する」ステップを追加し、実際にmainへpushして実機で検証した。4回目で初めて、コミットコメントに実際のジョブログ内容(失敗の直接証拠を含む)が正しく投稿されることを確認できたため、検証後、一時的な「意図的な失敗」ステップ(「22.885」)を直ちに削除し、通常運用時にこのステップが残らないようにした。
 
@@ -1696,9 +1696,9 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 
 
-### §CL: `src/sandalphon/seccomp-profile.json`のdenylistにio_uring_setup/io_uring_enter/io_uring_registerが含まれておらず、Dockerの既定seccompプロファイル(§CGでこのプロファイルに完全に置き換えた)が2024年以降io_uringを拒否対象に加えていたのと同等の防御が、本プロファイルでは一度も実現していなかった
+### §CL: `src/docker_sandbox/seccomp-profile.json`のdenylistにio_uring_setup/io_uring_enter/io_uring_registerが含まれておらず、Dockerの既定seccompプロファイル(§CGでこのプロファイルに完全に置き換えた)が2024年以降io_uringを拒否対象に加えていたのと同等の防御が、本プロファイルでは一度も実現していなかった
 
-**発見**: §CKの作業を終えた後、継続的な改善の一環として、`src/sandalphon/seccomp-profile.json`自体(§CG〜§CIで作り込んだdenylist)が、network名前空間・読み取り専用rootfs・ケーパビリティ剥奪という他の層と比べて、「暴露面として本当に網羅的か」を一般公開文献を調べながら再点検した。その過程で、io_uring(io_uring_setup/io_uring_enter/io_uring_register)というLinuxの非同期I/O機構が、2024年にDocker 25.0・containerdのRuntimeDefaultプロファイルの双方から、自身の既定allowlistの対象外(=拒否)に変更されていたことを確認した。理由は、io_uringがリングバッファへI/O操作を「提出」する方式であり、対応する個々のsyscall(`connect`・`sendto`・`openat`等)自体を一度も呼ばないため、まさにそれらのsyscallを狙い撃ちで拒否するdenylist(本プロファイルの設計そのもの)が、一度も発動しないまま迂回されうる、という構造的な弱点だった。
+**発見**: §CKの作業を終えた後、継続的な改善の一環として、`src/docker_sandbox/seccomp-profile.json`自体(§CG〜§CIで作り込んだdenylist)が、network名前空間・読み取り専用rootfs・ケーパビリティ剥奪という他の層と比べて、「暴露面として本当に網羅的か」を一般公開文献を調べながら再点検した。その過程で、io_uring(io_uring_setup/io_uring_enter/io_uring_register)というLinuxの非同期I/O機構が、2024年にDocker 25.0・containerdのRuntimeDefaultプロファイルの双方から、自身の既定allowlistの対象外(=拒否)に変更されていたことを確認した。理由は、io_uringがリングバッファへI/O操作を「提出」する方式であり、対応する個々のsyscall(`connect`・`sendto`・`openat`等)自体を一度も呼ばないため、まさにそれらのsyscallを狙い撃ちで拒否するdenylist(本プロファイルの設計そのもの)が、一度も発動しないまま迂回されうる、という構造的な弱点だった。
 
 本プロファイルは`defaultAction: SCMP_ACT_ALLOW`(denylist方式)であり、これは`docker run --security-opt seccomp=...`でDocker自身の既定プロファイルを完全に置き換える(両者は併用されず、カスタムプロファイルが既定プロファイルに上書きされる)。つまり、Dockerの既定プロファイルが2024年以降io_uringの3syscallを拒否するようになっていても、本プロファイルを指定した瞬間にその防御は失われ、io_uring_setup等は(本プロファイルに明示的な拒否規則がない以上)既定のSCMP_ACT_ALLOWにより許可されたままになっていた。
 
@@ -1706,15 +1706,15 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **原因**: §CG新設当時、このプロファイルは「まず§CD・§CEで実際に発見した具体的な迂回経路(プロセス生成・ptrace・mount等)を塞ぐ」ことを目的に組まれ、Dockerの既定プロファイル自体が別途提供していたio_uring関連の防御を、カスタムプロファイルへの置き換えによって暗黙に失っていたこと自体には、これまで気づいていなかった。これは実装ミスというより、「カスタムseccompプロファイルは既定プロファイルの上に積み重なるのではなく、完全に置き換える」という前提の確認を、§CG当初に行っていなかったことによる見落としである。
 
-**対応**: `src/sandalphon/seccomp-profile.json`に、`io_uring_setup`・`io_uring_enter`・`io_uring_register`を拒否する新しいsyscall群を追加した。`checks/dominions_syscall_guard.py`の`_REQUIRED_CORE_DENYLIST`(静的な後退検知の核)に`io_uring_setup`を追加し、`_RAW_KERNEL_CHECK_SCRIPT`(libseccompを実機のカーネルへ直接ロードする生カーネル検証)にも、`io_uring_setup`を実際にraw syscall番号(x86_64で425)経由で呼び出し、EPERMで拒否されることを確認する検査を追加した(glibcに名前付きラッパーが存在しないため、`libc.syscall(425, ...)`で直接呼び出す――これは実際にこの経路を悪用するコードが行うのと全く同じ呼び出し方である)。
+**対応**: `src/docker_sandbox/seccomp-profile.json`に、`io_uring_setup`・`io_uring_enter`・`io_uring_register`を拒否する新しいsyscall群を追加した。`checks/guard_seccomp_syscall.py`の`_REQUIRED_CORE_DENYLIST`(静的な後退検知の核)に`io_uring_setup`を追加し、`_RAW_KERNEL_CHECK_SCRIPT`(libseccompを実機のカーネルへ直接ロードする生カーネル検証)にも、`io_uring_setup`を実際にraw syscall番号(x86_64で425)経由で呼び出し、EPERMで拒否されることを確認する検査を追加した(glibcに名前付きラッパーが存在しないため、`libc.syscall(425, ...)`で直接呼び出す――これは実際にこの経路を悪用するコードが行うのと全く同じ呼び出し方である)。
 
-**正直な設計方針の開示**: この隔離結界(`run_in_sandalphon()`)には、io_uringを許したままでも、独立した他の層による限定が既に効いている。`--network none`によりネットワーク名前空間自体が存在しないため、io_uring経由で`connect`/`send`相当の操作を提出しても、送り先となるネットワークインターフェース自体が存在せず失敗する。`--read-only`な root filesystemにより、io_uring経由の書き込みも、通常の`write()`と同じくVFS層でEROFSになる。つまり、本件が実際に新しく可能にしていた「具体的な悪用」は、この時点では確認できていない――これはDocker自身のメンテナが2024年にこの3つのsyscallを自分たちの既定プロファイルから外した際に示した判断(「他の層が今はたまたま塞いでいるとしても、syscall自体を監視できないという構造的な弱点を、個別に塞ぐ価値がある」)に倣った、予防的な対応である。「他の層が今は防いでいるから後回しにする」という判断こそ、本プロジェクトが避けようとしている「正しく構成できていることを確認しないまま放置する」姿勢そのものであるため、具体的な悪用実証の有無に関わらず、既知の構造的弱点として直ちに塞いだ。
+**正直な設計方針の開示**: この隔離結界(`run_in_docker_sandbox()`)には、io_uringを許したままでも、独立した他の層による限定が既に効いている。`--network none`によりネットワーク名前空間自体が存在しないため、io_uring経由で`connect`/`send`相当の操作を提出しても、送り先となるネットワークインターフェース自体が存在せず失敗する。`--read-only`な root filesystemにより、io_uring経由の書き込みも、通常の`write()`と同じくVFS層でEROFSになる。つまり、本件が実際に新しく可能にしていた「具体的な悪用」は、この時点では確認できていない――これはDocker自身のメンテナが2024年にこの3つのsyscallを自分たちの既定プロファイルから外した際に示した判断(「他の層が今はたまたま塞いでいるとしても、syscall自体を監視できないという構造的な弱点を、個別に塞ぐ価値がある」)に倣った、予防的な対応である。「他の層が今は防いでいるから後回しにする」という判断こそ、本プロジェクトが避けようとしている「正しく構成できていることを確認しないまま放置する」姿勢そのものであるため、具体的な悪用実証の有無に関わらず、既知の構造的弱点として直ちに塞いだ。
 
 **一般化**: カスタムseccompプロファイル(`defaultAction: SCMP_ACT_ALLOW`のdenylist方式)を採用する場合、「Dockerの既定プロファイルが元々拒否していた全syscall」の一覧を一度洗い出し、本プロファイルのdenylistがそれを下回っていないかを確認する作業を、今後プロファイルを変更する際の恒久的なチェック項目として記録する。本件はその一覧の中でio_uring関連の3syscallだけを具体的に扱ったものであり、将来Dockerの既定プロファイルにさらなる変更(新しいsyscallの追加拒否等)があった場合、同種の再点検が必要になる。
 
 **実装中の自己レッドチーム**: `_REQUIRED_CORE_DENYLIST`から`io_uring_setup`のみを除いた架空のプロファイルを与え、(1)静的検証(`_check_profile_json_is_well_formed`)が正しくFAILし、かつ検知内容に`io_uring_setup`という名前が含まれること、(2)生カーネル検証(`_check_raw_kernel_enforcement`)が、fork/socket/ptrace/mountは正しく遮断されている状態でも、`io_uring_setup`だけが遮断されていないことを正しく検知してFAILすることを、実際にlibseccompを実機のカーネルへロードして確認する2件の回帰テストを追加した。
 
-**検証**: `libseccomp.so.2`の`seccomp_syscall_resolve_name`で、`io_uring_setup`(425)・`io_uring_enter`(426)・`io_uring_register`(427)の3名が実際にこの実機のx86_64カーネルで解決可能であることを確認した。`checks/dominions_syscall_guard.py`を直接実行し、新設した生カーネル検証(io_uring_setupを実際にraw syscall経由で呼び出し、EPERMで拒否されることを確認)がPASSすることを確認した。`tests/test_dominions_syscall_guard.py`に追加した2件の回帰テストを含む同ファイルの全19件がPASSすることを確認した。リポジトリ全体のpytestを再実行し、428 passed(新設した2件を含む)・既知の無関係な2件のみが残ることを確認した。
+**検証**: `libseccomp.so.2`の`seccomp_syscall_resolve_name`で、`io_uring_setup`(425)・`io_uring_enter`(426)・`io_uring_register`(427)の3名が実際にこの実機のx86_64カーネルで解決可能であることを確認した。`checks/guard_seccomp_syscall.py`を直接実行し、新設した生カーネル検証(io_uring_setupを実際にraw syscall経由で呼び出し、EPERMで拒否されることを確認)がPASSすることを確認した。`tests/test_guard_seccomp_syscall.py`に追加した2件の回帰テストを含む同ファイルの全19件がPASSすることを確認した。リポジトリ全体のpytestを再実行し、428 passed(新設した2件を含む)・既知の無関係な2件のみが残ることを確認した。
 
 
 ### §CL追記: Dockerの既定seccompプロファイルとの体系的な比較で、io_uring以外にも3件の脱落(open_by_handle_at・quotactl・get_mempolicy)を発見
@@ -1723,32 +1723,32 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **原因**: §CG〜§CIで本プロファイルを作り込んだ際は、§CD・§CEで実際に発見した具体的な迂回経路を起点に組み立てたため、「Dockerの既定プロファイル自体が拒否している全syscallの一覧」との網羅的な照合を行っていなかった。§CLでio_uringという1件を見つけた際に、同じ照合をもう一歩進めて体系的に行うべきだった。
 
-**対応**: 3件それぞれを、既存の該当するグループ(`open_by_handle_at`→mount/filesystem-namespaceグループ、`quotactl`→kernel module/system-wide controlグループ、`get_mempolicy`→NUMA memory-policyグループ)へ追加した。`checks/dominions_syscall_guard.py`の生カーネル検証に、3件それぞれを実際にraw syscall/glibcラッパー経由で呼び出しEPERMで拒否されることを確認する検査を追加した(`quotactl`・`open_by_handle_at`はglibcに名前付きラッパーが存在するため直接呼び出し、`get_mempolicy`はラッパーが存在しないためraw syscall番号(x86_64で239)経由)。
+**対応**: 3件それぞれを、既存の該当するグループ(`open_by_handle_at`→mount/filesystem-namespaceグループ、`quotactl`→kernel module/system-wide controlグループ、`get_mempolicy`→NUMA memory-policyグループ)へ追加した。`checks/guard_seccomp_syscall.py`の生カーネル検証に、3件それぞれを実際にraw syscall/glibcラッパー経由で呼び出しEPERMで拒否されることを確認する検査を追加した(`quotactl`・`open_by_handle_at`はglibcに名前付きラッパーが存在するため直接呼び出し、`get_mempolicy`はラッパーが存在しないためraw syscall番号(x86_64で239)経由)。
 
 **実装中の自己レッドチーム**: 3件すべてをdenylistから除いた架空のプロファイルを与え、生カーネル検証(`_check_raw_kernel_enforcement`)が、他の本物の危険なシステムコールが正しく遮断されている状態でも、この3件が遮断されていないことを正しく検知してFAILすることを、実際にlibseccompを実機のカーネルへロードして確認する回帰テストを追加した。
 
-**検証**: libseccompの`seccomp_syscall_resolve_name`で、3件すべてが実際にこの実機のx86_64カーネルで解決可能であることを確認した。`checks/dominions_syscall_guard.py`を直接実行し、新設した3件の生カーネル検証(それぞれ実際にEPERMで拒否されることを確認)がPASSすることを確認した。リポジトリ全体のpytestを再実行し、429 passed(新設した回帰テストを含む)・既知の無関係な2件のみが残ることを確認した。
+**検証**: libseccompの`seccomp_syscall_resolve_name`で、3件すべてが実際にこの実機のx86_64カーネルで解決可能であることを確認した。`checks/guard_seccomp_syscall.py`を直接実行し、新設した3件の生カーネル検証(それぞれ実際にEPERMで拒否されることを確認)がPASSすることを確認した。リポジトリ全体のpytestを再実行し、429 passed(新設した回帰テストを含む)・既知の無関係な2件のみが残ることを確認した。
 
 **正直な注記**: この「Dockerの既定プロファイルとの体系的な比較」自体も、公式ドキュメントのページ内容(Web検索経由で取得)に基づくものであり、本プロジェクトが過去に何度も発見してきたパターン(「1つ見つけたら、同じ構造の他の抜け穴が無いか、もう一歩深く確認する」)の実践である。Docker・containerdの既定プロファイルは将来も更新され続ける可能性があるため、本件は「現時点で確認できた範囲での一致」であり、将来再度の照合が必要になりうることをBOUNDARY.mdの一般化の精神に沿って記録する。
 
 
-### §CM: `maquina_gatekeeper.py`の深層保護が、`socket.sendto()`は§CAで塞いだが、全く同じ「接続不要でデータを送信できる」別のAPIである`socket.sendmsg()`には及んでいなかった
+### §CM: `runtime_audit_gatekeeper.py`の深層保護が、`socket.sendto()`は§CAで塞いだが、全く同じ「接続不要でデータを送信できる」別のAPIである`socket.sendmsg()`には及んでいなかった
 
-**発見**: §CL完了後、継続的な見直しの一環として、本リポジトリで繰り返し発見してきたパターン(「ある具体的な迂回経路を1つ塞いだら、同じ構造を持つ他のAPIにも同じ穴がないか、もう一歩深く確認する」、§CL自身がDockerの既定プロファイルとの体系的比較で実践したのと同じ方法論)を、§CAで修正した`socket.sendto`に対しても適用した。Python標準ライブラリの`socket`モジュールが発火する audit event を実際に`sys.addaudithook`で捕捉して調べたところ、`socket.sendmsg()`が`"socket.sendmsg"`という、`"socket.sendto"`とは別個の専用audit eventを発火することを確認した。`maquina_gatekeeper.py`の`ultimate_audit_hook`のforbidden集合には`"socket.sendto"`はあったが`"socket.sendmsg"`は無く、実際に`set_runtime_sealed(True)`(深層保護が有効な状態)で`socket.sendmsg()`によるUDPデータ送信を試みたところ、例外無しで素通りし、実際にOSレベルの送信まで到達することを実機で確認した。
+**発見**: §CL完了後、継続的な見直しの一環として、本リポジトリで繰り返し発見してきたパターン(「ある具体的な迂回経路を1つ塞いだら、同じ構造を持つ他のAPIにも同じ穴がないか、もう一歩深く確認する」、§CL自身がDockerの既定プロファイルとの体系的比較で実践したのと同じ方法論)を、§CAで修正した`socket.sendto`に対しても適用した。Python標準ライブラリの`socket`モジュールが発火する audit event を実際に`sys.addaudithook`で捕捉して調べたところ、`socket.sendmsg()`が`"socket.sendmsg"`という、`"socket.sendto"`とは別個の専用audit eventを発火することを確認した。`runtime_audit_gatekeeper.py`の`ultimate_audit_hook`のforbidden集合には`"socket.sendto"`はあったが`"socket.sendmsg"`は無く、実際に`set_runtime_sealed(True)`(深層保護が有効な状態)で`socket.sendmsg()`によるUDPデータ送信を試みたところ、例外無しで素通りし、実際にOSレベルの送信まで到達することを実機で確認した。
 
 **たとえ話**: §CAは「正面玄関(connect)を使わず裏口(sendto)から出て行かれる」ことを発見して裏口にも錠をかけた。本件は、その裏口のすぐ隣に、同じ塀を通り抜けられる別の勝手口(sendmsg)があったのに、裏口にだけ気を取られて勝手口の存在そのものに気づいていなかった、という話である。
 
 **原因**: §CAの修正時、「UDPは`connect()`を経由せずデータを送信できる」という発見を起点に`socket.sendto`という具体的なAPI名だけを塞いだが、「接続不要でデータを送信できるPython標準ライブラリのAPIは`sendto`以外にも存在するか」という、より一段上の視点での網羅的な確認を行っていなかった。これは§CLで発見した「Dockerの既定プロファイルとの体系的な比較を怠っていた」のと全く同じ種類の見落とし(個別の具体例への対応で止まり、その具体例が属するカテゴリ全体への網羅的確認に進んでいなかった)である。
 
-**対応**: `maquina_gatekeeper.py`の`ultimate_audit_hook`のforbidden集合に`"socket.sendmsg"`を追加した。`checks/jegudiel_exfiltration_guard.py`(§CAで新設した、この種の迂回を継続的に再検証する天使)に、`socket.sendmsg()`版の遮断検証(`_check_udp_sendmsg_is_blocked_while_sealed`)・誤検知防止検証(`_check_udp_sendmsg_is_allowed_when_unsealed`)を追加し、既存のsendto版と並行して常時実行されるようにした。
+**対応**: `runtime_audit_gatekeeper.py`の`ultimate_audit_hook`のforbidden集合に`"socket.sendmsg"`を追加した。`checks/guard_network_exfiltration.py`(§CAで新設した、この種の迂回を継続的に再検証する検査)に、`socket.sendmsg()`版の遮断検証(`_check_udp_sendmsg_is_blocked_while_sealed`)・誤検知防止検証(`_check_udp_sendmsg_is_allowed_when_unsealed`)を追加し、既存のsendto版と並行して常時実行されるようにした。
 
-**正直な設計方針の開示**: 独立した別の防御層である`sefer/__init__.py`の`_michael_absolute_defense`は、個々のイベント名の列挙ではなく`"socket" in event`という名前空間ごとの広いチェックを備えているため、実機で確認したところ`"socket.sendmsg"`も最初から自動的に遮断されており、この欠陥の対象ではなかった(§CEのctypes.dlsymと全く同じ、2つの独立した監査フック間の非対称性――狭いallowlist方式のGatekeeperと、広いdefault-deny方式のSeferという設計そのものの違いに起因する)。しかし、§CC・§CEと同じ方針により、構造的に並行する別の層がたまたま塞いでいることに依存せず、本ファイル(Gatekeeper)単独でも防御が成立することを保証するため、本ファイル自身のforbidden集合にも明示的に追加した。BOUNDARY.mdの「Python層の防御はあくまでPythonのAPI呼び出しを監視するものである」という記述自体には変更はない――本件はPython層の中での網羅性の問題であり、カーネルレベルの迂回(ctypes経由の直接syscall)とは別種の欠陥である。
+**正直な設計方針の開示**: 独立した別の防御層である`runtime_guard/__init__.py`の`_runtime_audit_hook`は、個々のイベント名の列挙ではなく`"socket" in event`という名前空間ごとの広いチェックを備えているため、実機で確認したところ`"socket.sendmsg"`も最初から自動的に遮断されており、この欠陥の対象ではなかった(§CEのctypes.dlsymと全く同じ、2つの独立した監査フック間の非対称性――狭いallowlist方式のGatekeeperと、広いdefault-deny方式のruntime_guardという設計そのものの違いに起因する)。しかし、§CC・§CEと同じ方針により、構造的に並行する別の層がたまたま塞いでいることに依存せず、本ファイル(Gatekeeper)単独でも防御が成立することを保証するため、本ファイル自身のforbidden集合にも明示的に追加した。BOUNDARY.mdの「Python層の防御はあくまでPythonのAPI呼び出しを監視するものである」という記述自体には変更はない――本件はPython層の中での網羅性の問題であり、カーネルレベルの迂回(ctypes経由の直接syscall)とは別種の欠陥である。
 
 **一般化**: 「1つの具体的な迂回経路を見つけたら、同じ構造を持つ他のAPI・同じカテゴリの他の項目にも同じ穴がないかを、体系的に確認する」という方法論を、§CL(Dockerの既定プロファイルとの比較)・本件(socket audit eventの網羅的確認)の2件で連続して実践した。この方法論自体を、本リポジトリの今後の見直し全般に適用する一般的な教訓として記録する。
 
-**実装中の自己レッドチーム**: `git stash`で`maquina_gatekeeper.py`の修正のみを一時的に取り消し(`socket.sendmsg`を含まない§CA時点のforbidden集合に戻し)、`checks/jegudiel_exfiltration_guard.py`を実行したところ、新設した`UDP sendmsg遮断(§CM)`の検査が正しく「封鎖中にsocket.sendmsg()によるデータ送信が遮断されなかった」としてFAILすることを確認した。`git stash pop`で修正を復元したところ、同じ検査がPASSに戻ることを確認した。`tests/test_jegudiel_exfiltration_guard.py`にも、架空の脆弱な検査関数を与えてこの退行を再現する回帰テスト(`test_battery_detects_sendmsg_regression`)を追加した。
+**実装中の自己レッドチーム**: `git stash`で`runtime_audit_gatekeeper.py`の修正のみを一時的に取り消し(`socket.sendmsg`を含まない§CA時点のforbidden集合に戻し)、`checks/guard_network_exfiltration.py`を実行したところ、新設した`UDP sendmsg遮断(§CM)`の検査が正しく「封鎖中にsocket.sendmsg()によるデータ送信が遮断されなかった」としてFAILすることを確認した。`git stash pop`で修正を復元したところ、同じ検査がPASSに戻ることを確認した。`tests/test_guard_network_exfiltration.py`にも、架空の脆弱な検査関数を与えてこの退行を再現する回帰テスト(`test_battery_detects_sendmsg_regression`)を追加した。
 
-**検証**: `sys.addaudithook`で実際にイベント名を捕捉し、`socket.sendmsg()`が`"socket.sendmsg"`という専用eventを発火すること、その引数の形状(`(socket_obj, address_tuple)`)を実機で確認した。`checks/jegudiel_exfiltration_guard.py`を直接実行し、修正後は4件の検査(sendto遮断・sendto非封鎖時・sendmsg遮断・sendmsg非封鎖時)すべてがPASSすることを確認した。`tests/test_jegudiel_exfiltration_guard.py`の全9件(新設4件を含む)がPASSすることを確認した。リポジトリ全体のpytestを再実行し、432 passed(新設分を含む)・既知の無関係な2件のみが残ることを確認した。
+**検証**: `sys.addaudithook`で実際にイベント名を捕捉し、`socket.sendmsg()`が`"socket.sendmsg"`という専用eventを発火すること、その引数の形状(`(socket_obj, address_tuple)`)を実機で確認した。`checks/guard_network_exfiltration.py`を直接実行し、修正後は4件の検査(sendto遮断・sendto非封鎖時・sendmsg遮断・sendmsg非封鎖時)すべてがPASSすることを確認した。`tests/test_guard_network_exfiltration.py`の全9件(新設4件を含む)がPASSすることを確認した。リポジトリ全体のpytestを再実行し、432 passed(新設分を含む)・既知の無関係な2件のみが残ることを確認した。
 
 
 ### §CN: `os.sendfile()`はCPythonのaudit eventを一切発火しないため、`sefer`のファイル書き込み制限用ラッパーが「ソケット宛の送出」を意図的にスキップしていた盲点から、ネットワーク情報持ち出しが可能だった
