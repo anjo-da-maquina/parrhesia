@@ -2,7 +2,7 @@
 [脆弱性修正 2026-10 §BG] src/ollama_selfplay_round.py の回帰テスト。
 
 `OllamaSelfplayRound.defend_and_execute()`は、`src/selfplay_orchestrator.py`の
-`execute_holy_war()`から呼ばれる実運用の自動防衛ループの一部である。以前は
+`run_selfplay_cycles()`から呼ばれる実運用の自動防衛ループの一部である。以前は
 `DefenseOrchestrator.execute_ai_intent()`が例外を投げずに戻った時点で、無条件に
 `True`を返していた。しかし`execute_ai_intent()`はScanSource・IntentInterceptor・
 Dockerの隔離結界内での使い捨てドライランのみを行う「事前検閲」であり、実際の

@@ -13,7 +13,7 @@ except ModuleNotFoundError as e:
     sys.exit(1)
 
 # [脆弱性修正 2026-10 §AW] 以前はここで `from network_block_demo import NetworkBlockDemo`
-# をimportし、`execute_holy_war()`内で`OllamaSelfplayRound.defend_and_execute()`の
+# をimportし、`run_selfplay_cycles()`内で`OllamaSelfplayRound.defend_and_execute()`の
 # 直前に`NetworkBlockDemo.activate_seal()`(socket.socketをプロセスグローバルに
 # ブロック版へ置き換える通信遮断)を展開していた。しかし`defend_and_execute()`
 # は内部で`learn_threat()`を呼び、これは実運用のローカルOllamaサーバーへ
@@ -74,7 +74,7 @@ class SelfplayOrchestrator:
         self.angel = OllamaSelfplayRound()
         self.scan_source = SelfplayReportGenerator()
 
-    def execute_holy_war(self, cycles=1):
+    def run_selfplay_cycles(self, cycles=1):
         print("=== [Parrhesia] メタトロンの統括（完全自動化防衛ループ） ===")
         print("[システム] 神の代理人が要塞の全機能を掌握しました。これより自律進化を開始します。\n")
         
@@ -106,4 +106,4 @@ class SelfplayOrchestrator:
             time.sleep(1)
 
 if __name__ == "__main__":
-    SelfplayOrchestrator().execute_holy_war(cycles=1)
+    SelfplayOrchestrator().run_selfplay_cycles(cycles=1)

@@ -51,8 +51,8 @@ def main():
                            "runtime_guard.scan_source()と同じドット付き禁止名の検知漏れが再発しています。")
 
     # E: 誤解を招く独自audit hookの重複実装が復活していないか
-    if "def metatrons_seal" in shield_text or "def metatrons_seal" in judgment_text:
-        report_fail(NAME, "撤去済みの独自audit hook実装(metatrons_seal)が復活しています。"
+    if "def legacy_audit_hook_stub" in shield_text or "def legacy_audit_hook_stub" in judgment_text:
+        report_fail(NAME, "撤去済みの独自audit hook実装(legacy_audit_hook_stub)が復活しています。"
                            "実行を伴わない本ファイル群にOSレベルhookを装う表示は誤解を招くため禁止します。")
 
     report_pass(NAME, "外部脅威インテリジェンス取り込み(shield_rule_sync.py/verdict.py)が、"

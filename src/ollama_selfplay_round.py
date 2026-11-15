@@ -72,7 +72,7 @@ class OllamaSelfplayRound:
         """
         [脆弱性修正 2026-10 §BG] 以前は`self.defense.execute_ai_intent()`が例外
         を投げずに戻った時点で、呼び出し元(`src/selfplay_orchestrator.py`の
-        `execute_holy_war()`)に単に`True`を返していた。しかし
+        `run_selfplay_cycles()`)に単に`True`を返していた。しかし
         `execute_ai_intent()`自身のdocstring(`src/defense_orchestrator.py`)が明記す
         る通り、これはScanSource・IntentInterceptor・Dockerの隔離結界内での
         使い捨てドライランのみを行う*事前検閲*であり、実際のファイルI/O・

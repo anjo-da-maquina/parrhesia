@@ -135,7 +135,7 @@ python src/selfplay_orchestrator.py
 ```
 実行結果は`reports/scan_source_revelation_<サイクルID>.md`に記録される。デフォルトは
 1サイクルのみ。複数サイクル回す場合はコード側で
-`SelfplayOrchestrator().execute_holy_war(cycles=N)`を呼ぶ。
+`SelfplayOrchestrator().run_selfplay_cycles(cycles=N)`を呼ぶ。
 
 ## 🔑 証明書（ataraxia_certificate.json）の再発行
 [2026-10改訂] 以前は`provisioning_agent.py`実行後に`ataraxia_certificate.json`と

@@ -12,7 +12,7 @@ tests/test_guard_shield_rule_autoapply_and_key_leak.py
      こと。
   C. GEMINI_API_KEYをos.environ.pop()で即時消去していること。
   D. ShieldRuleScannerが完全修飾名(例: "os.system")でも照合すること。
-  E. 誤解を招く独自audit hookの重複実装(metatrons_seal)が復活して
+  E. 誤解を招く独自audit hookの重複実装(legacy_audit_hook_stub)が復活して
      いないこと。
 
 report_fail()は呼び出し即座にsys.exit(1)するため、各チェックは
@@ -145,17 +145,17 @@ def test_fails_when_qualified_call_name_check_is_missing(monkeypatch, tmp_path):
 
 
 def test_fails_when_duplicate_audit_hook_is_revived_in_shield(monkeypatch, tmp_path):
-    """[核心・E] 撤去済みの独自audit hook実装(metatrons_seal)が
+    """[核心・E] 撤去済みの独自audit hook実装(legacy_audit_hook_stub)が
     shield_rule_sync.py側に復活している場合、正しくFAILする。"""
-    bad_shield = VALID_SHIELD_TEXT + "\n    def metatrons_seal(self):\n        pass\n"
+    bad_shield = VALID_SHIELD_TEXT + "\n    def legacy_audit_hook_stub(self):\n        pass\n"
     _write_fixtures(tmp_path, shield_text=bad_shield)
     _expect_fail(monkeypatch, tmp_path)
 
 
 def test_fails_when_duplicate_audit_hook_is_revived_in_judgment(monkeypatch, tmp_path):
-    """同様に、verdict.py側にmetatrons_sealが復活している場合も
+    """同様に、verdict.py側にlegacy_audit_hook_stubが復活している場合も
     正しくFAILする。"""
-    bad_judgment = VALID_JUDGMENT_TEXT + "\n    def metatrons_seal(self):\n        pass\n"
+    bad_judgment = VALID_JUDGMENT_TEXT + "\n    def legacy_audit_hook_stub(self):\n        pass\n"
     _write_fixtures(tmp_path, judgment_text=bad_judgment)
     _expect_fail(monkeypatch, tmp_path)
 

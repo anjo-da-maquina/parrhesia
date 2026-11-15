@@ -1,5 +1,5 @@
 """
-[脆弱性修正 2026-10 §AW] src/selfplay_orchestrator.py の execute_holy_war() が、
+[脆弱性修正 2026-10 §AW] src/selfplay_orchestrator.py の run_selfplay_cycles() が、
 NetworkBlockDemo.activate_seal()(socket.socketをプロセスグローバルにブロック版へ
 置き換える通信遮断)を、OllamaSelfplayRound.defend_and_execute() の直前に展開して
 いた。defend_and_execute() は内部で learn_threat() を呼び、これは実運用の
@@ -68,7 +68,7 @@ import selfplay_orchestrator  # noqa: E402  (スタブ設置後に import する
 
 
 def test_network_block_seal_does_not_block_the_angels_own_ollama_learning_call(tmp_path, monkeypatch):
-    """[脆弱性の核心] execute_holy_war() の中で、NetworkBlockDemoの通信遮断結界が
+    """[脆弱性の核心] run_selfplay_cycles() の中で、NetworkBlockDemoの通信遮断結界が
     展開されている間に行われる ollama.chat() 呼び出し(OllamaSelfplayRound.learn_threat
     による脅威学習通信)が、その結界自身によってブロックされていないこと。"""
     monkeypatch.chdir(tmp_path)
@@ -78,7 +78,7 @@ def test_network_block_seal_does_not_block_the_angels_own_ollama_learning_call(t
     _socket_state_at_ollama_call.clear()
 
     orchestrator = selfplay_orchestrator.SelfplayOrchestrator()
-    orchestrator.execute_holy_war(cycles=1)
+    orchestrator.run_selfplay_cycles(cycles=1)
 
     assert _socket_state_at_ollama_call, "ollama.chat が一度も呼ばれなかった"
     assert all(_socket_state_at_ollama_call), (
@@ -94,5 +94,5 @@ def test_socket_module_is_restored_to_original_after_the_cycle(tmp_path, monkeyp
     monkeypatch.chdir(tmp_path)
     sys.modules["ollama"].chat = _fake_chat
     orchestrator = selfplay_orchestrator.SelfplayOrchestrator()
-    orchestrator.execute_holy_war(cycles=1)
+    orchestrator.run_selfplay_cycles(cycles=1)
     assert _socket_mod.socket is _REAL_SOCKET_CLASS

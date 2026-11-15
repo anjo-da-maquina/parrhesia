@@ -237,39 +237,39 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 
 
-\### K. スタンドアロンデモの実運用統合（uriel\_phoenix / metatron\_orchestrator）
+\### K. スタンドアロンデモの実運用統合（incident\_reset\_tool / selfplay\_orchestrator）
 
 2026-10、`src/`直下に残っていた未統合のスタンドアロンデモのうち2件を実運用に組み込んだ。
 
-\*\*`uriel\_phoenix.UrielPhoenix` を人間操作のインシデント対応ツールへ昇格\*\* — 元のデモは固定パス`jail\_workspace`/`anjo-da-maquina`のみを対象とする`\_\_main\_\_`専用スクリプトだった。「致命的な侵入が確定した後の焦土作戦」という設計意図上、通常タスク完了ごとに自動実行するのはAIの正常な作業成果まで毎回消去してしまうため不適切と判断し、`tools/promote_ledger_seal.py`/`tools/promote_shield_seal.py`と同じ「人間が状況を確認した上で明示的に起動する」運用ツールとして`tools/incident_reset.py`を新設した。`core_dir`/`talisman`を任意指定可能に一般化し、`tests/test_uriel_phoenix_reset.py`で回帰を固定した。
+\*\*`incident_reset_tool.IncidentResetTool` を人間操作のインシデント対応ツールへ昇格\*\* — 元のデモは固定パス`jail_workspace`のみを対象とする`__main__`専用スクリプトだった。「致命的な侵入が確定した後の焦土作戦」という設計意図上、通常タスク完了ごとに自動実行するのはAIの正常な作業成果まで毎回消去してしまうため不適切と判断し、`tools/promote_ledger_seal.py`/`tools/promote_shield_seal.py`と同じ「人間が状況を確認した上で明示的に起動する」運用ツールとして`tools/incident_reset.py`を新設した。対象ディレクトリを任意指定可能に一般化し、`tests/test_incident_reset_tool_reset.py`で回帰を固定した。
 
-\*\*`metatron_orchestrator.py`の実バグ修正（Docker不在で即クラッシュ）\*\* — `RazielIntelligence.analyze_aidd_artifact()`が、自分自身が生成した信頼済みの内部偵察レポート（固定文字列）を書き込むだけなのに、`AegisSystem.execute_ai_intent()`（AI生成コード審査パイプライン全体、Sandalphon/Docker必須）を誤って通していた。Dockerデーモンが利用できない環境（フェイルクローズド設計の既定状態）では、サイクル1回目の偵察フェーズで無関係な`PermissionError`が捕捉されずに伝播し、オーケストレーター全体が即座にクラッシュしていた（実機検証済み: 本番のOllama/Dockerが無いサンドボックス環境でテスト実行し再現）。信頼済みの内部書き込みのパス越脱検証は`WorkspaceJail.secure_resolve()`単体で十分であり、AI生成コードの審査層を通す必要がないため、該当呼び出しを削除した。`tests/test_metatron_orchestrator.py`で回帰を固定した。なお、本番相当のOllama/Docker環境でのエンドツーエンド検証（`execute_holy_war()`の完全実行）は、設計上ユーザーのローカル環境が前提であり、クラウドのレビュー環境では実施できなかった。
+\*\*`selfplay_orchestrator.py`の実バグ修正（Docker不在で即クラッシュ）\*\* — `ThreatIntelGatherer.analyze_aidd_artifact()`が、自分自身が生成した信頼済みの内部偵察レポート（固定文字列）を書き込むだけなのに、`DefenseOrchestrator.execute_ai_intent()`（AI生成コード審査パイプライン全体、Docker必須）を誤って通していた。Dockerデーモンが利用できない環境（フェイルクローズド設計の既定状態）では、サイクル1回目の偵察フェーズで無関係な`PermissionError`が捕捉されずに伝播し、オーケストレーター全体が即座にクラッシュしていた（実機検証済み: 本番のOllama/Dockerが無いサンドボックス環境でテスト実行し再現）。信頼済みの内部書き込みのパス越脱検証は`WorkspaceJail.secure_resolve()`単体で十分であり、AI生成コードの審査層を通す必要がないため、該当呼び出しを削除した。`tests/test_selfplay_orchestrator.py`で回帰を固定した。なお、本番相当のOllama/Docker環境でのエンドツーエンド検証（`run_selfplay_cycles()`の完全実行）は、設計上ユーザーのローカル環境が前提であり、クラウドのレビュー環境では実施できなかった。
 
 
 
-\### L. `cassiels_veil.py`は統合せずデモとして保持、`samaels_curse.py`は削除
+\### L. `network_block_demo.py`は統合せずデモとして保持、`samaels_curse.py`は削除
 
 2026-10、残っていた2件のスタンドアロンデモについて判断した。
 
-\*\*`cassiels_veil.CassielsVeil`は統合しない(デモとして保持)\*\* — `socket.socket`をプロセスグローバルに置き換える実装のため、実運用ループ(`src/ollama_agent_loop.py`等)が依存するローカルOllamaサーバーへの通信まで一緒に遮断してしまい、システム自体が機能不能になる。また、AI生成コードの動的実行は既に`src/aegis_system.py`経由でDockerの`--network none`によってOSレベルで通信遮断済み(§Aおよび`src/sandalphon_jail.py`)であり、本クラスはそれより弱い手法で、かつ上記の副作用を抱えるため、現行アーキテクチャ上は安全に組み込める場所がない。「audit hookより下の層(socket層)でも遮断できる」という設計思想を示す教材として、docstringにこの位置づけを明記した上で保持する。
+\*\*`network_block_demo.NetworkBlockDemo`は統合しない(デモとして保持)\*\* — `socket.socket`をプロセスグローバルに置き換える実装のため、実運用ループ(`src/ollama_agent_loop.py`等)が依存するローカルOllamaサーバーへの通信まで一緒に遮断してしまい、システム自体が機能不能になる。また、AI生成コードの動的実行は既に`src/defense_orchestrator.py`経由でDockerの`--network none`によってOSレベルで通信遮断済み(§Aおよび`src/docker_sandbox_executor.py`)であり、本クラスはそれより弱い手法で、かつ上記の副作用を抱えるため、現行アーキテクチャ上は安全に組み込める場所がない。「audit hookより下の層(socket層)でも遮断できる」という設計思想を示す教材として、docstringにこの位置づけを明記した上で保持する。
 
-\*\*`samaels_curse.py`を削除\*\* — マーカーファイル(`anjo-da-maquina`)の有無のみで「監視環境かどうか」を判定する囮ファイルの概念実証だったが、実運用の防御には既に`anjo_interceptor.IntentInterceptor`の本格的なハニーポット機構(`dummy_secrets/`固定ハニーポット、タスクごとに動的生成される`phantom_prison`)が存在し、本ファイルの単純なファイル存在チェックはそれより弱く機能的に完全に重複していた。§Iの重複コード削除(`oracle_feed.py`等)と同じ判断基準により削除した。
+\*\*`samaels_curse.py`を削除\*\* — マーカーファイルの有無のみで「監視環境かどうか」を判定する囮ファイルの概念実証だったが、実運用の防御には既に`agent_interceptor.IntentInterceptor`の本格的なハニーポット機構(`dummy_secrets/`固定ハニーポット、タスクごとに動的生成される`phantom_prison`)が存在し、本ファイルの単純なファイル存在チェックはそれより弱く機能的に完全に重複していた。§Iの重複コード削除(`oracle_feed.py`等)と同じ判断基準により削除した。
 
 
 
 \### M. 根本原因の是正: 「実運用ループ」の並行多重実装を一本化
 
-2026-10、個別ファイルの対症療法ではなく、設計そのものの根本原因を是正した。`AegisSystem`をラップする「エージェント実行ループ」が、聖書由来の新しい名前を付けられるたびに個別ファイルとして増殖し、最終的に`src/`配下に\*\*最低6種類\*\*並存していた: `ollama\_agent\_loop.py`(正規の実運用ループ)、`openai\_agent\_loop.py`(正式なテンプレート)、そして`final\_agent\_loop.py`(AutonomousAssistant)・`claude\_agent\_loop.py`(MythosContainmentUnit)・`active\_defense.py`(ActiveDefenseProtocol)・`mythos\_weaponization.py`(MythosWeaponizationEngine)という4つの重複/デモ。
+2026-10、個別ファイルの対症療法ではなく、設計そのものの根本原因を是正した。`DefenseOrchestrator`をラップする「エージェント実行ループ」が、物語的な新しい名前を付けられるたびに個別ファイルとして増殖し、最終的に`src/`配下に\*\*最低6種類\*\*並存していた: `ollama\_agent\_loop.py`(正規の実運用ループ)、`openai\_agent\_loop.py`(正式なテンプレート)、そして`final\_agent\_loop.py`(AutonomousAssistant)・`claude\_agent\_loop.py`(旧名の単発デモ)・`active\_defense.py`(ActiveDefenseProtocol)・`mythos\_weaponization.py`(旧名の単発デモ)という4つの重複/デモ。
 
-\*\*根本原因\*\*: 命名規則（旧約聖書の世界観）が「新しい名前＝新しい機能」という誤った直感を生み、既存実装の拡張ではなく新規ファイルの作成を誘発していた。この結果、同一の脆弱性修正が複数箇所に個別に必要になる構造的リスク（§Hで実際に発生した事例と同種）を抱えていた。
+\*\*根本原因\*\*: 命名規則（物語的な世界観）が「新しい名前＝新しい機能」という誤った直感を生み、既存実装の拡張ではなく新規ファイルの作成を誘発していた。この結果、同一の脆弱性修正が複数箇所に個別に必要になる構造的リスク（§Hで実際に発生した事例と同種）を抱えていた。
 
 \*\*削除(機能的に完全な重複・演出のみで実体機構を持たない)\*\*:
 \- `claude\_agent\_loop.py` — 44行の単発デモ。独自メカニズムなし。
 \- `mythos\_weaponization.py` — 58行の単発デモ。独自メカニズムなし。
-\- `active\_defense.py` — `counter\_strike()`(ハックバック)は`time.sleep(2)`とログファイル書き込みのみで、実際の反撃機構を一切持たない純粋な演出(セキュリティシアター)。`autonomous\_assimilation\_loop()`は`angelic\_evolution.py`自身のデモ・`metatron\_orchestrator.py`経由の実利用と機能的に重複。
+\- `active\_defense.py` — `counter\_strike()`(ハックバック)は`time.sleep(2)`とログファイル書き込みのみで、実際の反撃機構を一切持たない純粋な演出(セキュリティシアター)。`autonomous\_assimilation\_loop()`は`ollama\_selfplay\_round.py`自身のデモ・`selfplay\_orchestrator.py`経由の実利用と機能的に重複。
 
 \*\*統合(独自機能を正規実装へ移植してから削除)\*\*:
-\- `final\_agent\_loop.py`(AutonomousAssistant)の"list"アクション(ディレクトリ一覧取得)を、唯一の実運用ループである`ollama\_agent\_loop.py`に統合した。この過程で\*\*実機検証により新たな構造的欠陥\*\*を発見した: `pathlib.Path.iterdir()`は内部で`os.scandir`監査イベントを発行するが、これはSandboxの`\_michael\_absolute\_defense`のホワイトリストにも個別ハンドラにも存在せず、「デフォルト拒否」規則によりパスに関わらず常に遮断される。一方`os.listdir`はホワイトリスト入りしておりパスに関わらず常に許可される。つまり\*\*Sandboxの監査フック層は、ディレクトリ一覧取得に関して境界保護を一切提供しない\*\*(実機検証済み)。このため"list"はSandboxではなく`WorkspaceJail.secure\_resolve()`(パス文字列の前方一致によるジェイル境界検証)で保護するよう実装した。`tests/test\_ollama\_agent\_loop\_list\_action.py`で回帰を固定した。
+\- `final\_agent\_loop.py`(AutonomousAssistant)の"list"アクション(ディレクトリ一覧取得)を、唯一の実運用ループである`ollama\_agent\_loop.py`に統合した。この過程で\*\*実機検証により新たな構造的欠陥\*\*を発見した: `pathlib.Path.iterdir()`は内部で`os.scandir`監査イベントを発行するが、これはSandboxの`\_runtime\_audit\_hook`のホワイトリストにも個別ハンドラにも存在せず、「デフォルト拒否」規則によりパスに関わらず常に遮断される。一方`os.listdir`はホワイトリスト入りしておりパスに関わらず常に許可される。つまり\*\*Sandboxの監査フック層は、ディレクトリ一覧取得に関して境界保護を一切提供しない\*\*(実機検証済み)。このため"list"はSandboxではなく`WorkspaceJail.secure\_resolve()`(パス文字列の前方一致によるジェイル境界検証)で保護するよう実装した。`tests/test\_ollama\_agent\_loop\_list\_action.py`で回帰を固定した。
 
 \*\*副次的に発覚・修正した事故\*\*: `ollama\_agent\_loop.py`/`openai\_agent\_loop.py`の`\_\_main\_\_`デモタスクが、`workspace\_root`を指定せず実質的にリポジトリルート全体を隔離境界としていたため、デモ実行の出力(AIが書き写したDB接続情報)が`src/db\_config\_backup.py`という実ソースファイルの位置に書き込まれ、過去のコミットで誤ってgit管理下に入っていた。両ファイルのデモで`workspace\_root="jail\_workspace"`を明示するよう修正し、`src/db\_config\_backup.py`を削除、`.gitignore`に`jail\_workspace/`を追加して再発を防止した。
 
@@ -281,9 +281,9 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 2026-10、`src/`の是正に続き、`checks/`配下37ファイルおよびそれを配線する`.github/workflows/anjo\_da\_maquina\_protocol.yml`の棚卸しを行った。`checks/\_common.py`のdocstringによれば、このディレクトリは以前別途刷新（33ファイル中28ファイルが`print('initialized...')`のみの中身のないプレースホルダーだった状態から、名称が示す役割に対応する実質的な検査へ置き換え済み）されており、`src/`の「実運用ループ」ほどの深刻な重複は見つからなかった。見つかった問題は以下2点。
 
-\*\*削除: `checks/fifth\_seal\_samson.py`\*\* — 他の全ての天使スクリプトが`checks/\_common.py`の`report\_pass`/`report\_fail`による検査・レポート機構に統合されているのに対し、本ファイルのみ`CHAOS\_MODE`環境変数を読んで劇的な文言（ネフィリムの金銭トレーサビリティ放出、スリーパーマルウェア活性化等、いずれも明記の通り「シミュレート」）を`print`し`sys.exit(1)`するだけで、`\_common.py`を一切importせず実質的な検査を何も行っていなかった。§Aの`active\_defense.py`削除と同一の判断基準（実体を持たないセキュリティシアター）により削除し、ワークフローの対応ステップ(3.1)も削除した。なお`checks/lucifer\_rebellion.py`も同じ`CHAOS\_MODE`を読むが、こちらは実際に難読化攻撃ペイロードを`run\_code\_against\_sefer()`でSeferに対して実行し、その結果（突破数）に基づいて`report\_fail`するため、`CHAOS\_MODE`という設計自体は正当であることを確認した。
+\*\*削除: `checks/fifth\_seal\_samson.py`\*\* — 他の全ての検査スクリプトが`checks/\_common.py`の`report\_pass`/`report\_fail`による検査・レポート機構に統合されているのに対し、本ファイルのみ`CHAOS\_MODE`環境変数を読んで劇的な文言（いずれも明記の通り「シミュレート」）を`print`し`sys.exit(1)`するだけで、`\_common.py`を一切importせず実質的な検査を何も行っていなかった。§Aの`active\_defense.py`削除と同一の判断基準（実体を持たないセキュリティシアター）により削除し、ワークフローの対応ステップ(3.1)も削除した。なお`checks/lucifer\_rebellion.py`も同じ`CHAOS\_MODE`を読むが、こちらは実際に難読化攻撃ペイロードを`run\_code\_against\_sefer()`でRuntimeGuardに対して実行し、その結果（突破数）に基づいて`report\_fail`するため、`CHAOS\_MODE`という設計自体は正当であることを確認した。
 
-\*\*レビュー済み・変更不要: `camael\_shield.py`/`lucifer\_rebellion.py`間の攻撃ペイロード文字列の重複\*\* — 両ファイルは同種の難読化`os.system`呼び出しパターンを定数として共有するが、検証している性質が異なる。`camael\_shield.py`は「静的検査(Gabriel)または動的検査(Sandbox)のいずれかで必ず捕捉されること」（多層防御の論理和）を検証し、`lucifer\_rebellion.py`は`CHAOS\_MODE`下での動的検査単体の突破件数を検証する。`seraphim\_consensus.py`はマルチLLM異端検知という全く別の関心事であり、重複ではない。意図的な設計であり是正不要と判断した。
+\*\*レビュー済み・変更不要: `camael\_shield.py`/`lucifer\_rebellion.py`間の攻撃ペイロード文字列の重複\*\* — 両ファイルは同種の難読化`os.system`呼び出しパターンを定数として共有するが、検証している性質が異なる。`camael\_shield.py`は「静的検査(ScanSource)または動的検査(Sandbox)のいずれかで必ず捕捉されること」（多層防御の論理和）を検証し、`lucifer\_rebellion.py`は`CHAOS\_MODE`下での動的検査単体の突破件数を検証する。`seraphim\_consensus.py`はマルチLLM異端検知という全く別の関心事であり、重複ではない。意図的な設計であり是正不要と判断した。
 
 \*\*修正: `.github/workflows/anjo\_da\_maquina\_protocol.yml`の日本語ステップ名・コメントの文字コード破損\*\* — `run:`で実行されるコマンド自体は無事だったが、`name:`・`description:`・`echo`の日本語文字列が、UTF-8バイト列を誤ってShift\_JIS/CP932として解釈し再度UTF-8で保存したことに起因する典型的な文字化け（mojibake）を起こしていた（例: 本来`máquina`の`á`であるべき`\xc3\xa1`が、Shift\_JISの半角カナ単バイトとして誤読され`ﾃ｡`として保存されていた）。バイト単位の機械的逆変換（corrupted文字列をCP932でエンコードしUTF-8でデコードし直す）を試みたが、一部の行（特にギリシャ文字`Β`やラテン拡張の`´`等、本来存在しないはずの文字を含む行）では一貫して失敗し、複数世代にわたる非可逆な文字化けが疑われたため、全行の機械的逆変換は断念した。代わりに、各ステップが実行する`checks/*.py`の内容（既に本棚卸しで全件読了済み）と、機械的逆変換が成功した行（約20行）から復元した文字化けパターンの対応表を手掛かりに、全ての`name:`/`description:`/`echo`文字列を正しい日本語として手動で書き直した。YAML構文としての妥当性（`yaml.safe_load`でのパース、ステップ数が意図した40件と一致すること）は確認済みだが、意味内容の復元は機械的な逆変換ではなく文脈からの再構成であるため、元のコミット時点の原文と一字一句完全に一致する保証はない。
 
@@ -291,13 +291,13 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \### O. `adapters/provisioning\_agent.py`の自己署名脆弱性を修正
 
-2026-10、`src/`・`checks/`に続き`sefer/`・`anjo\_interceptor/`・`adapters/`・`tartarus/`・`tools/`の棚卸しを行った。このうち`adapters/provisioning\_agent.py`に、既に修正済みの§F(`ZadkielDominion`)・Armageddon Engine(`raziel\_ledger\_pending.json`)と同種の、より深刻な脆弱性を発見した。
+2026-10、`src/`・`checks/`に続き`runtime\_guard/`・`agent\_interceptor/`・`adapters/`・`adversarial\_training/`・`tools/`の棚卸しを行った。このうち`adapters/provisioning\_agent.py`に、既に修正済みの§F(`ShieldRuleProposalQueue`)・Selfplay Engine(`proposed\_rule\_queue.json`)と同種の、より深刻な脆弱性を発見した。
 
-\*\*脆弱性の内容\*\*: `maquina\_gatekeeper.py`の`enforce\_maquina\_seal`は、`ataraxia\_certificate.json`が`MAQUINA\_PUBLIC\_KEY\_PEM`(同ファイルにハードコードされた信頼の起点)で検証可能な署名を持つことを要求する、ライセンス証明書機構である(`checks/metatron\_scripture\_seal.py`のdocstringが示す通り、これは`sefer`単体のゼロトラスト監査フックとは別系統の、運用環境を限定するための仕組み)。修正前の`provisioning\_agent.provision\_runtime_seal()`は、(1)この場で新規にRSA鍵対を生成し、(2)その秘密鍵で証明書ペイロードに自ら署名し、(3)`maquina\_gatekeeper.py`の`MAQUINA\_PUBLIC\_KEY\_PEM`を正規表現置換でその場で生成した公開鍵に直接書き換え、(4)署名済み証明書をそのまま`ataraxia\_certificate.json`として発行していた。審査者(信頼の起点)と被審査者(証明書の発行者)が同一であるため、本スクリプトを実行できる者なら誰でも無条件に自分自身を「承認済み」にでき、ライセンス証明書機構は実質的に何の認可も提供していなかった。
+\*\*脆弱性の内容\*\*: `runtime\_audit\_gatekeeper.py`の`enforce\_maquina\_seal`は、`ataraxia\_certificate.json`が`MAQUINA\_PUBLIC\_KEY\_PEM`(同ファイルにハードコードされた信頼の起点)で検証可能な署名を持つことを要求する、ライセンス証明書機構である(`checks/audit\_package\_boundary\_isolation.py`のdocstringが示す通り、これは`runtime\_guard`単体のゼロトラスト監査フックとは別系統の、運用環境を限定するための仕組み)。修正前の`provisioning\_agent.provision\_runtime_seal()`は、(1)この場で新規にRSA鍵対を生成し、(2)その秘密鍵で証明書ペイロードに自ら署名し、(3)`maquina\_gatekeeper.py`の`MAQUINA\_PUBLIC\_KEY\_PEM`を正規表現置換でその場で生成した公開鍵に直接書き換え、(4)署名済み証明書をそのまま`ataraxia\_certificate.json`として発行していた。審査者(信頼の起点)と被審査者(証明書の発行者)が同一であるため、本スクリプトを実行できる者なら誰でも無条件に自分自身を「承認済み」にでき、ライセンス証明書機構は実質的に何の認可も提供していなかった。
 
-\*\*修正\*\*: 鍵対生成と署名はその場で行うが、`maquina\_gatekeeper.py`の書き換えと証明書の発行は行わず、`sefer/provisioning\_pending.json`への提案キューイングに留めるよう変更した。新設した`tools/promote\_provisioning\_seal.py`で、人間が提案内容(client\_id・hardware\_fingerprint・有効期限)を確認した上で明示的に`--approve`して初めて、信頼の起点の更新と証明書発行が行われる。`tools/promote\_shield\_seal.py`・`tools/promote\_ledger\_seal.py`と同一のパターン。`tests/test\_provisioning\_approval\_flow.py`で回帰を固定した(実行環境に`rsa`パッケージ(PyPI)がインストールできないため、署名の暗号学的正しさ自体はテスト範囲外とし、「どのファイルが・いつ・何を書き換えるか」という構造を検証する疑似実装で代替している)。
+\*\*修正\*\*: 鍵対生成と署名はその場で行うが、`runtime\_audit\_gatekeeper.py`の書き換えと証明書の発行は行わず、`runtime\_guard/provisioning\_pending.json`への提案キューイングに留めるよう変更した。新設した`tools/promote\_provisioning\_seal.py`で、人間が提案内容(client\_id・hardware\_fingerprint・有効期限)を確認した上で明示的に`--approve`して初めて、信頼の起点の更新と証明書発行が行われる。`tools/promote\_shield\_seal.py`・`tools/promote\_ledger\_seal.py`と同一のパターン。`tests/test\_provisioning\_approval\_flow.py`で回帰を固定した(実行環境に`rsa`パッケージ(PyPI)がインストールできないため、署名の暗号学的正しさ自体はテスト範囲外とし、「どのファイルが・いつ・何を書き換えるか」という構造を検証する疑似実装で代替している)。
 
-\*\*その他確認済み(変更不要)\*\*: `adapters/excel\_to\_yaml\_parser.py`・`adapters/external\_qa\_wrapper.py`は、`checks/\_common.py`のdocstringが言及する刷新前の`print('initialized...')`プレースホルダーのまま残存していることを確認したが、CIワークフロー上は情報収集的な位置づけのステップであり、`checks/`の検査ステップ群のような合否判定の実体を持つ必要はないため、今回は現状維持とした。`sefer/\_\_init\_\_.py`(Sandbox)・`anjo\_interceptor/intent\_checker.py`・`tartarus/armageddon.py`・`tartarus/armageddon\_core.py`・`tools/`配下の各ツールは実質的な重複・演出のみのコードは見つからなかった。
+\*\*その他確認済み(変更不要)\*\*: `adapters/excel\_to\_yaml\_parser.py`・`adapters/external\_qa\_wrapper.py`は、`checks/\_common.py`のdocstringが言及する刷新前の`print('initialized...')`プレースホルダーのまま残存していることを確認したが、CIワークフロー上は情報収集的な位置づけのステップであり、`checks/`の検査ステップ群のような合否判定の実体を持つ必要はないため、今回は現状維持とした。`runtime\_guard/\_\_init\_\_.py`(Sandbox)・`agent\_interceptor/intent\_checker.py`・`adversarial\_training/local\_only\_selfplay\_gate.py`・`adversarial\_training/selfplay\_engine\_core.py`・`tools/`配下の各ツールは実質的な重複・演出のみのコードは見つからなかった。
 
 
 
@@ -317,11 +317,11 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 これら7ファイルはいずれも上記コミット`4f1b48a`以降一度も変更されておらず、`--follow`付きの個別`git log`で確認した通り独自の変更履歴を持たない。
 
-\*\*修正: `COMMANDS.md`の証明書再発行手順が§Oの修正前の挙動を記述したまま残存していた\*\* — §Oで`adapters/provisioning\_agent.py`を「提案キューイング＋人間承認」方式に修正したにもかかわらず、`COMMANDS.md`の「🔑 証明書（ataraxia\_certificate.json）の再発行」節は、修正前の「`provisioning\_agent.py`実行後、`ataraxia\_certificate.json`と`maquina\_gatekeeper.py`の両方を即座にコミットする」という旧い自己署名の運用手順を記述したまま残っていた。`tools/promote\_ledger\_seal.py`・`tools/promote\_shield\_seal.py`と同じ形式で、`tools/promote\_provisioning\_seal.py`による`--list`/`--approve`/`--reject`の手順に書き直した。
+\*\*修正: `COMMANDS.md`の証明書再発行手順が§Oの修正前の挙動を記述したまま残存していた\*\* — §Oで`adapters/provisioning\_agent.py`を「提案キューイング＋人間承認」方式に修正したにもかかわらず、`COMMANDS.md`の「🔑 証明書（ataraxia\_certificate.json）の再発行」節は、修正前の「`provisioning\_agent.py`実行後、`ataraxia\_certificate.json`と`runtime\_audit\_gatekeeper.py`の両方を即座にコミットする」という旧い自己署名の運用手順を記述したまま残っていた。`tools/promote\_ledger\_seal.py`・`tools/promote\_shield\_seal.py`と同じ形式で、`tools/promote\_provisioning\_seal.py`による`--list`/`--approve`/`--reject`の手順に書き直した。
 
 \*\*確認済み(変更不要・削除候補ではあるが本修正の範囲外として報告のみ)\*\*:
 \- `assets/demo.mp4`(約11MB) — `README.md`・`architecture.html`のいずれからも参照されていない。リポジトリを11MB肥大化させているが、ユーザー自身が保持しているデモ録画である可能性があり、メディアファイルの削除は後戻りしにくい判断のため、本修正では削除せずユーザーへの報告事項とした。
-\- `MANIFEST.in`・`shield\_rules.json`・`hooks/pre-commit`・`dummy\_secrets/`・`COMMANDS.md`(証明書節以外)・`architecture.html` — いずれも実際に参照され機能している、または意図的なハニーポット/ドキュメントであることを確認した。`sefer.egg-info/`は`.gitignore`の`\*.egg-info/`パターンにより元々Git管理外であることを確認した(pip editable installのビルド成果物)。
+\- `MANIFEST.in`・`shield\_rules.json`・`hooks/pre-commit`・`dummy\_secrets/`・`COMMANDS.md`(証明書節以外)・`architecture.html` — いずれも実際に参照され機能している、または意図的なハニーポット/ドキュメントであることを確認した。`runtime\_guard.egg-info/`は`.gitignore`の`\*.egg-info/`パターンにより元々Git管理外であることを確認した(pip editable installのビルド成果物)。
 \- `zk\_audit\_report.xml` — `adapters/junit\_xml\_exporter.py`・`checks/heavenly\_tablets\_zkp.py`が生成する成果物だが、`.gitignore`の対象になっておらずコミット済みの内容は古い実行結果のスナップショットになっている。`sefer/audit\_chain.jsonl`と同種の「テスト実行で汚染されるがgit管理されている」ファイルであり、本修正の範囲外として変更しなかった(将来的に`.gitignore`への追加を検討する価値はある)。
 
 
@@ -336,7 +336,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \*\*修正: `architecture.html`に残っていた旧プロジェクト名`Merkabah`\*\* — `<title>`・見出し(`<h1>`)・本文中の3箇所に、改名(Merkabah→Pleroma)前の旧名称がそのまま残っていた。いずれも単純な名称置換で`Pleroma`に修正した。
 
-\*\*確認済み(報告のみ・本修正では変更せず)\*\*: `architecture.html`はRaphael/Gabriel/Michaelの3要素と`rubric.json`・`homilies/`プラグイン機構を中心に説明する、現行実装(30件超の`checks/`検査・Sandbox・AegisSystem等)よりかなり早期の構想段階の設計を記述したドキュメントだった。`rubric.json`・`homilies/`はいずれも`.gitignore`にエントリがあるが、どちらも現在のリポジトリ内には実体が存在せず、どの`.py`ファイルからも参照されていない(未実装の将来機能、または構想段階で後に別アーキテクチャに置き換わった名残と推測される)。名称の修正のみ行い、内容全体を現行アーキテクチャに合わせて書き直すかどうかはユーザー判断に委ねる。
+\*\*確認済み(報告のみ・本修正では変更せず)\*\*: `architecture.html`は証明書ゲート/ScanSource/AuditHookの3要素と`rubric.json`・`homilies/`プラグイン機構を中心に説明する、現行実装(30件超の`checks/`検査・Sandbox・DefenseOrchestrator等)よりかなり早期の構想段階の設計を記述したドキュメントだった。`rubric.json`・`homilies/`はいずれも`.gitignore`にエントリがあるが、どちらも現在のリポジトリ内には実体が存在せず、どの`.py`ファイルからも参照されていない(未実装の将来機能、または構想段階で後に別アーキテクチャに置き換わった名残と推測される)。名称の修正のみ行い、内容全体を現行アーキテクチャに合わせて書き直すかどうかはユーザー判断に委ねる。
 
 
 
@@ -344,7 +344,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \*\*事実確認\*\*: `git log --oneline -- Dockerfile`より、本ファイルはリポジトリ最初のコミット(`4f1b48a`)以来一度も変更されておらず、今回の一連の棚卸し・修正が原因で後から壊れたものではなく、\*\*最初から一度も正しく動く状態になったことがない\*\*ファイルだったことを確認した(ユーザーへの事実確認に対する回答として記録)。
 
-\*\*不備の内容\*\*: 修正前は`COPY requirements.txt .`・`COPY maquina\_gatekeeper.py .`・`COPY tests/ tests/`の3点のみをイメージにコピーしており、テストが実際に`import`する`sefer/`・`checks/`・`adapters/`・`anjo\_interceptor/`・`src/`・`tartarus/`・`tools/`が一切含まれていなかった。Dockerが使えない本環境の制約上、実際の`docker build`では検証できなかったため、`.dockerignore`相当の除外ルールを適用した一時ディレクトリへ`cp`で再現し、そこで`mini\_pytest.py`シムを実行して実機相当の検証を行った。修正前の構成を再現した場合は`PASS=1 FAIL=25 ERROR=12`で大半が`ModuleNotFoundError`により失敗することを確認し、不備の実在を裏付けた。
+\*\*不備の内容\*\*: 修正前は`COPY requirements.txt .`・`COPY runtime\_audit\_gatekeeper.py .`・`COPY tests/ tests/`の3点のみをイメージにコピーしており、テストが実際に`import`する`runtime\_guard/`・`checks/`・`adapters/`・`agent\_interceptor/`・`src/`・`adversarial\_training/`・`tools/`が一切含まれていなかった。Dockerが使えない本環境の制約上、実際の`docker build`では検証できなかったため、`.dockerignore`相当の除外ルールを適用した一時ディレクトリへ`cp`で再現し、そこで`mini\_pytest.py`シムを実行して実機相当の検証を行った。修正前の構成を再現した場合は`PASS=1 FAIL=25 ERROR=12`で大半が`ModuleNotFoundError`により失敗することを確認し、不備の実在を裏付けた。
 
 \*\*修正\*\*: 個別ファイルの列挙は新しいディレクトリの追記漏れを構造的に誘発する(今回の不備そのものがその実例)ため、`COPY . .`でリポジトリ全体をコピーし、イメージに含めたくないもの(`.git`・`.github`・ビルド/キャッシュ生成物・ホスト/マシン固有の`ataraxia\_certificate.json`・テスト実行で汚染される各種監査ログ等)は新設した`.dockerignore`側で除外する方式に変更した。`ataraxia\_certificate.json`をイメージに焼き込まない方針は、`docker-compose.yml`が同ファイルを実行時に読み取り専用でマウントする既存の設計(ハードウェア指紋がマシン固有であるため)と整合する。
 
@@ -360,7 +360,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \*\*判断根拠\*\*: `README.md`・`COMMANDS.md`のどちらにも`docker-compose`自体への言及が一切無く、本コンテナを「ローカルOllamaサーバーと通信する実運用エージェントの実行環境」として使う計画の裏付けが見当たらなかった。一方`Dockerfile`のデフォルト`CMD`は`pytest tests/`であり、これが唯一確認できる実利用経路である。架空の将来用途を推測して再設計するより、裏付けのある現状の用途(テスト実行)に合わせて明確化する方が安全と判断した。
 
-\*\*修正\*\*: `network\_mode: "none"`はそのまま維持し、「テストスイートがネットワーク通信を一切発生させないことを前提にした、テスト専用・ネットワーク遮断サンドボックス」という用途をコメントで明記した。実運用エージェントをOllamaと通信させて動かしたい場合は、本コンテナの外(ホスト上で直接実行)か、`network\_mode`を緩めた別のcomposeサービスを別途新設する必要がある旨も明記した。あわせて、どの`.py`ファイルからも参照されていなかった死んだ`oracle\_output/`ボリュームマウントを削除した。`ataraxia\_certificate.json`(読み取り専用マウント)・`zk\_audit\_trail.json`(`maquina\_gatekeeper.py`の`ZKAuditTrail`が書き込む)は実際に使われていることを確認し、変更していない。
+\*\*修正\*\*: `network\_mode: "none"`はそのまま維持し、「テストスイートがネットワーク通信を一切発生させないことを前提にした、テスト専用・ネットワーク遮断サンドボックス」という用途をコメントで明記した。実運用エージェントをOllamaと通信させて動かしたい場合は、本コンテナの外(ホスト上で直接実行)か、`network\_mode`を緩めた別のcomposeサービスを別途新設する必要がある旨も明記した。あわせて、どの`.py`ファイルからも参照されていなかった死んだ`oracle\_output/`ボリュームマウントを削除した。`ataraxia\_certificate.json`(読み取り専用マウント)・`zk\_audit\_trail.json`(`runtime\_audit\_gatekeeper.py`の`ZKAuditTrail`が書き込む)は実際に使われていることを確認し、変更していない。
 
 
 
@@ -836,7 +836,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \### AW. src/metatron\_orchestrator.py — `CassielsVeil`の通信遮断結界が、天使自身の正規のOllama学習通信まで毎サイクル確実にブロックしていた (2026-10)
 
-\*\*発見\*\*: §AVの修正後、本セッションの既存の知見(DEFECTS.md §L: 「`cassiels_veil.CassielsVeil`は統合しない(デモとして保持)」——理由は、本クラスの`socket.socket`を丸ごと置き換える通信遮断が、実運用ループが依存するローカルOllamaサーバーへの通信まで一緒に遮断してしまうため)を思い出し、「この決定が本当に全ファイルで守られているか」を横断的に確認する目的で`src/metatron_orchestrator.py`(§Lの対象だった旧ファイル群より\*後から\*新設された、各天使クラスを統括する正式なオーケストレータ)を精査した。すると、`execute_holy_war()`が`self.cassiel.activate_seal()`(`CassielsVeil`の結界展開)を、`self.angel.defend_and_execute(payload, ...)`の直前で呼んでいた。この`defend_and_execute()`は内部で`learn_threat()`を呼び、これは防御側AI(Blue Team)に未知の攻撃パターンを分析させるため、実運用のローカルOllamaサーバーへ`ollama.chat(...)`で通信する。つまり、§Lで既に判明していた「通信遮断がOllama通信まで一緒に遮断する」という問題が、§Lの対象ファイル群とは独立に新設された本ファイルで、まさに禁止されていたはずの統合がそのまま行われてしまっていた。
+\*\*発見\*\*: §AVの修正後、本セッションの既存の知見(DEFECTS.md §L: 「`cassiels_veil.CassielsVeil`は統合しない(デモとして保持)」——理由は、本クラスの`socket.socket`を丸ごと置き換える通信遮断が、実運用ループが依存するローカルOllamaサーバーへの通信まで一緒に遮断してしまうため)を思い出し、「この決定が本当に全ファイルで守られているか」を横断的に確認する目的で`src/metatron_orchestrator.py`(§Lの対象だった旧ファイル群より\*後から\*新設された、各天使クラスを統括する正式なオーケストレータ)を精査した。すると、`run_selfplay_cycles()`が`self.cassiel.activate_seal()`(`CassielsVeil`の結界展開)を、`self.angel.defend_and_execute(payload, ...)`の直前で呼んでいた。この`defend_and_execute()`は内部で`learn_threat()`を呼び、これは防御側AI(Blue Team)に未知の攻撃パターンを分析させるため、実運用のローカルOllamaサーバーへ`ollama.chat(...)`で通信する。つまり、§Lで既に判明していた「通信遮断がOllama通信まで一緒に遮断する」という問題が、§Lの対象ファイル群とは独立に新設された本ファイルで、まさに禁止されていたはずの統合がそのまま行われてしまっていた。
 
 実機検証済み: `CassielsVeil.activate_seal()`展開中に`socket.create_connection(('127.0.0.1', 11434), ...)`(ローカルOllamaサーバーへの接続と同種の経路)を試みたところ、`ConnectionRefusedError`で確実に遮断されることを確認した。また、スタブ化した`ollama.chat`が呼ばれた瞬間の`socket.socket`の状態を記録するテストを書いたところ、`craft_poison()`(結界展開\*前\*のOllama呼び出し)は`True`(遮断されていない)、`learn_threat()`(結界展開\*後\*のOllama呼び出し)は`False`(遮断されている)という結果になり、まさに疑っていた通りの非対称なブロックが実際に発生することを確認した。
 
@@ -846,7 +846,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*対応\*\*: `src/metatron_orchestrator.py`から`CassielsVeil`のimport・インスタンス化・`activate_seal()`/`deactivate_seal()`の呼び出しを削除した。AI生成ペイロードの実行時の通信遮断そのものは、`defend_and_execute()`が呼ぶ`AegisSystem.execute_ai_intent()`内で、既にDockerコンテナの`--network none`によってOSレベルで提供されている(`src/sandalphon_jail.py`、§Aで導入)。`CassielsVeil`の結界はそれより弱い追加の一層でしかなく、ここでの展開は保護の上積みなしに正規の学習通信を壊すだけだったため、削除という判断をした。レポート生成文言(`GabrielRevelation.generate_report`)の「カシエルの結界(通信遮断)」という記述も、実際に機能している防御層(認知的防壁・Dockerの隔離結界)に即した記述へ修正した。
 
-\*\*検証\*\*: `tests/test_metatron_orchestrator_cassiel_ollama.py`を新設し、2件追加した。(1) `execute_holy_war()`の実行中、`ollama.chat`が呼ばれた瞬間ごとに`socket.socket`が本物のクラスのままであること(=正規の学習通信が自分自身の結界で遮断されていないこと)を固定する(これが本修正の核心)。本テストは修正前のコードに対して実際に`[True, False]`(2回目の呼び出しがブロックされている)でFAILすることを確認した上で、修正後は`[True, True]`でPASSすることを確認済み。(2) サイクル終了後に`socket.socket`が元のクラスへ確実に復元されていること(他のテストへの汚染防止)。`mini_pytest.py`再実行で`PASS=167`(§AV時点の165から新規2件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。
+\*\*検証\*\*: `tests/test_metatron_orchestrator_cassiel_ollama.py`を新設し、2件追加した。(1) `run_selfplay_cycles()`の実行中、`ollama.chat`が呼ばれた瞬間ごとに`socket.socket`が本物のクラスのままであること(=正規の学習通信が自分自身の結界で遮断されていないこと)を固定する(これが本修正の核心)。本テストは修正前のコードに対して実際に`[True, False]`(2回目の呼び出しがブロックされている)でFAILすることを確認した上で、修正後は`[True, True]`でPASSすることを確認済み。(2) サイクル終了後に`socket.socket`が元のクラスへ確実に復元されていること(他のテストへの汚染防止)。`mini_pytest.py`再実行で`PASS=167`(§AV時点の165から新規2件増加)・`FAIL=0`・`ERROR=2`(既存の無関係なもののみ)であることを確認した。
 
 \*\*自己点検\*\*: 本件は私自身が過去に修正した箇所の不備ではなく、`metatron_orchestrator.py`新設時に元から存在していたバグである。しかし発見経緯そのものは、既に確定していたはずの設計判断(§L)が、後から追加されたコードで横展開を忘れられ、再び同じ種類の問題として表出した、という本セッションで繰り返し見ている「教訓が一箇所にしか適用されない」パターンの一例であり、正直に次の調査対象として残していた「§AVの関連する未調査事項」の確認作業中に見つけたものである。
 
@@ -1009,7 +1009,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*発見\*\*: §BFをmainにマージし実CIの連続成功を確認した後、`src/`・`adapters/`・`tools/`の棚卸しを継続する中で、`src/angelic_evolution.py`(§AWで既に一度精査済みのファイル)を読み直したところ、`EvolvingAngel.defend_and_execute()`の末尾が`return self.aegis.execute_ai_intent(payload, target)`となっていることに気づいた。これは`src/adversarial_evolution.py`の§BBで既に発見・修正したのと\*\*全く同じ構造の欠陥\*\*である: `execute_ai_intent()`はGabriel・IntentInterceptor・Dockerの隔離結界内での使い捨てドライランのみを行う事前検閲であり、実際のファイルI/O・コード実行は呼び出し側が`sefer.Sandbox`の中で行う責務として明示的に残されている(`src/aegis_system.py`のdocstring参照)。本関数はこの責務を一度も果たしていなかった。
 
-さらに重要な点として、本ファイルは`src/metatron_orchestrator.py`の`execute_holy_war()`から呼ばれており、§BBの`src/adversarial_evolution.py`(自己対戦シミュレーション単体、スタンドアロン実行専用)とは異なり、\*\*実運用の自動防衛ループに配線されている\*\*。`execute_holy_war()`は`defend_and_execute()`が例外を出さなければ無条件に`"❌ 致命的敗北: サマエルの毒が防壁を突破しました。"`という文言を`revelations/`配下のレポートファイルに記録する設計である。
+さらに重要な点として、本ファイルは`src/metatron_orchestrator.py`の`run_selfplay_cycles()`から呼ばれており、§BBの`src/adversarial_evolution.py`(自己対戦シミュレーション単体、スタンドアロン実行専用)とは異なり、\*\*実運用の自動防衛ループに配線されている\*\*。`run_selfplay_cycles()`は`defend_and_execute()`が例外を出さなければ無条件に`"❌ 致命的敗北: サマエルの毒が防壁を突破しました。"`という文言を`revelations/`配下のレポートファイルに記録する設計である。
 
 実機検証: `open(path, "w").write("pwned")`という、importも禁止関数名も含まないペイロードを`defend_and_execute()`に通したところ(Docker不在のテスト環境のため`require_docker_sandbox=False`で事前検閲層のみを切り離して検証)、修正前は例外を出さずに`True`を返すことを確認した(=偽の「防壁突破」が報告される)。一方、`src/adversarial_evolution.py`の`execute_payload_under_sandbox()`で同じペイロードを実際にSandbox配下で実行すると、Michaelが確実に`LossOfAtaraxia`で遮断することは§BBで既に実証済みである。
 

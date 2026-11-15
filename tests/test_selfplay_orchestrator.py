@@ -5,7 +5,7 @@ promoteするための回帰テスト。
 実機にOllama/Dockerが無い環境(本テスト実行環境を含む)では、
 `DefenseOrchestrator.execute_ai_intent` はSandalphon(Docker)段でフェイルクローズド
 に`PermissionError`を送出する。これは「防御が機能している」ことの証左であり、
-`SelfplayOrchestrator.execute_holy_war`は本来これを捕捉して
+`SelfplayOrchestrator.run_selfplay_cycles`は本来これを捕捉して
 「✅ 迎撃成功」として扱うべきだが、修正前は
 `ThreatIntelGatherer.analyze_aidd_artifact()`内の、信頼済みの内部レポート
 書き込みにまで誤って`execute_ai_intent`(AI生成コード審査パイプライン)を
