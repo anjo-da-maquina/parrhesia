@@ -206,6 +206,46 @@ def _normalize_skip_line(ln: str) -> str:
     return normalized.strip()
 
 
+def _join_continued_statements(lines: List[str]) -> List[str]:
+    """丸括弧の対応が1行で閉じていない行を、閉じるまで後続の行と結合し、
+    1つの論理行として返す(decoratorの引数などが複数行に整形されている
+    場合に、1つの呼び出しとして比較できるようにするための前処理)。
+
+    [2026-11、§DCの残存限界の修正] 完全な構文解析ではなく、丸括弧の
+    個数だけを数える簡易実装。結合時は各行の間に半角スペースを1つ挟む
+    (直後に`_normalize_skip_line`で連続空白が1個に畳まれるため、元の
+    改行・インデントの違いは比較に影響しない)。
+
+    [確認できなかったこと] 文字列リテラル中の丸括弧(例:
+    `reason="(see issue)"`)は区別せず、そのまま数に含めてしまう。
+    skip指定の`reason=`文字列に丸括弧を使うことは稀と判断し、本バージョン
+    では対応を見送る。閉じなかった場合(ファイル末尾まで開いたままなど)
+    は、結合せずそのまま返す(偽陰性側に倒す=見逃す側に倒す、保守的な
+    挙動)。"""
+    joined: List[str] = []
+    buffer: str = ""
+    depth = 0
+    for ln in lines:
+        if depth == 0:
+            opens, closes = ln.count("("), ln.count(")")
+            if opens > closes:
+                buffer = ln
+                depth = opens - closes
+            else:
+                joined.append(ln)
+        else:
+            buffer += " " + ln
+            depth += ln.count("(") - ln.count(")")
+            if depth <= 0:
+                joined.append(buffer)
+                buffer = ""
+                depth = 0
+    if depth != 0:
+        # 閉じなかった場合は結合を諦め、保守的に未結合のまま扱う。
+        joined.append(buffer)
+    return joined
+
+
 def detect_skip_addition(per_file: Dict[str, Dict[str, List[str]]]) -> List[DiffFraudFinding]:
     """スキップ指定(@pytest.mark.skip等)が新規に追加された行を検出する
     (削除側に同じ意味のskip指定が無い=元から有ったものの移動や、見た目
@@ -219,17 +259,34 @@ def detect_skip_addition(per_file: Dict[str, Dict[str, List[str]]]) -> List[Diff
     skip指定を含む行どうし(`_SKIP_MARKER_RE`にマッチする行)に絞り、
     末尾コメントを除去し、連続空白を1個に畳んでから比較する。
 
-    [確認できなかったこと・この修正の限界] 複数行に分割されたデコレータ
-    の引数を、1つの正規化済みトークン列として結合して比較するような、
-    行を越えた意味的な同一性判定は行っていない(`multiline_split`型の
-    一部は、分割後の各行がそれぞれ元の1行と部分的にしか一致しないため、
-    依然として誤検知されうる。実測結果は§DC・READMEに記録)。"""
+    [2026-11、残存限界の修正] 当初は複数行に分割されたデコレータの引数を
+    結合しておらず、`multiline_split`型(1行の呼び出しを複数行に整形
+    しただけ)の一部を誤検知していた。`_join_continued_statements()`で、
+    丸括弧の対応が1行で閉じていない行を後続行と結合し、1つの論理行として
+    から`_SKIP_MARKER_RE`の判定・`_normalize_skip_line`の正規化を行う
+    ように修正した(凍結データでの改善前後の実測は§DC・READMEに記録)。
+
+    [確認できなかったこと・この修正でも残る限界] `_join_continued_
+    statements`は丸括弧の個数だけで継続行を判定する簡易実装であり、
+    文字列リテラル中の丸括弧は区別しない。また、凍結データ
+    (`frozen_rename_skipmove_holdout.jsonl`)の`skipif_reformat`タグの
+    1件(`frozen_holdout_40baedee8534`)は、データ生成スクリプト自身の
+    別の不具合(複数行のPython文字列を1つのリスト要素として渡したため、
+    `+`接頭辞が最初の物理行にしか付かず、残りの行が`diff`としては
+    無視されてしまっていた)により、元々意図していた複数行デコレータの
+    シナリオを正しく再現できていない。この件は凍結データであるため
+    ファイル自体は書き換えず、`build_frozen_holdout.py`側の生成ロジック
+    のみ修正し、本件をこの関数のdocstringとREADMEに記録する(詳細は
+    `build_frozen_holdout.py`のSKIP_MOVE_CASES、tag="skipif_reformat"
+    のコメント参照)。"""
     findings = []
     for file_path, lines in per_file.items():
+        removed_joined = _join_continued_statements(lines["removed"])
+        added_joined = _join_continued_statements(lines["added"])
         removed_skip_keys = {
-            _normalize_skip_line(ln) for ln in lines["removed"] if _SKIP_MARKER_RE.search(ln)
+            _normalize_skip_line(ln) for ln in removed_joined if _SKIP_MARKER_RE.search(ln)
         }
-        for ln in lines["added"]:
+        for ln in added_joined:
             if _SKIP_MARKER_RE.search(ln):
                 key = _normalize_skip_line(ln)
                 if key not in removed_skip_keys:

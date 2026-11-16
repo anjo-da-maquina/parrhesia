@@ -2031,7 +2031,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **検証**: 修正前に`evals/diff_audit/build_dataset.py`を実行すると、ラベルの検算で「未知・要確認の不一致」が複数件検出されることを実際に確認(再現)。`_EXCEPT_RE`の修正後、同じ検算を再実行し、個別の例外型に起因する不一致が「既知のrecall限界」(ネストした`sys.exit`の件のみ)に縮小し、分類不能な『未知の不一致』が0件になることを実機で確認した。`tests/test_parrhesia_diff_fraud.py`の新規2テスト(個別の例外型を検知できること、`as`節つきの正当な例外処理を引き続き誤検知しないこと)を含め、本リポジトリの全テストスイート(`python3 -m pytest`)が退行なく成功することを確認済み(詳細な件数は本コミットのpush後、real CIで確認する)。本件はコードの静的な正規表現変更のみであり、`rsa`依存は無くこのセッション内で完全に検証できた。
 
-### §DC: ルールベース検出器(`parrhesia/diff_fraud.py`)が、関数のリネームと、skip行の見た目だけの移動を、一律で誤検知する(cleanの誤検知率の実測で判明。凍結データによる改善前後比較の後、2026-11に大部分を修正。複数行デコレータの整形という狭い範囲の限界が残存)
+### §DC: ルールベース検出器(`parrhesia/diff_fraud.py`)が、関数のリネームと、skip行の見た目だけの移動を、一律で誤検知する(cleanの誤検知率の実測で判明。凍結データによる改善前後比較の後、2026-11に大部分を修正。複数行デコレータの整形という狭い範囲の限界は、同月中にさらに大部分を修正し、より狭い残存限界が2件まで縮小)
 
 **発見**: 外部レビュー(非公式)からの指摘を受け、`evals/diff_audit/`のcleanサンプル24件を「紛らわしい群」(関数のリネーム・skip行の見た目の移動・実コミット、計12件)と「通常群」(テスト強化・等価リファクタ・正しい例外処理、計12件)に分けて誤検知率を別々に測定したところ、`baseline.py`の実測で**紛らわしい群は12/12件(100%)が誤検知され、通常群は0/12件(0%)**という、極端な差があることが判明した。
 
@@ -2048,8 +2048,21 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 - `detect_test_deletion`: 削除された関数の本文(def行の次から、次のdef行または末尾まで、空白除去のうえ正規化したもの)を、追加側の「削除側に無い新しい名前を持つ関数」の本文と比較し、**本文が完全一致する場合のみ**リネームとみなして削除の検知対象から除外するよう修正した(本文が1文字でも変わっている場合は、保守的に引き続き削除として検知する)。
 - `detect_skip_addition`: 比較をskip指定を含む行どうしに絞り、末尾のPythonコメント除去・シングル/ダブルクォートの統一・括弧直後直前の余分な空白除去・連続空白の畳み込みを行ったうえで比較するよう修正した。
 
-同じ凍結データで**改善後**に再測定したところ、**21/24 (0.875) → 3/24 (0.125)**、リネーム群は**12/12 (1.000) → 0/12 (0.000)**(完全に解消)、skip移動群は**9/12 (0.750) → 3/12 (0.250)**まで改善した。残る3件は、いずれも1行のデコレータ呼び出しが複数行に整形されたケース(`multiline_split`・`skipif_reformat`・`multiline_and_comment`タグ)であり、行単位の正規化だけでは複数行にまたがる論理的な同一性を判定できないという、**新たな、より狭い範囲の未修正の限界**として残った(`tests/test_parrhesia_diff_fraud.py::test_detect_skip_addition_known_limitation_multiline_decorator_split`で回帰的に固定)。
+同じ凍結データで**改善後**に再測定したところ、**21/24 (0.875) → 3/24 (0.125)**、リネーム群は**12/12 (1.000) → 0/12 (0.000)**(完全に解消)、skip移動群は**9/12 (0.750) → 3/12 (0.250)**まで改善した。残る3件は、いずれも1行のデコレータ呼び出しが複数行に整形されたケース(`multiline_split`・`skipif_reformat`・`multiline_and_comment`タグ)であり、行単位の正規化だけでは複数行にまたがる論理的な同一性を判定できないという、**新たな、より狭い範囲の未修正の限界**として残った(当時`tests/test_parrhesia_diff_fraud.py::test_detect_skip_addition_known_limitation_multiline_decorator_split`で回帰的に固定していたが、このテストは下記「第2回」の修正により`test_detect_skip_addition_does_not_flag_multiline_decorator_split_now_fixed`へ反転・改名されている)。
 
 既存の`data/eval.jsonl`(改善の評価には使わず、回帰確認にのみ使用)でも同じ傾向を確認: 「紛らわしい群」12/12 (1.000) → 2/12 (0.167) (残る2件は§DCとは無関係の既知の誤検知: 新規ファイルへのexcept/pass追加、DEFECTS.md本文中の`sys.exit(0)`という文字列への誤反応)。「通常群」は改善前後とも**0/12のまま変化なし**(正当な変更への誤検知が新たに増えていないことを確認)。副次的に、`deleted_test`の精度が0.650→1.000、`skip_marker`の精度が0.842→1.000に向上した(recallはいずれのカテゴリも1.000のまま変化なし、またはhardcoded_exit_codeのように本修正の対象外のカテゴリは完全に不変)。
 
 **検証**: 改善前後の数字はいずれも、`python3 evals/diff_audit/measure_frozen_holdout.py`(凍結データ)・`python3 evals/diff_audit/baseline.py`(既存eval.jsonl)の実行結果であり、手計算・推測は行っていない。Wilson 95%信頼区間も、手計算ではなく`baseline.py`内の`wilson_ci()`関数で算出したもの。凍結データ(`data/frozen_rename_skipmove_holdout.jsonl`)は、この改善作業中、一切書き換えていない(`build_frozen_holdout.py`は、既にファイルが存在する場合は実行を拒否する安全策を入れている)。新規テスト6件(`tests/test_parrhesia_diff_fraud.py`)と既存テストスイート全体(`python3 -m pytest`、851 passed / 0 failed)で回帰を確認済み。
+
+**対応(2026-11、第2回。残存していたskip移動群3/12件のうち2件をさらに修正)**: 上記で残った3件(`multiline_split`・`skipif_reformat`・`multiline_and_comment`)を個別に調査したところ、2つの異なる原因が判明した。
+
+1. `detect_skip_addition`が、丸括弧の対応が1行で閉じていない行(複数行に整形されたデコレータの引数)を、1つの論理行として結合せずに個別の行として比較していたため、`multiline_split`型(内容は同一のまま複数行に整形しただけ)を一律で「新規追加」と誤検知していた。`_join_continued_statements()`(丸括弧の個数だけを数える簡易実装)を追加し、比較前に継続行を結合するよう修正した。
+2. `skipif_reformat`タグの凍結サンプル(`frozen_holdout_40baedee8534`)自体に、**凍結データの生成スクリプト(`build_frozen_holdout.py`)側の不具合**が見つかった。`added`の1要素に改行文字`\n`を直接埋め込んでいたため、`f"+{ln}\n"`では先頭の物理行にしか`+`接頭辞が付かず、2つの物理行がdiffとして認識されずに無視されていた。つまりこのサンプルは、本来意図した「複数行に整形されたskipif」を正しく再現できていなかった。**凍結データ自体は書き換えない方針のため、このサンプルはそのまま残し**、`build_frozen_holdout.py`のコメントで経緯を明記し、同種の間違いを再発させないガード(各行が単一の物理行であることを検証する)を追加した。
+
+同じ凍結データ(書き換えていない)で再測定した結果、skip移動群は**9/12 (0.750) → 2/12 (0.167)**まで改善(全体は21/24 (0.875) → 2/24 (0.083))。前回残った3件のうち、`multiline_split`(1件)は完全に解消。残る2件は、(a) 上記の生成スクリプト側の不具合により元々意図した複数行シナリオを再現できていない`skipif_reformat`の1件、(b) `multiline_and_comment`型の1件で、これは別の限界(下記)による。
+
+**残る既知の限界(`multiline_and_comment`型)**: 継続行(閉じ括弧より前の行)に末尾コメントが付いている場合、複数行を結合した文字列に対して`#.*$`でコメントを除去すると、コメントより物理的に後ろにある(=結合後の文字列上ではコメントの後ろに位置する)本来は構文上必要な閉じ括弧まで一緒に消えてしまい、比較対象の文字列が閉じ括弧の有無で不一致になる。これにより、依然として新規追加として誤検知される。本バージョンでは、完全な字句解析(文字列リテラル・コメントを正しく区別する)が必要になるため、修正を見送り、既知のrecall限界として記録する(`tests/test_parrhesia_diff_fraud.py::test_detect_skip_addition_known_limitation_comment_on_continuation_line`で回帰的に固定)。
+
+既存の`data/eval.jsonl`・`data/tune.jsonl`を再生成して確認したところ、「紛らわしい群」は2/12 (0.167)のまま変化なし(残る2件は本件§DCとは無関係の既知の誤検知、上記参照)、「通常群」も0/12のまま変化なし(悪化なし)。既存5カテゴリのrecall/precisionにも変化なし。
+
+**検証(第2回)**: `python3 evals/diff_audit/measure_frozen_holdout.py`(凍結データ、書き換えなし)・`python3 evals/diff_audit/baseline.py`の実行結果をそのまま引用。新規テスト7件(`tests/test_parrhesia_diff_fraud.py`に4件追加・既存1件を反転・新規ファイル`tests/test_evals_diff_audit_frozen_holdout.py`に3件)を追加し、既存テストスイート全体で回帰を確認済み。

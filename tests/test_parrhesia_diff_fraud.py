@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from parrhesia.diff_fraud import (
+    _join_continued_statements,
     analyze_diff,
     check_references_exist,
     detect_assertion_weakening,
@@ -198,15 +199,37 @@ def test_detect_skip_addition_still_flags_genuinely_new_marker_despite_normaliza
     assert len(findings) == 1
 
 
-def test_detect_skip_addition_known_limitation_multiline_decorator_split():
-    """[既知の未修正の限界、§DC] 1行のデコレータ呼び出しが、内容は同一
-    のまま複数行に分割された場合、行単位の正規化だけでは『移動』と
-    認識できず、依然として新規追加として誤検知される
+def test_join_continued_statements_merges_balanced_parens_across_lines():
+    lines = [
+        "@pytest.mark.skip(",
+        '    reason="x"',
+        ")",
+        "def test_example():",
+    ]
+    joined = _join_continued_statements(lines)
+    assert joined == ['@pytest.mark.skip(     reason="x" )', "def test_example():"]
+
+
+def test_join_continued_statements_leaves_already_balanced_lines_untouched():
+    lines = ['@pytest.mark.skip(reason="x")', "def test_example():"]
+    assert _join_continued_statements(lines) == lines
+
+
+def test_join_continued_statements_conservatively_handles_never_closed_parens():
+    """構文的に異常(丸括弧が最後まで閉じない)な入力でも、例外を出さず、
+    結合を諦めてそのまま返す(保守的=見逃す側に倒す)こと。"""
+    lines = ["foo(", "bar"]
+    result = _join_continued_statements(lines)
+    assert result == ["foo( bar"]
+
+
+def test_detect_skip_addition_does_not_flag_multiline_decorator_split_now_fixed():
+    """[2026-11、§DCの残存限界を修正] 1行のデコレータ呼び出しが、内容は
+    同一のまま複数行に分割された場合、以前は行単位の正規化だけでは
+    『移動』と認識できず新規追加として誤検知していたが、
+    `_join_continued_statements()`による複数行の結合で修正した
     (evals/diff_audit/data/frozen_rename_skipmove_holdout.jsonlの
-    `multiline_split`・`skipif_reformat`・`multiline_and_comment`タグで
-    実測、改善後も3/12件が残存)。本テストは、この限界が意図せず
-    『いつの間にか直っていた/いつの間にか悪化していた』ことに気づく
-    ための回帰テストであり、直った場合はこのassertを反転させること。"""
+    `multiline_split`タグで実測、改善後は誤検知されない)。"""
     diff_text = (
         "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
         "--- a/tests/test_foo.py\n"
@@ -216,6 +239,54 @@ def test_detect_skip_addition_known_limitation_multiline_decorator_split():
         " def test_example():\n"
         "+@pytest.mark.skip(\n"
         '+    reason="env dependent"\n'
+        "+)\n"
+        " def test_example():\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert findings == []
+
+
+def test_detect_skip_addition_still_flags_genuinely_new_multiline_marker():
+    """複数行への分割だけでなく、本当に新規追加された複数行のskip指定
+    (削除側に対応する指定が無い)は、結合後も引き続き検出されること。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,1 +1,4 @@\n"
+        "+@pytest.mark.skip(\n"
+        '+    reason="newly added, not a move"\n'
+        "+)\n"
+        " def test_example():\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert len(findings) == 1
+    assert findings[0].pattern_id == "skip_addition"
+
+
+def test_detect_skip_addition_known_limitation_comment_on_continuation_line():
+    """[既知の未修正の限界、§DC] 複数行に分割されたデコレータの、継続行
+    (閉じ括弧より前の行)に末尾コメントが付いている場合、結合後の文字列
+    に対して`#.*$`でコメントを除去すると、コメントより後ろにある本来は
+    構文上必要な閉じ括弧まで一緒に消えてしまい、比較対象の文字列が
+    (除去されなかった側と比べて)閉じ括弧の有無で不一致になり、依然として
+    新規追加として誤検知される
+    (evals/diff_audit/data/frozen_rename_skipmove_holdout.jsonlの
+    `multiline_and_comment`タグで実測、改善後も残存)。本テストは、この
+    限界が意図せず『いつの間にか直っていた/いつの間にか悪化していた』
+    ことに気づくための回帰テストであり、直った場合はこのassertを
+    反転させること。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,2 +1,4 @@\n"
+        '-@pytest.mark.skip(reason="waiting on upstream fix")\n'
+        " def test_example():\n"
+        "+@pytest.mark.skip(\n"
+        '+    reason="waiting on upstream fix"  # see upstream/issues/99\n'
         "+)\n"
         " def test_example():\n"
     )

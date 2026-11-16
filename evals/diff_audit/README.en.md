@@ -330,13 +330,13 @@ samples in `eval.jsonl`.
 evals/diff_audit/measure_frozen_holdout.py`; details in
 `data/frozen_holdout_results.json`):
 
-| Subgroup | Before | After |
-|---|---|---|
-| Overall (24) | 21/24 = 0.875 [0.690, 0.957] | 3/24 = 0.125 [0.043, 0.310] |
-| Rename (12) | 12/12 = 1.000 [0.758, 1.000] | **0/12 = 0.000 [0.000, 0.242]** |
-| Skip-move (12) | 9/12 = 0.750 [0.468, 0.911] | 3/12 = 0.250 [0.089, 0.532] |
+| Subgroup | Before (round 1) | After (round 1) | After (round 2, below) |
+|---|---|---|---|
+| Overall (24) | 21/24 = 0.875 [0.690, 0.957] | 3/24 = 0.125 [0.043, 0.310] | **2/24 = 0.083 [0.023, 0.258]** |
+| Rename (12) | 12/12 = 1.000 [0.758, 1.000] | 0/12 = 0.000 [0.000, 0.242] | 0/12 = 0.000 [0.000, 0.242] |
+| Skip-move (12) | 9/12 = 0.750 [0.468, 0.911] | 3/12 = 0.250 [0.089, 0.532] | **2/12 = 0.167 [0.047, 0.448]** |
 
-**The fix**:
+**The fix (round 1)**:
 - `detect_test_deletion`: compares a removed function's body against the
   body of any added function with a new name, and treats it as a rename
   (excluded from "deletion") **only when the bodies match exactly**. If the
@@ -347,20 +347,56 @@ evals/diff_audit/measure_frozen_holdout.py`; details in
   quote style, and removing extra whitespace just inside parentheses before
   comparing.
 
-**Regressions: none.** The existing "normal" subgroup (12 samples) stayed
-at 0/12 before and after (no new false positives on legitimate changes).
-Recall on all five existing shortcut categories is identical before and
-after (1.000 stayed 1.000, 0.842 stayed 0.842) — the false-positive
-reduction did not come at the cost of true-positive detection.
+**Regressions (round 1): none.** The existing "normal" subgroup (12 samples)
+stayed at 0/12 before and after (no new false positives on legitimate
+changes). Recall on all five existing shortcut categories is identical
+before and after (1.000 stayed 1.000, 0.842 stayed 0.842) — the
+false-positive reduction did not come at the cost of true-positive
+detection.
 
-**Remaining known limitation**: 3 of 12 skip-move cases remain false
-positives after the fix — all cases where a single-line decorator call
-(`@pytest.mark.skip(reason="...")`) was reformatted, content unchanged,
-across multiple lines (the `multiline_split`, `skipif_reformat`, and
-`multiline_and_comment` tags). The current line-by-line normalization
-cannot judge logical equivalence across multiple lines; this narrower
-remaining limitation is locked in as a regression by
-`tests/test_parrhesia_diff_fraud.py::test_detect_skip_addition_known_limitation_multiline_decorator_split`.
+**Round 2 fix (2026-11, following a further-improvements request)**: after
+round 1, 3 of 12 skip-move cases still remained false positives. Looking
+closer, these turned out to have two separate causes:
+
+1. **Multi-line-reformatted decorator calls were not yet handled**
+   (part of the `multiline_split`/`multiline_and_comment` tags): a
+   single-line `@pytest.mark.skip(reason="...")` reformatted across
+   multiple lines with unchanged content. Fixed by adding
+   `_join_continued_statements()` to `parrhesia/diff_fraud.py` (a helper
+   that merges a line whose parentheses are not yet balanced with the
+   following lines, until they are, producing one logical line) and
+   applying it before comparison in `detect_skip_addition`.
+2. **The `skipif_reformat`-tagged frozen sample itself had a bug in the
+   generator script**: the relevant case in `build_frozen_holdout.py`
+   passed several physical lines as a single string with an embedded
+   `\n`, so `_skip_move_sample()`'s `f"+{ln}\n"` prefixing only tagged the
+   first line with `+`, silently dropping part of the diff (meaning this
+   sample never actually exercised the intended "multi-line reformat"
+   scenario at all). **The already-committed frozen file itself
+   (`data/frozen_rename_skipmove_holdout.jsonl`) was left untouched**, per
+   the anti-overfitting procedure above. Instead: (a) the generator
+   script's case was fixed to use proper separate list elements, (b) a
+   `ValueError` guard was added to `_skip_move_sample()` to catch this
+   same mistake (an embedded newline in one element) if it recurs, and
+   (c) this is documented here, in `DEFECTS.md`, and in the relevant
+   source docstrings.
+
+**Regressions (round 2): none.** The existing "normal" subgroup and recall
+on all five categories are unchanged from round 1 (re-confirmed against
+`eval.jsonl`).
+
+**Remaining known limitation (the `multiline_and_comment` case)**: after
+the round-2 fix, 1 skip-move case (part of the `multiline_and_comment` tag)
+is still an unfixed false positive. This is because the trailing-comment
+stripping regex (`_TRAILING_COMMENT_RE = re.compile(r"#.*$")`) is applied
+to the already-joined multi-line string, so an inline `#` comment on a
+continuation line eats everything after it — including a syntactically
+necessary closing parenthesis that originally lived on a later physical
+line — producing a normalization mismatch. This is locked in as a
+regression by `tests/test_parrhesia_diff_fraud.py::
+test_detect_skip_addition_known_limitation_comment_on_continuation_line`
+(note: this limitation is conservative — it causes continued detection,
+not a false negative).
 
 ## Limitations (as required by the brief)
 
@@ -388,9 +424,13 @@ remaining limitation is locked in as a regression by
 - **The frozen holdout data (24 samples) used to evaluate the detector
   improvement was also authored by this same session**, so it is not
   independent third-party verification either (the same "dataset author and
-  tool author are the same person" limitation above applies here too). A
-  narrower, newly discovered unfixed limitation also remains: multi-line
-  reformatted decorators (see §DC).
+  tool author are the same person" limitation above applies here too). The
+  frozen-data generator script itself also turned out to have a bug, from
+  embedding multi-line content inside a single string (the frozen file
+  itself was left unmodified; only the generator and its guard were fixed —
+  see §DC). A narrower unfixed limitation also remains: decorators that are
+  both reformatted across multiple lines and carry an inline comment
+  (see §DC).
 - **LLM evaluation results (actual numbers from a real model) have not been
   run** (see above), so as of this README, only the rule-based detector's
   baseline results can be reported. That `task.py` itself actually runs in
