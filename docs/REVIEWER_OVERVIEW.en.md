@@ -31,7 +31,7 @@ labeled as such.
   or a human reviewer).
 - Measure a false-positive rate on a large sample of legitimate commits. This
   has now been measured, separately, on two groups of 12 clean diffs each in
-  [evals/diff_audit/](../evals/diff_audit/README.md): 12 deliberately
+  [evals/diff_audit/](../evals/diff_audit/README.en.md): 12 deliberately
   constructed to be misleading (a rename, a skip marker merely moved, or
   drawn from the project's own past commits) were false-flagged 12/12 (rate
   1.000, Wilson 95% CI [0.758, 1.000]), while 12 ordinary legitimate changes
@@ -163,7 +163,7 @@ this very overview are recorded in detail in a separate file:
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | Reproducible demo, including the honest record of its first run scoring 2/5, not 5/5 |
 | [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see DEFECTS.md for the current count) |
 | [DEFECTS.md](../DEFECTS.md) | §A–§DC, 107 entries, the raw, most detailed record |
-| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | An Inspect (`inspect_ai`) diff-audit eval task. The rule-based detector's baseline result (measured, by subgroup): misleading-clean 12/12 false-flagged (1.000, CI [0.758, 1.000]); ordinary-clean 0/12 false-flagged (0.000, CI [0.000, 0.242]). The combined figure (0.500) is a mixture artifact and is not used as a headline. `task.py`'s mock-provider wiring check (`inspect eval ... --model mockllm/model`) has been confirmed to actually run to completion in CI's dedicated job `verify_evals_diff_audit_wiring` ([run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234)) — it needed no fixes and passed as written. Real-model evaluation results are still not run; see the README for the exact commands for the owner to run that with their own API key. |
+| [evals/diff_audit/README.en.md](../evals/diff_audit/README.en.md) | An Inspect (`inspect_ai`) diff-audit eval task. The rule-based detector's baseline result (measured, by subgroup): misleading-clean 12/12 false-flagged (1.000, CI [0.758, 1.000]); ordinary-clean 0/12 false-flagged (0.000, CI [0.000, 0.242]). The combined figure (0.500) is a mixture artifact and is not used as a headline. `task.py`'s mock-provider wiring check (`inspect eval ... --model mockllm/model`) has been confirmed to actually run to completion in CI's dedicated job `verify_evals_diff_audit_wiring` ([run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234)) — it needed no fixes and passed as written. Real-model evaluation results are still not run; see the README for the exact commands for the owner to run that with their own API key. |
 | [docs/FAQ.md](./FAQ.md) | Differentiation, limitations, and other Q&A |
 | [docs/WHY.md](./WHY.md) | The design rationale for auditing rather than trusting AI agents |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do |

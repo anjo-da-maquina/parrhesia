@@ -1,5 +1,7 @@
 # evals/diff_audit — Inspect差分監査評価
 
+[English version](./README.en.md)
+
 Parrhesiaの検出対象である「AIエージェントが書いたコード差分に潜む5種類
 のズル」を題材にした、[Inspect](https://inspect.ai-safety-institute.org.uk/)
 (`inspect_ai`)ベースの評価タスク一式。
