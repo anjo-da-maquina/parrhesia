@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ANGELS_DIR = REPO_ROOT / "checks"
+CHECKS_DIR = REPO_ROOT / "checks"
 
 
 def _run_with_stubbed_runtime_guard(stub_script: str, env_extra=None) -> subprocess.CompletedProcess:
@@ -28,7 +28,7 @@ def _run_with_stubbed_runtime_guard(stub_script: str, env_extra=None) -> subproc
     run_code_against_runtime_guard呼び出しをstub_scriptで差し替える。"""
     script = f"""
 import sys
-sys.path.insert(0, {str(ANGELS_DIR)!r})
+sys.path.insert(0, {str(CHECKS_DIR)!r})
 
 {stub_script}
 

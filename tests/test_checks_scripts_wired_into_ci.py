@@ -19,7 +19,7 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ANGELS_DIR = REPO_ROOT / "checks"
+CHECKS_DIR = REPO_ROOT / "checks"
 WORKFLOWS_DIR = REPO_ROOT / ".github" / "workflows"
 
 # _common.py は他の検査スクリプトから import される共有ヘルパーであり、
@@ -77,7 +77,7 @@ def test_every_check_script_is_referenced_by_some_ci_workflow():
     されていることを確認する(コメントや他のキーに名前が残っているだけ
     では一致しない。§AOと同じ、構造的なYAML解析による検証)。"""
     all_scripts = {
-        p.name for p in ANGELS_DIR.glob("*.py")
+        p.name for p in CHECKS_DIR.glob("*.py")
         if p.name not in _NOT_STANDALONE_STEPS
     }
     referenced = _collect_referenced_check_scripts()

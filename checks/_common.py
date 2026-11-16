@@ -1,12 +1,12 @@
 ﻿"""
 checks/_common.py
 ==================
-各「天使」スクリプトが共有する検査ヘルパー群。
+各検査スクリプトが共有する検査ヘルパー群。
 
 [刷新 2026-10] 以前の checks/*.py の大半（33ファイル中28ファイル）は
 `print('... initialized. Zero-Trust audit passed.')` のみを実行する
 中身のないプレースホルダーであり、CI上では常に成功するため、実際には
-何も検査していなかった。本モジュールと各天使スクリプトの刷新により、
+何も検査していなかった。本モジュールと各検査スクリプトの刷新により、
 それぞれの名称が示す役割に対応した実質的な検査を実装する。
 """
 import sys
@@ -18,8 +18,8 @@ import subprocess
 import time
 from pathlib import Path
 
-ANGELS_DIR = Path(__file__).parent.resolve()
-ROOT = ANGELS_DIR.parent
+CHECKS_DIR = Path(__file__).parent.resolve()
+ROOT = CHECKS_DIR.parent
 STATE_DIR = ROOT / "runtime_guard" / ".runtime_state"
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -47,7 +47,7 @@ def report_fail(name: str, message: str, evidence: dict = None):
 # 終了コード(2・3)でsys.exit()する設計にしていたが、実機で
 # checks/check_zkp_audit_export_status.pyを実行したところ、実際に終了コード3を
 # 返すことを確認した。.github/workflows/regression_checks_ci.ymlの
-# 各天使ステップには continue-on-error が一切設定されておらず、単純な
+# 各検査ステップには continue-on-error が一切設定されておらず、単純な
 # `run: python checks/x.py` のみである。GitHub Actionsは非ゼロ終了コード
 # であれば1でも2でも3でも同じくそのステップ・ジョブ全体を失敗(赤)にする
 # ため、この設計のままでは「検査対象が無いだけの、本来は異常ではない

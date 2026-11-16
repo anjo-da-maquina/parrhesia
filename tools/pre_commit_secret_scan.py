@@ -24,9 +24,9 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_ANGELS_DIR = _REPO_ROOT / "checks"
-if str(_ANGELS_DIR) not in sys.path:
-    sys.path.insert(0, str(_ANGELS_DIR))
+_CHECKS_DIR = _REPO_ROOT / "checks"
+if str(_CHECKS_DIR) not in sys.path:
+    sys.path.insert(0, str(_CHECKS_DIR))
 
 # guard_precommit_secret_leak.py (CI時のリポジトリ全体走査) と同じパターン定義を
 # 単一の正として再利用する。ここで独自にパターンを持たないことで、
