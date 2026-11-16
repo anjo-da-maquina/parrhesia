@@ -11,14 +11,14 @@ src/incident_reset_tool.py
 実際の起動は `tools/incident_reset.py`(新規)から行う。
 
 本修正で以下を一般化した:
-  - `core_dir` / `talisman` を引数で指定可能にし、実際の運用対象である
+  - `core_dir` / `marker_file` を引数で指定可能にし、実際の運用対象である
     `WorkspaceJail.base_dir`(既定 "jail_workspace")を直接渡せるようにした。
-  - `talisman` は任意(None可)。元のデモは `samaels_curse.py` の護符マーカー
+  - `marker_file` は任意(None可)。元のデモは `samaels_curse.py` のマーカー
     ファイル慣習に合わせていたが、実運用上は隔離領域のリセットのみで十分な
     ケースが多いため、指定しない場合はスキップする。
   - `announce` 引数で、運用ツールから静かに呼び出す場合の演出出力を抑制できる。
 
-[脆弱性修正 2026-10] `core_dir`/`talisman`を一般化して任意のパスを
+[脆弱性修正 2026-10] `core_dir`/`marker_file`を一般化して任意のパスを
 指定可能にした際、`shutil.rmtree()`/`Path.unlink()`に対する経路の安全性
 検証を一切追加していなかった。本クラスは`tools/incident_reset.py`という、
 人間がインシデント対応中に手で呼び出す運用ツールの中核であり、たとえば
@@ -84,22 +84,22 @@ def _ensure_safe_destructive_target(path: Path, kind: str, allow_shallow_path: b
 
 
 class IncidentResetTool:
-    def __init__(self, core_dir="jail_workspace", talisman=None, allow_shallow_path: bool = False):
+    def __init__(self, core_dir="jail_workspace", marker_file=None, allow_shallow_path: bool = False):
         self.core_dir = Path(core_dir)
-        self.talisman = Path(talisman) if talisman else None
+        self.marker_file = Path(marker_file) if marker_file else None
         self.allow_shallow_path = allow_shallow_path
 
     def scorched_earth_and_rebirth(self, announce: bool = True):
         if announce:
-            print("=== [Parrhesia] ウリエルの炎（破壊と再生の焦土作戦） ===\n")
+            print("=== [Parrhesia] 破壊と再生の焦土作戦 ===\n")
             print("[警告] 致命的な侵入を検知。要塞 Parrhesia の完全掌握が確認されました。")
-            print("=> [ウリエル降臨] 穢れた要塞を浄化するため、神の炎が解き放たれます...\n")
+            print("=> [IncidentResetTool] 隔離領域の強制リセットを開始します...\n")
 
         # 【安全装置】実際に破壊する前に、対象パスがルート・ホーム・
         # 極端に浅いシステムディレクトリでないことを検証する。
         _ensure_safe_destructive_target(self.core_dir, "隔離領域(core_dir)", self.allow_shallow_path)
-        if self.talisman is not None:
-            _ensure_safe_destructive_target(self.talisman, "護符(talisman)", self.allow_shallow_path)
+        if self.marker_file is not None:
+            _ensure_safe_destructive_target(self.marker_file, "マーカーファイル(marker_file)", self.allow_shallow_path)
 
         # 【破壊】すべてを焼却し、敵の足場を消滅させる
         if announce:
@@ -109,10 +109,10 @@ class IncidentResetTool:
             if announce:
                 print(f"[-] 隔離領域 '{self.core_dir}' および内部のすべての汚染データを焼却しました。")
 
-        if self.talisman is not None and self.talisman.exists():
-            self.talisman.unlink()
+        if self.marker_file is not None and self.marker_file.exists():
+            self.marker_file.unlink()
             if announce:
-                print(f"[-] 穢れた護符 '{self.talisman}' を灰に帰しました。")
+                print(f"[-] マーカーファイル '{self.marker_file}' を削除しました。")
 
         # 【再生】純白の初期状態としてシステムを復活させる
         if announce:
@@ -121,23 +121,23 @@ class IncidentResetTool:
         if announce:
             print(f"[+] 純白の隔離領域 '{self.core_dir}' を再構築しました。")
 
-        if self.talisman is not None:
-            self.talisman.touch()
+        if self.marker_file is not None:
+            self.marker_file.touch()
             if announce:
-                print(f"[+] 新たな護符 '{self.talisman.name}' が灰の中から転生しました。")
+                print(f"[+] マーカーファイル '{self.marker_file.name}' を再生成しました。")
 
         if announce:
             print("\n[戦果] 敵は掌握したはずのすべてを失い、我々は無傷の要塞を取り戻しました。")
-            print("ウリエルによる浄化と復活が完了しました。")
+            print("リセットと再構築が完了しました。")
 
-        return {"core_dir": str(self.core_dir), "talisman": str(self.talisman) if self.talisman else None}
+        return {"core_dir": str(self.core_dir), "marker_file": str(self.marker_file) if self.marker_file else None}
 
 
 def simulate_breach_demo():
     """元の `__main__` デモと同じ挙動(固定パス・演出あり)を保つための互換関数。"""
-    print("=== [Parrhesia] ウリエルの炎 デモシミュレーション ===\n")
+    print("=== [Parrhesia] 焦土作戦デモシミュレーション ===\n")
     time.sleep(1)
-    IncidentResetTool(core_dir="jail_workspace", talisman="parrhesia-seal").scorched_earth_and_rebirth()
+    IncidentResetTool(core_dir="jail_workspace", marker_file="parrhesia-seal").scorched_earth_and_rebirth()
 
 
 if __name__ == "__main__":

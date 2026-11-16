@@ -4,7 +4,7 @@ tests/test_incident_reset_tool_safety_guardrail.py
 src/incident_reset_tool.IncidentResetTool の回帰テスト。DEFECTS.md §AI 参照。
 
 背景: IncidentResetTool.scorched_earth_and_rebirth()は`shutil.rmtree()`/
-`Path.unlink()`による不可逆な破壊的操作を行うが、`core_dir`/`talisman`を
+`Path.unlink()`による不可逆な破壊的操作を行うが、`core_dir`/`marker_file`を
 一般化して任意のパスを指定可能にした際、対象パスの安全性検証を一切
 追加していなかった。本クラスは`tools/incident_reset.py`という、人間が
 インシデント対応中に手で呼び出す運用ツールの中核であるため、操作者が
@@ -91,13 +91,13 @@ def test_deep_tmp_path_is_unaffected_by_the_guardrail(tmp_path):
     assert list(core_dir.iterdir()) == []
 
 
-def test_talisman_is_also_validated():
-    """talismanにファイルシステムのルート相当の危険なパスを指定した場合も、
+def test_marker_file_is_also_validated():
+    """marker_fileにファイルシステムのルート相当の危険なパスを指定した場合も、
     core_dirと同様に拒否されなければならない。"""
     try:
-        IncidentResetTool(core_dir="/this_dir_should_not_exist_incident_reset_test_2", talisman="/").scorched_earth_and_rebirth(
+        IncidentResetTool(core_dir="/this_dir_should_not_exist_incident_reset_test_2", marker_file="/").scorched_earth_and_rebirth(
             announce=False
         )
-        assert False, "危険なtalismanパスが拒否されなかった。"
+        assert False, "危険なmarker_fileパスが拒否されなかった。"
     except IncidentResetUnsafeTargetError:
         pass

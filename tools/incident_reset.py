@@ -26,7 +26,7 @@ from incident_reset_tool import IncidentResetTool, IncidentResetUnsafeTargetErro
 def main():
     parser = argparse.ArgumentParser(description="侵害確定後の隔離領域リセット(焦土作戦)")
     parser.add_argument("--core-dir", default="jail_workspace", help="リセット対象の隔離領域(既定: jail_workspace)")
-    parser.add_argument("--talisman", default=None, help="任意: リセット時に再生成するマーカーファイル")
+    parser.add_argument("--marker-file", default=None, help="任意: リセット時に再生成するマーカーファイル")
     parser.add_argument("--yes", action="store_true", help="確認プロンプトをスキップする(CI/スクリプト用)")
     parser.add_argument(
         "--allow-shallow-path", action="store_true",
@@ -40,12 +40,12 @@ def main():
     # 解決して表示する。操作者が意図せぬ場所を対象にしていることに、
     # 削除前に気付けるようにするため。
     resolved_core_dir = Path(args.core_dir).resolve()
-    resolved_talisman = Path(args.talisman).resolve() if args.talisman else None
+    resolved_marker_file = Path(args.marker_file).resolve() if args.marker_file else None
 
     if not args.yes:
         print(f"[確認] 隔離領域 '{resolved_core_dir}' の内容を完全に削除し、空の状態で再構築します。")
-        if resolved_talisman is not None:
-            print(f"[確認] 護符 '{resolved_talisman}' も削除・再生成します。")
+        if resolved_marker_file is not None:
+            print(f"[確認] マーカーファイル '{resolved_marker_file}' も削除・再生成します。")
         print("この操作は不可逆です。侵害調査(フォレンジック)が完了していることを確認してください。")
         answer = input("続行しますか？ [y/N]: ").strip().lower()
         if answer != "y":
@@ -54,7 +54,7 @@ def main():
 
     try:
         result = IncidentResetTool(
-            core_dir=args.core_dir, talisman=args.talisman, allow_shallow_path=args.allow_shallow_path
+            core_dir=args.core_dir, marker_file=args.marker_file, allow_shallow_path=args.allow_shallow_path
         ).scorched_earth_and_rebirth()
     except IncidentResetUnsafeTargetError as e:
         print(f"\n{e}")

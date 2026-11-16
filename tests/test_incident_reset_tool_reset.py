@@ -1,7 +1,7 @@
 ﻿"""
 [テスト追加 2026-10] src/incident_reset_tool.IncidentResetTool の実運用統合(一般化)の
 回帰テスト。元の __main__ 専用デモ(固定パス "jail_workspace" のみ)から、
-任意の core_dir/talisman を指定できる形へ一般化した際の挙動を固定する。
+任意の core_dir/marker_file を指定できる形へ一般化した際の挙動を固定する。
 """
 import sys
 from pathlib import Path
@@ -31,22 +31,22 @@ def test_rebirth_recreates_core_dir_when_missing(tmp_path):
     assert core_dir.exists() and core_dir.is_dir()
 
 
-def test_talisman_is_optional_and_skipped_when_none(tmp_path):
+def test_marker_file_is_optional_and_skipped_when_none(tmp_path):
     core_dir = tmp_path / "jail_workspace"
-    result = IncidentResetTool(core_dir=str(core_dir), talisman=None).scorched_earth_and_rebirth(announce=False)
-    assert result["talisman"] is None
+    result = IncidentResetTool(core_dir=str(core_dir), marker_file=None).scorched_earth_and_rebirth(announce=False)
+    assert result["marker_file"] is None
 
 
-def test_talisman_is_recreated_when_specified(tmp_path):
+def test_marker_file_is_recreated_when_specified(tmp_path):
     core_dir = tmp_path / "jail_workspace"
-    talisman = tmp_path / "parrhesia-seal"
-    talisman.write_text("old, possibly compromised")
+    marker_file = tmp_path / "parrhesia-seal"
+    marker_file.write_text("old, possibly compromised")
 
-    result = IncidentResetTool(core_dir=str(core_dir), talisman=str(talisman)).scorched_earth_and_rebirth(announce=False)
+    result = IncidentResetTool(core_dir=str(core_dir), marker_file=str(marker_file)).scorched_earth_and_rebirth(announce=False)
 
-    assert talisman.exists()
-    assert talisman.read_text() == ""  # touch()で再生成されるため空
-    assert result["talisman"] == str(talisman)
+    assert marker_file.exists()
+    assert marker_file.read_text() == ""  # touch()で再生成されるため空
+    assert result["marker_file"] == str(marker_file)
 
 
 def test_backward_compat_demo_entrypoint_still_runs():

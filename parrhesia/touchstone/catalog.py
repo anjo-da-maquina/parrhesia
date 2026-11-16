@@ -38,7 +38,7 @@ parrhesia/touchstone/catalog.py
 想定し、実際にそのような応答サンプルで採点器を試した上で実装している。
 見つかった穴は採点ロジックの修正(青チーム)として反映し、
 tests/test_parrhesia_touchstone.py に、その具体的な応答サンプルを
-回帰テストとして固定した(GRIMOIRE方式: 失敗は検出器として恒久化する)。
+回帰テストとして固定した(失敗は検出器として恒久化する方式)。
 """
 from __future__ import annotations
 

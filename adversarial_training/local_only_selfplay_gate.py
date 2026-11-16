@@ -72,7 +72,7 @@ The environment blocks standard functions (os.system, os.remove) and uses deep A
     if previous_failure:
         prompt += f"\nPrevious attempt failed with:\n{previous_failure}"
     if qa_hint:
-        prompt += f"\nMetatron's QA Hint for next mutation:\n{qa_hint}"
+        prompt += f"\nSelfplay QA Hint for next mutation:\n{qa_hint}"
     return extract_python_code(ask_ollama(prompt, system_prompt))
 
 

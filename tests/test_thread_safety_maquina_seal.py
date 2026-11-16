@@ -267,7 +267,7 @@ def test_os_fork_is_allowed_when_unsealed():
 
 def test_os_forkpty_is_blocked_while_sealed():
     """
-    [§CC「残存する限界」の解消] §CCのGRIMOIRE記述では、`os.fork()`と
+    [§CC「残存する限界」の解消] §CCのDEFECTS.md記述では、`os.fork()`と
     同じ修正でカバーされているはずの`os.forkpty()`について、CI環境での
     プロセス管理上の不安定化を避けるため直接の実行確認を見送っていた。
     実機で確認した結果、`os.forkpty()`も専用のaudit event"os.forkpty"
@@ -304,7 +304,7 @@ def test_os_forkpty_is_blocked_while_sealed():
 )
 def test_fork_then_exec_combo_is_unreachable_while_sealed():
     """
-    [§CC「残存する限界」の解消・核心] §CCのGRIMOIRE記述では、
+    [§CC「残存する限界」の解消・核心] §CCのDEFECTS.md記述では、
     「`os.fork()`後に子プロセスが`os.exec`系APIを呼ぶ複合的な攻撃
     パターンについては、本セッションの環境では安全に実機検証
     できなかった」と正直に明記していた(fork()後に子プロセス内で
