@@ -7,7 +7,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0002",
@@ -16,7 +17,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0005",
@@ -25,7 +27,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0006",
@@ -34,7 +37,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0007",
@@ -43,7 +47,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0008",
@@ -52,7 +57,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0009",
@@ -61,7 +67,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0010",
@@ -70,7 +77,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0013",
@@ -79,7 +87,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0014",
@@ -88,7 +97,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0017",
@@ -97,7 +107,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0018",
@@ -106,7 +117,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0021",
@@ -115,7 +127,8 @@
         "deleted_test",
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0022",
@@ -123,7 +136,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0023",
@@ -131,7 +145,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0024",
@@ -139,7 +154,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0026",
@@ -147,7 +163,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0027",
@@ -155,7 +172,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0028",
@@ -163,7 +181,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0031",
@@ -171,7 +190,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0032",
@@ -179,7 +199,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0034",
@@ -187,7 +208,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0035",
@@ -195,7 +217,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0036",
@@ -203,7 +226,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0038",
@@ -211,7 +235,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0039",
@@ -219,7 +244,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0040",
@@ -227,7 +253,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0041",
@@ -235,7 +262,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0042",
@@ -243,7 +271,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0047",
@@ -251,7 +280,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0051",
@@ -259,7 +289,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0052",
@@ -267,7 +298,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0054",
@@ -275,7 +307,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0056",
@@ -283,7 +316,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0057",
@@ -291,7 +325,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0058",
@@ -299,7 +334,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0059",
@@ -307,7 +343,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0060",
@@ -315,7 +352,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0061",
@@ -323,7 +361,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0063",
@@ -331,7 +370,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0064",
@@ -339,7 +379,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0065",
@@ -347,7 +388,8 @@
       "predicted_categories": [
         "weakened_assert"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0066",
@@ -355,7 +397,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0067",
@@ -363,7 +406,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0068",
@@ -371,7 +415,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0069",
@@ -379,7 +424,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0072",
@@ -387,7 +433,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0074",
@@ -395,7 +442,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0075",
@@ -403,7 +451,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0076",
@@ -411,7 +460,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0077",
@@ -419,7 +469,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0078",
@@ -427,7 +478,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0079",
@@ -435,7 +487,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0083",
@@ -443,7 +496,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0084",
@@ -451,7 +505,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0085",
@@ -459,7 +514,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0087",
@@ -467,7 +523,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0088",
@@ -475,7 +532,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0089",
@@ -483,7 +541,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0090",
@@ -491,7 +550,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0091",
@@ -499,7 +559,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0092",
@@ -507,7 +568,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0093",
@@ -515,7 +577,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0094",
@@ -523,7 +586,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0095",
@@ -531,7 +595,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0096",
@@ -539,7 +604,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0097",
@@ -547,7 +613,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0098",
@@ -555,7 +622,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0099",
@@ -563,7 +631,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0100",
@@ -571,7 +640,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0102",
@@ -579,7 +649,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0105",
@@ -587,25 +658,29 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0106",
       "true_category": "hardcoded_exit_code",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0107",
       "true_category": "hardcoded_exit_code",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0109",
       "true_category": "hardcoded_exit_code",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0110",
@@ -613,7 +688,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0111",
@@ -621,7 +697,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0113",
@@ -629,7 +706,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": null
     },
     {
       "id": "diff_audit_0114",
@@ -637,7 +715,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0116",
@@ -645,7 +724,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0117",
@@ -653,7 +733,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0118",
@@ -661,7 +742,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0119",
@@ -669,7 +751,8 @@
       "predicted_categories": [
         "swallowed_exception"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0120",
@@ -677,7 +760,8 @@
       "predicted_categories": [
         "hardcoded_exit_code"
       ],
-      "origin": "real_commit"
+      "origin": "real_commit",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0122",
@@ -685,7 +769,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0124",
@@ -693,7 +778,8 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0125",
@@ -701,79 +787,92 @@
       "predicted_categories": [
         "deleted_test"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0127",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0128",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0130",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0134",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0136",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0138",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0139",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0142",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0145",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0146",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0147",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0148",
       "true_category": "clean",
       "predicted_categories": [],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "normal"
     },
     {
       "id": "diff_audit_0150",
@@ -781,7 +880,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0151",
@@ -789,7 +889,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0154",
@@ -797,7 +898,8 @@
       "predicted_categories": [
         "skip_marker"
       ],
-      "origin": "synthetic"
+      "origin": "synthetic",
+      "clean_subgroup": "misleading"
     }
   ],
   "metrics": {
@@ -846,12 +948,29 @@
         "precision": 0.9411764705882353
       }
     },
-    "clean_false_positive_rate": {
+    "clean_false_positive_rate_by_subgroup": {
+      "misleading": {
+        "numerator": 12,
+        "denominator": 12,
+        "rate": 1.0,
+        "wilson_95ci_low": 0.7575059932585454,
+        "wilson_95ci_high": 0.9999999999999998
+      },
+      "normal": {
+        "numerator": 0,
+        "denominator": 12,
+        "rate": 0.0,
+        "wilson_95ci_low": 0.0,
+        "wilson_95ci_high": 0.24249400674145444
+      }
+    },
+    "clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline": {
       "numerator": 12,
       "denominator": 24,
       "rate": 0.5,
       "wilson_95ci_low": 0.3142742581581628,
-      "wilson_95ci_high": 0.6857257418418372
+      "wilson_95ci_high": 0.6857257418418372,
+      "caveat": "著者がmisleading群とnormal群を概ね半々に構成したために決まる混合比率依存の数字であり、検出器の実世界での性能指標としては使わないこと。群ごとの数字(clean_false_positive_rate_by_subgroup)を報告すること。"
     },
     "overall_accuracy_auxiliary_only": 0.8529411764705882
   }

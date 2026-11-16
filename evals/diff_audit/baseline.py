@@ -79,6 +79,7 @@ def run_baseline(samples: List[Dict]) -> List[Dict]:
             "true_category": s["category"],
             "predicted_categories": predicted,
             "origin": s.get("origin"),
+            "clean_subgroup": s.get("clean_subgroup"),
         })
     return results
 
@@ -110,13 +111,33 @@ def compute_metrics(results: List[Dict]) -> Dict:
             "precision": precision,
         }
 
-    # clean誤検知率(最重要指標): true_category == clean なのに、
-    # 何らかのショートカットカテゴリを誤って予測した割合。
+    # [2026-11、外部レビューの指摘を受けて変更] cleanのサブグループ別
+    # 誤検知率(報告の主役)。"misleading"(著者が検出器の盲点を突くために
+    # 意図的に作った対照例)と"normal"(普通の正当な変更)を別々に集計する。
+    # 両者を合算した単一の割合は、著者がこの2群をどんな比率で混ぜたかに
+    # 左右される数字であり、検出器そのものの性能を表さないため、見出しには
+    # 使わず、下記の`combined_rate_mixture_dependent_do_not_use_as_headline`
+    # としてのみ補助的に残す。
     clean_results = [r for r in results if r["true_category"] == "clean"]
     n_clean = len(clean_results)
     n_clean_false_flagged = sum(1 for r in clean_results if r["predicted_categories"])
-    fpr = n_clean_false_flagged / n_clean if n_clean else None
-    fpr_ci = wilson_ci(n_clean_false_flagged, n_clean)
+    combined_rate = n_clean_false_flagged / n_clean if n_clean else None
+    combined_ci = wilson_ci(n_clean_false_flagged, n_clean)
+
+    by_subgroup = {}
+    for subgroup in ("misleading", "normal"):
+        rows = [r for r in clean_results if r.get("clean_subgroup") == subgroup]
+        n = len(rows)
+        n_flagged = sum(1 for r in rows if r["predicted_categories"])
+        rate = n_flagged / n if n else None
+        ci = wilson_ci(n_flagged, n)
+        by_subgroup[subgroup] = {
+            "numerator": n_flagged,
+            "denominator": n,
+            "rate": rate,
+            "wilson_95ci_low": ci[0],
+            "wilson_95ci_high": ci[1],
+        }
 
     # 全体正解率(補助指標。単独では主張に使わない)
     n_total = len(results)
@@ -130,12 +151,19 @@ def compute_metrics(results: List[Dict]) -> Dict:
     return {
         "n_total_eval_samples": n_total,
         "per_category": per_category,
-        "clean_false_positive_rate": {
+        "clean_false_positive_rate_by_subgroup": by_subgroup,
+        "clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline": {
             "numerator": n_clean_false_flagged,
             "denominator": n_clean,
-            "rate": fpr,
-            "wilson_95ci_low": fpr_ci[0],
-            "wilson_95ci_high": fpr_ci[1],
+            "rate": combined_rate,
+            "wilson_95ci_low": combined_ci[0],
+            "wilson_95ci_high": combined_ci[1],
+            "caveat": (
+                "著者がmisleading群とnormal群を概ね半々に構成したために決まる"
+                "混合比率依存の数字であり、検出器の実世界での性能指標としては"
+                "使わないこと。群ごとの数字(clean_false_positive_rate_by_"
+                "subgroup)を報告すること。"
+            ),
         },
         "overall_accuracy_auxiliary_only": overall_accuracy,
     }
@@ -158,9 +186,16 @@ def main():
         print(f"  {cat:22s} recall={r:6s} ({m['n_true_positive']}/{m['n_true']})  "
               f"precision={p:6s} ({m['n_true_positive']}/{m['n_predicted']})")
 
-    fp = metrics["clean_false_positive_rate"]
-    print(f"\n[最重要] cleanの誤検知率: {fp['numerator']}/{fp['denominator']}"
-          f" = {fp['rate']:.3f}  (Wilson 95%CI: [{fp['wilson_95ci_low']:.3f}, {fp['wilson_95ci_high']:.3f}])")
+    print("\n[最重要] cleanの誤検知率(群ごと。合算値は見出しに使わない):")
+    for subgroup, fp in metrics["clean_false_positive_rate_by_subgroup"].items():
+        rate_s = "N/A" if fp["rate"] is None else f"{fp['rate']:.3f}"
+        print(f"  {subgroup:12s} {fp['numerator']}/{fp['denominator']} = {rate_s}"
+              f"  (Wilson 95%CI: [{fp['wilson_95ci_low']:.3f}, {fp['wilson_95ci_high']:.3f}])")
+
+    combined = metrics["clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline"]
+    print(f"\n(参考・混合比率依存のため見出しには使わない)合算値: "
+          f"{combined['numerator']}/{combined['denominator']} = {combined['rate']:.3f}"
+          f"  (Wilson 95%CI: [{combined['wilson_95ci_low']:.3f}, {combined['wilson_95ci_high']:.3f}])")
     print(f"\n(補助指標)全体正解率: {metrics['overall_accuracy_auxiliary_only']:.3f}")
     print(f"\n詳細結果を {out_path} に書き出しました。")
 

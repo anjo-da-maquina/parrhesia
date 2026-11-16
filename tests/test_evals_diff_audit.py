@@ -41,13 +41,17 @@ def test_build_all_meets_minimum_category_counts():
 
 def test_every_sample_has_required_metadata():
     samples = build_dataset.build_all()
-    required_keys = {"id", "diff", "category", "origin", "language", "generation_method", "split"}
+    required_keys = {"id", "diff", "category", "origin", "language", "generation_method", "split", "clean_subgroup"}
     for s in samples:
         missing = required_keys - set(s.keys())
         assert not missing, f"{s.get('id')} に必須メタデータが欠けている: {missing}"
         assert s["origin"] in ("synthetic", "real_commit")
         assert s["category"] in build_dataset.CATEGORIES
         assert s["split"] in ("tune", "eval")
+        if s["category"] == "clean":
+            assert s["clean_subgroup"] in ("misleading", "normal"), s["id"]
+        else:
+            assert s["clean_subgroup"] is None, s["id"]
 
 
 def test_real_commit_samples_are_present_and_documented():
@@ -124,17 +128,25 @@ def test_compute_metrics_on_small_synthetic_results():
     """compute_metrics()自体を、手計算で検算できる小さな合成結果で
     検証する(実データのbaseline_results.jsonに依存しない単体テスト)。"""
     results = [
-        {"id": "s1", "true_category": "clean", "predicted_categories": [], "origin": "synthetic"},
-        {"id": "s2", "true_category": "clean", "predicted_categories": ["deleted_test"], "origin": "real_commit"},
-        {"id": "s3", "true_category": "deleted_test", "predicted_categories": ["deleted_test"], "origin": "synthetic"},
-        {"id": "s4", "true_category": "deleted_test", "predicted_categories": [], "origin": "synthetic"},
+        {"id": "s1", "true_category": "clean", "predicted_categories": [], "origin": "synthetic", "clean_subgroup": "normal"},
+        {"id": "s2", "true_category": "clean", "predicted_categories": ["deleted_test"], "origin": "real_commit", "clean_subgroup": "misleading"},
+        {"id": "s3", "true_category": "deleted_test", "predicted_categories": ["deleted_test"], "origin": "synthetic", "clean_subgroup": None},
+        {"id": "s4", "true_category": "deleted_test", "predicted_categories": [], "origin": "synthetic", "clean_subgroup": None},
     ]
     metrics = baseline.compute_metrics(results)
 
-    fp = metrics["clean_false_positive_rate"]
-    assert fp["numerator"] == 1
-    assert fp["denominator"] == 2
-    assert fp["rate"] == pytest.approx(0.5)
+    combined = metrics["clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline"]
+    assert combined["numerator"] == 1
+    assert combined["denominator"] == 2
+    assert combined["rate"] == pytest.approx(0.5)
+
+    by_sub = metrics["clean_false_positive_rate_by_subgroup"]
+    assert by_sub["normal"]["numerator"] == 0
+    assert by_sub["normal"]["denominator"] == 1
+    assert by_sub["normal"]["rate"] == pytest.approx(0.0)
+    assert by_sub["misleading"]["numerator"] == 1
+    assert by_sub["misleading"]["denominator"] == 1
+    assert by_sub["misleading"]["rate"] == pytest.approx(1.0)
 
     dt = metrics["per_category"]["deleted_test"]
     assert dt["n_true"] == 2
@@ -159,7 +171,9 @@ def test_baseline_run_on_real_eval_dataset_is_reproducible(tmp_path, monkeypatch
 
     metrics = baseline.compute_metrics(results_1)
     assert metrics["n_total_eval_samples"] == len(samples)
-    assert metrics["clean_false_positive_rate"]["denominator"] > 0
+    assert metrics["clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline"]["denominator"] > 0
+    assert metrics["clean_false_positive_rate_by_subgroup"]["misleading"]["denominator"] > 0
+    assert metrics["clean_false_positive_rate_by_subgroup"]["normal"]["denominator"] > 0
 
 
 # ------------------------------------------------------------------

@@ -199,6 +199,24 @@ def test_extract_divergent_pip_packages_on_unrelated_runtime_call_is_a_known_sco
     assert og._extract_divergent_pip_packages("pip install --quiet pip-audit") == ["pip-audit"]
 
 
+def test_extract_divergent_pip_packages_ignores_local_package_self_install():
+    """[2026-11、evals/diff_audit/ CIジョブ新設時に発見] `pip install .`
+    や `pip install ".[evals]"` は、pyproject.tomlの
+    [project.optional-dependencies]という正規の宣言場所を経由した、
+    このリポジトリ自身のインストールであり、requirements.txtを迂回した
+    未宣言のサードパーティ依存の直接指定ではない。誤って『乖離』として
+    検知しないことを固定する。"""
+    assert og._extract_divergent_pip_packages('pip install ".[evals]"') == []
+    assert og._extract_divergent_pip_packages("pip install -e .") == []
+    assert og._extract_divergent_pip_packages("pip install .") == []
+
+
+def test_extract_divergent_pip_packages_still_catches_real_package_alongside_dot_install():
+    """[赤チーム] `.`の除外が広すぎて、その隣に書かれた本物の未宣言
+    パッケージまで見逃さないこと。"""
+    assert og._extract_divergent_pip_packages('pip install ".[evals]" some-other-package') == ["some-other-package"]
+
+
 def test_find_divergent_workflow_installs_flags_hardcoded_workflow(tmp_path, monkeypatch):
     wf_dir = tmp_path / ".github" / "workflows"
     wf_dir.mkdir(parents=True)

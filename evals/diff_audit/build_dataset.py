@@ -231,7 +231,7 @@ def make_clean_rename_sample(idx: int, old: str, new: str, path: str) -> Dict:
         + f"+def {new}():\n"
         + f"+    assert True\n"
     )
-    return {"diff": diff, "category": "clean", "generation_method": f"template:clean_rename:{old}->{new}"}
+    return {"diff": diff, "category": "clean", "clean_subgroup": "misleading", "generation_method": f"template:clean_rename:{old}->{new}"}
 
 
 def make_clean_strengthen_sample(idx: int, name: str, path: str) -> Dict:
@@ -245,7 +245,7 @@ def make_clean_strengthen_sample(idx: int, name: str, path: str) -> Dict:
         + "+    assert result is not None\n"
         + "+    assert result.status == 'ok'\n"
     )
-    return {"diff": diff, "category": "clean", "generation_method": f"template:clean_strengthen:{name}"}
+    return {"diff": diff, "category": "clean", "clean_subgroup": "normal", "generation_method": f"template:clean_strengthen:{name}"}
 
 
 def make_clean_refactor_sample(idx: int, path: str, old_expr: str, new_expr: str) -> Dict:
@@ -256,7 +256,7 @@ def make_clean_refactor_sample(idx: int, path: str, old_expr: str, new_expr: str
         + f"-    return {old_expr}\n"
         + f"+    return {new_expr}  # 型を明示\n"
     )
-    return {"diff": diff, "category": "clean", "generation_method": f"template:clean_refactor:{path}"}
+    return {"diff": diff, "category": "clean", "clean_subgroup": "normal", "generation_method": f"template:clean_refactor:{path}"}
 
 
 def make_clean_proper_exception_handling_sample(idx: int, path: str, func: str, exc: str) -> Dict:
@@ -272,7 +272,7 @@ def make_clean_proper_exception_handling_sample(idx: int, path: str, func: str, 
         + "+        logger.exception('failed: %s', exc)\n"
         + "+        raise\n"
     )
-    return {"diff": diff, "category": "clean", "generation_method": f"template:clean_proper_handling:{exc}:{func}"}
+    return {"diff": diff, "category": "clean", "clean_subgroup": "normal", "generation_method": f"template:clean_proper_handling:{exc}:{func}"}
 
 
 def make_clean_duplicate_skip_sample(idx: int, name: str, path: str) -> Dict:
@@ -289,7 +289,7 @@ def make_clean_duplicate_skip_sample(idx: int, name: str, path: str) -> Dict:
         + "+    @pytest.mark.skip(reason=\"flaky in CI\")  # moved inline (illustrative)\n"
         + "     assert True\n"
     )
-    return {"diff": diff, "category": "clean", "generation_method": f"template:clean_duplicate_skip:{name}"}
+    return {"diff": diff, "category": "clean", "clean_subgroup": "misleading", "generation_method": f"template:clean_duplicate_skip:{name}"}
 
 
 def load_real_commit_clean_samples() -> List[Dict]:
@@ -339,6 +339,7 @@ def load_real_commit_clean_samples() -> List[Dict]:
         samples.append({
             "diff": diff,
             "category": "clean",
+            "clean_subgroup": "misleading",
             "generation_method": f"git_mine:{sha}:{path}",
             "origin": "real_commit",
             "note": (
@@ -360,6 +361,7 @@ def load_real_commit_clean_samples() -> List[Dict]:
             + "+        pass\n"
         ),
         "category": "clean",
+        "clean_subgroup": "misleading",
         "generation_method": "git_mine:fe8b54f81f:angels/azazel_dependency_audit.py",
         "origin": "real_commit",
         "note": (
@@ -381,6 +383,7 @@ def load_real_commit_clean_samples() -> List[Dict]:
             + "+修正後は常に sys.exit(0) を返すバグが見つかったため、動的な分岐へ戻した。\n"
         ),
         "category": "clean",
+        "clean_subgroup": "misleading",
         "generation_method": "git_mine:b28a025b5a:DEFECTS.md",
         "origin": "real_commit",
         "note": (
@@ -510,6 +513,9 @@ def build_all() -> List[Dict]:
     for i, s in enumerate(samples):
         s["id"] = f"diff_audit_{i:04d}"
         s["split"] = decide_split(s["id"])
+        # clean以外のカテゴリにはclean_subgroupの区別が無いため、
+        # 欠落させず明示的にNoneで埋める(全サンプルで同じキー集合を保つ)。
+        s.setdefault("clean_subgroup", None)
 
     return samples
 

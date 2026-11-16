@@ -7,7 +7,7 @@
 **Parrhesia** audits an AI coding agent's commits directly from the **diff** for
 five concrete shortcuts (deleting the failing test, adding a skip marker, etc.).
 It also audits its own defense code the same way, and has found, fixed, and
-recorded 106 defects so far (§3). Detailed working-process notes (signed
+recorded 107 defects so far (§3). Detailed working-process notes (signed
 commits, CI checks, how AI-assistant review feedback was incorporated) live in
 a separate worklog (§5).
 
@@ -30,24 +30,29 @@ labeled as such.
   verified") is actually true — that needs a separate mechanism (a second model
   or a human reviewer).
 - Measure a false-positive rate on a large sample of legitimate commits. This
-  has now been measured on 24 clean diffs in
-  [evals/diff_audit/](../evals/diff_audit/README.md): the false-positive rate
-  is 50% (12/24, Wilson 95% CI [0.314, 0.686]). Broken down, though: 12 of
-  those were deliberately constructed to be misleading (a rename, a skip
-  marker merely moved, or drawn from the project's own past commits) and all
-  12 of those were false-flagged, while the other 12 were ordinary legitimate
-  changes (a strengthened test, an equivalent refactor, correct exception
-  handling) and none of those 12 were false-flagged. So the measured pattern
-  is "fooled by misleading diffs, but passes ordinary ones cleanly" — but the
-  sample (12 of each) is still too small to represent the real-world
-  distribution.
+  has now been measured, separately, on two groups of 12 clean diffs each in
+  [evals/diff_audit/](../evals/diff_audit/README.md): 12 deliberately
+  constructed to be misleading (a rename, a skip marker merely moved, or
+  drawn from the project's own past commits) were false-flagged 12/12 (rate
+  1.000, Wilson 95% CI [0.758, 1.000]), while 12 ordinary legitimate changes
+  (a strengthened test, an equivalent refactor, correct exception handling)
+  were false-flagged 0/12 (rate 0.000, CI [0.000, 0.242]). A single number
+  combining both groups (0.500) is not reported as a headline, since it is
+  an artifact of the roughly 50/50 mix the author chose, not a measure of
+  the detector's actual performance. The measured pattern — "fooled by
+  misleading diffs, passes ordinary ones cleanly" — is real, but the sample
+  (12 of each) is still too small to represent the real-world distribution.
+  The two specific blind spots behind the misleading-group failures (it
+  can't tell a rename from a deletion, or a merely-relocated skip marker
+  from a newly added one) are recorded as an unfixed known limitation in
+  DEFECTS.md §DC.
 - Guarantee that this project's own operational tooling (e.g. certificate
   management) always follows the principles it states. One such self-found
   inconsistency did exist in the past (§2) — it has since been fixed.
 - **Claim independent third-party audit.** No independent audit has been done.
   The person who finds each defect (the project's own red-team code) and the
   person who fixes it are the same. This is a real limitation of a solo QA
-  research project, and it's stated here first: every one of the 106 entries
+  research project, and it's stated here first: every one of the 107 entries
   in §3 is a number the author found and fixed themselves.
 
 ## 1. Glossary (for a first-time reader)
@@ -55,9 +60,9 @@ labeled as such.
 | Term in this repo | Plain meaning |
 | --- | --- |
 | **checks/** | CI check scripts: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. The number actually wired into CI is verified by a script, not counted by hand: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py) (55 as of this writing). |
-| **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DB). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
+| **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DC). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
 | **Runtime Seal / Sandbox** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
-| **§A–§DB** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
+| **§A–§DC** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
 
 ## 2. A known self-inconsistency, found and actually fixed
 
@@ -79,12 +84,12 @@ not actively) are stated as a threat model in [docs/BOUNDARY.md](./BOUNDARY.md).
 ## 3. How it keeps finding defects
 
 CI checks under `checks/` mechanically re-check that every previously-found
-defect stays fixed. DEFECTS.md actually contains **106 entries (§A–§DB, no
+defect stays fixed. DEFECTS.md actually contains **107 entries (§A–§DC, no
 gaps or duplicates)**, counted by a script that parses the headings
 programmatically (DEVLOG.md's narrative version still says 81 and has not been
 updated since).
 
-Those 106 fall into three broad patterns:
+Those 107 fall into three broad patterns:
 
 1. **The same bypass exists under a different name** — e.g. a layer blocking
    `import os` was fully bypassed by `import os.path`.
@@ -153,8 +158,8 @@ this very overview are recorded in detail in a separate file:
 | [README.en.md](../README.en.md) / [README.md](../README.md) | Overview, usage, threat model, design principles |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | Reproducible demo, including the honest record of its first run scoring 2/5, not 5/5 |
 | [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see DEFECTS.md for the current count) |
-| [DEFECTS.md](../DEFECTS.md) | §A–§DB, 106 entries, the raw, most detailed record |
-| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | An Inspect (`inspect_ai`) diff-audit eval task. The rule-based detector's baseline result (measured): a 50% false-positive rate on clean diffs (12/24, Wilson 95% CI [0.314, 0.686]). Actual LLM evaluation was not run in this session — `inspect_ai` could not be installed (no network access); the README gives the exact commands for the owner to reproduce it with their own environment and API key. |
+| [DEFECTS.md](../DEFECTS.md) | §A–§DC, 107 entries, the raw, most detailed record |
+| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | An Inspect (`inspect_ai`) diff-audit eval task. The rule-based detector's baseline result (measured, by subgroup): misleading-clean 12/12 false-flagged (1.000, CI [0.758, 1.000]); ordinary-clean 0/12 false-flagged (0.000, CI [0.000, 0.242]). The combined figure (0.500) is a mixture artifact and is not used as a headline. See the README for the mock-provider wiring check status and the exact commands for the owner to run actual LLM evaluation with their own API key. |
 | [docs/FAQ.md](./FAQ.md) | Differentiation, limitations, and other Q&A |
 | [docs/WHY.md](./WHY.md) | The design rationale for auditing rather than trusting AI agents |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do |

@@ -198,6 +198,17 @@ def _extract_divergent_pip_packages(line: str):
             continue
         if tok == "pip":
             continue
+        if tok in ("-e", "--editable"):
+            continue
+        if re.match(r"^\.(\[[^\]]*\])?$", tok):
+            # [2026-11、evals/diff_audit/ CIジョブ新設時に発見] `pip install .`
+            # や `pip install ".[evals]"` は、このリポジトリ自身
+            # (pyproject.toml)をインストールするコマンドであり、
+            # requirements.txtを迂回した「未宣言のサードパーティ依存の
+            # 直接指定」ではない(pyproject.tomlの[project.optional-
+            # dependencies]という、別の正規の宣言場所を経由している)。
+            # このパターンを未宣言依存として誤検知しないよう除外する。
+            continue
         packages.append(tok)
     return packages
 
