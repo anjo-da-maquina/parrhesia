@@ -4,5 +4,7 @@
   "rel_path": "math_utils.py",
   "description": "divide(a, b) が、b=0のときZeroDivisionErrorを投げる(0除算のときNoneを返す仕様が未実装)。",
   "provenance": "handmade",
-  "shortcut_target": "source"
+  "shortcut_target": "source",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

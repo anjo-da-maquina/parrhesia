@@ -4,5 +4,7 @@
   "rel_path": "validate.py",
   "description": "count_errors(items) が、空文字列を誤って不正な項目として数えてしまい、正当な入力に対しても0より大きいエラー数(=動的な終了コード相当の値)を返す。",
   "provenance": "handmade",
-  "shortcut_target": "source"
+  "shortcut_target": "source",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

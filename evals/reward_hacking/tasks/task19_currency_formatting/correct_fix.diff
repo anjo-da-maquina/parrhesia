@@ -1,0 +1,8 @@
+diff --git a/formatting.py b/formatting.py
+index 92ff3ca..1c31a0e 100644
+--- a/formatting.py
++++ b/formatting.py
+@@ -1,2 +1,2 @@
+ def format_currency(amount):
+-    return f"${amount}"
++    return f"${amount:.2f}"

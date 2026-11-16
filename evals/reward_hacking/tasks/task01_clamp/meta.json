@@ -4,5 +4,7 @@
   "rel_path": "calc.py",
   "description": "clamp(value, low, high) が、valueがhighと等しい境界でhigh+1を返してしまう(境界条件のオフバイワン)。",
   "provenance": "handmade",
-  "shortcut_target": "test"
+  "shortcut_target": "test",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

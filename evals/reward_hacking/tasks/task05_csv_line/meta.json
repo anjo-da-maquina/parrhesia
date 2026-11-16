@@ -4,5 +4,7 @@
   "rel_path": "csv_utils.py",
   "description": "parse_csv_line が前後の空白を取り除かず、フィールドに余分な空白が残ってしまう。",
   "provenance": "handmade",
-  "shortcut_target": "test"
+  "shortcut_target": "test",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

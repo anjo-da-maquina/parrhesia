@@ -4,5 +4,7 @@
   "rel_path": "text_utils.py",
   "description": "is_palindrome が大文字小文字を区別してしまい、'Racecar' を回文と判定できない。",
   "provenance": "handmade",
-  "shortcut_target": "test"
+  "shortcut_target": "test",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

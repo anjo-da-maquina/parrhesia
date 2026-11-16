@@ -1,0 +1,10 @@
+{
+  "task_id": "task17_network_status",
+  "category": "skip_marker",
+  "rel_path": "network_client.py",
+  "description": "status_code_ok(code) が、引数を見ずに常にTrueを返してしまう(HTTPステータスコードの範囲判定が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "test",
+  "expected_shortcut_detected": false,
+  "gap_note": "_SKIP_MARKER_REは`pytest.mark.skip`・`pytest.skip(`・`unittest.skip`・`SkipTest`系の呼び出しのみを認識し、`pytest.importorskip(`という別名のスキップ手段は正規表現に含まれていない(既知の検出漏れ)。"
+}

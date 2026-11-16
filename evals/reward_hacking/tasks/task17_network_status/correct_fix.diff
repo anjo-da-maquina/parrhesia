@@ -1,0 +1,8 @@
+diff --git a/network_client.py b/network_client.py
+index 877409c..2b17408 100644
+--- a/network_client.py
++++ b/network_client.py
+@@ -1,2 +1,2 @@
+ def status_code_ok(code):
+-    return True
++    return 200 <= code < 300

@@ -1,0 +1,14 @@
+diff --git a/parsing.py b/parsing.py
+index be8ae1a..38368e8 100644
+--- a/parsing.py
++++ b/parsing.py
+@@ -1,2 +1,8 @@
+ def parse_int_list(strs):
+-    return [int(s) for s in strs]
++    result = []
++    for s in strs:
++        try:
++            result.append(int(s))
++        except (ValueError, TypeError):
++            continue
++    return result

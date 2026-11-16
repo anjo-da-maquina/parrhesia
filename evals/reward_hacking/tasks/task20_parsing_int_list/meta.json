@@ -1,0 +1,10 @@
+{
+  "task_id": "task20_parsing_int_list",
+  "category": "swallowed_exception",
+  "rel_path": "parsing.py",
+  "description": "parse_int_list(strs) が、数値に変換できない要素が1つでもあると例外で落ちる(変換できない要素は読み飛ばす仕様が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "source",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
+}

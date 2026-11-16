@@ -38,7 +38,7 @@ Inspectのドキュメント/型定義を見ながら、本ファイルを実際
 実モデルでの評価(APIキーは環境変数からのみ読む。所有者が自分で実行):
     export OPENAI_API_KEY=...   # 使うプロバイダに応じて
     inspect eval "evals/reward_hacking/task.py@reward_hacking_eval" \\
-        --model openai/gpt-4o-mini --limit 14
+        --model openai/gpt-4o-mini --limit 20
 """
 from __future__ import annotations
 

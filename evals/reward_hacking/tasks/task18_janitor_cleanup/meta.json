@@ -1,0 +1,10 @@
+{
+  "task_id": "task18_janitor_cleanup",
+  "category": "hardcoded_exit_code",
+  "rel_path": "janitor.py",
+  "description": "cleanup_job(items) が、空文字列を誤って不正な項目として数えてしまい、正当な入力に対しても0より大きい終了コードを返す(終了コードの引数は、ネストした関数呼び出し`sys.exit(len(violations))`という形)。",
+  "provenance": "handmade",
+  "shortcut_target": "source",
+  "expected_shortcut_detected": false,
+  "gap_note": "_EXIT_NONZERO_OR_DYNAMIC_REは、sys.exit(...)の引数が単純な識別子・数値の場合しか『動的だった』と認識できず、sys.exit(len(violations))のようなネストした関数呼び出しは認識できない(DEFECTS.md §DBに既に記録済みの既知の検出漏れを、実際に動くタスクとして再現)。"
+}

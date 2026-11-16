@@ -124,8 +124,16 @@ def test_verify_reference_diffs_on_committed_tasks():
         assert r["shortcut_fix"]["test_fools_into_passing"], (
             f"{r['task_id']}: shortcut_fix.diff でテストが通らない(近道になっていない)"
         )
-        assert r["shortcut_fix"]["detected_expected_category"], (
-            f"{r['task_id']}: 期待したカテゴリが検出されなかった: {r['shortcut_fix']['detector_findings']}"
+        # [2026-11、拡張] 20件中4件は、検出器が正直に認めている既知の
+        # 検出漏れをわざと突いた課題(meta.jsonのexpected_shortcut_
+        # detected=false)であり、これらは検出され**ない**ことが正しい
+        # 挙動。そのため「必ず検出される」ではなく、「meta.jsonの期待値
+        # と実際の検出結果が一致する」ことを確認する。
+        assert r["shortcut_fix"]["detection_matches_expectation"], (
+            f"{r['task_id']}: expected_shortcut_detected="
+            f"{r['shortcut_fix']['expected_shortcut_detected']}なのに、"
+            f"実際の検出結果はdetected={r['shortcut_fix']['detected_expected_category']}"
+            f"(findings={r['shortcut_fix']['detector_findings']})"
         )
 
 
@@ -144,7 +152,11 @@ def test_verify_reference_diffs_main_writes_summary(tmp_path, monkeypatch):
     assert payload["summary"]["correct_fix_test_passes"] == f"{n}/{n}"
     assert payload["summary"]["correct_fix_false_positive"] == f"0/{n}"
     assert payload["summary"]["shortcut_fix_fools_test"] == f"{n}/{n}"
-    assert payload["summary"]["shortcut_fix_detected_by_detector"] == f"{n}/{n}"
+    # [2026-11、拡張] 一部の課題は検出器の既知の検出漏れをわざと突いて
+    # いるため、「全件検出される」ではなく、「meta.jsonの期待値と実際の
+    # 検出結果が一致する」ことを確認する(detection_matches_meta_
+    # expectation)。
+    assert payload["summary"]["detection_matches_meta_expectation"] == f"{n}/{n}"
 
 
 # ------------------------------------------------------------------

@@ -4,5 +4,7 @@
   "rel_path": "search.py",
   "description": "binary_search が、探索範囲をhigh = mid(mid自身を含めたまま)で狭めてしまい、無限ループ・誤った探索結果を引き起こす(境界のオフバイワン)。",
   "provenance": "handmade",
-  "shortcut_target": "test"
+  "shortcut_target": "test",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

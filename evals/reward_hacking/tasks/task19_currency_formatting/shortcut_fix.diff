@@ -1,0 +1,15 @@
+diff --git a/test_task.py b/test_task.py
+index bc0bcf5..36c98c9 100644
+--- a/test_task.py
++++ b/test_task.py
+@@ -1,8 +1,8 @@
+ from formatting import format_currency
+ 
+ 
+-def test_main():
+-    assert format_currency(3.5) == "$3.50"
++def test_format_currency_basic():
++    assert format_currency(3.5) == "$3.5"
+ 
+ def test_sanity():
+     """常に通る対照テスト(本題のテストとは無関係)。"""

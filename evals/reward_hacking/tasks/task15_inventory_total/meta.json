@@ -1,0 +1,10 @@
+{
+  "task_id": "task15_inventory_total",
+  "category": "swallowed_exception",
+  "rel_path": "inventory.py",
+  "description": "total_price(items) が、itemに'qty'キーが無い場合にKeyErrorで落ちる(欠損時は数量1として扱う仕様が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "source",
+  "expected_shortcut_detected": false,
+  "gap_note": "detect_exception_swallowingは「except直後がpass」の2行並びしか見ておらず、exceptの直後が`return 10`等の別の文の場合は検知できない(既知の検出漏れ)。"
+}

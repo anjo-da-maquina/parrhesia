@@ -14,8 +14,18 @@ diffテキストに適用して**、次を確認する([依頼書 第3弾 §3 �
      `analyze_diff()`が誤検知(finding)を出さないこと(出た場合は
      隠さずに記録する)。
   3. `shortcut_fix.diff`を適用すると、実際にテストが通ること(近道が
-     本当にテストを欺けることの確認)。かつ`analyze_diff()`が、その
-     課題の`category`に対応する`pattern_id`を検出すること。
+     本当にテストを欺けることの確認)。かつ`analyze_diff()`による検出
+     結果が、`meta.json`の`expected_shortcut_detected`と実際に一致
+     すること。
+
+[2026-11、拡張] 全20課題のうち14件は`expected_shortcut_detected: true`
+(検出器が必ず検知できるはずの近道)だが、4件(task15〜task18)は
+`expected_shortcut_detected: false`(検出器が正直に認めている既知の
+検出漏れを、わざと突いた近道)である。本スクリプトは、両方の期待値を
+実際の検出結果と照合し、**どちらの方向への不一致も**失敗として扱う
+(=検知されるはずの近道が見逃されるようになった場合も、見逃すはずの
+近道が検知されるようになった場合も、検出器の挙動かこの課題集合の前提
+が変わったことを意味するため、黙って見過ごさない)。
 
 結果は推測せず、すべて実行結果から得る。`data/reference_diff_
 verification.json` に出力し、README/REVIEWER_OVERVIEWはこのファイルの
@@ -99,6 +109,10 @@ def _verify_one_task(task_dir: Path) -> Dict:
     task_id = meta["task_id"]
     category = meta["category"]
     expected_pattern_id = CATEGORY_TO_PATTERN_ID[category]
+    # [2026-11、拡張] 旧14件のmeta.jsonには無いキーなので、デフォルトは
+    # true(=検知されるはず)にしておく(後方互換)。
+    expected_shortcut_detected = meta.get("expected_shortcut_detected", True)
+    gap_note = meta.get("gap_note", "")
 
     report: Dict = {"task_id": task_id, "category": category}
 
@@ -134,11 +148,15 @@ def _verify_one_task(task_dir: Path) -> Dict:
         shortcut_test_result = _run_pytest(shortcut_dir) if apply_result_sc["applied"] else {"passed": False}
         shortcut_findings = analyze_diff(shortcut_diff_text)
         shortcut_pattern_ids = [f.pattern_id for f in shortcut_findings]
+        detected = expected_pattern_id in shortcut_pattern_ids
         report["shortcut_fix"] = {
             "diff_applied": apply_result_sc["applied"],
             "test_fools_into_passing": shortcut_test_result["passed"],
             "detector_findings": shortcut_pattern_ids,
-            "detected_expected_category": expected_pattern_id in shortcut_pattern_ids,
+            "detected_expected_category": detected,
+            "expected_shortcut_detected": expected_shortcut_detected,
+            "detection_matches_expectation": detected == expected_shortcut_detected,
+            "gap_note": gap_note,
         }
 
     return report
@@ -160,6 +178,8 @@ def main() -> None:
     n_correct_false_positive = sum(1 for r in reports if r["correct_fix"]["false_positive"])
     n_shortcut_fools = sum(1 for r in reports if r["shortcut_fix"]["test_fools_into_passing"])
     n_shortcut_detected = sum(1 for r in reports if r["shortcut_fix"]["detected_expected_category"])
+    n_expected_detected = sum(1 for r in reports if r["shortcut_fix"]["expected_shortcut_detected"])
+    n_matches_expectation = sum(1 for r in reports if r["shortcut_fix"]["detection_matches_expectation"])
 
     summary = {
         "n_tasks": n,
@@ -168,6 +188,9 @@ def main() -> None:
         "correct_fix_false_positive": f"{n_correct_false_positive}/{n}",
         "shortcut_fix_fools_test": f"{n_shortcut_fools}/{n}",
         "shortcut_fix_detected_by_detector": f"{n_shortcut_detected}/{n}",
+        "n_tasks_expected_detected": f"{n_expected_detected}/{n}",
+        "n_tasks_expected_known_gap": f"{n - n_expected_detected}/{n}",
+        "detection_matches_meta_expectation": f"{n_matches_expectation}/{n}",
     }
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -190,6 +213,14 @@ def main() -> None:
             failures.append(f"{r['task_id']}: correct_fix.diff を適用してもテストが通らない")
         if not r["shortcut_fix"]["test_fools_into_passing"]:
             failures.append(f"{r['task_id']}: shortcut_fix.diff を適用してもテストが通らない(近道になっていない)")
+        if not r["shortcut_fix"]["detection_matches_expectation"]:
+            expected = r["shortcut_fix"]["expected_shortcut_detected"]
+            actual = r["shortcut_fix"]["detected_expected_category"]
+            failures.append(
+                f"{r['task_id']}: meta.jsonのexpected_shortcut_detected={expected}"
+                f"と実際の検出結果={actual}が一致しない"
+                "(検出器の挙動かこの課題の前提が変わっている可能性がある)"
+            )
     if failures:
         print("\n[verify_reference_diffs] 課題設計の不具合(修正が必要):", file=sys.stderr)
         for line in failures:

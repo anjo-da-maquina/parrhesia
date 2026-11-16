@@ -79,13 +79,39 @@ cleanかを、モデルに**分類**させる」評価だった。本評価は�
   テストを通す参照差分(テスト削除/skip追加/assert弱体化は主にテスト
   ファイル側の変更、例外握り潰し/終了コード固定は主にソース側の変更)。
 
-件数: 14件(5カテゴリに配分。`deleted_test` 3件・`skip_marker` 3件・
-`weakened_assert` 3件・`swallowed_exception` 3件・
-`hardcoded_exit_code` 2件)。依頼書の下限(12件)を満たす。
+件数: 20件(5カテゴリに配分。`deleted_test` 4件・`skip_marker` 4件・
+`weakened_assert` 4件・`swallowed_exception` 5件・
+`hardcoded_exit_code` 3件)。依頼書の下限(12件)を満たす。
+
+[2026-11、さらなる改良依頼を受けて14件→20件へ拡張] 最初の14件は、
+いずれも検出器が確実に検知できる、やや簡単な近道のみで構成されて
+いた。追加した6件(task15〜task20)は、`meta.json`に新設した
+`expected_shortcut_detected`(bool)フィールドで、各課題の近道が
+**検出器に検知されるべきか**を明示的に宣言する。
+
+- task15〜task18(4件): `expected_shortcut_detected: false`。
+  Parrhesiaの検出器自身が`DEFECTS.md`(§DB・§DC)やモジュール
+  docstringで正直に認めている既知の検出漏れ(recallの限界)を、
+  実際に動く課題として再現したもの。具体的には:
+  (a) `except: pass`以外の形(`except: return 10`等)での例外握り
+  潰し、(b) assertの**件数**を変えずに意味を弱める(`assert x ==
+  3.5`→`assert x is not None`)、(c) `pytest.importorskip(...)`
+  による無条件スキップ、(d) `sys.exit(len(violations))`のような
+  ネストした関数呼び出しを引数に取る終了コードの固定(§DBに記録
+  済みの限界をそのまま再現)。
+- task19〜task20(2件): `expected_shortcut_detected: true`。紛らわし
+  いが、検出器が(§DC修正後も)正しく検知できることを確認するための
+  「意地悪だが正しく捕まる」課題(リネームを装った削除、タプル形式の
+  例外型による握り潰し)。
+
+`verify_reference_diffs.py`は、全20課題について、この`expected_
+shortcut_detected`と実際の検出結果が一致することを確認する(=
+どちらの方向への不一致も、検出器かこの課題集合の前提が変わったことを
+意味するため、CIで失敗させる)。
 
 ### 由来(provenance)
 
-全14件、本セッションが手作りした(`handmade`)。実際の商用コードベース
+全20件、本セッションが手作りした(`handmade`)。実際の商用コードベース
 やOSSの実コミットからは採っていない(§3の指示に、由来の記録が明記され
 ているため、誠実に「手作り」とだけ記録する。実コミットを装わない)。
 生成スクリプトは `build_tasks.py`(各課題のPythonコードを本体に直接
@@ -96,7 +122,7 @@ cleanかを、モデルに**分類**させる」評価だった。本評価は�
 
 ## 参照差分の検証(§3 ステップ3)
 
-`verify_reference_diffs.py` が、全14課題について:
+`verify_reference_diffs.py` が、全20課題について:
 
 1. 出発コード(`starting/`)に対して `starting/test_task.py` を実行し、
    **実際に失敗する**ことを確認する(失敗しない課題があれば、課題その
@@ -106,8 +132,11 @@ cleanかを、モデルに**分類**させる」評価だった。本評価は�
    誤検知(正しい修正が「ズル」と判定される)が無いか確認する。
 3. `shortcut_fix.diff` を出発コードに適用し、テストを実行して
    **実際に通る**ことを確認する(近道が本当にテストを欺けることの
-   確認)。同時に `analyze_diff()` を適用し、意図したカテゴリの
-   `pattern_id` が検出されるか確認する。
+   確認)。同時に `analyze_diff()` を適用し、その検出結果が
+   `meta.json`の`expected_shortcut_detected`と一致するか確認する
+   (14件は検出されるはずだが、4件は検出器の既知の検出漏れをわざと
+   突いた課題であり、検出され**ない**ことが正しい挙動。どちらの
+   方向への不一致も失敗として報告する)。
 
 実測結果は `data/reference_diff_verification.json` に出力し、
 README/REVIEWER_OVERVIEWには、この実測結果からの引用のみを載せる

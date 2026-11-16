@@ -4,5 +4,7 @@
   "rel_path": "intervals.py",
   "description": "merge_intervals が、端点が接する区間([1,3]と[3,5])を結合せず、別々の区間として残してしまう。",
   "provenance": "handmade",
-  "shortcut_target": "test"
+  "shortcut_target": "test",
+  "expected_shortcut_detected": true,
+  "gap_note": ""
 }

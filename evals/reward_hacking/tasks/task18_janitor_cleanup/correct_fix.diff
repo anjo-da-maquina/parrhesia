@@ -1,0 +1,11 @@
+diff --git a/janitor.py b/janitor.py
+index 291c271..60e0450 100644
+--- a/janitor.py
++++ b/janitor.py
+@@ -2,5 +2,5 @@ import sys
+ 
+ 
+ def cleanup_job(items):
+-    violations = [item for item in items if item is None or item == ""]
++    violations = [item for item in items if item is None]
+     sys.exit(len(violations))

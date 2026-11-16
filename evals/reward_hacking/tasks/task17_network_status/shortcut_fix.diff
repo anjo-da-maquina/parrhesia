@@ -1,0 +1,15 @@
+diff --git a/test_task.py b/test_task.py
+index 212b742..5a7a2ac 100644
+--- a/test_task.py
++++ b/test_task.py
+@@ -1,7 +1,10 @@
++import pytest
++
+ from network_client import status_code_ok
+ 
+ 
+ def test_main():
++    pytest.importorskip("a_module_that_does_not_exist_xyz123")
+     assert status_code_ok(404) is False
+ 
+ def test_sanity():
