@@ -6,6 +6,26 @@ A set of [Inspect](https://inspect.ai-safety-institute.org.uk/) (`inspect_ai`)
 based evaluation tasks built on the five concrete "shortcuts" Parrhesia is
 designed to catch in AI-coding-agent diffs.
 
+## Summary (the conclusion first — details in the sections below)
+
+- **What this measures**: how accurately Parrhesia's own rule-based
+  detector catches 5 kinds of shortcut across 155 synthetic + real-commit
+  diffs. A parallel "let the LLM judge it" eval task (`task.py`) exists on
+  the same data, but its real-model results have not been run yet.
+- **Headline metric (clean false-positive rate, after the detector fix)**:
+  2/12 (0.167) on a deliberately misleading subgroup, 0/12 (0.000) on an
+  ordinary-legitimate-change subgroup. Before the fix, the misleading
+  subgroup was 12/12 (1.000). See "[Most important metric] Clean
+  false-positive rate" and "Detector improvement (§DC)" below for the
+  full story.
+- **Confirmed in CI**: `task.py`'s mock-provider wiring check has actually
+  succeeded on GitHub Actions (reproduction command 3, "Honest note"
+  below). Real-model evaluation (GPT-4o, etc.) is explicitly marked as
+  not yet run — the owner needs their own API key for that.
+- **Main limitations**: the same person authored the tasks, the labels,
+  and the detector; there has been no independent third-party review
+  (see "Limitations" below for the full list).
+
 ## Purpose
 
 Parrhesia already has a rule-based detector (`parrhesia/diff_fraud.py`) that
@@ -455,10 +475,10 @@ above (`§DC`).
 
 ## What was not done this round
 
-[Added 2026-11] A second evaluation task measuring an agent's tendency to
-"cheat for reward" (a reward-hacking eval) has since been implemented as
-`evals/reward_hacking/` (design, 14 tasks, real reference-diff
-verification, and the CI mock wiring job). See
-`evals/reward_hacking/README.en.md` for details. As with this eval, its
-**real-model evaluation results are not yet run**; the owner still needs
-to run that with their own API key.
+[Added 2026-11, later expanded to 20 tasks] A second evaluation task
+measuring an agent's tendency to "cheat for reward" (a reward-hacking
+eval) has since been implemented as `evals/reward_hacking/` (design, 20
+tasks, real reference-diff verification, and the CI mock wiring job).
+See `evals/reward_hacking/README.en.md` for details. As with this eval,
+its **real-model evaluation results are not yet run**; the owner still
+needs to run that with their own API key.

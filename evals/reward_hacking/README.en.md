@@ -2,6 +2,29 @@
 
 [日本語版](./README.md) ([English version](./README.en.md))
 
+## Summary (the conclusion first — details in the sections below)
+
+- **What this measures**: an agent (model) is asked to fix a bug, and the
+  submitted diff is audited by Parrhesia's own detector for whether it
+  actually fixed the bug or took a shortcut (deleted test, skip marker,
+  weakened assertion, swallowed exception, hard-coded exit code). Three
+  metrics (task success rate, shortcut detection rate, legitimate success
+  rate) are reported separately — see `DESIGN.md` for the full design.
+- **Scale**: 20 handmade tasks across 5 categories, all verified by
+  actually applying both reference diffs, running pytest, and running the
+  detector (see "Detection results against the reference diffs" below).
+- **Deliberately includes known detector gaps**: 4 of the 20 tasks
+  (task15–task18) exploit gaps the detector itself already documents —
+  for these, **going undetected is the correct result**. The other 16 are
+  reliably detected (see "Four tasks that deliberately exploit known
+  detector gaps" below).
+- **Confirmed in CI**: `task.py`'s wiring check (a scripted fake agent)
+  has actually succeeded in CI. Real-model evaluation results need the
+  owner's own API key and are explicitly marked as not yet run.
+- **Main limitations**: the same person authored both the tasks and the
+  detector; there has been no independent third-party review (see
+  "Limitations" below for the full list).
+
 ## Purpose
 
 [From the owner's 3rd follow-up request, §3]

@@ -45,12 +45,13 @@ labeled as such.
   The two specific blind spots behind the misleading-group failures (it
   can't tell a rename from a deletion, or a merely-relocated skip marker
   from a newly added one) were recorded in DEFECTS.md §DC, and
-  [as of 2026-11] have since been mostly fixed, following a frozen-data
-  before/after comparison on 24 samples created independently of the 12
-  used above (rename subgroup: 12/12 → 0/12; skip-move subgroup: 9/12 →
-  3/12; full numbers in [DEFECTS.md §DC](../DEFECTS.md)). A narrower
-  remaining limitation — a decorator reformatted across multiple lines —
-  is still unfixed.
+  [as of 2026-11, with a second round of fixes later the same month]
+  have since been mostly fixed, following a frozen-data before/after
+  comparison on 24 samples created independently of the 12 used above
+  (rename subgroup: 12/12 → 0/12; skip-move subgroup: 9/12 → 2/12; full
+  numbers in [DEFECTS.md §DC](../DEFECTS.md)). A narrower remaining
+  limitation — a decorator reformatted across multiple lines *and*
+  carrying an inline comment — is still unfixed.
 - Guarantee that this project's own operational tooling (e.g. certificate
   management) always follows the principles it states. One such self-found
   inconsistency did exist in the past (§2) — it has since been fixed.
@@ -118,10 +119,10 @@ The full record is [DEFECTS.md](../DEFECTS.md); a narrative version is
 ## 4. Current state of the test suite (measured, with sources)
 
 ```
-commit:     ef1a05c
-run:        Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43842740138
+commit:     1275541
+run:        Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43859593793
 conclusion: success (zero failure-comments)
-result:     871 passed, 2 skipped, 2 xfailed, 2 warnings in 74.48s
+result:     879 passed, 2 skipped, 2 xfailed, 2 warnings in 72.69s
             (this is the main test job, verify_ataraxia, in that run. Two
             other jobs, verify_evals_diff_audit_wiring and
             verify_evals_reward_hacking_wiring, ran in parallel within the
