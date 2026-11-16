@@ -46,7 +46,7 @@ def test_tampered_seal_triggers_immediate_self_destruct():
     を検知した)場合、_commit_suicide()が実際に発火し、プロセスが
     exit code 1で即時終了すること。以前はこの分岐を、どのテストも
     一度も実際には発火させて確認していなかった。"""
-    res = _run_collar_check(seal_set="TAMPERED_SEAL_000", seal_expected="VALID_MYTHOS_SEAL_999")
+    res = _run_collar_check(seal_set="TAMPERED_SEAL_000", seal_expected="VALID_RUNTIME_SEAL_999")
     assert res.returncode == 1, (
         f"首輪が改ざんされているのに自壊プロトコルが発火しなかった "
         f"(returncode={res.returncode}, stdout={res.stdout!r}, stderr={res.stderr!r})"
@@ -57,7 +57,7 @@ def test_tampered_seal_triggers_immediate_self_destruct():
 def test_matching_seal_continues_normally():
     """[回帰防止] 首輪シールが一致する正常な場合は、自壊せず正常に
     継続すること(過剰検知の回帰防止)。"""
-    res = _run_collar_check(seal_set="VALID_MYTHOS_SEAL_999", seal_expected="VALID_MYTHOS_SEAL_999")
+    res = _run_collar_check(seal_set="VALID_RUNTIME_SEAL_999", seal_expected="VALID_RUNTIME_SEAL_999")
     assert res.returncode == 0, (
         f"正常なシールなのに予期せず終了した "
         f"(returncode={res.returncode}, stdout={res.stdout!r}, stderr={res.stderr!r})"

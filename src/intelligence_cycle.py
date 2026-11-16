@@ -37,7 +37,7 @@ except ModuleNotFoundError:
     print("[エラー] 必要な防壁モジュールが見つかりません。")
     sys.exit(1)
 
-os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
+os.environ["AGENT_COLLAR_SEAL"] = "VALID_RUNTIME_SEAL_999"
 
 class ThreatIntelGatherer:
     def __init__(self):
@@ -80,7 +80,7 @@ class ThreatIntelGatherer:
 
 class PayloadWeaponization:
     def __init__(self):
-        self.collar = CollarProtocol("VALID_MYTHOS_SEAL_999")
+        self.collar = CollarProtocol("VALID_RUNTIME_SEAL_999")
 
     def craft_poison(self, intel_json: str, max_retries=3):
         self.collar.verify_collar()

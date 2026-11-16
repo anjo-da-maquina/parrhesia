@@ -8,7 +8,7 @@ class CollarProtocol:
 
     [2026-10 既知の限界] 照合対象のシークレットは呼び出し側コード
     (intelligence_cycle.py, adversarial_evolution.py)に固定文字列
-    "VALID_MYTHOS_SEAL_999" として直接埋め込まれている。環境変数
+    "VALID_RUNTIME_SEAL_999" として直接埋め込まれている。環境変数
     AGENT_COLLAR_SEAL を同じ固定値に設定するだけで誰でも検査を通過できる
     ため、これは外部からの乗っ取りを検知する独立したセキュリティ境界では
     なく、同一プロセス内の自己整合性チェックに過ぎない。実行主体の認可を
@@ -54,8 +54,8 @@ def simulate_containment_breach():
     
     # シナリオ1: 自軍の制御下（首輪が正常に機能している状態）
     print("\n>> シナリオ1: 自軍の完全な統制下での兵器運用")
-    os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
-    collar = CollarProtocol("VALID_MYTHOS_SEAL_999")
+    os.environ["AGENT_COLLAR_SEAL"] = "VALID_RUNTIME_SEAL_999"
+    collar = CollarProtocol("VALID_RUNTIME_SEAL_999")
     collar.verify_collar()
     print("=> AIは正常にペネトレーションテスト（脆弱性攻撃の生成）を実行中...\n")
 

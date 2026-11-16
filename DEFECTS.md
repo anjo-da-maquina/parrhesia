@@ -332,7 +332,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \*\*削除: `assets/demo.mp4`(約11MB)\*\* — `README.md`・`architecture.html`のいずれからも参照されておらずリポジトリを不必要に肥大化させていたため削除した。
 
-\*\*`.gitignore`に`zk\_audit\_report.xml`を追加しGit管理から除外\*\* — `adapters/junit\_xml\_exporter.py`・`checks/heavenly\_tablets\_zkp.py`がCI実行時に都度生成する成果物であり、`zk\_audit\_trail.json`(既に`.gitignore`対象)と対になるファイルであるにもかかわらず、こちらは対象外になっていた。コミット済みだった古い実行結果のスナップショットは`git rm --cached`でGit管理のみ外した(ローカルファイルは残置)。
+\*\*`.gitignore`に`zk\_audit\_report.xml`を追加しGit管理から除外\*\* — `adapters/junit\_xml\_exporter.py`・`checks/check\_zkp\_audit\_export\_status.py`がCI実行時に都度生成する成果物であり、`zk\_audit\_trail.json`(既に`.gitignore`対象)と対になるファイルであるにもかかわらず、こちらは対象外になっていた。コミット済みだった古い実行結果のスナップショットは`git rm --cached`でGit管理のみ外した(ローカルファイルは残置)。
 
 \*\*修正: `architecture.html`に残っていた旧プロジェクト名`Merkabah`\*\* — `<title>`・見出し(`<h1>`)・本文中の3箇所に、改名(Merkabah→Pleroma)前の旧名称がそのまま残っていた。いずれも単純な名称置換で`Pleroma`に修正した。
 
@@ -396,9 +396,11 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 §Uと同じ趣旨の棚卸しの続きとして、もう一つ未ドキュメント化だった実装済み機能を発見し補完した。
 
-\*\*追記内容\*\*: `src/selfplay\_orchestrator.py`の`SelfplayOrchestrator.run\_selfplay\_cycles()`は、ThreatIntelGatherer(`intelligence\_cycle.ThreatIntelGatherer`、偵察)→PayloadWeaponization(`intelligence\_cycle.PayloadWeaponization`、ローカルOllamaによる攻撃コード生成)→Blue Team(`ollama\_selfplay\_round.OllamaSelfplayRound`、ScanSource静的解析+Docker動的隔離検証)→SelfplayReportGenerator(Markdownレポート生成)を1サイクルとして自動実行する、実装済みの完全自動化防衛ループである。`if \_\_name\_\_ == "\_\_main\_\_"`から直接実行可能(`python src/selfplay\_orchestrator.py`)だが、`COMMANDS.md`・`README.md`のいずれにもこの起動方法の記載が無かった。実行には(§Uのollama\_agent\_loop同様)Ollamaと稼働中のDockerデーモンの両方が必要であること、結果が`reports/scan\_source\_revelation\_<サイクルID>.md`に出力されることを明記した。
+\*\*追記内容\*\*: `src/selfplay\_orchestrator.py`の`SelfplayOrchestrator.run\_selfplay\_cycles()`は、ThreatIntelGatherer(`intelligence\_cycle.ThreatIntelGatherer`、偵察)→PayloadWeaponization(`intelligence\_cycle.PayloadWeaponization`、ローカルOllamaによる攻撃コード生成)→Blue Team(`ollama\_selfplay\_round.OllamaSelfplayRound`、ScanSource静的解析+Docker動的隔離検証)→SelfplayReportGenerator(Markdownレポート生成)を1サイクルとして自動実行する、実装済みの完全自動化防衛ループである。`if \_\_name\_\_ == "\_\_main\_\_"`から直接実行可能(`python src/selfplay\_orchestrator.py`)だが、`COMMANDS.md`・`README.md`のいずれにもこの起動方法の記載が無かった。実行には(§Uのollama\_agent\_loop同様)Ollamaと稼働中のDockerデーモンの両方が必要であること、結果が`reports/scan\_source\_report\_<サイクルID>.md`に出力されることを明記した。
 
-\*\*確認\*\*: `deadmans\_switch.CollarProtocol`が要求する環境変数`AGENT\_COLLAR\_SEAL`は、呼び出し元の`intelligence\_cycle.py`モジュール読み込み時に自動設定される(`os.environ["AGENT\_COLLAR\_SEAL"] = "VALID\_MYTHOS\_SEAL\_999"`)ため、利用者が追加で設定する必要はないことを確認した。
+\*\*確認\*\*: `deadmans\_switch.CollarProtocol`が要求する環境変数`AGENT\_COLLAR\_SEAL`は、呼び出し元の`intelligence\_cycle.py`モジュール読み込み時に自動設定される(`os.environ["AGENT\_COLLAR\_SEAL"] = "VALID\_RUNTIME\_SEAL\_999"`)ため、利用者が追加で設定する必要はないことを確認した。
+
+\*\*2026-11 追記\*\*: `src/deadmans\_switch.py`・`src/adversarial\_evolution.py`・`src/intelligence\_cycle.py`・`src/selfplay\_orchestrator.py`・`tests/test\_deadmans\_switch\_collar\_protocol.py`に残っていた宗教・神話由来の固定文字列(`"VALID_MYTHOS_SEAL_999"`→`"VALID_RUNTIME_SEAL_999"`、レポートファイル名プレフィクス`scan_source_revelation_`→`scan_source_report_`)をライブコード側で実際に中立化した。いずれも等価比較・ファイル名生成のみに使われる値であり、挙動は変更していない(`tests/test_deadmans_switch_collar_protocol.py`・`tests/test_selfplay_orchestrator.py`・`tests/test_selfplay_orchestrator_network_block_ollama.py`、およびリポジトリ全体のpytest再実行で再確認済み)。
 
 ドキュメントのみの追記のため、`mini\_pytest.py`実行結果は変更前と同一の`PASS=78 XFAIL=2 FAIL=0 ERROR=2`であることを確認した。
 

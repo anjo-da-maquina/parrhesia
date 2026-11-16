@@ -39,7 +39,7 @@ class SelfplayReportGenerator:
         print("\n[SelfplayReportGenerator] 攻防の記録を編纂し、レポートを作成中...")
         report_dir = Path("reports")
         report_dir.mkdir(exist_ok=True)
-        report_path = report_dir / f"scan_source_revelation_{cycle_id}.md"
+        report_path = report_dir / f"scan_source_report_{cycle_id}.md"
         
         try:
             intel_dict = json.loads(intel)

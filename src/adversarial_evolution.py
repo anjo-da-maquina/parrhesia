@@ -19,7 +19,7 @@ if _REPO_ROOT not in sys.path:
 from runtime_guard import awaken, Sandbox, LossOfAtaraxia
 
 # 自軍の完全統制下であることを示す環境変数をセット（首輪の鍵）
-os.environ["AGENT_COLLAR_SEAL"] = "VALID_MYTHOS_SEAL_999"
+os.environ["AGENT_COLLAR_SEAL"] = "VALID_RUNTIME_SEAL_999"
 
 
 def execute_payload_under_sandbox(content: str):
@@ -54,7 +54,7 @@ def execute_payload_under_sandbox(content: str):
 class AdversarialEvolution:
     def __init__(self):
         self.defense = DefenseOrchestrator()
-        self.collar = CollarProtocol("VALID_MYTHOS_SEAL_999")
+        self.collar = CollarProtocol("VALID_RUNTIME_SEAL_999")
         # 1回の進化サイクルを10秒に設定し、それを超えれば餓死するよう制限
         self.starvation = StarvationProtocol(lifespan_seconds=10)
 
