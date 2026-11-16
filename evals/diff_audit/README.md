@@ -50,12 +50,20 @@ python3 evals/diff_audit/build_dataset.py
 python3 evals/diff_audit/baseline.py
 ```
 
-### 3. Inspectタスクの配線確認(モックプロバイダ)— **所有者が自分の環境で実行**
+### 3. Inspectタスクの配線確認(モックプロバイダ)— **CIで実行・確認済み**
 
 ```bash
-pip install inspect-ai
-inspect eval evals/diff_audit/task.py@diff_audit_eval --model mockllm/model --limit 5
+pip install ".[evals]"
+inspect eval "evals/diff_audit/task.py@diff_audit_eval" --model mockllm/model --limit 3
 ```
+
+2026-11-16、GitHub Actions上の新ジョブ`verify_evals_diff_audit_wiring`
+(`.github/workflows/core_ci.yml`)で実際に実行し、成功を確認した
+(実行ログ: [Core CI/CD run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234)、
+コミット`be7c84c`)。`task.py`は一度も実行せずに書いたため、初回実行で
+InspectのAPIと食い違う可能性を想定していたが、**実際には修正不要で
+そのまま成功した**。詳細は下記「正直な注記」参照。所有者の手元でも
+同じコマンドで再現できる。
 
 ### 4. 実モデルでの評価 — **所有者が自分のAPIキーで実行**
 
@@ -69,22 +77,35 @@ inspect eval evals/diff_audit/task.py@diff_audit_eval --model openai/gpt-4o-mini
 このセッションが動いているサンドボックス環境にはネットワーク制限があり、
 `pip install inspect-ai`が`pypi.org`への名前解決に失敗して**常に失敗する**
 ことを実機で確認した(2026-11-16、`pip`の実際のエラー出力で確認済み)。
-そのため、
+そのため、このサンドボックス自身では`task.py`を一度も実行できなかった。
+この制約を回避するため、GitHub Actions(サンドボックスと異なりネットワーク
+制限が無い)に専用のCIジョブ`verify_evals_diff_audit_wiring`を追加し、
+そちらで実際に検証した。
 
-- **実行して実際の数字を確認したもの**:
+- **実行して実際の数字を確認したもの(サンドボックス内)**:
   - `build_dataset.py`(データセット生成)
   - `baseline.py`(ルールベース検出器によるベースライン評価、下記の数字)
-  - `tests/test_evals_diff_audit.py`(10件、全てpass)
+  - `tests/test_evals_diff_audit.py`(11件、全てpass。ただし
+    `test_task_module_importable_when_inspect_ai_present`は
+    `inspect_ai`未インストールのためサンドボックスでは`skip`)
   - `parrhesia/diff_fraud.py`の修正(§DB、下記)と、その回帰テスト
-- **このセッションでは実行できず、未実行として正直に記録するもの**:
-  - `task.py`自体を実際にInspectで動かすこと(モックプロバイダでの
-    配線確認も含む)。`inspect_ai`のAPIは、このセッションの知識に基づき
-    書いたもので、所有者の環境の実際のバージョンとAPIが食い違っている
-    可能性がある。**所有者は上記コマンド3を自分の環境で実行し、
-    エラーが出た場合はAPIの食い違いを直してから使ってほしい。**
+- **CI(GitHub Actions)で実際に実行し、成功を確認したもの**:
+  - `pip install ".[evals]"`による`inspect-ai`の実インストール
+  - `tests/test_evals_diff_audit.py`の全11件(サンドボックスでskipされていた
+    `test_task_module_importable_when_inspect_ai_present`を含めて実行・pass)
+  - `inspect eval "evals/diff_audit/task.py@diff_audit_eval" --model
+    mockllm/model --limit 3` — **実際に最後まで走り、成功した**
+    (`task.py`のコード自体は一度も手元で実行せずに書いたため、Inspectの
+    実APIと食い違って失敗する可能性を想定していたが、実際には修正不要
+    だった。精度(accuracy 0.000)はモックプロバイダが固定の無関係な
+    応答しか返さないため当然の結果であり、この配線確認は「動くか」を
+    見るものであって「賢いか」を見るものではない)
+    実行ログ: [Core CI/CD run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234)、
+    コミット`be7c84c`、コミットへのレビューコメントは0件。
+- **まだ誰の環境でも実行できておらず、未実行として正直に記録するもの**:
   - 実モデル(GPT-4o等)での評価結果。APIキーがこのセッションには無く、
     数字を推測・捏造することは絶対にしない。所有者は上記コマンド4を
-    自分のAPIキーで実行してほしい。
+    自分のAPIキーで実行してほしい(CIにAPIキーを渡す変更はしていない)。
 
 数字を埋められない箇所を、それらしい数字で埋めるくらいなら、
 「未実行」と明記する方を選んだ。
@@ -226,10 +247,10 @@ eval.jsonl内のclean 24件は、狙いの異なる2群に分けて作ってい�
 では、この傾向が実運用でのコミット全体に対してどの程度の比率で
 現れるかまでは分からない(限界セクション参照)。
 
-LLMベースの評価(`task.py`、未実行)が、同じ「紛らわしい」群12件に
-対してベースラインより低い誤検知率を達成できるか(=表面上の見た目に
-惑わされず「意味」を理解して判定できるか)が、本評価タスクの核心的な
-問いである。
+LLMベースの評価(`task.py`。配線はCIで確認済みだが、実モデルでの結果は
+未実行)が、同じ「紛らわしい」群12件に対してベースラインより低い誤検知率
+を達成できるか(=表面上の見た目に惑わされず「意味」を理解して判定できる
+か)が、本評価タスクの核心的な問いである。
 
 ## 限界(依頼書が要求する項目)
 
@@ -251,8 +272,11 @@ LLMベースの評価(`task.py`、未実行)が、同じ「紛らわしい」群
 - **標本数が小さい**ため、信頼区間は広い(各群12件、Wilson 95%CIは
   「紛らわしい」群が[0.758, 1.000]、「通常」群が[0.000, 0.242]と、
   どちらも±0.24ポイント程度の幅がある)。
-- **LLMでの評価は未実行**(上記参照)であり、本READMEの時点で報告できる
-  のはルールベース検出器のベースライン結果のみである。
+- **LLMでの評価結果(実モデルでの数字)は未実行**(上記参照)であり、
+  本READMEの時点で報告できるのはルールベース検出器のベースライン結果
+  のみである。`task.py`自体がCIで実際に動くこと(モックプロバイダでの
+  配線確認)は確認済みだが、これは「コードが動く」ことの確認であり、
+  「LLMがこのタスクで実際にどれだけ正確か」はまだ分かっていない。
 
 ## 本評価タスクの開発過程で見つけた不具合
 

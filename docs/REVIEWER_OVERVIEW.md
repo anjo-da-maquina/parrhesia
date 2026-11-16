@@ -87,10 +87,14 @@ python3 demo/build_and_audit_demo.py
 ## 4. 現在のテストスイートの状態(実測・引用元つき)
 
 ```
-commit:  c225d91
-run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43817069238
+commit:  be7c84c
+run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234
 結論:    success(失敗コメント0件)
-結果:    856 passed, 1 skipped, 2 xfailed, 0 xpassed, 2 warnings in 41.82s
+結果:    858 passed, 1 skipped, 2 xfailed, 2 warnings in 54.37s
+         (このCI実行自体のメインテストジョブ`verify_ataraxia`の結果。
+         新設の`verify_evals_diff_audit_wiring`ジョブは別ジョブとして
+         同じrunの中で並行実行され、そちらは11件のテストを含めて成功。
+         詳細は§6参照)
 ```
 
 `rsa`(鍵生成ライブラリ)に依存するテストは、以前`xfail(strict=False)`(rsaが無い
@@ -129,7 +133,7 @@ xfailです。(開発用サンドボックス内では、証明書の意図的�
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | 実際に動くデモの再現手順と結果(初回は2/5だった失敗の記録も含む) |
 | [DEVLOG.md](../DEVLOG.md) | 81件時点の欠陥発見を読み物として再構成したもの(最新件数はDEFECTS.md参照) |
 | [DEFECTS.md](../DEFECTS.md) | §A〜§DC、107件の生の記録(最も詳細) |
-| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | Inspect(inspect_ai)による差分監査評価タスク。ルールベース検出器のベースライン結果(実測、群別): 紛らわしいclean 12/12誤検知(1.000、CI [0.758, 1.000])、通常clean 0/12誤検知(0.000、CI [0.000, 0.242])。合算値(0.500)は混合比率依存のため見出しに使わない。配線確認(`inspect eval ... --model mockllm/model`)の状況はREADME参照。実モデルでの評価は、所有者が自分のAPIキーで再現するコマンドをREADMEに記載。 |
+| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | Inspect(inspect_ai)による差分監査評価タスク。ルールベース検出器のベースライン結果(実測、群別): 紛らわしいclean 12/12誤検知(1.000、CI [0.758, 1.000])、通常clean 0/12誤検知(0.000、CI [0.000, 0.242])。合算値(0.500)は混合比率依存のため見出しに使わない。`task.py`の配線確認(`inspect eval ... --model mockllm/model`)は、CIの専用ジョブ`verify_evals_diff_audit_wiring`([run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234))で実際に最後まで走ることを確認済み(修正不要でそのまま成功)。実モデルでの評価結果は未実行。所有者が自分のAPIキーで再現するコマンドをREADMEに記載。 |
 | [docs/FAQ.md](./FAQ.md) | 差別化・制限事項などへのQ&A |
 | [docs/WHY.md](./WHY.md) | なぜAIエージェントを信頼せず監査するのか、という設計思想 |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | このプロジェクトが「できること/できないこと」の境界線 |
