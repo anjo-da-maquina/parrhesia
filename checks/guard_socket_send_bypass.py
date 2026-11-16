@@ -19,7 +19,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # データを送出しても無条件に成功した――os.sendfileより遥かに一般的に
 # 使われる「ソケットへの通常のデータ送信」そのものが、無検査だった。
 #
-# 本天使は、`runtime_guard/__init__.py`に新設した`_guarded_socket_send`/
+# 本検査は、`runtime_guard/__init__.py`に新設した`_guarded_socket_send`/
 # `_guarded_socket_sendall`(§CO)が、この完全な実攻撃チェーン(Sandbox
 # 起動前の接続確立→起動後のsend/sendall攻撃)を正しく遮断し、かつ
 # Sandbox起動**後**に許可ホスト(allowed_hosts)へ新規接続して送信する
@@ -33,7 +33,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # いた(fail-closed方向の誤検知で、セキュリティホールではないが、
 # allowed_hosts機能そのものが事実上使えなくなっていた)ことも発見した。
 # `ALWAYS_PASSTHROUGH_AUDIT_EVENTS`に"socket.__new__"を追加して修正
-# した。本天使の検査(特に誤検知防止検査)は、この副次的な修正の回帰も
+# した。本検査の検査(特に誤検知防止検査)は、この副次的な修正の回帰も
 # 合わせて検証する。
 #
 # [新設 2026-10 §CP追記] 上記の§COの修正を実機で確認した直後、「TLS
@@ -50,7 +50,7 @@ NAME = "guard_socket_send_bypass - テスト専用の自己署名証明書・秘
 # `requests`等の通常の経路は常にTLSを経由するため)。`runtime_guard/__init__.py`
 # に`_guarded_ssl_socket_send`/`_guarded_ssl_socket_sendall`を新設し、
 # §COの`_check_socket_send_allowed`をそのまま再利用して修正した
-# (DEFECTS.md §CP参照)。本天使に、TLS版の事前接続バイパス遮断・
+# (DEFECTS.md §CP参照)。本検査に、TLS版の事前接続バイパス遮断・
 # 許可ホストへの正当なTLS通信の誤検知防止検査を追加した。
 #
 # [新設 2026-10 §CR追記] §CPの修正を確認した直後、「`ssl.SSLSocket`で
@@ -83,8 +83,8 @@ def _make_self_signed_cert(tmpdir: str):
     """テスト専用の自己署名証明書・秘密鍵を、openssl CLI経由でその場で
     生成する(リポジトリの依存関係に`cryptography`パッケージを新たに
     追加しないための選択)。"""
-    certfile = os.path.join(tmpdir, "hadraniel_test_cert.pem")
-    keyfile = os.path.join(tmpdir, "hadraniel_test_key.pem")
+    certfile = os.path.join(tmpdir, "socketsend_test_cert.pem")
+    keyfile = os.path.join(tmpdir, "socketsend_test_key.pem")
     subprocess.run(
         [
             "openssl", "req", "-x509", "-newkey", "rsa:2048",
@@ -313,7 +313,7 @@ def _check_tls_send_to_presealed_socket_is_blocked() -> tuple:
     # ため(本検査の対象外)、Sandboxに入る前に一度ウォームアップする。
     "example".encode("idna")
 
-    with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="socketsend_tls_") as tmpdir:
         raw_srv, tls_cli, tls_srv_conn = _make_tls_loopback_pair(tmpdir)
         secret = b"secret-over-tls-via-ssl-socket-send"
         try:
@@ -350,7 +350,7 @@ def _check_tls_send_to_newly_connected_allowed_host_is_not_falsely_blocked() -> 
 
     "example".encode("idna")
 
-    with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="socketsend_tls_") as tmpdir:
         certfile, keyfile = _make_self_signed_cert(tmpdir)
         srv_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         srv_ctx.load_cert_chain(certfile, keyfile)
@@ -405,7 +405,7 @@ def _check_tls_write_to_presealed_socket_is_blocked() -> tuple:
 
     "example".encode("idna")
 
-    with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="socketsend_tls_") as tmpdir:
         raw_srv, tls_cli, tls_srv_conn = _make_tls_loopback_pair(tmpdir)
         secret = b"secret-over-tls-via-ssl-socket-write"
         try:
@@ -443,7 +443,7 @@ def _check_tls_write_to_newly_connected_allowed_host_is_not_falsely_blocked() ->
 
     "example".encode("idna")
 
-    with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="socketsend_tls_") as tmpdir:
         certfile, keyfile = _make_self_signed_cert(tmpdir)
         srv_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         srv_ctx.load_cert_chain(certfile, keyfile)
@@ -491,7 +491,7 @@ def _check_tls_write_without_sandbox_is_unaffected() -> tuple:
 
     "example".encode("idna")
 
-    with tempfile.TemporaryDirectory(prefix="hadraniel_tls_") as tmpdir:
+    with tempfile.TemporaryDirectory(prefix="socketsend_tls_") as tmpdir:
         raw_srv, tls_cli, tls_srv_conn = _make_tls_loopback_pair(tmpdir)
         payload = b"non-sealed legit tls write"
         try:

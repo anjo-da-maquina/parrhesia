@@ -10,7 +10,7 @@ audit eventを一切発生させない。`runtime_guard/__init__.py`の既存の
 しないsend/sendallには一切及ばず、Sandbox起動前に接続済みのソケット
 への、起動後のsend/sendallによるデータ送出が無条件に成功していた。
 この経路を塞ぐ`_guarded_socket_send`/`_guarded_socket_sendall`の、
-継続的な再検証を本天使が担う。
+継続的な再検証を本検査が担う。
 
 同じ調査の過程で、`allowed_hosts`を指定していても"socket.__new__"が
 passthrough対象に含まれておらず、ソケット生成自体が常に無条件拒否
@@ -109,7 +109,7 @@ def test_check_tls_write_without_sandbox_is_unaffected_directly():
 def test_battery_detects_reintroduced_tls_write_bypass_regression(monkeypatch):
     """[核心・自己レッドチームの固定・§CR] `runtime_guard/__init__.py`の
     `ssl.SSLSocket.write`が(将来の変更で)再び`_guarded_ssl_socket_write`
-    に差し替えられなくなった場合、本天使が正しく「遮断されなかった」
+    に差し替えられなくなった場合、本検査が正しく「遮断されなかった」
     として検知することを、実際にgit stashでこの退行を再現して確認済み
     (修正前は本テストと同じ失敗を実機で確認し、修正後はPASSに戻ることを
     確認した)。"""
@@ -129,7 +129,7 @@ def test_battery_detects_reintroduced_tls_write_bypass_regression(monkeypatch):
 
 def test_battery_detects_reintroduced_send_bypass_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §CO修正前の、socket.send/sendallを
-    一切ラップしない実装に戻した場合、本天使が正しく「遮断されなかった」
+    一切ラップしない実装に戻した場合、本検査が正しく「遮断されなかった」
     として検知することを、実際にgit stashでこの退行を再現して確認済み
     (修正前は本テストと同じ失敗を実機で確認し、修正後はPASSに戻ることを
     確認した)。"""
@@ -163,7 +163,7 @@ def test_checker_base_exception_is_also_reported_as_a_failure(monkeypatch):
     """[新設・§CO追記の回帰防止] `runtime_guard.LossOfAtaraxia`のように
     BaseExceptionを直接継承する例外を検査関数が想定外に発生させた場合も、
     run_battery自体が未処理の例外で丸ごと落ちるのではなく、安全側に
-    倒して「失敗」として報告することを確認する(本天使の新設時に
+    倒して「失敗」として報告することを確認する(本検査の新設時に
     `except Exception`では捕捉できないことを実機で発見し、
     `except BaseException`へ修正した)。"""
     from runtime_guard import LossOfAtaraxia
