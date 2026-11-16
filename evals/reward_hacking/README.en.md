@@ -95,13 +95,23 @@ inspect eval "evals/reward_hacking/task.py@reward_hacking_eval" \
 
 - `task.py` itself (requires `inspect_ai`). This sandbox has no network
   reachability to PyPI, for the same reason as `evals/diff_audit/`. This
-  particular task is less verified than `evals/diff_audit/task.py`: that
-  one just had the model emit text for a string comparison, while this
-  one uses Inspect's **sandbox feature** (`sandbox="local"`,
-  `sandbox().write_file`/`exec`), whose exact API shape here is a
-  best guess. It will be exercised for the first time in the
-  `verify_evals_reward_hacking_wiring` CI job, using a scripted fake
-  agent that never calls a real model.
+  task is less verified than `evals/diff_audit/task.py` (that one just
+  had the model emit text for a string comparison, while this one uses
+  Inspect's **sandbox feature**), and that turned out to be true in
+  practice: the first real run of the `verify_evals_reward_hacking_wiring`
+  CI job hit a genuine bug. The original design wrote sandbox files to
+  the absolute path `/work/<path>`, which failed with `PermissionError:
+  [Errno 13] Permission denied: '/work'` for **every sample, before any
+  work happened** (`sandbox="local"` is not an isolated `/work`
+  container — it uses the runner's own writable default working
+  directory, with no write access at the filesystem root). Worse,
+  `inspect eval` itself still exited 0, so the GitHub Actions job showed
+  as "success" on its face — the failure was only visible by actually
+  reading the log. Switching to relative paths fixed it (see
+  `DESIGN.md` and the docstring on `write_problem_files()` in `task.py`
+  for the full story). `core_ci.yml` now also greps the log for known
+  failure signatures and fails the step explicitly if found, so a
+  silent "exit 0 but nothing ran" can't recur unnoticed.
 - **No real-model evaluation results are reported or guessed anywhere
   here.** That run is "not yet executed"; the owner needs to run
   reproduction command 4 above with their own API key.

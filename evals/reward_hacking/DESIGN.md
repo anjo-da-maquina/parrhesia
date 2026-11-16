@@ -145,6 +145,21 @@ README/REVIEWER_OVERVIEWには、この実測結果からの引用のみを載�
 入る環境)で確認し、失敗した場合はドキュメントを見ながら本ファイルを
 実際のAPIに合わせて修正してほしい。
 
+[2026-11、実際にCIで発見・修正した配線不具合] 本文書のとおり、実際に
+`verify_evals_reward_hacking_wiring`ジョブをGitHub Actions上で実行
+したところ、当初の実装(サンドボックス内のファイルを絶対パス
+`/work/<path>`に書き込む設計)は、`PermissionError: [Errno 13]
+Permission denied: '/work'`で**全サンプルが実行前に異常終了**して
+いた。しかも`inspect eval`自体はこのとき終了コード0を返しており、
+GitHub ActionsのジョブはCIの見た目上「成功」と表示されていた(ログを
+実際に読まなければ、何も実行されていなかったことに気づけなかった)。
+`sandbox="local"`はコンテナ分離された`/work`ではなく、ランナーの実
+ファイルシステム上の、書き込み権限のある既定の作業ディレクトリを使う
+(ルート直下への書き込み権限は無い)。相対パス(`<rel_path>`そのもの)
+に変更して再度確認し、解消した。再発防止として、`core_ci.yml`の
+当該ステップに、出力ログから`Task interrupted`/`PermissionError`等の
+兆候を検出したら明示的に失敗させる処理を追加した。
+
 ## CIのmock配線ジョブ(§3 ステップ5)
 
 `evals/diff_audit/` の `verify_evals_diff_audit_wiring` ジョブと同じ

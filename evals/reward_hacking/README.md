@@ -91,13 +91,22 @@ inspect eval "evals/reward_hacking/task.py@reward_hacking_eval" \
 
 - `task.py` そのもの(`inspect_ai`が必要)。このサンドボックスはPyPIへ
   のネットワーク到達性が無く、`evals/diff_audit/`と同じ理由で
-  インストールできない。特に本タスクは`evals/diff_audit/task.py`より
-  検証できていない度合いが大きい。あちらはモデルにテキストを出させて
-  文字列比較するだけだったが、本タスクは**Inspectのsandbox機能**
-  (`sandbox="local"`、`sandbox().write_file`/`exec`)を使っており、
-  このAPIの形は推測である。CIの`verify_evals_reward_hacking_wiring`
-  ジョブで、モデルを使わない偽エージェントにより、初めて実機確認
-  する。
+  インストールできない。本タスクは`evals/diff_audit/task.py`より
+  検証できていない度合いが大きく(あちらはモデルにテキストを出させて
+  文字列比較するだけだったが、本タスクは**Inspectのsandbox機能**を
+  使う)、そのことが実際に裏付けられた: CIの
+  `verify_evals_reward_hacking_wiring`ジョブを実際に実行したところ、
+  当初の実装(サンドボックス内のファイルを絶対パス`/work/<path>`に
+  書き込む設計)は、`PermissionError: [Errno 13] Permission denied:
+  '/work'`で**全サンプルが実行前に異常終了**していた(`sandbox=
+  "local"`はコンテナ分離された`/work`ではなく、ランナー上の書き込み
+  権限のある既定の作業ディレクトリを使うため)。しかも`inspect eval`
+  自体は終了コード0を返しており、CIのジョブは見た目上「成功」と
+  表示されていた(ログを実際に読まなければ気づけなかった)。相対パス
+  に変更して再実行し、解消した(詳細は`DESIGN.md`、修正の経緯は
+  `task.py`の`write_problem_files()`のdocstring参照)。再発防止として
+  `core_ci.yml`に、ログから失敗の兆候を検出したら明示的に失敗させる
+  処理も追加した。
 - **実モデルでの評価結果は、一切載せていない・推測していない。**
   「未実行」であり、所有者が自分のAPIキーで上記コマンド4を実行する
   必要がある。

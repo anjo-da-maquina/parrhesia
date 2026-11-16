@@ -232,6 +232,24 @@ jobs:
           --model mockllm/model --limit 3 \
           2>&1 | tee /tmp/inspect_mock_run_reward_hacking_output.txt
 
+        # [2026-11、実際にこのジョブで発見した事故の再発防止]
+        # `inspect eval`は、全サンプルがサンドボックスへの書き込み段階
+        # で異常終了しても(実際に、絶対パス`/work/...`への書き込みが
+        # `PermissionError: [Errno 13] Permission denied: '/work'`で
+        # 失敗し、`Task interrupted (no samples completed before
+        # interruption)`のまま0件実行で終わったことがあった)、
+        # プロセスの終了コードは0のままになりうる。そのため、終了コード
+        # だけでなく、出力ログに既知の失敗の兆候が無いかをここで
+        # 明示的に確認する(`/work`絶対パスの問題自体は
+        # `write_problem_files()`の相対パス化で修正済みだが、同種の
+        # 「終了コード0だが中身は失敗」という事故の再発を、今後も
+        # ここで検知できるようにする)。
+        if grep -qiE "Task interrupted|PermissionError|0 samples completed" \
+            /tmp/inspect_mock_run_reward_hacking_output.txt; then
+          echo "::error::inspect eval の出力ログに失敗の兆候が見つかりました(終了コードが0でも、実際には失敗している可能性があります)。"
+          exit 1
+        fi
+
     - name: 失敗時の詳細をコミットコメントとして可視化
       if: failure() && steps.inspect_mock_run_reward_hacking.outcome == 'failure'
       env:
