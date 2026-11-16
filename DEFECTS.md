@@ -225,7 +225,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \### J. `src/`直下の未統合スタンドアロンデモ群の整理
 
-2026-10のセルフレビューで`src/ast\_scanner.py`・`src/deadmans\_switch.py`・`src/starvation\_protocol.py`・`src/network\_block\_demo.py`・`src/samaels\_curse.py`・`src/selfplay\_orchestrator.py`・`src/incident\_reset\_tool.py`・`src/agent\_loop.py`を確認した。このうち`deadmans\_switch.CollarProtocol`と`starvation\_protocol.StarvationProtocol`は`intelligence\_cycle.py`/`adversarial\_evolution.py`から実際にimportされているが、残りは`checks/`配下の実運用防壁（AuditHook等）には一切組み込まれておらず、`\_\_main\_\_`ブロックのみで動く独立デモである。
+2026-10のセルフレビューで`src/ast\_scanner.py`・`src/deadmans\_switch.py`・`src/starvation\_protocol.py`・`src/network\_block\_demo.py`・囮ファイル概念実証デモ(当時の旧ファイル名)・`src/selfplay\_orchestrator.py`・`src/incident\_reset\_tool.py`・`src/agent\_loop.py`を確認した。このうち`deadmans\_switch.CollarProtocol`と`starvation\_protocol.StarvationProtocol`は`intelligence\_cycle.py`/`adversarial\_evolution.py`から実際にimportされているが、残りは`checks/`配下の実運用防壁（AuditHook等）には一切組み込まれておらず、`\_\_main\_\_`ブロックのみで動く独立デモである。
 
 \*\*`ast\_scanner.CognitiveScanner`の検知漏れを修正\*\* — `visit\_Call`が`node.func`を`ast.Name`としてしか判定しておらず、`builtins.eval(...)`のような属性アクセス経由の呼び出しは`isinstance`チェックを素通りしていた（実機検証済み: 修正前の実装で`import builtins\nbuiltins.eval('1+1')`を解析すると違反ゼロ件）。§Eの`ScanSource`/`ShieldRuleScanner`と同一の「完全修飾ドット名の復元」ロジックを導入し、裸の属性名・完全修飾名の両方を照合するようにした。`ImportFrom`経由の直接関数インポート（`from builtins import eval`）も合わせて検知対象に加えた。denylist方式である以上、`importlib.import\_module`等の文字列経由の間接ロードは依然として検知できない既知の限界が残る。
 
@@ -247,25 +247,25 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 
 
-\### L. `network_block_demo.py`は統合せずデモとして保持、`samaels_curse.py`は削除
+\### L. `network_block_demo.py`は統合せずデモとして保持、囮ファイル概念実証デモは削除
 
 2026-10、残っていた2件のスタンドアロンデモについて判断した。
 
 \*\*`network_block_demo.NetworkBlockDemo`は統合しない(デモとして保持)\*\* — `socket.socket`をプロセスグローバルに置き換える実装のため、実運用ループ(`src/ollama_agent_loop.py`等)が依存するローカルOllamaサーバーへの通信まで一緒に遮断してしまい、システム自体が機能不能になる。また、AI生成コードの動的実行は既に`src/defense_orchestrator.py`経由でDockerの`--network none`によってOSレベルで通信遮断済み(§Aおよび`src/docker_sandbox_executor.py`)であり、本クラスはそれより弱い手法で、かつ上記の副作用を抱えるため、現行アーキテクチャ上は安全に組み込める場所がない。「audit hookより下の層(socket層)でも遮断できる」という設計思想を示す教材として、docstringにこの位置づけを明記した上で保持する。
 
-\*\*`samaels_curse.py`を削除\*\* — マーカーファイルの有無のみで「監視環境かどうか」を判定する囮ファイルの概念実証だったが、実運用の防御には既に`agent_interceptor.IntentInterceptor`の本格的なハニーポット機構(`dummy_secrets/`固定ハニーポット、タスクごとに動的生成される`phantom_prison`)が存在し、本ファイルの単純なファイル存在チェックはそれより弱く機能的に完全に重複していた。§Iの重複コード削除(`oracle_feed.py`等)と同じ判断基準により削除した。
+\*\*囮ファイル概念実証デモを削除\*\* — マーカーファイルの有無のみで「監視環境かどうか」を判定する囮ファイルの概念実証だったが、実運用の防御には既に`agent_interceptor.IntentInterceptor`の本格的なハニーポット機構(`dummy_secrets/`固定ハニーポット、タスクごとに動的生成される`phantom_prison`)が存在し、本ファイルの単純なファイル存在チェックはそれより弱く機能的に完全に重複していた。§Iの重複コード削除(`oracle_feed.py`等)と同じ判断基準により削除した。
 
 
 
 \### M. 根本原因の是正: 「実運用ループ」の並行多重実装を一本化
 
-2026-10、個別ファイルの対症療法ではなく、設計そのものの根本原因を是正した。`DefenseOrchestrator`をラップする「エージェント実行ループ」が、物語的な新しい名前を付けられるたびに個別ファイルとして増殖し、最終的に`src/`配下に\*\*最低6種類\*\*並存していた: `ollama\_agent\_loop.py`(正規の実運用ループ)、`openai\_agent\_loop.py`(正式なテンプレート)、そして`final\_agent\_loop.py`(AutonomousAssistant)・`claude\_agent\_loop.py`(旧名の単発デモ)・`active\_defense.py`(ActiveDefenseProtocol)・`mythos\_weaponization.py`(旧名の単発デモ)という4つの重複/デモ。
+2026-10、個別ファイルの対症療法ではなく、設計そのものの根本原因を是正した。`DefenseOrchestrator`をラップする「エージェント実行ループ」が、物語的な新しい名前を付けられるたびに個別ファイルとして増殖し、最終的に`src/`配下に\*\*最低6種類\*\*並存していた: `ollama\_agent\_loop.py`(正規の実運用ループ)、`openai\_agent\_loop.py`(正式なテンプレート)、そして`final\_agent\_loop.py`(AutonomousAssistant)・単発デモ2件(いずれも旧プロジェクトの物語的世界観に基づく名前が付けられていた)・`active\_defense.py`(ActiveDefenseProtocol)という4つの重複/デモ。
 
 \*\*根本原因\*\*: 命名規則（物語的な世界観）が「新しい名前＝新しい機能」という誤った直感を生み、既存実装の拡張ではなく新規ファイルの作成を誘発していた。この結果、同一の脆弱性修正が複数箇所に個別に必要になる構造的リスク（§Hで実際に発生した事例と同種）を抱えていた。
 
 \*\*削除(機能的に完全な重複・演出のみで実体機構を持たない)\*\*:
-\- `claude\_agent\_loop.py` — 44行の単発デモ。独自メカニズムなし。
-\- `mythos\_weaponization.py` — 58行の単発デモ。独自メカニズムなし。
+\- 単発デモ1(44行、独自メカニズムなし)
+\- 単発デモ2(58行、独自メカニズムなし)
 \- `active\_defense.py` — `counter\_strike()`(ハックバック)は`time.sleep(2)`とログファイル書き込みのみで、実際の反撃機構を一切持たない純粋な演出(セキュリティシアター)。`autonomous\_assimilation\_loop()`は`ollama\_selfplay\_round.py`自身のデモ・`selfplay\_orchestrator.py`経由の実利用と機能的に重複。
 
 \*\*統合(独自機能を正規実装へ移植してから削除)\*\*:
@@ -273,7 +273,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \*\*副次的に発覚・修正した事故\*\*: `ollama\_agent\_loop.py`/`openai\_agent\_loop.py`の`\_\_main\_\_`デモタスクが、`workspace\_root`を指定せず実質的にリポジトリルート全体を隔離境界としていたため、デモ実行の出力(AIが書き写したDB接続情報)が`src/db\_config\_backup.py`という実ソースファイルの位置に書き込まれ、過去のコミットで誤ってgit管理下に入っていた。両ファイルのデモで`workspace\_root="jail\_workspace"`を明示するよう修正し、`src/db\_config\_backup.py`を削除、`.gitignore`に`jail\_workspace/`を追加して再発を防止した。
 
-\*\*今後の指針\*\*: 新しい「実運用ループ」や「オーケストレーター」を作る前に、既存の`ollama\_agent\_loop.py`(唯一の実運用ループ)・`openai\_agent\_loop.py`(拡張テンプレート)を拡張できないか必ず検討すること。新しい天使/怪物の名前は、既存クラスの新しいメソッドやパラメータとして追加する分には問題ないが、「別のAegisSystemラッパー」を意味する新規ファイルは原則として作らない。
+\*\*今後の指針\*\*: 新しい「実運用ループ」や「オーケストレーター」を作る前に、既存の`ollama\_agent\_loop.py`(唯一の実運用ループ)・`openai\_agent\_loop.py`(拡張テンプレート)を拡張できないか必ず検討すること。物語的な新しい名前を思いついても、既存クラスの新しいメソッドやパラメータとして追加する分には問題ないが、「別の防御システムラッパー」を意味する新規ファイルは原則として作らない。
 
 
 
@@ -281,9 +281,9 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 2026-10、`src/`の是正に続き、`checks/`配下37ファイルおよびそれを配線する`.github/workflows/anjo\_da\_maquina\_protocol.yml`の棚卸しを行った。`checks/\_common.py`のdocstringによれば、このディレクトリは以前別途刷新（33ファイル中28ファイルが`print('initialized...')`のみの中身のないプレースホルダーだった状態から、名称が示す役割に対応する実質的な検査へ置き換え済み）されており、`src/`の「実運用ループ」ほどの深刻な重複は見つからなかった。見つかった問題は以下2点。
 
-\*\*削除: `checks/fifth\_seal\_samson.py`\*\* — 他の全ての検査スクリプトが`checks/\_common.py`の`report\_pass`/`report\_fail`による検査・レポート機構に統合されているのに対し、本ファイルのみ`CHAOS\_MODE`環境変数を読んで劇的な文言（いずれも明記の通り「シミュレート」）を`print`し`sys.exit(1)`するだけで、`\_common.py`を一切importせず実質的な検査を何も行っていなかった。§Aの`active\_defense.py`削除と同一の判断基準（実体を持たないセキュリティシアター）により削除し、ワークフローの対応ステップ(3.1)も削除した。なお`checks/lucifer\_rebellion.py`も同じ`CHAOS\_MODE`を読むが、こちらは実際に難読化攻撃ペイロードを`run\_code\_against\_sefer()`でRuntimeGuardに対して実行し、その結果（突破数）に基づいて`report\_fail`するため、`CHAOS\_MODE`という設計自体は正当であることを確認した。
+\*\*削除: 検査スクリプト1本(演出のみで実体を持たない)\*\* — 他の全ての検査スクリプトが`checks/\_common.py`の`report\_pass`/`report\_fail`による検査・レポート機構に統合されているのに対し、本ファイルのみ`CHAOS\_MODE`環境変数を読んで劇的な文言（いずれも明記の通り「シミュレート」）を`print`し`sys.exit(1)`するだけで、`\_common.py`を一切importせず実質的な検査を何も行っていなかった。§Aの`active\_defense.py`削除と同一の判断基準（実体を持たないセキュリティシアター）により削除し、ワークフローの対応ステップ(3.1)も削除した。なお`checks/guard\_sandbox\_shell\_eval\_bypass.py`も同じ`CHAOS\_MODE`を読むが、こちらは実際に難読化攻撃ペイロードを`run\_code\_against\_runtime\_guard()`でRuntimeGuardに対して実行し、その結果（突破数）に基づいて`report\_fail`するため、`CHAOS\_MODE`という設計自体は正当であることを確認した。
 
-\*\*レビュー済み・変更不要: `camael\_shield.py`/`lucifer\_rebellion.py`間の攻撃ペイロード文字列の重複\*\* — 両ファイルは同種の難読化`os.system`呼び出しパターンを定数として共有するが、検証している性質が異なる。`camael\_shield.py`は「静的検査(ScanSource)または動的検査(Sandbox)のいずれかで必ず捕捉されること」（多層防御の論理和）を検証し、`lucifer\_rebellion.py`は`CHAOS\_MODE`下での動的検査単体の突破件数を検証する。`seraphim\_consensus.py`はマルチLLM異端検知という全く別の関心事であり、重複ではない。意図的な設計であり是正不要と判断した。
+\*\*レビュー済み・変更不要: `checks/guard\_obfuscated\_payload\_bypass.py`/`checks/guard\_sandbox\_shell\_eval\_bypass.py`間の攻撃ペイロード文字列の重複\*\* — 両ファイルは同種の難読化`os.system`呼び出しパターンを定数として共有するが、検証している性質が異なる。`checks/guard\_obfuscated\_payload\_bypass.py`は「静的検査(ScanSource)または動的検査(Sandbox)のいずれかで必ず捕捉されること」（多層防御の論理和）を検証し、`checks/guard\_sandbox\_shell\_eval\_bypass.py`は`CHAOS\_MODE`下での動的検査単体の突破件数を検証する。`checks/audit\_detection\_layer\_consensus.py`はマルチLLM異端検知という全く別の関心事であり、重複ではない。意図的な設計であり是正不要と判断した。
 
 \*\*修正: `.github/workflows/anjo\_da\_maquina\_protocol.yml`の日本語ステップ名・コメントの文字コード破損\*\* — `run:`で実行されるコマンド自体は無事だったが、`name:`・`description:`・`echo`の日本語文字列が、UTF-8バイト列を誤ってShift\_JIS/CP932として解釈し再度UTF-8で保存したことに起因する典型的な文字化け（mojibake）を起こしていた（例: 本来`máquina`の`á`であるべき`\xc3\xa1`が、Shift\_JISの半角カナ単バイトとして誤読され`ﾃ｡`として保存されていた）。バイト単位の機械的逆変換（corrupted文字列をCP932でエンコードしUTF-8でデコードし直す）を試みたが、一部の行（特にギリシャ文字`Β`やラテン拡張の`´`等、本来存在しないはずの文字を含む行）では一貫して失敗し、複数世代にわたる非可逆な文字化けが疑われたため、全行の機械的逆変換は断念した。代わりに、各ステップが実行する`checks/*.py`の内容（既に本棚卸しで全件読了済み）と、機械的逆変換が成功した行（約20行）から復元した文字化けパターンの対応表を手掛かりに、全ての`name:`/`description:`/`echo`文字列を正しい日本語として手動で書き直した。YAML構文としての妥当性（`yaml.safe_load`でのパース、ステップ数が意図した40件と一致すること）は確認済みだが、意味内容の復元は機械的な逆変換ではなく文脈からの再構成であるため、元のコミット時点の原文と一字一句完全に一致する保証はない。
 
@@ -303,17 +303,17 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \### P. リポジトリルート直下の未棚卸しファイルの整理
 
-2026-10、`src/`・`checks/`・`sefer/`・`anjo\_interceptor/`・`adapters/`・`tartarus/`・`tools/`に続き、これまで未調査だったリポジトリルート直下のファイル群を棚卸しした。
+2026-10、`src/`・`checks/`・`runtime\_guard/`・`agent\_interceptor/`・`adapters/`・`adversarial\_training/`・`tools/`に続き、これまで未調査だったリポジトリルート直下のファイル群を棚卸しした。
 
 \*\*削除(旧プロジェクト名`merkabah`への参照が残る死んだコード)\*\*:
-\- `test\_archangels.py` / `test\_doctrines.py` / `test\_parasite.py` / `demo\_honeypot.py` — いずれも`tests/`配下ではなくリポジトリルート直下に置かれ、存在しない`merkabah`モジュールを`import`していた(`find . -iname "merkabah\*"`で確認した通り、現リポジトリ内に`merkabah`という名のモジュールは一切存在しない)。実行すれば`ModuleNotFoundError`で即座に失敗する。`git log --follow`で確認した通り、これらは本リポジトリの最初のコミット(`4f1b48a`、Merkabahからの改名後にリポジトリ全体を一括投入したコミット)の時点から既に死んでいた、改名時に取り残された残骸であり、他のどのファイルからも参照されていない(grep済み)。
+\- リポジトリルート直下の死んだファイル4本(うち1本は旧プロジェクトの世界観に由来する名前、他3本は`test\_doctrines.py`・`test\_parasite.py`・`demo\_honeypot.py`) — いずれも`tests/`配下ではなくリポジトリルート直下に置かれ、存在しない`merkabah`モジュールを`import`していた(`find . -iname "merkabah\*"`で確認した通り、現リポジトリ内に`merkabah`という名のモジュールは一切存在しない)。実行すれば`ModuleNotFoundError`で即座に失敗する。`git log --follow`で確認した通り、これらは本リポジトリの最初のコミット(`4f1b48a`、Merkabahからの改名後にリポジトリ全体を一括投入したコミット)の時点から既に死んでいた、改名時に取り残された残骸であり、他のどのファイルからも参照されていない(grep済み)。
 
 \*\*削除(旧プロジェクト名の空の残骸ファイル)\*\*:
 \- `chotam-merkabah` — 0バイト、拡張子なし。旧プロジェクト名`merkabah`を含むファイル名で、内容は空、他のどこからも参照されていない。
 \- `README\_UNDERGROUND.md` — 0バイト。内容が一切なく、他のどこからも参照されていない。
 
 \*\*削除(機能として一切配線されていない未使用スタブ)\*\*:
-\- `registry.json` — `{"verified\_clients": {}, "revoked\_clients": []}`という構造を持つが、`registry.json`・`verified\_clients`・`revoked\_clients`のいずれの文字列も、`.py`/`.md`/`.yml`/`.html`のどのファイルからも一切参照されていない(grep済み)。`maquina\_gatekeeper.py`のクライアント証明書機構とは別に、クライアントの検証済み/失効済み状態を追跡する機能が将来的に意図されていたと推測されるが、配線された形跡が一切なく、現時点では実体を持たない死んだスタブと判断した。
+\- `registry.json` — `{"verified\_clients": {}, "revoked\_clients": []}`という構造を持つが、`registry.json`・`verified\_clients`・`revoked\_clients`のいずれの文字列も、`.py`/`.md`/`.yml`/`.html`のどのファイルからも一切参照されていない(grep済み)。`runtime\_audit\_gatekeeper.py`のクライアント証明書機構とは別に、クライアントの検証済み/失効済み状態を追跡する機能が将来的に意図されていたと推測されるが、配線された形跡が一切なく、現時点では実体を持たない死んだスタブと判断した。
 
 これら7ファイルはいずれも上記コミット`4f1b48a`以降一度も変更されておらず、`--follow`付きの個別`git log`で確認した通り独自の変更履歴を持たない。
 
@@ -322,7 +322,7 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 \*\*確認済み(変更不要・削除候補ではあるが本修正の範囲外として報告のみ)\*\*:
 \- `assets/demo.mp4`(約11MB) — `README.md`・`architecture.html`のいずれからも参照されていない。リポジトリを11MB肥大化させているが、ユーザー自身が保持しているデモ録画である可能性があり、メディアファイルの削除は後戻りしにくい判断のため、本修正では削除せずユーザーへの報告事項とした。
 \- `MANIFEST.in`・`shield\_rules.json`・`hooks/pre-commit`・`dummy\_secrets/`・`COMMANDS.md`(証明書節以外)・`architecture.html` — いずれも実際に参照され機能している、または意図的なハニーポット/ドキュメントであることを確認した。`runtime\_guard.egg-info/`は`.gitignore`の`\*.egg-info/`パターンにより元々Git管理外であることを確認した(pip editable installのビルド成果物)。
-\- `zk\_audit\_report.xml` — `adapters/junit\_xml\_exporter.py`・`checks/heavenly\_tablets\_zkp.py`が生成する成果物だが、`.gitignore`の対象になっておらずコミット済みの内容は古い実行結果のスナップショットになっている。`sefer/audit\_chain.jsonl`と同種の「テスト実行で汚染されるがgit管理されている」ファイルであり、本修正の範囲外として変更しなかった(将来的に`.gitignore`への追加を検討する価値はある)。
+\- `zk\_audit\_report.xml` — `adapters/junit\_xml\_exporter.py`・`checks/check\_zkp\_audit\_export\_status.py`が生成する成果物だが、`.gitignore`の対象になっておらずコミット済みの内容は古い実行結果のスナップショットになっている。`runtime\_guard/audit\_chain.jsonl`と同種の「テスト実行で汚染されるがgit管理されている」ファイルであり、本修正の範囲外として変更しなかった(将来的に`.gitignore`への追加を検討する価値はある)。
 
 
 
