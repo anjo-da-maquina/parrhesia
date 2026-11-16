@@ -61,7 +61,7 @@ class ThreatIntelGatherer:
         report_target = "threat_intel_aidd_report.json"
         # [2026-10 修正] これは我々自身(ThreatIntel)が生成した信頼済みの内部レポート
         # であり、AIが生成した未検証コードではない。したがって
-        # DefenseOrchestrator.execute_ai_intent()(ScanSource静的解析 + Sandalphon/Docker
+        # DefenseOrchestrator.execute_ai_intent()(ScanSource静的解析 + DockerSandbox
         # 動的検証を含むAI生成コード審査パイプライン全体)を通す必要はない。
         # 修正前は固定文字列 "print('safe_recon_save')" をここに通していたが、
         # これは実質的に無意味な審査であるにもかかわらず、Dockerデーモンが

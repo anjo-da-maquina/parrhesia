@@ -52,7 +52,7 @@ class OllamaAgentExecutor:
     def __init__(self, workspace_root=".", model_name="llama3.1"):
         self.workspace_root = Path(workspace_root).resolve()
         self.interceptor = IntentInterceptor(workspace_root=self.workspace_root)
-        # [2026-10] ScanSource(静的AST解析)とSandalphon(Docker隔離結界での
+        # [2026-10] ScanSource(静的AST解析)とDockerSandbox(Docker隔離結界での
         # 動的実行検証・既定で強制)をこの実運用ループにも統合する。
         # Dockerデーモンが起動していない環境では、DefenseOrchestratorはゼロトラスト
         # 方針によりここで PermissionError を送出し、全てのAI実行を拒否する。
@@ -197,14 +197,14 @@ class OllamaAgentExecutor:
                     break
 
                 try:
-                    # ScanSource(静的AST解析) + Sandalphon(Docker隔離結界での
+                    # ScanSource(静的AST解析) + DockerSandbox(Docker隔離結界での
                     # 動的実行検証)を通す。IntentInterceptorの文字列検知を
                     # すり抜ける難読化・動的生成コードはここで捕捉される。
                     self.defense.execute_ai_intent(
                         action_req.get("content", ""), str(action_req.get("target", ""))
                     )
                 except PermissionError as e:
-                    print(f"=> [システム: Defense/Sandalphon 遮断!!] {e}")
+                    print(f"=> [システム: Defense/DockerSandbox 遮断!!] {e}")
                     self.messages.append({"role": "user", "content": f"拒絶されました。理由: {e}"})
                     continue
 

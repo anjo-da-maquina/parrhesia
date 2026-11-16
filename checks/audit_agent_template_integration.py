@@ -46,7 +46,7 @@ def main():
     if "from runtime_guard import Sandbox" not in text:
         report_fail(NAME, "runtime_guard.Sandbox がimportされていません。OSレベルの最終防衛線が外れています。")
     if "from defense_orchestrator import DefenseOrchestrator" not in text:
-        report_fail(NAME, "defense_orchestrator.DefenseOrchestrator がimportされていません。ScanSource/Sandalphonの事前検閲が外れています。")
+        report_fail(NAME, "defense_orchestrator.DefenseOrchestrator がimportされていません。ScanSource/DockerSandboxの事前検閲が外れています。")
     if "with Sandbox(" not in text:
         report_fail(NAME, "_execute_safe_action が Sandbox コンテキスト内でファイルI/Oを行っていません。")
     if "self.defense.execute_ai_intent" not in text and "defense.execute_ai_intent" not in text:

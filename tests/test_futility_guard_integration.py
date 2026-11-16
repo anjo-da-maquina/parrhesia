@@ -5,8 +5,9 @@
 
 test_agent_loop_sandbox_integration.pyと同じ手法(サブプロセス起動 +
 runtime_audit_gatekeeper/ollamaのスタブ化)でrsa/ollamaパッケージへの依存を避ける。
-Dockerデーモンは不要(FutilityGuardの判定はAegis/Sandalphonの呼び出し前に
-行われるため、空転が検知された場合はDockerに一度も到達しない)。
+Dockerデーモンは不要(FutilityGuardの判定はDefenseOrchestrator(ScanSource/
+DockerSandbox)の呼び出し前に行われるため、空転が検知された場合はDockerに
+一度も到達しない)。
 """
 import subprocess
 import sys

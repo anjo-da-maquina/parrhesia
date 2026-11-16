@@ -46,12 +46,12 @@ VALID_OLLAMA_LOOP_TEXT = (
 )
 
 
-def _write_fixtures(root, orchestrator_text=VALID_ORCHESTRATOR_TEXT, sandalphon_text=VALID_DOCKER_SANDBOX_TEXT,
+def _write_fixtures(root, orchestrator_text=VALID_ORCHESTRATOR_TEXT, docker_sandbox_text=VALID_DOCKER_SANDBOX_TEXT,
                      ollama_text=VALID_OLLAMA_LOOP_TEXT, include_ollama_loop=True):
     src_dir = root / "src"
     src_dir.mkdir(parents=True, exist_ok=True)
     (src_dir / "defense_orchestrator.py").write_text(orchestrator_text, encoding="utf-8")
-    (src_dir / "docker_sandbox_executor.py").write_text(sandalphon_text, encoding="utf-8")
+    (src_dir / "docker_sandbox_executor.py").write_text(docker_sandbox_text, encoding="utf-8")
     if include_ollama_loop:
         (src_dir / "ollama_agent_loop.py").write_text(ollama_text, encoding="utf-8")
 
@@ -128,13 +128,13 @@ def test_fails_when_timeout_handling_is_missing(monkeypatch, tmp_path):
     _expect_fail(monkeypatch, tmp_path)
 
 
-def test_fails_when_sandalphon_daemon_check_is_missing(monkeypatch, tmp_path):
+def test_fails_when_docker_sandbox_daemon_check_is_missing(monkeypatch, tmp_path):
     """[核心] `docker_sandbox_executor.py`が実際のDockerデーモン接続確認
     (`docker info`相当)を行っていない場合、正しくFAILする(CLIバイナリ
     の存在確認だけでは偽陽性になるため)。"""
     _write_fixtures(
         tmp_path,
-        sandalphon_text=VALID_DOCKER_SANDBOX_TEXT.replace("docker info", "docker --version")
+        docker_sandbox_text=VALID_DOCKER_SANDBOX_TEXT.replace("docker info", "docker --version")
         .replace("check_docker_available", "something_else"),
     )
     _expect_fail(monkeypatch, tmp_path)

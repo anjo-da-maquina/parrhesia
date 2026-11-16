@@ -134,7 +134,8 @@ def test_find_undeclared_imports_skips_local_arena_local_modules(tmp_path, monke
     使われている確立済みのパターン)場合、`checks/`配下の新しいファイルが
     同じ流儀でimportしても、サードパーティ未宣言として誤検知しては
     ならない。実機で確認済み: 新設した`checks/sandalphon_rejection_memory_
-    guard.py`(§BZ)がこの流儀で`selfplay_core`をimportしたところ、
+    guard.py`(§BZ、現 `checks/guard_rejection_memory.py`)がこの流儀で
+    `selfplay_core`をimportしたところ、
     修正前の本検査自身がそれを誤検知し、マージ前のリポジトリ全体pytest
     実行で初めて発覚した。
     """

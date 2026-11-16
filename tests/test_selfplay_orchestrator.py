@@ -3,7 +3,7 @@
 promoteするための回帰テスト。
 
 実機にOllama/Dockerが無い環境(本テスト実行環境を含む)では、
-`DefenseOrchestrator.execute_ai_intent` はSandalphon(Docker)段でフェイルクローズド
+`DefenseOrchestrator.execute_ai_intent` はDockerSandbox(Docker)段でフェイルクローズド
 に`PermissionError`を送出する。これは「防御が機能している」ことの証左であり、
 `SelfplayOrchestrator.run_selfplay_cycles`は本来これを捕捉して
 「✅ 迎撃成功」として扱うべきだが、修正前は

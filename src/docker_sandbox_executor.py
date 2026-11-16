@@ -117,7 +117,7 @@ def run_in_docker_sandbox(code: str, timeout: int = 5) -> dict:
             "docker", "run", "--rm",
             "--network", "none",
             "--read-only",
-            # [新設 2026-10 §CF] これまでSandalphonの隔離は「ネットワーク
+            # [新設 2026-10 §CF] これまでDockerSandbox(旧名Sandalphon)の隔離は「ネットワーク
             # 完全遮断・読み取り専用・非rootユーザー」の3点のみに依存して
             # いたが、コンテナ自体にはDockerの既定のLinuxケーパビリティ
             # 集合(CAP_DAC_OVERRIDE・CAP_SETUID・CAP_SETGID・

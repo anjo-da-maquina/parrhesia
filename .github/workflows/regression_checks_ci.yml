@@ -253,7 +253,7 @@ jobs:
         run: python checks/audit_log_format_integrity.py
       - name: 20.5. Docker強制サンドボックス化の退行監査 (Mandatory Sandbox Regression Audit)
         # [脆弱性修正 2026-10 §BC] 同種の配線漏れ。DefenseOrchestratorのDocker隔離
-        # 結界(Sandalphon)が、既定でフェイルクローズドな強制のまま実運用
+        # 結界(DockerSandbox、旧名Sandalphon)が、既定でフェイルクローズドな強制のまま実運用
         # ループに統合され続けているかを静的検証するスクリプトが、CI
         # ワークフローに一度も追加されていなかった。
         if: success()
@@ -464,8 +464,8 @@ jobs:
         # あり、恒久対策には「城を囲む外壁」すなわちOSレベル(カーネル
         # レベル)の強制が必要であると記してきた。本件はユーザーからその
         # 恒久対策への着手を依頼され、既存のOSレベル隔離結界
-        # (`src/sandalphon_jail.py`のSandalphon、Dockerコンテナ内での
-        # 動的実行検証)を調査した結果の修正である。
+        # (`src/sandalphon_jail.py`のSandalphon、現 `src/docker_sandbox_executor.py`、
+        # Dockerコンテナ内での動的実行検証)を調査した結果の修正である。
         #
         # 実際のdocker run呼び出しを確認したところ、ネットワーク完全
         # 遮断・読み取り専用・非rootユーザーの3点にしか依存しておらず、
@@ -494,8 +494,9 @@ jobs:
         # fd・関数ポインタを使った迂回」は、特権を一切必要とせず、無権限
         # プロセスのままでも到達できるシステムコールの範疇にある。
         #
-        # `src/sandalphon/seccomp-profile.json`(denylist方式のseccomp
-        # プロファイル)を新設し、`run_in_sandalphon()`の`docker run`へ
+        # `src/docker_sandbox/seccomp-profile.json`(denylist方式のseccomp
+        # プロファイル、旧パス`src/sandalphon/seccomp-profile.json`)を新設し、
+        # `run_in_docker_sandbox()`(旧名`run_in_sandalphon()`)の`docker run`へ
         # `--security-opt=seccomp=...`で適用した。プロセス生成・ptrace・
         # mount・カーネルモジュール・特権関連・生ソケット(--network none
         # の上の多層防御)・時刻変更・NUMA/keyringといった、危険だが
@@ -511,7 +512,7 @@ jobs:
         # 正直な未着手の課題として残した。
         #
         # 本検査は3段階で検証する: (A) プロファイルJSON自体の静的健全性、
-        # (B) `run_in_sandalphon()`が実際にこのプロファイルを参照して
+        # (B) `run_in_docker_sandbox()`(旧名`run_in_sandalphon()`)が実際にこのプロファイルを参照して
         # いるかの静的確認、(C) Dockerを一切使わず、libseccomp(C ABI)
         # への直接ctypes呼び出しで、同じdenylistをこの実機のカーネルへ
         # 直接ロードし、denylist上の各システムコールが本当にEPERMで

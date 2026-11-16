@@ -9,7 +9,7 @@ src/openai_agent_loop.py
      本番では絶対に通らない死んだコードパスだった。
   2. `_execute_safe_action` が実際のファイルI/Oを一切行わないダミー実装で、
      `runtime_guard.Sandbox` (OSレベルの最終防衛線) も `DefenseOrchestrator`
-     (ScanSource静的解析 + IntentInterceptor + Sandalphon動的隔離検証) も
+     (ScanSource静的解析 + IntentInterceptor + DockerSandbox動的隔離検証) も
      一切統合されていなかった。つまり「テンプレート」と言いながら、
      これをコピーして拡張した開発者は防壁を一つも使わないコードを
      書くことになってしまう構造的な欠陥があった。
@@ -18,7 +18,7 @@ src/openai_agent_loop.py
 同一の防御構成を、OpenAI API向けに適用し直したものである:
 
   - IntentInterceptor によるハニーポット・ディレクトリトラバーサル検知
-  - DefenseOrchestrator (ScanSource + IntentInterceptor + Sandalphon) による
+  - DefenseOrchestrator (ScanSource + IntentInterceptor + DockerSandbox) による
     実行前の多層検閲（Dockerデーモン不在時はフェイルクローズドで拒否）
   - runtime_guard.Sandbox によるOSレベルのファイルI/O強制隔離
 
@@ -81,7 +81,7 @@ class OpenAIAgentExecutor:
         self.workspace_root = Path(workspace_root).resolve()
         self.interceptor = IntentInterceptor(workspace_root=self.workspace_root)
         # [2026-10] ollama_agent_loop.py と同様、ScanSource(静的AST解析)と
-        # Sandalphon(Docker隔離結界、既定で強制)をこのループにも統合する。
+        # DockerSandbox(Docker隔離結界、既定で強制)をこのループにも統合する。
         # Dockerデーモンが起動していない環境では、DefenseOrchestratorはゼロトラスト
         # 方針によりここで PermissionError を送出し、全てのAI実行を拒否する。
         self.defense = DefenseOrchestrator(workspace_root=self.workspace_root)
@@ -167,14 +167,14 @@ class OpenAIAgentExecutor:
                     break
 
                 try:
-                    # ScanSource(静的AST解析) + Sandalphon(Docker隔離結界での
+                    # ScanSource(静的AST解析) + DockerSandbox(Docker隔離結界での
                     # 動的実行検証)を通す。IntentInterceptorの文字列検知を
                     # すり抜ける難読化・動的生成コードはここで捕捉される。
                     self.defense.execute_ai_intent(
                         action_req.get("content", ""), str(action_req.get("target", ""))
                     )
                 except PermissionError as e:
-                    print(f"=> [システム: Defense/Sandalphon 遮断!!] {e}")
+                    print(f"=> [システム: Defense/DockerSandbox 遮断!!] {e}")
                     self.messages.append({"role": "user", "content": f"拒絶されました。理由: {e}"})
                     continue
 
