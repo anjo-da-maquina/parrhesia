@@ -597,9 +597,9 @@ chain.record("AI_ACTION", {...})
 
 なお、テスト実装上の注意として、`runtime\_guard`モジュールは`sys.addaudithook`/`os.write`をプロセス全体へ副作用として適用するため、`importlib.reload()`すると`os.write`の多重ラップによる無限再帰を引き起こすことを実機で発見した(テスト実装中に`tests/test\_read\_restriction.py`で`RecursionError`として再現)。本番コードに影響する脆弱性ではないが、テストの書き方として記録しておく: 本モジュールを検証する際はreloadせず、`monkeypatch.setattr()`でパス定数とキャッシュ辞書を直接差し替えること。
 
-\### AH. maquina\_gatekeeper.py の`ZKAuditTrail` — 「ゼロ知識証明」を名乗る鍵無しハッシュ連鎖と、実質的に死んでいた改ざん検知 (2026-10)
+\### AH. runtime\_audit\_gatekeeper.py の`ZKAuditTrail` — 「ゼロ知識証明」を名乗る鍵無しハッシュ連鎖と、実質的に死んでいた改ざん検知 (2026-10)
 
-\*\*発見\*\*: §AEで`runtime_guard/audit_chain.py`の`SignedAuditChain`を修正した後、同種の「名前だけの暗号機構」が別の場所にも存在することを疑い、`maquina_gatekeeper.py`を再精査した。`ZKAuditTrail.verify_and_record()`には、互いに補強し合う形の欠陥が二つ重なっていた。
+\*\*発見\*\*: §AEで`runtime_guard/audit_chain.py`の`SignedAuditChain`を修正した後、同種の「名前だけの暗号機構」が別の場所にも存在することを疑い、`runtime_audit_gatekeeper.py`を再精査した。`ZKAuditTrail.verify_and_record()`には、互いに補強し合う形の欠陥が二つ重なっていた。
 
 \*\*欠陥1(鍵無し・改ざん耐性ゼロ)\*\*: "current\_hash"は§AE修正前の`SignedAuditChain`と全く同じ、秘密鍵を使わない単純なSHA-256だった。ファイルへの書き込み権限を持つ攻撃者は、任意のブロック(侵入記録等)を削除し、残りのチェーンを先頭から秘密鍵なしに再計算して書き直すだけで、改ざんを一切検知されずに証拠を消せた。
 
@@ -613,7 +613,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*残存する限界(誠実に明記する)\*\*: §AEと同様、本機構は鍵ファイル(`.zk_audit_signing_key`)を読めない攻撃者による改ざんを防ぐものであり、ホストOS上で鍵ファイル自体を読み書きできる特権(root等、本フレームワークの脅威モデルの範囲外)を持つ攻撃者までは防げない。
 
-\*\*テスト\*\*: `tests/test_zk_audit_trail_chain_integrity.py`を新設し、(1)正常系での記録、(2)複数回記録時のチェーン連結、(3)あるブロックを削除し鍵無しSHA-256で再計算した改ざんが検知されること(§AEと同種の核心テスト)、(4)プロセス起動直後(グローバル状態が改ざんを一切記憶していない状態)を模した呼び出しでも改ざんが検知されること(欠陥2の回帰テスト)、(5)"zk\_proof"フィールドが固定文字列の見せかけから誠実な注記に変わっていること、(6)秘密鍵ファイルが0600権限で生成されること、の6パターンを固定した。`checks/audit_package_boundary_isolation.py`・`checks/audit_agent_template_integration.py`(`maquina_gatekeeper.py`を検証するCI向けスクリプト)を実行し、本修正後も正しく動作することを確認した。`mini_pytest.py`実行結果は`PASS=115`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
+\*\*テスト\*\*: `tests/test_zk_audit_trail_chain_integrity.py`を新設し、(1)正常系での記録、(2)複数回記録時のチェーン連結、(3)あるブロックを削除し鍵無しSHA-256で再計算した改ざんが検知されること(§AEと同種の核心テスト)、(4)プロセス起動直後(グローバル状態が改ざんを一切記憶していない状態)を模した呼び出しでも改ざんが検知されること(欠陥2の回帰テスト)、(5)"zk\_proof"フィールドが固定文字列の見せかけから誠実な注記に変わっていること、(6)秘密鍵ファイルが0600権限で生成されること、の6パターンを固定した。`checks/audit_package_boundary_isolation.py`・`checks/audit_agent_template_integration.py`(`runtime_audit_gatekeeper.py`を検証するCI向けスクリプト)を実行し、本修正後も正しく動作することを確認した。`mini_pytest.py`実行結果は`PASS=115`(新規+6)`XFAIL=2 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)。
 
 \### AI. src/incident\_reset\_tool.py `IncidentResetTool` — 不可逆な破壊的操作(焦土作戦)に経路の安全装置が無かった (2026-10)
 
@@ -764,9 +764,9 @@ chain.record("AI_ACTION", {...})
 
 \*\*2026-11 追記\*\*: `src/verdict.py`自体に残っていた「異端モジュール」「異端関数」「能天使カマエルの異端審問」等の表示文言も中立化し、現在は「禁止モジュール」「禁止関数」「[審査]」等の表現になっている。挙動・戻り値・終了コードは本修正時点から変更していない(`tests/test_shield_rebuild.py`で再確認済み)。
 
-\### AS. maquina\_gatekeeper.py — Windows以外では「ハードウェア指紋」が全ホスト共通の固定値だった (2026-10)
+\### AS. runtime\_audit\_gatekeeper.py — Windows以外では「ハードウェア指紋」が全ホスト共通の固定値だった (2026-10)
 
-\*\*発見\*\*: `maquina_gatekeeper.py`の`get_machine_id()`(証明書を発行対象の実機に縛る「ハードウェア指紋」の入力元)を精査したところ、`platform.system() == "Windows"`の分岐しか存在せず、Linux・macOSではこの関数が無条件に`"UNKNOWN_MACHINE_ID"`という\*\*固定文字列\*\*を返すことが分かった。実機検証済み: 本サンドボックス(Linux/x86_64)で直接呼び出し、ホストの識別情報を一切含まない定数的な指紋が算出されることを確認した。
+\*\*発見\*\*: `runtime_audit_gatekeeper.py`の`get_machine_id()`(証明書を発行対象の実機に縛る「ハードウェア指紋」の入力元)を精査したところ、`platform.system() == "Windows"`の分岐しか存在せず、Linux・macOSではこの関数が無条件に`"UNKNOWN_MACHINE_ID"`という\*\*固定文字列\*\*を返すことが分かった。実機検証済み: 本サンドボックス(Linux/x86_64)で直接呼び出し、ホストの識別情報を一切含まない定数的な指紋が算出されることを確認した。
 
 これが特に重大なのは、本リポジトリのCIワークフロー(`regression_checks_ci.yml`)が`ubuntu-latest`(Linux)で動いていることである。つまり、`enforce_maquina_seal`が行っている「この証明書は本当にこのマシン用に発行されたものか」(`get_absolute_hardware_fingerprint() != cert['payload']['hardware_fingerprint']`)という検証が、実運用上最も頻繁に通る環境(Linux CI)において、「同一アーキテクチャ・同一OSなら誰でも同じ指紋になる」という、個体識別としては機能していない状態に縮退していた。
 
@@ -815,7 +815,7 @@ awaken()
 
 \### AV. runtime_guard/\_\_init\_\_.py — ネストした`Sandbox`の`allowed_dirs`絞り込みが、実際には\*\*広げる\*\*方向にも効いてしまい、サンドボックスをファイルシステム全体まで脱獄できた (2026-10)
 
-\*\*発見\*\*: §AUで`adversarial_training/selfplay_engine_core.build_forge_script()`を、AI生成ペイロードを`with Sandbox(allowed_dirs=[tartarus_dir], restrict_reads=True):`の内側で`exec()`する方式に修正した直後、「この新しい防御自体は本当に安全か」を再点検する目的で`Sandbox.__init__`のネスト処理(外側の`with Sandbox(...):`の中でさらに`with Sandbox(...):`を開いた場合の挙動)を精査した。すると、子スコープの`allowed_dirs`を親の範囲内に絞り込む判定が、以下の2条件をORで結合したものになっていた:
+\*\*発見\*\*: §AUで`adversarial_training/selfplay_engine_core.build_forge_script()`を、AI生成ペイロードを`with Sandbox(allowed_dirs=[local_arena_dir], restrict_reads=True):`の内側で`exec()`する方式に修正した直後、「この新しい防御自体は本当に安全か」を再点検する目的で`Sandbox.__init__`のネスト処理(外側の`with Sandbox(...):`の中でさらに`with Sandbox(...):`を開いた場合の挙動)を精査した。すると、子スコープの`allowed_dirs`を親の範囲内に絞り込む判定が、以下の2条件をORで結合したものになっていた:
 
 ```
 any(d == pd or d.is_relative_to(pd) for pd in parent_dirs)   # (A) dがpdの配下
@@ -830,7 +830,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*原因\*\*: ネストした`Sandbox`の絞り込みロジックを実装した際、「子は親の配下でなければならない(子 ⊆ 親)」という設計意図を、パス包含関係の\*\*両方向\*\*(「子が親の配下にあるか」と「親が子の配下にあるか」)でチェックしてしまい、本来チェックすべきでない後者の方向(親が子の配下にある、つまり子が親の祖先である)まで「絞り込みとして許可」の条件に含めてしまっていた。`allowed_hosts`側の絞り込みは単純な集合の`.intersection()`で実装されており、この種の方向性の誤りが入り込む余地がそもそも無かった(本修正の過程で確認済み、該当箇所は変更していない)。本件はこのネスト処理自体を直接テストする既存の回帰テストが一件も存在しなかったため、`Sandbox`の基本的な単方向の防御(`allowed_dirs`外への書き込みを拒否する)を検証する既存テスト群だけでは、ネストした場合の絞り込みの崩壊には一度も気付けなかった。
 
-本件の発見経緯そのものが重要である。§AUの修正は「AI生成コードを`with Sandbox(...):`の中で`exec()`する」という、本プロジェクトの実運用コード(`src/ollama_agent_loop.py`等)と同一の、正しいパターンへの修正だった。しかし`runtime_guard.scan_source()`の`forbidden_modules`(`{"pickle", "ctypes", "importlib", "socket", "urllib", "requests", "http", "subprocess", "os"}`)と`agent_interceptor/intent_checker.py`の`IntentInterceptor.forbidden_modules`(`{"os", "subprocess", "sys", "pty"}`)のいずれにも`"runtime_guard"`自体は含まれていないことを確認した。つまりAI生成コードは`import runtime_guard`し、`runtime_guard.Sandbox(allowed_dirs=["/"])`を自ら開くことを一切禁止されていない。もし本脆弱性を直さずに§AUの修正だけを入れていた場合、「`with Sandbox(...):`の中で実行する」という正しい防御パターンそのものが、十分に賢い(あるいは単に`sefer`を知っている)攻撃コードによって、ネストした`Sandbox`を自分で開くだけで完全に無力化されてしまう、という事態になっていた。§AUの修正によって生まれた新しい信頼の土台(「`Sandbox`の中で実行すれば安全」)を、本件の修正前の状態のまま使っていたら、その土台自体に穴が開いていたことになる。
+本件の発見経緯そのものが重要である。§AUの修正は「AI生成コードを`with Sandbox(...):`の中で`exec()`する」という、本プロジェクトの実運用コード(`src/ollama_agent_loop.py`等)と同一の、正しいパターンへの修正だった。しかし`runtime_guard.scan_source()`の`forbidden_modules`(`{"pickle", "ctypes", "importlib", "socket", "urllib", "requests", "http", "subprocess", "os"}`)と`agent_interceptor/intent_checker.py`の`IntentInterceptor.forbidden_modules`(`{"os", "subprocess", "sys", "pty"}`)のいずれにも`"runtime_guard"`自体は含まれていないことを確認した。つまりAI生成コードは`import runtime_guard`し、`runtime_guard.Sandbox(allowed_dirs=["/"])`を自ら開くことを一切禁止されていない。もし本脆弱性を直さずに§AUの修正だけを入れていた場合、「`with Sandbox(...):`の中で実行する」という正しい防御パターンそのものが、十分に賢い(あるいは単に`runtime_guard`を知っている)攻撃コードによって、ネストした`Sandbox`を自分で開くだけで完全に無力化されてしまう、という事態になっていた。§AUの修正によって生まれた新しい信頼の土台(「`Sandbox`の中で実行すれば安全」)を、本件の修正前の状態のまま使っていたら、その土台自体に穴が開いていたことになる。
 
 \*\*対応\*\*: 絞り込み条件から(B)(「親が子の配下にある」方向の判定)を削除し、(A)(「子が親の配下にある」方向の判定)のみを残した。これにより、子が親より広い(または無関係な)ディレクトリを指定した場合、そのディレクトリは絞り込み結果から単純に除外される(昇格は起こらない)。子が親の真の配下にある、正当な狭いディレクトリを指定した場合の挙動(絞り込みが機能し、その狭い範囲内でのみ操作が許可される)は変更していない。
 
@@ -846,7 +846,7 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 \*\*たとえ話\*\*: これは、ボディーガード(NetworkBlockDemoの結界)が「不審な電話を一切取り次がせない」という方針で雇われたのに、実際に配置された場所が、依頼主(オーケストレータ自身)が部下(Ollama)に電話で指示を出す、その電話線の途中だった、という状態である。ボディーガードは言われた通りの仕事(電話線を物理的に遮断する)を正確に実行しているのに、配置が間違っていたため、外部からの不審な電話だけでなく、依頼主自身の業務連絡まで毎回確実に切られてしまう。結果として、依頼主が部下に「この新しい手口を学んでおけ」と指示を出そうとする(`learn_threat`)たびに、その指示自体が通らず、部下は何も学習できないまま、何も知らなかった時と同じ状態で次の攻撃に対処し続けることになる。
 
-\*\*原因\*\*: §Lの決定(「`NetworkBlockDemo`はローカルOllama通信を壊すため実運用パイプラインに統合しない」)は、当時存在していた個別ファイル群(`mythos_weaponization.py`等、既に`defense_orchestrator.py`の新設に伴い統合・整理された旧ファイル群)を対象に下されたものだった。その後`src/selfplay_orchestrator.py`が、既存の`ThreatIntelGatherer`・`PayloadWeaponization`(`intelligence_cycle.py`)・`OllamaSelfplayRound`(`ollama_selfplay_round.py`)を束ねる新しい統括クラスとして新設された際、「もっと多層的な防御に見せるため」`NetworkBlockDemo`を追加で組み込む判断がなされたと見られるが、その時点で§Lの決定(なぜ統合しないことにしたか)が再確認されなかった。`OllamaSelfplayRound.defend_and_execute()`が内部でOllama通信を行うという事実は、`ollama_selfplay_round.py`を読まなければ分からず、`selfplay_orchestrator.py`だけを見ていると「`NetworkBlockDemo`の結界を追加するのは安全そうだ」と見えてしまう、モジュール間の依存を見落としやすい構造的な死角だった。
+\*\*原因\*\*: §Lの決定(「`NetworkBlockDemo`はローカルOllama通信を壊すため実運用パイプラインに統合しない」)は、当時存在していた個別ファイル群(`PayloadWeaponization`の前身ファイル等、既に`defense_orchestrator.py`の新設に伴い統合・整理された旧ファイル群)を対象に下されたものだった。その後`src/selfplay_orchestrator.py`が、既存の`ThreatIntelGatherer`・`PayloadWeaponization`(`intelligence_cycle.py`)・`OllamaSelfplayRound`(`ollama_selfplay_round.py`)を束ねる新しい統括クラスとして新設された際、「もっと多層的な防御に見せるため」`NetworkBlockDemo`を追加で組み込む判断がなされたと見られるが、その時点で§Lの決定(なぜ統合しないことにしたか)が再確認されなかった。`OllamaSelfplayRound.defend_and_execute()`が内部でOllama通信を行うという事実は、`ollama_selfplay_round.py`を読まなければ分からず、`selfplay_orchestrator.py`だけを見ていると「`NetworkBlockDemo`の結界を追加するのは安全そうだ」と見えてしまう、モジュール間の依存を見落としやすい構造的な死角だった。
 
 \*\*対応\*\*: `src/selfplay_orchestrator.py`から`NetworkBlockDemo`のimport・インスタンス化・`activate_seal()`/`deactivate_seal()`の呼び出しを削除した。AI生成ペイロードの実行時の通信遮断そのものは、`defend_and_execute()`が呼ぶ`DefenseOrchestrator.execute_ai_intent()`内で、既にDockerコンテナの`--network none`によってOSレベルで提供されている(`src/docker_sandbox_executor.py`、§Aで導入)。`NetworkBlockDemo`の結界はそれより弱い追加の一層でしかなく、ここでの展開は保護の上積みなしに正規の学習通信を壊すだけだったため、削除という判断をした。レポート生成文言(`SelfplayReportGenerator.generate_report`)の「通信遮断結界」という記述も、実際に機能している防御層(認知的防壁・Dockerの隔離結界)に即した記述へ修正した。
 
@@ -1243,9 +1243,9 @@ any(pd == d or pd.is_relative_to(d) for pd in parent_dirs)   # (B) pdがdの配�
 
 **実装中の自己訂正(自白)**: 完成直後、本検査自身をリポジトリ全体に対して実行する統合テスト(`test_file_with_no_except_reports_not_applicable`)を書いた際、`main()`内の当初の実装が`"except" not in text`という文字列部分一致でファイルの対象外判定をしていたため、テスト用のダミーファイルに書いた`'no except here'`という無関係な文字列リテラルの中の"except"という部分文字列に反応し、本来NOT_APPLICABLEになるべき場合にPASSを報告してしまうという、自己発見の誤りがあった。これは`audit_security_flag_test_coverage.py`が自分自身のコメント内の例示コードを誤検知した時と全く同じ種類のミス(文字列部分一致による自己言及的な誤爆)であり、正直に認める。astで実際にtry/except構文の有無を判定する`_has_any_except_handler()`に置き換えて修正し、専用の回帰テストを追加した。
 
-**検証**: `tests/test_jerahmeel_fail_open_guard.py`(11件)・`tests/test_audit_hook_registration_fails_closed.py`(1件)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.75として配線し、配線漏れ検知テストが通ることを確認。リポジトリ全体のpytestを再実行し、258 passed(§BR時点の246から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/jerahmeel_fail_open_guard.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した。
+**検証**: `tests/test_guard_fail_open_exception.py`(11件)・`tests/test_audit_hook_registration_fails_closed.py`(1件)を新設。`.github/workflows/regression_checks_ci.yml`にステップ22.75として配線し、配線漏れ検知テストが通ることを確認。リポジトリ全体のpytestを再実行し、258 passed(§BR時点の246から12件増加)・既存の無関係な5件のサンドボックス固有の失敗のみであることを確認した。`checks/guard_fail_open_exception.py`を実機で直接実行し、現時点のリポジトリ全体でPASSすることを確認した。
 
-**残存する限界(正直に記す)**: (1) 本体が`pass`一文のみの場合しか検知しない(`continue`・`...`・部分的なログ出力の亜種は検知範囲外)。(2) 近傍コメントの「存在」のみを見ており、その内容が本当にその握り潰しを正当化しているかの妥当性までは判定しない――コメントさえあれば(内容が的を外れていても)通過する、意図的な「判定ではなく開示の強制」という設計。(3) このため、悪意または不注意により「残存する限界」というマーカー文字列だけを機械的に貼り付けて本検査を回避することは原理的に可能であり、本天使は「レビュアーが読むべき場所を示す」ことまでしか保証しない。
+**残存する限界(正直に記す)**: (1) 本体が`pass`一文のみの場合しか検知しない(`continue`・`...`・部分的なログ出力の亜種は検知範囲外)。(2) 近傍コメントの「存在」のみを見ており、その内容が本当にその握り潰しを正当化しているかの妥当性までは判定しない――コメントさえあれば(内容が的を外れていても)通過する、意図的な「判定ではなく開示の強制」という設計。(3) このため、悪意または不注意により「残存する限界」というマーカー文字列だけを機械的に貼り付けて本検査を回避することは原理的に可能であり、本検査は「レビュアーが読むべき場所を示す」ことまでしか保証しない。
 
 ### §BT: §11.9フェーズC着手。`src/ollama_agent_loop.py`の実運用ループで「検証されると宣言されていたが実際には検証されていなかった」パス結合を発見・修正し、一般化検知する新しい検査(`checks/guard_unvalidated_path_join.py`)を追加
 
@@ -1481,7 +1481,7 @@ Pythonのaudit event仕様を実機で直接確認したところ、UDPソケッ
 
 (2)については、より安全な手順――完全に隔離された子プロセス(`subprocess.run`、標準入力を`/dev/null`からリダイレクト、タイムアウト付き)の中でのみ`fork()`を試みる形――で再検証したところ、当初想定していた検証方法自体が的外れであったことに気づいた。`os.fork()`自体が本§CCの修正によって封鎖中に遮断されるため、「封鎖中に子プロセスが生まれて、その子プロセスが`exec`する」という状況そのものが、`fork()`の時点で構造的に発生し得なくなっている。すなわち、懸念していた複合攻撃は、子プロセス側での`exec`遮断を個別に確認する必要すらなく、前提条件(`fork`)自体が塞がれたことで、根本的に再現不可能になっていることを実機で確認した。
 
-両者を`tests/test_thread_safety_maquina_seal.py`に`test_os_forkpty_is_blocked_while_sealed`・`test_fork_then_exec_combo_is_unreachable_while_sealed`として追加し、回帰テストとして固定した(前者はpre-§CCのコードに対して正しくFAILし、修正後に正しくPASSすることを`git checkout <pre-§CCコミット> -- maquina_gatekeeper.py`で確認済み)。これにより、§CC時点で正直に認めていた2つの限界は、いずれも解消済みである。
+両者を`tests/test_thread_safety_maquina_seal.py`に`test_os_forkpty_is_blocked_while_sealed`・`test_fork_then_exec_combo_is_unreachable_while_sealed`として追加し、回帰テストとして固定した(前者はpre-§CCのコードに対して正しくFAILし、修正後に正しくPASSすることを`git checkout <pre-§CCコミット> -- runtime_audit_gatekeeper.py`で確認済み)。これにより、§CC時点で正直に認めていた2つの限界は、いずれも解消済みである。
 
 ### §CD: `runtime_guard/__init__.py`のfd事前オープンバイパス対策が、`os.sendfile()`・`os.copy_file_range()`というカーネル直接転送APIを一切ラップしておらず、監査イベント自体が存在しないために完全に素通りしていた欠陥を発見・修正し、継続的に再検証する新しい検査(`checks/guard_kernel_socket_transfer.py`)を追加
 
@@ -1944,17 +1944,17 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **検証**: 現時点の実際の`.github/workflows/*.yml`(2ファイル)に対して`checks/check_ci_step_disabled.py`を直接実行し、PASSすることを確認した(唯一の`continue-on-error: true`使用箇所である§BQの`runtime_seal_verify`ステップが、正しくoutcome enforcementされていると認識されたことの裏付け)。`tests/test_check_ci_step_disabled.py`に追加した8件の新規テスト(検知2パターン・非検知4パターン・idなしパターン・一時ディレクトリ上の最小再現ワークフローによるmain()レベルの退行固定テスト)を自作の`FakeMonkeypatch`ハーネスで直接実行し、既存の8件を含め全16件がPASSすることを確認した。本件はPythonレベルの監査フックではなくCI設定ファイルの静的解析であるため、`rsa`/`runtime_audit_gatekeeper.py`への依存は無く、このセッション内で完全に検証できた(スタブ不要)。`checks/guard_fail_open_exception.py`による正当化コメント漏れの事前チェックも実施済み。本件の修正を含むpushの最終的なpytest全件実行の確認は、他の§と同じ理由(リポジトリ全体のconftest.pyがruntime_audit_gatekeeper経由でrsaに依存するため)により、real CIに委ねる。
 
-### §CW: `checks/ariel_vigilant_watch.py`(§CVでcontinue-on-error検知を追加した直後)が、ステップ単位の`if: false`検知を1レベル上から迂回する「ジョブ単位の`if: false`」を一度も検査していなかった
+### §CW: `checks/check_ci_step_disabled.py`(§CVでcontinue-on-error検知を追加した直後)が、ステップ単位の`if: false`検知を1レベル上から迂回する「ジョブ単位の`if: false`」を一度も検査していなかった
 
-**発見**: §CVの修正直後、「`if: false`によるCI無効化は、本当にステップ単位でしか起こり得ないか」を点検した。既存の`find_disabled_steps()`(§BU)は`workflow["jobs"][job_name]["steps"]`配下の各ステップの`if:`のみを検査しており、GitHub Actionsのジョブ定義自体が持てる`jobs.<job_id>.if`(そのジョブ全体の実行条件、ステップの`if:`とは別のYAMLキー)は一度も検査対象になっていなかった。実機で、`jobs.<job_id>.if: false`をジョブ定義の直下に追加して`checks/ariel_vigilant_watch.py`を実行したところ、ステップ単位の検査($BU)・continue-on-error検査(§CV)のいずれも検知せず、PASSを返し続けることを確認した――GitHub Actionsの仕様上、ジョブの`if:`が偽であれば配下の全ステップ(失敗時の後処理ステップも含む)が丸ごとスキップされるため、これは§BUが検知する欠陥よりも影響範囲が広い、同一クラスの欠陥の兄弟である。
+**発見**: §CVの修正直後、「`if: false`によるCI無効化は、本当にステップ単位でしか起こり得ないか」を点検した。既存の`find_disabled_steps()`(§BU)は`workflow["jobs"][job_name]["steps"]`配下の各ステップの`if:`のみを検査しており、GitHub Actionsのジョブ定義自体が持てる`jobs.<job_id>.if`(そのジョブ全体の実行条件、ステップの`if:`とは別のYAMLキー)は一度も検査対象になっていなかった。実機で、`jobs.<job_id>.if: false`をジョブ定義の直下に追加して`checks/check_ci_step_disabled.py`を実行したところ、ステップ単位の検査($BU)・continue-on-error検査(§CV)のいずれも検知せず、PASSを返し続けることを確認した――GitHub Actionsの仕様上、ジョブの`if:`が偽であれば配下の全ステップ(失敗時の後処理ステップも含む)が丸ごとスキップされるため、これは§BUが検知する欠陥よりも影響範囲が広い、同一クラスの欠陥の兄弟である。
 
 **たとえ話**: 警備員個人の勤務表に「今日は休み」と書く(§BU)代わりに、警備会社全体の契約書に「このビル(ジョブ)の警備は、ある条件下では実施しない」という一文を追加するようなものである。個々の警備員の勤務表は普段通りに見えても、契約条項レベルで警備そのものが丸ごと発動しなくなる。
 
 **原因**: §BU新設時、「`run:`を持つ各ステップのif:条件」という最初に見つけた具体的な欠陥のみを一般化し、GitHub Actionsのワークフロー構文において`if:`がステップだけでなくジョブ自身にも存在するという事実の横展開(同じYAMLキー名が異なる階層で同じ効果を持つ)が行われていなかった。
 
-**対応**: `checks/ariel_vigilant_watch.py`に`find_disabled_jobs()`を新設し、各ジョブ定義自身の`if:`が常に偽になっているジョブを検出するようにした。`main()`で既存の2種類の検知(ステップ単位のif:false・continue-on-error握り潰し)と統合し、いずれかが検知した場合にFAILする。
+**対応**: `checks/check_ci_step_disabled.py`に`find_disabled_jobs()`を新設し、各ジョブ定義自身の`if:`が常に偽になっているジョブを検出するようにした。`main()`で既存の2種類の検知(ステップ単位のif:false・continue-on-error握り潰し)と統合し、いずれかが検知した場合にFAILする。
 
-**実装中の自己レッドチーム**: `.github/workflows/core_ci.yml`の`verify_ataraxia`ジョブ定義の直下に、実際に`if: false`を一時的に追加し、`checks/ariel_vigilant_watch.py`を直接実行したところ、新設した検査が正しく「ジョブ定義自身のif:が常に偽になっており、そのジョブ配下の全ステップが丸ごと実行されない」としてFAIL(終了コード1)することを実機で確認した。`git diff --stat .github/workflows/core_ci.yml`で差分が完全に消えたことを確認した上で復元し、再実行してPASSに戻ることも確認した。合成テストケース(ジョブ単位の検知・動的条件での非検知・if:自体が無い場合の非検知)を`tests/test_ariel_vigilant_watch.py`に追加し、一時ディレクトリ上の最小再現ワークフローによるmain()レベルの退行固定テストも含め、自作の`FakeMonkeypatch`ハーネスで全てPASSすることを確認した。
+**実装中の自己レッドチーム**: `.github/workflows/core_ci.yml`の`verify_ataraxia`ジョブ定義の直下に、実際に`if: false`を一時的に追加し、`checks/check_ci_step_disabled.py`を直接実行したところ、新設した検査が正しく「ジョブ定義自身のif:が常に偽になっており、そのジョブ配下の全ステップが丸ごと実行されない」としてFAIL(終了コード1)することを実機で確認した。`git diff --stat .github/workflows/core_ci.yml`で差分が完全に消えたことを確認した上で復元し、再実行してPASSに戻ることも確認した。合成テストケース(ジョブ単位の検知・動的条件での非検知・if:自体が無い場合の非検知)を`tests/test_check_ci_step_disabled.py`に追加し、一時ディレクトリ上の最小再現ワークフローによるmain()レベルの退行固定テストも含め、自作の`FakeMonkeypatch`ハーネスで全てPASSすることを確認した。
 
 ### §CX: `tools/renew_certificate.ps1`/`.sh`(証明書の週次自動更新)が、`promote_provisioning_seal.py`が前提とする「人間による帯外(out-of-band)確認」を、自動化によって事実上無効化していた
 
@@ -1972,7 +1972,7 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 
 **検証**: 修正の詳細な検証内容は§CZに記載。本項目(§CX)自体は「発見・報告」の記録として残し、実際の技術的修正は独立した§CZとして分離記録する(発見時点と修正時点の違いを隠さないため)。
 
-**検証**: 現時点の実際の`.github/workflows/*.yml`(2ファイル)に対して本天使を実行し、PASSすることを確認した。`tests/test_ariel_vigilant_watch.py`に追加した4件の新規テストを含め、本ファイル全20件(§CV以前からの既存8件+§CVで追加した8件+本件で追加した4件)がPASSすることを確認した。本件もCI設定ファイルの静的解析のみであり、`rsa`依存は無くセッション内で完全に検証できた。`checks/jerahmeel_fail_open_guard.py`による正当化コメント漏れの事前チェックも実施済み。本件の修正を含むpushの最終的なpytest全件実行の確認は、他の§と同じ理由により、real CIに委ねる。
+**検証**: 現時点の実際の`.github/workflows/*.yml`(2ファイル)に対して本検査を実行し、PASSすることを確認した。`tests/test_check_ci_step_disabled.py`に追加した4件の新規テストを含め、本ファイル全20件(§CV以前からの既存8件+§CVで追加した8件+本件で追加した4件)がPASSすることを確認した。本件もCI設定ファイルの静的解析のみであり、`rsa`依存は無くセッション内で完全に検証できた。`checks/guard_fail_open_exception.py`による正当化コメント漏れの事前チェックも実施済み。本件の修正を含むpushの最終的なpytest全件実行の確認は、他の§と同じ理由により、real CIに委ねる。
 
 ### §CY: `tests/test_pre_commit_secret_scan.py`が、実行者のグローバル/システムのgit設定(`commit.gpgsign = true`)に依存しており、署名を要求する環境では無関係な理由でテストが失敗していた
 
