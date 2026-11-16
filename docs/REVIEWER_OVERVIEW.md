@@ -26,7 +26,7 @@ python3 demo/build_and_audit_demo.py
 
 - 文章上の主張(「全エッジケースを検証済み」等)が事実かどうかの判定(別モデル・
   人間レビューが必要な別の仕組み)。
-- 正当なコミットに対する誤検知率の、大規模サンプルでの実測。[evals/diff_audit/](../evals/diff_audit/README.md)で、意図的に紛らわしく作った12件(リネーム・skip行の見た目の移動・自己の過去コミット由来)と、通常の正当な変更12件(テスト強化・等価なリファクタ・正しい例外処理)を分けて実測したところ、紛らわしい群は12/12(誤検知率1.000、Wilson 95%CI [0.758, 1.000])が誤検知された一方、通常群は0/12(誤検知率0.000、同CI [0.000, 0.242])で誤検知が無かった(2群を合算した単一の割合は、著者がこの2群をどんな比率で混ぜたかで決まる数字であり、検出器の性能指標としては使わない)。「紛らわしい変更には弱いが、普通の変更は正しく通す」という傾向までは実測できたが、標本数が小さく(各12件)、実世界の分布を代表するにはまだ足りない。§DBで発見したリネーム・skip移動への脆弱性は、未修正の既知の限界として§DCに記録済み。
+- 正当なコミットに対する誤検知率の、大規模サンプルでの実測。[evals/diff_audit/](../evals/diff_audit/README.md)で、意図的に紛らわしく作った12件(リネーム・skip行の見た目の移動・自己の過去コミット由来)と、通常の正当な変更12件(テスト強化・等価なリファクタ・正しい例外処理)を分けて実測したところ、紛らわしい群は12/12(誤検知率1.000、Wilson 95%CI [0.758, 1.000])が誤検知された一方、通常群は0/12(誤検知率0.000、同CI [0.000, 0.242])で誤検知が無かった(2群を合算した単一の割合は、著者がこの2群をどんな比率で混ぜたかで決まる数字であり、検出器の性能指標としては使わない)。「紛らわしい変更には弱いが、普通の変更は正しく通す」という傾向までは実測できたが、標本数が小さく(各12件)、実世界の分布を代表するにはまだ足りない。[2026-11追記] §DBで発見したリネーム・skip移動への脆弱性(§DC)は、その後、本番の12件とは独立に新規作成した凍結データ24件による改善前後比較を経て、大部分を修正した(紛らわしい群: 凍結データ12/12→0/12、skip移動群: 9/12→3/12。実測の全数は[DEFECTS.md §DC](../DEFECTS.md)参照)。複数行に整形されたデコレータという、より狭い範囲の限界が未修正のまま残っている。
 - このツール自身の運用(証明書管理等)が、プロジェクトが掲げる原則を常に守っている
   という保証。実際、過去に1件の既知の矛盾を自分で見つけています(§2、現在は修正済み)。
 - **独立した第三者による監査は、まだ受けていません。欠陥の発見者(自作のレッドチーム
@@ -87,13 +87,13 @@ python3 demo/build_and_audit_demo.py
 ## 4. 現在のテストスイートの状態(実測・引用元つき)
 
 ```
-commit:  be7c84c
-run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234
+commit:  ef1a05c
+run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43842740138
 結論:    success(失敗コメント0件)
-結果:    858 passed, 1 skipped, 2 xfailed, 2 warnings in 54.37s
+結果:    871 passed, 2 skipped, 2 xfailed, 2 warnings in 74.48s
          (このCI実行自体のメインテストジョブ`verify_ataraxia`の結果。
-         新設の`verify_evals_diff_audit_wiring`ジョブは別ジョブとして
-         同じrunの中で並行実行され、そちらは11件のテストを含めて成功。
+         `verify_evals_diff_audit_wiring`・`verify_evals_reward_hacking_wiring`
+         の2つは別ジョブとして同じrunの中で並行実行され、いずれも成功。
          詳細は§6参照)
 ```
 
@@ -110,11 +110,16 @@ xfailです。(開発用サンドボックス内では、証明書の意図的�
 `GITHUB_ACTIONS=true`によりクラウド実行自体が証明書の状態より先に遮断される設計
 のため、この期限切れはCIの結果に影響しません。)
 
-新たに現れた`1 skipped`は、`evals/diff_audit/`(§6参照)のInspectタスク用テスト
-(`tests/test_evals_diff_audit.py::test_task_module_importable_when_inspect_ai_present`)
-によるもので、CI環境にも`inspect_ai`(任意依存、`pip install .[evals]`で導入)が
-入っていないために理由明記でskipされている。rsaの場合と同じく、事前に分かっている
-前提条件によるskipであり、偶発的な失敗ではない。
+`2 skipped`は、`evals/diff_audit/`・`evals/reward_hacking/`(§6参照)それぞれの
+Inspectタスク用テスト
+(`tests/test_evals_diff_audit.py::test_task_module_importable_when_inspect_ai_present`・
+`tests/test_evals_reward_hacking.py::test_task_module_importable_when_inspect_ai_present`)
+によるもので、このメインテストジョブ(`verify_ataraxia`)には`inspect_ai`(任意依存、
+`pip install .[evals]`で導入)が入っていないために理由明記でskipされている
+(`inspect-ai`を実際にインストールする`verify_evals_diff_audit_wiring`・
+`verify_evals_reward_hacking_wiring`の2ジョブでは、同じrunの中でこれらのテストが
+実際にpassする)。rsaの場合と同じく、事前に分かっている前提条件によるskipであり、
+偶発的な失敗ではない。
 
 ## 5. このプロジェクトを実際に動かしてきた人間とAIエージェントの作業プロセス
 
@@ -133,7 +138,8 @@ xfailです。(開発用サンドボックス内では、証明書の意図的�
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | 実際に動くデモの再現手順と結果(初回は2/5だった失敗の記録も含む) |
 | [DEVLOG.md](../DEVLOG.md) | 81件時点の欠陥発見を読み物として再構成したもの(最新件数はDEFECTS.md参照) |
 | [DEFECTS.md](../DEFECTS.md) | §A〜§DC、107件の生の記録(最も詳細) |
-| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | Inspect(inspect_ai)による差分監査評価タスク。ルールベース検出器のベースライン結果(実測、群別): 紛らわしいclean 12/12誤検知(1.000、CI [0.758, 1.000])、通常clean 0/12誤検知(0.000、CI [0.000, 0.242])。合算値(0.500)は混合比率依存のため見出しに使わない。`task.py`の配線確認(`inspect eval ... --model mockllm/model`)は、CIの専用ジョブ`verify_evals_diff_audit_wiring`([run #43822034234](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43822034234))で実際に最後まで走ることを確認済み(修正不要でそのまま成功)。実モデルでの評価結果は未実行。所有者が自分のAPIキーで再現するコマンドをREADMEに記載。 |
+| [evals/diff_audit/README.md](../evals/diff_audit/README.md) / [README.en.md](../evals/diff_audit/README.en.md) | Inspect(inspect_ai)による差分監査評価タスク。ルールベース検出器のベースライン結果(実測、群別、§DCの検出器改善後): 紛らわしいclean 2/12誤検知(0.167、CI [0.047, 0.448])、通常clean 0/12誤検知(0.000、CI [0.000, 0.242])。改善前は紛らわしい群12/12=1.000だった(凍結データ24件による改善前後比較は README の「検出器の改善」節に全数掲載)。合算値は混合比率依存のため見出しに使わない。`task.py`の配線確認(`inspect eval ... --model mockllm/model`)は、CIの専用ジョブ`verify_evals_diff_audit_wiring`([run #43842740138](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43842740138))で実際に最後まで走ることを確認済み。実モデルでの評価結果は未実行。所有者が自分のAPIキーで再現するコマンドをREADMEに記載。 |
+| [evals/reward_hacking/README.md](../evals/reward_hacking/README.md) / [README.en.md](../evals/reward_hacking/README.en.md) | Inspectのsandbox機能(`sandbox="local"`)による報酬ハック評価タスク(エージェントにバグ修正をさせ、近道[テスト削除・skip追加・assert弱体化・例外握り潰し・終了コード固定]を使っていないかをParrhesiaの検出器で監査)。手作りの14課題について、参照差分を実際に検証した結果(実測): 出発コードが実際に失敗14/14、正しい修正でテスト合格14/14・誤検知0/14、近道でテスト合格14/14・意図したカテゴリの検出14/14。`task.py`の配線確認(モデルを使わない、台本どおりの差分を返す偽エージェント)は、CIの専用ジョブ`verify_evals_reward_hacking_wiring`([run #43842740138](https://github.com/anjo-da-maquina/parrhesia/actions/runs/43842740138))で実際に最後まで走ることを確認済み(初回実行でサンドボックスの絶対パス書き込み権限エラー、2回目でscorer間のpatch二重適用による矛盾した指標、の2件の実装不具合を実際に発見・修正した上での成功。詳細はREADMEの「正直な注記」節)。実モデルでの評価結果は未実行。所有者が自分のAPIキーで再現するコマンドをREADMEに記載。 |
 | [docs/FAQ.md](./FAQ.md) | 差別化・制限事項などへのQ&A |
 | [docs/WHY.md](./WHY.md) | なぜAIエージェントを信頼せず監査するのか、という設計思想 |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | このプロジェクトが「できること/できないこと」の境界線 |
