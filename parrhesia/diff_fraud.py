@@ -20,6 +20,17 @@ B章「主張の検証と突きつけ」のうち、差分ベースの不正検�
     意味的に対応付ける必要があり、単純な文字列照合では実装できない。
     「差分にあるが報告にない変更の洗い出し」(find_undisclosed_changes)
     は、その逆方向(差分→報告)のみを実装した。
+  - [2026-11、evals/diff_audit/の開発中に発見、§DB参照] `detect_exit_
+    code_hardcoding`の`_EXIT_NONZERO_OR_DYNAMIC_RE`は、`sys.exit(code)`
+    のような単純な識別子・数値の引数しか認識できず、
+    `sys.exit(len(violations))`のようなネストした関数呼び出しを引数に
+    取る行は「動的な終了コードだった」と認識できない(=そのような行が
+    `sys.exit(0)`に書き換えられても見逃す)。偽陽性を増やさずに一般の
+    ネストした式を安全に認識する正規表現の設計には追加の検証が必要な
+    ため、本バージョンでは修正を見送り、既知のrecall限界としてここに
+    記録する(`tests/test_parrhesia_diff_fraud.py`の
+    `test_detect_exit_code_hardcoding_known_limitation_nested_call_arg`
+    で、この限界そのものを回帰的に固定している)。
 
 本モジュールの入力は`git diff`のunified diff形式のテキストを想定する。
 diffの構造解析は、完全な構文解析器ではなく、行単位の簡易パーサーで
@@ -91,7 +102,13 @@ _TEST_DEF_RE = re.compile(r"^\s*def\s+(test_\w+)\s*\(")
 _SKIP_MARKER_RE = re.compile(r"@pytest\.mark\.skip|pytest\.skip\(|unittest\.skip|raise\s+SkipTest|SkipTest\(")
 _ASSERT_RE = re.compile(r"^\s*assert\b")
 _ASSERT_TRUE_RE = re.compile(r"^\s*assert\s+True\s*$")
-_EXCEPT_RE = re.compile(r"^\s*except(\s+Exception)?\s*:?\s*$")
+_EXCEPT_RE = re.compile(r"^\s*except(\s+[\w., ()]+)?\s*:?\s*$")
+# [修正 2026-11、evals/diff_audit/ の開発中に発見]
+# 旧正規表現は`except Exception:`または裸の`except:`のみにマッチし、
+# `except ValueError:`等の個別の例外型は対象外だった(§DB参照)。
+# これにより、個別の例外型で握り潰す新規コードを一律で見逃すrecall上の
+# 欠陥があった。例外型名(`ValueError`・`socket.error`等のドット区切り
+# 修飾名・`except (A, B):`形式のタプル)を広く受理するよう修正。
 _PASS_RE = re.compile(r"^\s*pass\s*$")
 _EXIT_ZERO_RE = re.compile(r"sys\.exit\(\s*0\s*\)|^\s*return\s+0\s*$")
 _EXIT_NONZERO_OR_DYNAMIC_RE = re.compile(r"sys\.exit\(\s*[1-9]|sys\.exit\(\s*\w+\s*\)|^\s*return\s+\w+\s*$")

@@ -7,7 +7,7 @@
 **Parrhesia** audits an AI coding agent's commits directly from the **diff** for
 five concrete shortcuts (deleting the failing test, adding a skip marker, etc.).
 It also audits its own defense code the same way, and has found, fixed, and
-recorded 105 defects so far (§3). Detailed working-process notes (signed
+recorded 106 defects so far (§3). Detailed working-process notes (signed
 commits, CI checks, how AI-assistant review feedback was incorporated) live in
 a separate worklog (§5).
 
@@ -37,7 +37,7 @@ labeled as such.
 - **Claim independent third-party audit.** No independent audit has been done.
   The person who finds each defect (the project's own red-team code) and the
   person who fixes it are the same. This is a real limitation of a solo QA
-  research project, and it's stated here first: every one of the 105 entries
+  research project, and it's stated here first: every one of the 106 entries
   in §3 is a number the author found and fixed themselves.
 
 ## 1. Glossary (for a first-time reader)
@@ -45,9 +45,9 @@ labeled as such.
 | Term in this repo | Plain meaning |
 | --- | --- |
 | **checks/** | CI check scripts: regression tests that mechanically re-verify, on every push, that a previously-found defect hasn't come back. The number actually wired into CI is verified by a script, not counted by hand: [`tools/count_ci_checks.py`](../tools/count_ci_checks.py) (55 as of this writing). |
-| **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DA). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
+| **DEFECTS.md** | The raw record of every defect found (sequentially numbered §A–§DB). Each entry is an engineering log entry: how it was found, why, the fix, and how it was verified. |
 | **Runtime Seal / Sandbox** | This repo's internal name for the isolation mechanism (file-access restriction, network blocking, etc.) used when running AI-generated code. |
-| **§A–§DA** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
+| **§A–§DB** | Sequential (alphabetic) IDs for individual defect write-ups in DEFECTS.md (A=1, Z=26, AA=27, ...), verified programmatically, not by hand: [`tools/count_defects_entries.py`](../tools/count_defects_entries.py). |
 
 ## 2. A known self-inconsistency, found and actually fixed
 
@@ -69,12 +69,12 @@ not actively) are stated as a threat model in [docs/BOUNDARY.md](./BOUNDARY.md).
 ## 3. How it keeps finding defects
 
 CI checks under `checks/` mechanically re-check that every previously-found
-defect stays fixed. DEFECTS.md actually contains **105 entries (§A–§DA, no
+defect stays fixed. DEFECTS.md actually contains **106 entries (§A–§DB, no
 gaps or duplicates)**, counted by a script that parses the headings
 programmatically (DEVLOG.md's narrative version still says 81 and has not been
 updated since).
 
-Those 105 fall into three broad patterns:
+Those 106 fall into three broad patterns:
 
 1. **The same bypass exists under a different name** — e.g. a layer blocking
    `import os` was fully bypassed by `import os.path`.
@@ -137,7 +137,8 @@ this very overview are recorded in detail in a separate file:
 | [README.en.md](../README.en.md) / [README.md](../README.md) | Overview, usage, threat model, design principles |
 | [docs/CASE_STUDY.md](./CASE_STUDY.md) | Reproducible demo, including the honest record of its first run scoring 2/5, not 5/5 |
 | [DEVLOG.md](../DEVLOG.md) | The defects as a narrative, as of the 81-entry snapshot (see DEFECTS.md for the current count) |
-| [DEFECTS.md](../DEFECTS.md) | §A–§DA, 105 entries, the raw, most detailed record |
+| [DEFECTS.md](../DEFECTS.md) | §A–§DB, 106 entries, the raw, most detailed record |
+| [evals/diff_audit/README.md](../evals/diff_audit/README.md) | An Inspect (`inspect_ai`) diff-audit eval task. The rule-based detector's baseline result (measured): a 50% false-positive rate on clean diffs (12/24, Wilson 95% CI [0.314, 0.686]). Actual LLM evaluation was not run in this session — `inspect_ai` could not be installed (no network access); the README gives the exact commands for the owner to reproduce it with their own environment and API key. |
 | [docs/FAQ.md](./FAQ.md) | Differentiation, limitations, and other Q&A |
 | [docs/WHY.md](./WHY.md) | The design rationale for auditing rather than trusting AI agents |
 | [docs/BOUNDARY.md](./BOUNDARY.md) | What this project does and does not claim to do |

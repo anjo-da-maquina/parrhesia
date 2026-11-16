@@ -18,5 +18,10 @@ classifiers = [
     "Topic :: Security",
 ]
 
+[project.optional-dependencies]
+# [新設 2026-11] evals/diff_audit/ のInspect(inspect_ai)タスクを実行する
+# ためだけの任意依存。通常のインストール・CI・pytest全件には不要。
+evals = ["inspect-ai"]
+
 [tool.setuptools]
 packages = ["runtime_guard"]

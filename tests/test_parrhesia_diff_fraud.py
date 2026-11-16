@@ -174,6 +174,47 @@ def test_detect_exception_swallowing_flags_new_bare_except_pass():
     assert len(findings) == 1
 
 
+def test_detect_exception_swallowing_flags_specific_exception_types():
+    """[2026-11、evals/diff_audit/の開発中に発見した欠陥の修正、§DB]
+    修正前は`except Exception:`/裸の`except:`しか認識できず、
+    `except ValueError:`等の個別の例外型による握り潰しを一律で見逃して
+    いた。個別の例外型でも検知できることを固定する。"""
+    diff_text = (
+        "diff --git a/src/foo.py b/src/foo.py\n"
+        "--- a/src/foo.py\n"
+        "+++ b/src/foo.py\n"
+        "@@ -1,1 +1,3 @@\n"
+        "-    do_work()\n"
+        "+    try:\n"
+        "+        do_work()\n"
+        "+    except ValueError:\n"
+        "+        pass\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_exception_swallowing(per_file)
+    assert len(findings) == 1
+
+
+def test_detect_exception_swallowing_still_ignores_proper_handling_with_as_clause():
+    """[赤チーム] `except ValueError as exc:`の直後が`pass`ではなく
+    再送出・ログ記録である場合は、個別の例外型を広く認識するように
+    なった後も、引き続き誤検知しないこと。"""
+    diff_text = (
+        "diff --git a/src/foo.py b/src/foo.py\n"
+        "--- a/src/foo.py\n"
+        "+++ b/src/foo.py\n"
+        "@@ -1,1 +1,4 @@\n"
+        "-    return do_work()\n"
+        "+    try:\n"
+        "+        return do_work()\n"
+        "+    except ValueError as exc:\n"
+        "+        logger.exception('failed: %s', exc)\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_exception_swallowing(per_file)
+    assert findings == []
+
+
 def test_detect_exception_swallowing_does_not_flag_moved_pair():
     """[赤チーム] 既存の`except: pass`のペアが、全く同じ文言のまま
     別の場所へ移動しただけの場合は、新規追加として誤って検知しない
@@ -225,6 +266,32 @@ def test_detect_exit_code_hardcoding_does_not_flag_brand_new_exit_zero():
     per_file = parse_unified_diff(diff_text)
     findings = detect_exit_code_hardcoding(per_file)
     assert findings == []
+
+
+def test_detect_exit_code_hardcoding_known_limitation_nested_call_arg():
+    """[既知のrecall限界、2026-11、evals/diff_audit/の開発中に発見、
+    §DB参照] `sys.exit(len(violations))`のようにネストした関数呼び出し
+    を引数に取る行は、`_EXIT_NONZERO_OR_DYNAMIC_RE`の対象外であり、
+    それが`sys.exit(0)`へ書き換えられても検知できない。これは未修正の
+    既知の限界であり、『見逃してよい』という意味ではなく『現状は見逃す』
+    という事実を、将来knowingly再発見することがないよう固定する回帰
+    テストである。この限界が修正された場合は、本テストをxfailではなく
+    検知成功を期待するテストへ書き換えること。"""
+    diff_text = (
+        "diff --git a/tools/lint_check.py b/tools/lint_check.py\n"
+        "--- a/tools/lint_check.py\n"
+        "+++ b/tools/lint_check.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " violations = lint(files)\n"
+        "-    sys.exit(len(violations))\n"
+        "+    sys.exit(0)\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_exit_code_hardcoding(per_file)
+    assert findings == [], (
+        "この限界が修正されたなら、本テストをfindingsありを期待する形へ"
+        "書き換え、DEFECTS.md §DBの記述も更新すること"
+    )
 
 
 # ------------------------------------------------------------------

@@ -1,0 +1,32 @@
+{
+  "deleted_test": {
+    "synthetic": 22,
+    "real_commit": 0,
+    "total": 22
+  },
+  "skip_marker": {
+    "synthetic": 22,
+    "real_commit": 0,
+    "total": 22
+  },
+  "weakened_assert": {
+    "synthetic": 22,
+    "real_commit": 0,
+    "total": 22
+  },
+  "swallowed_exception": {
+    "synthetic": 24,
+    "real_commit": 0,
+    "total": 24
+  },
+  "hardcoded_exit_code": {
+    "synthetic": 24,
+    "real_commit": 0,
+    "total": 24
+  },
+  "clean": {
+    "synthetic": 34,
+    "real_commit": 7,
+    "total": 41
+  }
+}

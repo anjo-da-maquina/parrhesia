@@ -2016,3 +2016,17 @@ python: can't open file '/jail/target.py': [Errno 13] Permission denied
 **検証**: 修正前はこのサンドボックスで`825 passed, 1 failed, 1 skipped, 14 xfailed`(§CYの修正直後の値)だったところ、本修正後は`830 passed, 11 skipped, 4 xfailed, 0 failed`になることを実際に`python3 -m pytest`で確認した(§CYで直した1件のflakeが無くなったことに加え、§CZの新規4テストが追加でpassedに加わり、rsa依存の10件がxfailedからskippedへ移動している――合計の整合性も実際に計算して確認済み)。
 
 本修正を実際にpushしてreal CIで確認したところ、`842 passed, 2 xfailed, 1 xpassed`という結果になり、予測通りCIでの`xpassed`は11件から1件まで減ったものの、ゼロにはならなかった。原因を実機のCIログで調査し、`tests/test_openai_agent_loop_template.py::test_execute_safe_action_uses_sandbox_and_is_not_a_stub`の無条件`xfail`が、`GITHUB_ACTIONS=true`の分岐(`pytest.raises(LossOfAtaraxia)`が常に成立する、rsa/証明書の状態とは無関係の分岐)を通る際には常にxpassしてしまう、別の見落としだったことを特定した。`xfail`の`condition=`を「`GITHUB_ACTIONS`以外のローカル実行時のみ」に限定する追加修正を行い、CIでは素直に`passed`になるようにした(この修正はrsaの有無に依存せず、既存の分岐ロジックの論理だけで確定できるため、このサンドボックスでも静的に確認済み)。この追加修正の実際のCI結果も、次のpushで確認する。
+
+### §DB: `parrhesia/diff_fraud.py`の`detect_exception_swallowing`が、個別の例外型(`ValueError`等)による握り潰しを一律で見逃すrecall上の欠陥を、Inspect評価タスク(`evals/diff_audit/`)の構築中に発見・修正
+
+**発見**: 所有者から「Parrhesiaの検出対象(5種類のズル)を題材にしたInspect評価タスクを追加し、評価を設計し誤検知率まで含めて測り、限界を明記できることを示す公開実績にしたい」という依頼を受け、`evals/diff_audit/`を新設した。その一環として、生成した評価用データセットの全サンプルに対し`parrhesia/diff_fraud.analyze_diff()`自身を適用して意図したラベルと機械的に照合する「ラベルの検算」(`build_dataset.py`の`crosscheck_labels()`)を実装したところ、`swallowed_exception`カテゴリの合成サンプルのうち、例外型を`ValueError`・`KeyError`・`OSError`等に変えたもの(全体の一部)が、意図通りに検知されないことが機械的に判明した。原因を`_EXCEPT_RE = re.compile(r"^\s*except(\s+Exception)?\s*:?\s*$")`の実際の正規表現で確認したところ、この正規表現は`except Exception:`または裸の`except:`にしかマッチせず、`except ValueError:`のような個別の例外型を一度も想定していなかったことを特定した。
+
+**たとえ話**: 「`except`の次の行が`pass`なら握り潰しとして検知する」という見張り番が、実際には「`except Exception:`または`except:`という特定の2つの言い回しの時だけ見張る」という、はるかに狭い約束しかしていなかったようなものである。`except ValueError:`という、見た目も意味も同じ握り潰しの言い回しは、見張り番の約束の外にあり、完全に素通りしていた。
+
+**原因**: `_EXCEPT_RE`を最初に書いた時点(§B由来のモジュール新設時)で、単体テスト(`tests/test_parrhesia_diff_fraud.py`)自身も`except Exception:`または裸の`except:`しかカバーしておらず、個別の例外型というバリエーションそのものに気づく機会が無いまま、長期間この欠陥が温存されていた。本評価タスクのためにデータセットのバリエーションを意図的に広げ、かつ「ラベルの検算」という独立した機械的突き合わせを行って初めて、この盲点が可視化された。
+
+**対応**: `_EXCEPT_RE`を`re.compile(r"^\s*except(\s+[\w., ()]+)?\s*:?\s*$")`へ変更し、任意の例外型名・タプル形式(`except (A, B):`)を広く受理するようにした。`except ... as exc:`の形(再送出・ログ記録を伴う正当な例外処理)は、この変更後も直後の行が`pass`でない限り誤検知しないことを`tests/test_parrhesia_diff_fraud.py`の新規テストで確認した。
+
+併せて、同じ検算の過程で`detect_exit_code_hardcoding`の`_EXIT_NONZERO_OR_DYNAMIC_RE`が、`sys.exit(len(violations))`のようなネストした関数呼び出しを引数に取る行を「動的な終了コードだった」と認識できない(そのような行が`sys.exit(0)`に書き換えられても見逃す)、別のrecall上の限界も発見した。こちらは偽陽性を増やさずに一般のネストした式を安全に認識する正規表現の設計に追加の検証が必要なため、本件では修正を見送り、`parrhesia/diff_fraud.py`のモジュール docstring と`tests/test_parrhesia_diff_fraud.py::test_detect_exit_code_hardcoding_known_limitation_nested_call_arg`(現状の『見逃す』という挙動自体を固定する回帰テスト)に、未修正の既知の限界として正直に記録した。
+
+**検証**: 修正前に`evals/diff_audit/build_dataset.py`を実行すると、ラベルの検算で「未知・要確認の不一致」が複数件検出されることを実際に確認(再現)。`_EXCEPT_RE`の修正後、同じ検算を再実行し、個別の例外型に起因する不一致が「既知のrecall限界」(ネストした`sys.exit`の件のみ)に縮小し、分類不能な『未知の不一致』が0件になることを実機で確認した。`tests/test_parrhesia_diff_fraud.py`の新規2テスト(個別の例外型を検知できること、`as`節つきの正当な例外処理を引き続き誤検知しないこと)を含め、本リポジトリの全テストスイート(`python3 -m pytest`)が退行なく成功することを確認済み(詳細な件数は本コミットのpush後、real CIで確認する)。本件はコードの静的な正規表現変更のみであり、`rsa`依存は無くこのセッション内で完全に検証できた。

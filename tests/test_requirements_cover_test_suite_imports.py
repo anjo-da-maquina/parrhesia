@@ -44,6 +44,13 @@ ALLOWLIST = {"pytest"}  # pytest自身はrequirements.txtに実在するが念�
 # stem名は「サードパーティ依存」ではないため、照合対象から除外する。
 LOCAL_MODULE_DIRS = ["checks", "src", "runtime_guard", "adapters", "agent_interceptor", "tools", "local_arena", "adversarial_training", "parrhesia"]
 
+# [2026-11追加] evals/diff_audit/配下はネストしたサブディレクトリであり、
+# 直下の.pyファイルだけを見るLOCAL_MODULE_DIRSの通常ループでは拾えない
+# ため、個別に追加する(tests/test_evals_diff_audit.py が
+# `sys.path.insert` 経由で build_dataset / baseline をローカルモジュール
+# としてimportする)。
+NESTED_LOCAL_MODULE_DIRS = ["evals/diff_audit"]
+
 
 def _local_module_names() -> set:
     names = set()
@@ -58,6 +65,12 @@ def _local_module_names() -> set:
         if not dir_path.is_dir():
             continue
         names.add(dir_path.name)
+        for p in dir_path.glob("*.py"):
+            names.add(p.stem)
+    for d in NESTED_LOCAL_MODULE_DIRS:
+        dir_path = ROOT / d
+        if not dir_path.is_dir():
+            continue
         for p in dir_path.glob("*.py"):
             names.add(p.stem)
     return names
