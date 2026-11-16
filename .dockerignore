@@ -1,6 +1,6 @@
 # [新設 2026-10] Dockerfileの実装(`COPY . .`)が、今後追加される新しい
 # ディレクトリを個別のCOPY行への追記漏れで取りこぼす(Dockerfile修正前に
-# 実際に発生していた不備。GRIMOIRE.md §R参照)構造的リスクを防ぐため、
+# 実際に発生していた不備。DEFECTS.md §R参照)構造的リスクを防ぐため、
 # 「全部コピーしてから、イメージに含めたくないものだけ除外する」方式に
 # 変更した。除外対象は以下の3種類:
 #   1. バージョン管理・ビルドツール自体の生成物(.git, __pycache__ 等)
@@ -18,7 +18,7 @@ __pycache__/
 dist/
 build/
 jail_workspace/
-.angel_state/
+.runtime_state/
 
 ataraxia_certificate.json
 zk_audit_trail.json

@@ -5,10 +5,9 @@ homilies/
 dist/
 build/
 *.egg-info/
-raziel_ledger_pending.json
 shield_rules_pending.json
 provisioning_pending.json
-.angel_state/
+.runtime_state/
 incident_report.json
 audit_violation_log_summary.json
 zk_audit_trail.json
@@ -17,15 +16,15 @@ zk_audit_report.xml
 # 都度追記する、実行時生成の監査ログ。zk_audit_trail.json等の他の監査ログと
 # 同種の「テスト実行で汚染される」ファイルであるにもかかわらずこれまで
 # .gitignoreの対象外になっており、Git管理対象として誤って追跡されていた
-# (GRIMOIRE.md §X参照)。
+# (DEFECTS.md §X参照)。
 runtime_guard/audit_chain.jsonl
 # [2026-10] SignedAuditChain(runtime_guard/audit_chain.py)がHMAC-SHA256で監査チェーンに
 # 署名するための秘密鍵。初回自動生成・0600権限で作成されるローカル専用の
-# 秘密情報であり、Gitにコミットしてはならない(GRIMOIRE.md §AE参照)。
+# 秘密情報であり、Gitにコミットしてはならない(DEFECTS.md §AE参照)。
 runtime_guard/.audit_signing_key
 # [2026-10] runtime_audit_gatekeeper.py(旧名maquina_gatekeeper.py)の ZKAuditTrail がHMAC-SHA256で鍵付き
 # ハッシュ連鎖に署名するための秘密鍵。初回自動生成・0600権限で作成される
-# ローカル専用の秘密情報であり、Gitにコミットしてはならない(GRIMOIRE §AH参照)。
+# ローカル専用の秘密情報であり、Gitにコミットしてはならない(DEFECTS.md §AH参照)。
 .zk_audit_signing_key
 # [新設 2026-10 §BX] SignedAuditChain/ZKAuditTrailいずれも、鍵ファイルと
 # 同じ場所に「最後に記録した(件数, 最終ハッシュ)」を記憶する水位標
@@ -37,7 +36,7 @@ runtime_guard/.audit_signing_key.watermark
 .zk_audit_signing_key.watermark
 # [2026-10] adapters/excel_to_yaml_parser.py が requirements.xlsx(存在する
 # 場合)から生成するYAML成果物。ビルド成果物であり、Git管理対象外とする
-# (GRIMOIRE.md §AJ参照)。
+# (DEFECTS.md §AJ参照)。
 runtime_guard/external_requirements.yaml
 # [2026-10] 本リポジトリにはまだ外部要件Excelシートが導入されていないが、
 # adapters/excel_to_yaml_parser.py のテスト・ローカル検証時に誤って
@@ -47,11 +46,11 @@ remote_ledger_sync.log
 vital_feed.sig
 fake_admin_credentials.py
 anjo-da-maquina
-# [2026-10] AegisSystem/WorkspaceJailの既定隔離領域。デモ・実運用タスクの
-# 実行時に生成される成果物(db_config_backup.py, raziel_aidd_report.json等)は
+# [2026-10] WorkspaceJailの既定隔離領域。デモ・実運用タスクの
+# 実行時に生成される成果物(db_config_backup.py, threat_intel_aidd_report.json等)は
 # すべてこの配下に書かれるため、個別ファイル名を列挙する代わりにディレクトリ
 # 単位で無視する(過去にsrc/db_config_backup.pyが誤ってgitにコミットされた
-# 事故を受けての再発防止。GRIMOIRE.md §M参照)。
+# 事故を受けての再発防止。DEFECTS.md §M参照)。
 jail_workspace/
 db_config_backup.py
 

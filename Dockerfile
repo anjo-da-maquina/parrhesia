@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # テストが実際に必要とするruntime_guard/・angels/・adapters/・anjo_interceptor/・
 # src/・tartarus/・tools/等が一切コピーされていなかった(ビルドして実行すると
 # ほぼ全テストがModuleNotFoundErrorで失敗する、実質ビルド後未使用の不備が
-# あった。詳細はGRIMOIRE.md §R参照)。個別ファイルの列挙は新規ディレクトリの
+# あった。詳細はDEFECTS.md §R参照)。個別ファイルの列挙は新規ディレクトリの
 # 追記漏れを構造的に誘発するため、リポジトリ全体をコピーし、イメージに
 # 含めたくないもの(.git・マシン固有の証明書・実行時生成物等)は.dockerignore
 # 側で除外する方式に変更した。

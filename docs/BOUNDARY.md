@@ -16,7 +16,7 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 | **IntentInterceptor** | ディレクトリトラバーサル・ハニーポット的な意図検知 | 単体テスト |
 | **RuntimeGuard / Sandbox** | OSレベルのaudit hookによる、ジェイル外へのファイル書き込み制限 | 単体テスト + 迂回経路の実機検証(DEFECTS.md §CD・§CE等) |
 | **Maquina Gatekeeper** | Pythonレベルでのプロセス起動・ネットワーク通信の遮断(`subprocess`・`os.fork`・`socket`系APIの監視) | 単体テスト |
-| **Sandalphon**(Docker隔離結界) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、DEFECTS.md §CF〜§CL) |
+| **DockerSandbox**(Docker隔離結界、旧名Sandalphon) | ネットワーク完全遮断(`--network none`)・読み取り専用rootfs(`--read-only`)・Linuxケーパビリティ全剥奪(`--cap-drop=ALL`)・seccompによるカーネルレベルのsyscall denylist(プロセス生成・ptrace・mount・io_uring等)を伴う、動的実行の最終検証 | libseccompを実機カーネルへ直接ロードしての生検証、GitHub Actions実機でのDockerコンテナ動的検証(両方、DEFECTS.md §CF〜§CL) |
 | **Checks**(~50体のCIチェック) | 上記すべての層が「後退していないか」を、pushごとに自動で再検証 | `.github/workflows/regression_checks_ci.yml`(GitHub Actions上で実行) |
 
 これらは単体で完結した機能ではなく、**DefenseOrchestrator(`src/defense_orchestrator.py`)が1〜4層を統合し、既定で「Dockerによる動的検証を必ず経由させる」ゼロトラスト方針を強制する**ことで初めて、設計通りの保証になります。
@@ -27,7 +27,7 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
 
 1. **Dockerデーモンが起動し、実際に到達可能であること。**
    `DefenseOrchestrator`は既定(`require_docker_sandbox=True`)で、Dockerが使えない場合は**フェイルクローズド**(コードの実行を無条件に拒否)で設計されています――これは意図的な安全側の設計であり、「Dockerが無いから検証をスキップして実行してしまう」というフェイルオープンにはなりません(`src/defense_orchestrator.py`のモジュールdocstring・`execute_ai_intent()`参照)。
-   ただし、**`require_docker_sandbox=False`を明示的に渡すことは技術的に可能**です。これはテスト・デバッグ専用として明記されていますが、利用者が本番コードでこれを(理解せずに、あるいは「動かないから」という理由で)渡してしまえば、Sandalphon層の保証は丸ごと失われます。公開時には、この引数の意味を目立つ場所で警告する必要があります。
+   ただし、**`require_docker_sandbox=False`を明示的に渡すことは技術的に可能**です。これはテスト・デバッグ専用として明記されていますが、利用者が本番コードでこれを(理解せずに、あるいは「動かないから」という理由で)渡してしまえば、DockerSandbox層の保証は丸ごと失われます。公開時には、この引数の意味を目立つ場所で警告する必要があります。
 
 2. **ホストのLinuxカーネルがseccomp/libseccompをサポートしていること、かつアーキテクチャがx86_64であること。**
    `src/docker_sandbox/seccomp-profile.json`(旧名`src/sandalphon/seccomp-profile.json`)の`architectures`は`SCMP_ARCH_X86_64`のみを宣言しています。実機検証(GitHub Actions・このセッションのサンドボックス)もすべてx86_64上でのみ行われています。**ARM系ホスト(Apple Silicon・AWS Graviton等)での動作・安全性は、この時点では未検証です。** Dockerが`--platform`指定なしでarm64版のベースイメージを自動的に取得した場合、このseccompプロファイルが正しく機能するか(あるいは安全側に失敗するか)は、実際にその環境で検証するまで断定できません。
@@ -39,7 +39,7 @@ Parrhesiaは、**AIエージェントが生成・実行するコードに対す�
    `.github/workflows/`配下の2本のワークフローは、GitHub Actions以外のCI(GitLab CI・Jenkins等)や、CIを一切使わないローカル実行環境では自動実行されません。それらの環境で同等の継続的検証を得るには、利用者自身が同じ仕組みを移植する必要があります。
 
 5. **Python層の防御(RuntimeGuard・Maquina Gatekeeper)は、あくまでPythonのAPI呼び出しを監視するものです。**
-   `ctypes`等によるカーネルへの直接syscall呼び出しは、Python層の監視を素通りします(これがまさに§CD・§CE・§CFでSandalphon/seccompという**カーネルレベル**の層を別途追加した理由です)。したがって、**Sandalphon(Docker+seccomp)を無効化・迂回した状態でRuntimeGuard/Gatekeeperだけに頼ることは、保証として成立しません。**
+   `ctypes`等によるカーネルへの直接syscall呼び出しは、Python層の監視を素通りします(これがまさに§CD・§CE・§CFでDockerSandbox/seccompという**カーネルレベル**の層を別途追加した理由です)。したがって、**DockerSandbox(Docker+seccomp)を無効化・迂回した状態でRuntimeGuard/Gatekeeperだけに頼ることは、保証として成立しません。**
    さらに、これは「迂回」とは別種の、より構造的な限界です――RuntimeGuard・Maquina Gatekeeperの大半は、CPythonの`sys.addaudithook`機構が発火する「監査イベント」を捕捉する設計ですが、**この機構自体が、Python標準ライブラリの全APIを網羅しているわけではありません。** 実際に`os.sendfile()`/`os.copy_file_range()`は、CPython 3.13時点で監査イベントを一度も発火しないことを実機で確認しています(DEFECTS.md §CD・§CN)。これらは、監視対象外であることが判明した具体的なAPIについては個別にモンキーパッチで塞いでいますが、**将来のPythonバージョンで追加される新しいAPI、またはまだ見つけていない既存のAPIが、同じく監査イベントを発火しない可能性は、構造的に排除できません。** 本プロジェクトが採用している対策は「1つ見つけたら、同じ構造の他の穴を体系的に探す」という継続的な方法論であり、「すべての穴が既に塞がれている」という完全性の証明ではありません。
 
    [正直な注記 2026-11、§CT・§CUで実際に塞いだ具体例] 「監査イベントを発火しないAPI」という上記の構造的限界の、もう一つの実例として、`socket.getaddrinfo()`(DNS名前解決そのもの)が、本プロジェクト新設当初から`ALWAYS_PASSTHROUGH_AUDIT_EVENTS`(RuntimeGuard側)・`forbidden`集合(Gatekeeper側)のいずれにも含まれておらず、`connect()`を一切経由しない「DNS exfiltration」(機密データをサブドメインラベルに符号化してDNSクエリとして外部へ送出する古典的手法)が、封鎖中でも無条件に素通りしていたことを実機で発見・修正しました(DEFECTS.md §CT)。直後の棚卸しで、同じ経路を持つ旧API(`gethostbyname`/`gethostbyname_ex`/`gethostbyaddr`/`getnameinfo`)も同様に未対策だったことが判明し、これも修正しました(§CU)。

@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT / "checks"))
 sys.path.insert(0, str(ROOT / "runtime_guard"))
 
 
-def test_ci_workflow_caches_angel_state_before_guard_audit_log_rollback_runs():
+def test_ci_workflow_caches_runtime_state_before_guard_audit_log_rollback_runs():
     """[脆弱性修正の核心] ワークフローに.runtime_stateを対象とするキャッシュ
     ステップが存在し、かつguard_audit_log_rollback.pyの実行ステップより前に
     配置されていなければならない。配置が逆だと、復元が実行後になり

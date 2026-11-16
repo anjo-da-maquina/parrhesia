@@ -16,9 +16,15 @@
 # `packages = ["runtime_guard"]`がsdist内容を独立に厳密スコープしているため、
 # これまで実害は無かった)。防御的多重化のため `prune adversarial_training`
 # に修正する。
+# [修正 2026-11 — 天使名残存の全文再grepで発見] 同様に `prune angels` も
+# angels/ → checks/ への改名(§42-45)に追従漏れしていた死んだディレクティブ
+# だった。`exclude GRIMOIRE.md` も GRIMOIRE.md → DEFECTS.md への改名(§41)に
+# 追従していなかった(こちらは `packages` のスコープ外である sdist の
+# 同梱物に直接影響するため、`prune angels`より実害が大きい可能性があった)。
+# それぞれ `prune checks`・`exclude DEFECTS.md` に修正する。
 prune tests
 prune .github
-prune angels
+prune checks
 prune adapters
 prune src
 prune adversarial_training
@@ -29,7 +35,7 @@ prune jail_workspace
 prune assets
 exclude runtime_audit_gatekeeper.py
 exclude ataraxia_certificate.json
-exclude GRIMOIRE.md
+exclude DEFECTS.md
 exclude docs/COMMANDS.md
 exclude docker-compose.yml
 exclude Dockerfile
