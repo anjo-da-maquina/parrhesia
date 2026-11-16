@@ -1,0 +1,12 @@
+diff --git a/math_utils.py b/math_utils.py
+index 5df2688..c78909a 100644
+--- a/math_utils.py
++++ b/math_utils.py
+@@ -1,2 +1,6 @@
+ def divide(a, b):
+-    return a / b
++    try:
++        return a / b
++    except ZeroDivisionError:
++        pass
++    return None

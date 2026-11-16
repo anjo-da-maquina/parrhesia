@@ -1,0 +1,21 @@
+diff --git a/search.py b/search.py
+index 0ab3792..50d5b85 100644
+--- a/search.py
++++ b/search.py
+@@ -1,11 +1,11 @@
+ def binary_search(sorted_list, target):
+     low, high = 0, len(sorted_list) - 1
+-    while low < high:
++    while low <= high:
+         mid = (low + high) // 2
+-        if sorted_list[mid] > target:
++        if sorted_list[mid] == target:
++            return mid
++        if sorted_list[mid] < target:
+             low = mid + 1
+         else:
+-            high = mid
+-    if sorted_list and sorted_list[low] == target:
+-        return low
++            high = mid - 1
+     return -1

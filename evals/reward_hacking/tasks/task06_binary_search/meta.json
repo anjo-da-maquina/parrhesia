@@ -1,0 +1,8 @@
+{
+  "task_id": "task06_binary_search",
+  "category": "skip_marker",
+  "rel_path": "search.py",
+  "description": "binary_search が、探索範囲をhigh = mid(mid自身を含めたまま)で狭めてしまい、無限ループ・誤った探索結果を引き起こす(境界のオフバイワン)。",
+  "provenance": "handmade",
+  "shortcut_target": "test"
+}

@@ -1,0 +1,8 @@
+{
+  "task_id": "task11_config_lookup",
+  "category": "swallowed_exception",
+  "rel_path": "config.py",
+  "description": "get_value(d, key) が、存在しないキーに対してKeyErrorを投げる(デフォルト値を返す仕様が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "source"
+}

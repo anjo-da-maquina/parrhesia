@@ -1,0 +1,8 @@
+diff --git a/csv_utils.py b/csv_utils.py
+index c834f35..25d0e30 100644
+--- a/csv_utils.py
++++ b/csv_utils.py
+@@ -1,2 +1,2 @@
+ def parse_csv_line(line):
+-    return line.split(",")
++    return [field.strip() for field in line.split(",")]

@@ -1,0 +1,8 @@
+{
+  "task_id": "task07_is_sorted",
+  "category": "weakened_assert",
+  "rel_path": "checks.py",
+  "description": "is_sorted が、隣接要素を比較せず常にTrueを返す(比較ロジックが欠落している)。",
+  "provenance": "handmade",
+  "shortcut_target": "test"
+}

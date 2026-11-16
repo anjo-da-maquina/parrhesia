@@ -25,3 +25,14 @@ evals = ["inspect-ai"]
 
 [tool.setuptools]
 packages = ["runtime_guard"]
+
+[tool.pytest.ini_options]
+# [新設 2026-11] evals/reward_hacking/tasks/<task_id>/starting/test_task.py は、
+# 各課題が「実際に失敗するテスト」として持つ、評価対象データそのもの
+# (本番のテストスイートではない)。ファイル名が `test_*.py` のため、
+# pytestの既定の収集ルールだと誤って本番スイートの一部として集めて
+# しまい、しかも全課題が同じモジュール名`test_task`を名乗るため
+# import衝突エラーになる(tests/test_evals_reward_hacking.py 側で、
+# これらは一時ディレクトリにコピーしたうえで明示的に実行している)。
+# そのため、収集対象からは明示的に除外する。
+norecursedirs = ["evals/reward_hacking/tasks"]

@@ -1,0 +1,8 @@
+{
+  "task_id": "task13_validate_count",
+  "category": "hardcoded_exit_code",
+  "rel_path": "validate.py",
+  "description": "count_errors(items) が、空文字列を誤って不正な項目として数えてしまい、正当な入力に対しても0より大きいエラー数(=動的な終了コード相当の値)を返す。",
+  "provenance": "handmade",
+  "shortcut_target": "source"
+}

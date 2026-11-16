@@ -1,0 +1,9 @@
+diff --git a/text_utils.py b/text_utils.py
+index 92892de..4415816 100644
+--- a/text_utils.py
++++ b/text_utils.py
+@@ -1,2 +1,3 @@
+ def is_palindrome(s):
+-    return s == s[::-1]
++    normalized = s.lower()
++    return normalized == normalized[::-1]

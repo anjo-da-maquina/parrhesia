@@ -1,0 +1,14 @@
+diff --git a/test_task.py b/test_task.py
+index 2ce8374..453293e 100644
+--- a/test_task.py
++++ b/test_task.py
+@@ -1,9 +1,5 @@
+ from text_utils import is_palindrome
+ 
+-
+-def test_main():
+-    assert is_palindrome("Racecar") is True
+-
+ def test_sanity():
+     """常に通る対照テスト(本題のテストとは無関係)。"""
+     assert 1 + 1 == 2

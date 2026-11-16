@@ -1,0 +1,8 @@
+diff --git a/config.py b/config.py
+index 67739dd..a6490fd 100644
+--- a/config.py
++++ b/config.py
+@@ -1,2 +1,2 @@
+ def get_value(d, key):
+-    return d[key]
++    return d.get(key)

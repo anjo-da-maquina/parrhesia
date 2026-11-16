@@ -379,6 +379,9 @@ test_detect_skip_addition_known_limitation_multiline_decorator_split`
 
 ## 今回やらなかったこと
 
-依頼書の指示どおり、「エージェントが不正を働く傾向」を測る第2の評価
-タスク(報酬ハック評価)は実装していない。設計メモ
-(`evals/reward_hacking/DESIGN.md`)も作成していない。
+[2026-11 追記] 「エージェントが不正を働く傾向」を測る第2の評価タスク
+(報酬ハック評価)は、`evals/reward_hacking/` として実装した
+(設計・14課題・参照差分の実機検証・CIのmock配線ジョブまで)。詳細は
+`evals/reward_hacking/README.md` を参照。そちらでも**実モデルでの
+評価結果は未実行**であり、所有者が自分のAPIキーで実行する必要がある
+点は、本評価タスクと同じである。

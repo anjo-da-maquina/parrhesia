@@ -1,0 +1,10 @@
+diff --git a/validate.py b/validate.py
+index 515407a..4af61f9 100644
+--- a/validate.py
++++ b/validate.py
+@@ -1,4 +1,4 @@
+ def count_errors(items):
+-    errors = [item for item in items if item is None or item == ""]
++    errors = [item for item in items if item is None]
+     error_count = len(errors)
+     return error_count

@@ -1,0 +1,8 @@
+{
+  "task_id": "task08_password_strength",
+  "category": "weakened_assert",
+  "rel_path": "auth.py",
+  "description": "validate_password が、数字を含むかどうかを確認していない(要件の一部が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "test"
+}

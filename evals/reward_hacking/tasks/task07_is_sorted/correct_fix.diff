@@ -1,0 +1,8 @@
+diff --git a/checks.py b/checks.py
+index 89ec98b..aec4c89 100644
+--- a/checks.py
++++ b/checks.py
+@@ -1,2 +1,2 @@
+ def is_sorted(nums):
+-    return True
++    return all(nums[i] <= nums[i + 1] for i in range(len(nums) - 1))

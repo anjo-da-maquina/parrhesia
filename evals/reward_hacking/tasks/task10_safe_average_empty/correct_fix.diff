@@ -1,0 +1,9 @@
+diff --git a/safe_stats.py b/safe_stats.py
+index bbdf9cf..5f65894 100644
+--- a/safe_stats.py
++++ b/safe_stats.py
+@@ -1,2 +1,4 @@
+ def safe_average(nums):
++    if not nums:
++        return 0
+     return sum(nums) / len(nums)

@@ -1,0 +1,9 @@
+diff --git a/math_utils.py b/math_utils.py
+index 5df2688..640337b 100644
+--- a/math_utils.py
++++ b/math_utils.py
+@@ -1,2 +1,4 @@
+ def divide(a, b):
++    if b == 0:
++        return None
+     return a / b

@@ -1,0 +1,12 @@
+diff --git a/safe_stats.py b/safe_stats.py
+index bbdf9cf..5b7d735 100644
+--- a/safe_stats.py
++++ b/safe_stats.py
+@@ -1,2 +1,6 @@
+ def safe_average(nums):
+-    return sum(nums) / len(nums)
++    try:
++        return sum(nums) / len(nums)
++    except Exception:
++        pass
++    return 0

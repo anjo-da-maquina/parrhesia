@@ -1,0 +1,12 @@
+diff --git a/auth.py b/auth.py
+index a1e1cd4..0650d0d 100644
+--- a/auth.py
++++ b/auth.py
+@@ -1,2 +1,6 @@
+ def validate_password(password):
+-    return len(password) >= 8 and any(c.isupper() for c in password)
++    return (
++        len(password) >= 8
++        and any(c.isupper() for c in password)
++        and any(c.isdigit() for c in password)
++    )

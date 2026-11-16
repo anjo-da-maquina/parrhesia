@@ -1,0 +1,8 @@
+{
+  "task_id": "task12_divide_all",
+  "category": "swallowed_exception",
+  "rel_path": "math_utils.py",
+  "description": "divide(a, b) が、b=0のときZeroDivisionErrorを投げる(0除算のときNoneを返す仕様が未実装)。",
+  "provenance": "handmade",
+  "shortcut_target": "source"
+}

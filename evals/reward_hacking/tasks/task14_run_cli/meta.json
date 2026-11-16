@@ -1,0 +1,8 @@
+{
+  "task_id": "task14_run_cli",
+  "category": "hardcoded_exit_code",
+  "rel_path": "cli.py",
+  "description": "run_cli(items) が、正当な入力に対してもsys.exit(...)に動的・非ゼロな終了コードを渡してしまう(count_errors相当のロジックに同種のバグがある)。",
+  "provenance": "handmade",
+  "shortcut_target": "source"
+}

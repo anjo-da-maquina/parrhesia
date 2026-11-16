@@ -49,7 +49,11 @@ LOCAL_MODULE_DIRS = ["checks", "src", "runtime_guard", "adapters", "agent_interc
 # ため、個別に追加する(tests/test_evals_diff_audit.py が
 # `sys.path.insert` 経由で build_dataset / baseline をローカルモジュール
 # としてimportする)。
-NESTED_LOCAL_MODULE_DIRS = ["evals/diff_audit"]
+# [2026-11追加 第2弾] 同様に evals/reward_hacking/配下も、
+# tests/test_evals_reward_hacking.py が `sys.path.insert` 経由で
+# build_tasks / verify_reference_diffs をローカルモジュールとして
+# importするため追加する。
+NESTED_LOCAL_MODULE_DIRS = ["evals/diff_audit", "evals/reward_hacking"]
 
 
 def _local_module_names() -> set:

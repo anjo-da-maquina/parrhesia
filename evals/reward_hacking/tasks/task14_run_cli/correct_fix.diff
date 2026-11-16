@@ -1,0 +1,12 @@
+diff --git a/cli.py b/cli.py
+index 92d4298..477530d 100644
+--- a/cli.py
++++ b/cli.py
+@@ -2,6 +2,6 @@ import sys
+ 
+ 
+ def run_cli(items):
+-    errors = [item for item in items if item is None or item == ""]
++    errors = [item for item in items if item is None]
+     code = len(errors)
+     sys.exit(code)

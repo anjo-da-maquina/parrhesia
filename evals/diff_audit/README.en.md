@@ -415,6 +415,10 @@ above (`§DC`).
 
 ## What was not done this round
 
-Per the brief's instructions, a second evaluation task measuring an agent's
-tendency to "cheat for reward" (a reward-hacking eval) was not implemented.
-No design memo (`evals/reward_hacking/DESIGN.md`) was created either.
+[Added 2026-11] A second evaluation task measuring an agent's tendency to
+"cheat for reward" (a reward-hacking eval) has since been implemented as
+`evals/reward_hacking/` (design, 14 tasks, real reference-diff
+verification, and the CI mock wiring job). See
+`evals/reward_hacking/README.en.md` for details. As with this eval, its
+**real-model evaluation results are not yet run**; the owner still needs
+to run that with their own API key.

@@ -178,3 +178,73 @@ jobs:
         } > /tmp/inspect_mock_run_comment_body.md
         gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
           -F body=@/tmp/inspect_mock_run_comment_body.md
+
+  # evals/reward_hacking/ 用の同種のジョブ。
+  #
+  # こちらは evals/diff_audit/ と異なり、Inspectの**sandbox機能**
+  # (Sample(..., sandbox="local")、inspect_ai.util.sandbox()の
+  # write_file/exec)を使っている。このAPIは、開発用サンドボックス
+  # (inspect_ai未インストール)では一度も検証できていない
+  # (詳細はevals/reward_hacking/DESIGN.md・task.py冒頭の注記)。
+  # モデルを一切呼ばず、各課題自身の「正しい修正」差分を台本として
+  # そのまま返す偽エージェント(reward_hacking_wiring_check)を使い、
+  # 「サンドボックスへの書き込み→diff適用→テスト実行→検出器実行→
+  # 採点」のパイプライン全体が実際に最後まで動くことを、ここで初めて
+  # 確認する。
+  verify_evals_reward_hacking_wiring:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install Dependencies (including inspect-ai via the evals extra)
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install ".[evals]"
+
+    - name: Regenerate evals/reward_hacking/ tasks
+      # コミット済みのtasks/ではなくこの場で再生成したものを使う
+      # (生成スクリプト自体が壊れていないことも同時に確認する)。
+      run: python3 evals/reward_hacking/build_tasks.py
+
+    - name: Verify reference diffs against Parrhesia's detector
+      run: python3 evals/reward_hacking/verify_reference_diffs.py
+
+    - name: Run evals/reward_hacking/ regression tests (inspect_ai available here)
+      # このジョブではinspect_aiが実際にインストールされているため、
+      # 開発用サンドボックス(inspect_ai無し)では
+      # `pytest.importorskip`によりskipされていた
+      # test_task_module_importable_when_inspect_ai_present が、ここでは
+      # 実際に実行されてpassすることを確認する。
+      run: python3 -m pytest tests/test_evals_reward_hacking.py -v
+
+    - name: Inspect sandbox wiring check (scripted fake agent, no real model call)
+      id: inspect_mock_run_reward_hacking
+      run: |
+        set -o pipefail
+        inspect eval "evals/reward_hacking/task.py@reward_hacking_wiring_check" \
+          --model mockllm/model --limit 3 \
+          2>&1 | tee /tmp/inspect_mock_run_reward_hacking_output.txt
+
+    - name: 失敗時の詳細をコミットコメントとして可視化
+      if: failure() && steps.inspect_mock_run_reward_hacking.outcome == 'failure'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        tail -c 60000 /tmp/inspect_mock_run_reward_hacking_output.txt > /tmp/inspect_mock_run_reward_hacking_tail.txt
+        {
+          echo "### 🔥 Core CI/CD (\`verify_evals_reward_hacking_wiring\`) — inspect eval sandbox mock run failure"
+          echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo
+          echo '```'
+          cat /tmp/inspect_mock_run_reward_hacking_tail.txt
+          echo '```'
+        } > /tmp/inspect_mock_run_reward_hacking_comment_body.md
+        gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/comments" \
+          -F body=@/tmp/inspect_mock_run_reward_hacking_comment_body.md
