@@ -223,11 +223,11 @@ SelfplayOrchestratorが提案する禁止イベントは`runtime_guard/proposed_
 
 \### I. 外部脅威インテリジェンス取り込み系の削除と再構築
 
-2026-10のセルフレビューで、Gemini経由の外部脅威情報取り込みに関する3ファイル(`src/oracle_feed.py`, `src/gemini_oracle_feed.py`, `src/angelic_shield.py`+`src/kamael_judgment.py`)に問題が見つかった。判断は機能の重複度合いによって二分した。
+2026-10のセルフレビューで、Gemini経由の外部脅威情報取り込みに関する3ファイル(`src/oracle_feed.py`, `src/gemini_oracle_feed.py`, および後に`src/shield_rule_sync.py`へ統合・改名された旧2ファイル)に問題が見つかった。判断は機能の重複度合いによって二分した。
 
 \*\*削除: `oracle_feed.py` / `gemini_oracle_feed.py`\*\* — 両ファイルは`src/secure_oracle_feed.py`（`GEMINI_API_KEY`を`os.environ.pop()`で即時消去し、`EconomicDefenseLimiter`・`DefenseOrchestrator`・`OllamaSelfplayRound`を統合した上位互換版）に完全に機能面で上書きされていた死んだ重複コードであり、作り直す価値がなかった。削除した。
 
-\*\*再構築: `angelic_shield.py` / `kamael_judgment.py`\*\* — この2ファイルが組み合わせて提供する「外部の脅威インテリジェンス(Gemini経由)を取り込み、独自ASTスキャナ(`ShieldRuleScanner`)のルールに反映する」機能自体は、Selfplay Engine(Ollamaによる内部自己対戦進化)とは別系統の独自の価値ある機能であり、単純削除すると機能が失われるため作り直した。修正点は3つ。(1) 独自実装の弱い、`sys.addaudithook`相当の簡易な監視フックが、実行を一切行わない静的解析・JSON読み書きのみのファイル群に対して「OSレベルで保護されている」かのような誤解を招く表示をしていたため撤去した。本当にOSレベルの保護が必要な箇所(AI生成コードの実行)は`runtime_guard.Sandbox`/`DefenseOrchestrator`が担い、本ファイル群はその代替ではない。(2) `ShieldRuleProposalQueue`がLLMの生出力を人間承認なしに`shield_rules.json`へ直接反映していた（Selfplay Engineの`proposed_rule_queue.json`で既に修正した同種の脆弱性）。`runtime_guard/shield_rules_pending.json`への提案キューイングと、`tools/promote_shield_seal.py`による人間の明示的承認を経てからの反映に変更した。(3) `ShieldRuleScanner`が`runtime_guard.scan_source()`(ScanSource)と同じドット付き完全修飾名の検知漏れを抱えていた（`"os.system"`のような`blocked_functions`エントリに、呼び出し式のバレ属性名`"system"`が一致しなかった）。ScanSourceの修正(§E)と同一のロジックで完全修飾名を復元し照合するようにした。`checks/guard_shield_rule_autoapply_and_key_leak.py`がこれら3点の再発を静的に検知し、`tests/test_shield_rebuild.py`が動作を実機検証する。
+\*\*再構築: 現`src/shield_rule_sync.py`(当時の旧2ファイル)\*\* — この2ファイルが組み合わせて提供する「外部の脅威インテリジェンス(Gemini経由)を取り込み、独自ASTスキャナ(`ShieldRuleScanner`)のルールに反映する」機能自体は、Selfplay Engine(Ollamaによる内部自己対戦進化)とは別系統の独自の価値ある機能であり、単純削除すると機能が失われるため作り直した。修正点は3つ。(1) 独自実装の弱い、`sys.addaudithook`相当の簡易な監視フックが、実行を一切行わない静的解析・JSON読み書きのみのファイル群に対して「OSレベルで保護されている」かのような誤解を招く表示をしていたため撤去した。本当にOSレベルの保護が必要な箇所(AI生成コードの実行)は`runtime_guard.Sandbox`/`DefenseOrchestrator`が担い、本ファイル群はその代替ではない。(2) `ShieldRuleProposalQueue`がLLMの生出力を人間承認なしに`shield_rules.json`へ直接反映していた（Selfplay Engineの`proposed_rule_queue.json`で既に修正した同種の脆弱性）。`runtime_guard/shield_rules_pending.json`への提案キューイングと、`tools/promote_shield_seal.py`による人間の明示的承認を経てからの反映に変更した。(3) `ShieldRuleScanner`が`runtime_guard.scan_source()`(ScanSource)と同じドット付き完全修飾名の検知漏れを抱えていた（`"os.system"`のような`blocked_functions`エントリに、呼び出し式のバレ属性名`"system"`が一致しなかった）。ScanSourceの修正(§E)と同一のロジックで完全修飾名を復元し照合するようにした。`checks/guard_shield_rule_autoapply_and_key_leak.py`がこれら3点の再発を静的に検知し、`tests/test_shield_rebuild.py`が動作を実機検証する。
 
 
 
@@ -494,7 +494,7 @@ jail.secure_resolve("../jail_workspace_EVIL/secret.txt")
 
 §AAで`WorkspaceJail`に見つけた脆弱性パターン(文字列の前方一致のみによる境界判定)が、リポジトリ内の他の場所にも残っていないか`grep`で横断的に点検した結果、もう一箇所で発見した。
 
-\*\*事実確認\*\*: `checks/\_common.py`の`scan\_for\_leaked\_secrets()`(CI上でシークレット漏洩を検知する`checks/guard\_precommit\_secret\_leak.py`が使用)は、スキャン除外対象のディレクトリ(`EXCLUDED\_SECRET\_SCAN\_DIRS = {"dummy\_secrets", ".git", "\_\_pycache\_\_", "runtime\_guard/.angel\_state", "reports"}`)との一致判定を`rel.startswith(ex)`という文字列の前方一致のみで行っていた。これは末尾の区切り文字を要求しないため、`"dummy\_secrets\_backup/real\_leaked\_key.env"`のように、除外対象の名前と前方一致するだけの別ディレクトリに置かれた本物のシークレットも、スキャン自体が一切行われずに素通りしてしまう欠陥だった(実機で再現を確認)。これは`WorkspaceJail`の脆弱性とは逆方向(過剰な除外によるセキュリティ機能自体の無効化)だが、根本原因は同一(末尾区切り文字を要求しない文字列前方一致)である。
+\*\*事実確認\*\*: `checks/\_common.py`の`scan\_for\_leaked\_secrets()`(CI上でシークレット漏洩を検知する`checks/guard\_precommit\_secret\_leak.py`が使用)は、スキャン除外対象のディレクトリ(当時の値: `EXCLUDED\_SECRET\_SCAN\_DIRS = {"dummy\_secrets", ".git", "\_\_pycache\_\_", "runtime\_guard/.angel\_state", "reports"}`——このディレクトリ名は後の命名整理で`runtime\_guard/.runtime\_state`へ改名され、§BDで"tests"も追加されている。現在値は`checks/\_common.py`参照)との一致判定を`rel.startswith(ex)`という文字列の前方一致のみで行っていた。これは末尾の区切り文字を要求しないため、`"dummy\_secrets\_backup/real\_leaked\_key.env"`のように、除外対象の名前と前方一致するだけの別ディレクトリに置かれた本物のシークレットも、スキャン自体が一切行われずに素通りしてしまう欠陥だった(実機で再現を確認)。これは`WorkspaceJail`の脆弱性とは逆方向(過剰な除外によるセキュリティ機能自体の無効化)だが、根本原因は同一(末尾区切り文字を要求しない文字列前方一致)である。
 
 \*\*修正\*\*: `rel == ex or rel.startswith(ex + "/")`という、完全一致またはそのディレクトリ配下(区切り文字付き)であることを要求する判定に修正した。テスト容易性のため`scan\_for\_leaked\_secrets()`に`root`引数を追加し(既定はリポジトリ本体の`ROOT`)、一時ディレクトリ上の架空のファイル構成で検証できるようにした。
 
@@ -761,7 +761,7 @@ chain.record("AI_ACTION", {...})
 
 \*\*たとえ話\*\*: これは、税関の検査官が「このスーツケースは危険物が入っているので、絶対に持ち込ませません。ここで廃棄します」と宣言しながら、実際には何も取り上げず、ただそのスーツケースをそのまま持ち主に返し、通過ゲートの信号も「問題なし」の緑色のままにしていた、という状態である。宣言の内容と、実際に起きた結果(スタンプが押され、何の制止もなく通過できる)が一致していなかった。
 
-\*\*原因\*\*: 本関数は`KamaelInquisitor`(検知ロジック自体)の結果を人間が読む画面表示用のメッセージに変換することに主眼が置かれ、「このCLIを呼び出すスクリプトが、終了コードで合否を判定できるようにする」という、CLIツールとして最低限満たすべき契約が設計時に意識されていなかった。既存のテスト(`tests/test_shield_rebuild.py`)は`KamaelInquisitor`クラス自体を直接呼び出して検証しており、`execute_judgment()`という外側のCLIラッパー関数そのものの戻り値・終了コードは一度も検証されていなかったため、この見せかけが発覚しないまま残っていた。
+\*\*原因\*\*: 本関数は`ShieldRuleScanner`(検知ロジック自体)の結果を人間が読む画面表示用のメッセージに変換することに主眼が置かれ、「このCLIを呼び出すスクリプトが、終了コードで合否を判定できるようにする」という、CLIツールとして最低限満たすべき契約が設計時に意識されていなかった。既存のテスト(`tests/test_shield_rebuild.py`)は`ShieldRuleScanner`クラス自体を直接呼び出して検証しており、`execute_judgment()`という外側のCLIラッパー関数そのものの戻り値・終了コードは一度も検証されていなかったため、この見せかけが発覚しないまま残っていた。
 
 \*\*対応\*\*: `execute_judgment()`が「潔白(違反なし)であればTrue」を返すように変更し、`__main__`ブロックでその戻り値に応じて`sys.exit(0)`/`sys.exit(1)`するようにした。これにより、本CLIを呼び出すシェルスクリプトや別のPythonプロセスが、終了コードで実際に合否判定できるようになる。なお、表示文言も「実行は不可能です。カマエルが対象を破棄します。」という、ファイルの物理的削除を暗示する誇張表現から、「このファイルは防壁ルールに違反しています。」という、実際に起きていること(検知のみ)に即した表現に改めた。ファイル削除という破壊的操作そのものを新たに実装することはしていない——それは別途明示的な承認フローを要する判断であり、既存の誇張した表示文言に挙動を合わせるために安易に追加すべきものではないと判断した。
 
