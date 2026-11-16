@@ -12,7 +12,7 @@ from pathlib import Path
 # [脆弱性修正 2026-10] 以前はここで `import requests` をモジュール先頭で
 # 即時実行していたが、これは `_verify_hardware_match()` の呼び出し(このすぐ下)
 # よりも先にPythonによって評価される。CI環境等で requests がインストール
-# されていない場合、このゲート本来の `sys.exit(666)` が一度も実行されず、
+# されていない場合、このゲート本来の `sys.exit(97)` が一度も実行されず、
 # 代わりに ModuleNotFoundError による通常のクラッシュ(exit code 1)で
 # プロセスが終了してしまう(実機検証済み)。つまり「最重要防壁の信頼性が、
 # 無関係なサードパーティ依存の有無に左右される」という脆弱性だった。
@@ -27,7 +27,7 @@ def _verify_hardware_match():
     current_hash = hashlib.sha256((mac_address + salt).encode()).hexdigest()
     if current_hash != COMMANDER_HASH:
         print("\n[!!!] FATAL: HARDWARE MISMATCH [!!!]")
-        sys.exit(666)
+        sys.exit(97)
 
 _verify_hardware_match()
 

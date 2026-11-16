@@ -668,6 +668,8 @@ chain.record("AI_ACTION", {...})
 
 \*\*検証\*\*: 削除後に`mini_pytest.py`を再実行し、`PASS=134 FAIL=0 ERROR=2`(既存の無関係なERROR2件のみ)に変化がないことを確認した(そもそも何からも参照されていなかったため、当然の結果ではあるが、削除が安全であることの最終確認として行った)。
 
+\*\*2026-11 追記\*\*: 本節で言及した`adversarial_training/local_only_selfplay_gate.py`のハードウェアゲートが使っていた終了コード`666`は、`tools/purify_tests.py`の削除とは無関係だが、DEFECTS.md全体の宗教・神話由来の命名を見直す作業の中で改めて点検した結果、キルスイッチの機能そのものには何の問題もない一方、終了コードの値自体に意味上の必然性が無く、単なる慣用的な数値選択だったことを確認した。`adversarial_training/local_only_selfplay_gate.py`・`adversarial_training/selfplay_engine_core.py`(コメント中の参照)・`tests/test_selfplay_gate_hardware_match.py`(テスト関数名・docstring・アサーション)の該当箇所を、`sys.exit(97)`へ中立的な値に置き換えた。併せて、POSIXの終了コードが8bitに丸められる(`666 % 256 = 154`)ことを前提にしていた回帰テストの但し書きコメントは、`97`が256未満で丸めの影響を受けないため不要になり、削除した。機能面の変更は無く、`python3 -B -m pytest tests/test_selfplay_gate_hardware_match.py -v`で2件とも引き続きPASSすることを確認し、フルスイートでも既存のベースライン(`830 passed, 11 skipped, 4 xfailed`)に変化がないことを確認した。
+
 \### AM.
 
 \*\*発見\*\*: `src/intelligence\_cycle.py`(`ThreatIntelGatherer`・`PayloadWeaponization`を提供し、`src/selfplay\_orchestrator.py`から実際に呼ばれている現役ファイル)の棚卸し中、2点の死んだ残骸を発見した。

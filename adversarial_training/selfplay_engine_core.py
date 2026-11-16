@@ -2,7 +2,7 @@
 adversarial_training/selfplay_engine_core.py
 ============================
 [テスト容易性改善 2026-10] local_only_selfplay_gate.py(旧名selfplay.py)は起動直後に `_verify_hardware_match()`
-（開発者本人のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(666)` で
+（開発者本人のMACアドレスのハッシュ照合）を実行し、不一致なら `sys.exit(97)` で
 即座に終了する。これはLocal Arena（闘技場）が開発者本人のローカル環境以外では
 絶対に起動しないための意図的な設計だが、副作用として local_only_selfplay_gate.py を
 import するだけでCI・他の開発者のマシン上のテストが強制終了してしまい、

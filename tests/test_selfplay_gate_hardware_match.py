@@ -4,7 +4,7 @@
 
 このゲートが弱体化・削除されると、Local Arena（闘技場）が開発者本人の
 ローカル環境以外でも起動してしまう致命的な回帰となるため、
-CI上では必ず exit(666) で拒否されることを確認する。
+CI上では必ず exit(97) で拒否されることを確認する。
 """
 import subprocess
 import sys
@@ -13,11 +13,11 @@ from pathlib import Path
 ADVERSARIAL_TRAINING_DIR = Path(__file__).resolve().parent.parent / "adversarial_training"
 
 
-def test_local_only_selfplay_gate_exits_666_on_unmatched_hardware():
+def test_local_only_selfplay_gate_exits_97_on_unmatched_hardware():
     """
     CI環境（およびこのリポジトリを手にした大半の第三者環境）では
     uuid.getnode() が開発者本人のMACアドレスと一致しないため、
-    local_only_selfplay_gate.py(旧名selfplay.py)は import された瞬間に exit(666) するべきである。
+    local_only_selfplay_gate.py(旧名selfplay.py)は import された瞬間に exit(97) するべきである。
     """
     script = f"""
 import sys
@@ -25,9 +25,7 @@ sys.path.insert(0, {str(ADVERSARIAL_TRAINING_DIR)!r})
 import local_only_selfplay_gate
 """
     res = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True)
-    # [注] POSIXのプロセス終了コードは8bit(0-255)に丸められるため、
-    # sys.exit(666) の実際の終了コードは 666 % 256 = 154 になる。
-    assert res.returncode == 666 % 256, (
+    assert res.returncode == 97, (
         f"CRITICAL: 開発者本人のMACアドレスゲートが機能していません。"
         f"returncode={res.returncode}, stderr={res.stderr}"
     )
