@@ -3,7 +3,7 @@ tests/test_check_log_flush_before_exit.py
 =====================================
 [新設 2026-10 §BR] checks/check_log_flush_before_exit.py の単体テスト。
 
-本天使は、§BQで実機CIにおいて実際に発見した「os._exit()の直前に
+本検査は、§BQで実機CIにおいて実際に発見した「os._exit()の直前に
 flush()が無いため、自壊理由のログが(標準出力がパイプ/ファイルの場合に)
 消失する」という、src/deadmans_switch.py・src/starvation_protocol.pyの
 2件の本物のバグのパターンを、astによる静的解析で一般化して検知する。
@@ -145,7 +145,7 @@ def test_file_with_no_exit_call_reports_not_applicable(monkeypatch, tmp_path, ca
 def test_real_repository_files_pass_after_the_sbq_fix():
     """[実機の裏付け] §BQで実際に修正したsrc/deadmans_switch.py・
     src/starvation_protocol.pyを含む、現時点のリポジトリ全体に対して
-    本天使を実行し、PASSすることを確認する(回帰防止)。"""
+    本検査を実行し、PASSすることを確認する(回帰防止)。"""
     import io
     from contextlib import redirect_stdout
 

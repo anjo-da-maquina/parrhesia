@@ -3,10 +3,10 @@ tests/test_audit_ledger_schema.py
 =====================================
 [新設 2026-11] checks/audit_ledger_schema.py の単体テスト。
 
-本天使(「ラジエルの書」)は、`runtime_guard/pending_rule_ledger.json`のスキーマと、
+本検査は、`runtime_guard/pending_rule_ledger.json`のスキーマと、
 禁止イベント名が妥当なPython audit event名の形式であること(LLM幻覚に
 よるデータ汚染検知)、および`runtime_guard/proposed_rule_queue.json`の各
-エントリのstatusが既知の値であることを検証する。天使群のテスト
+エントリのstatusが既知の値であることを検証する。検査群のテスト
 カバレッジの棚卸しの過程で、専用テストが一件も存在しないことが判明
 した。
 
@@ -35,7 +35,7 @@ def _fake_load_json(ledger=None, pending=None):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリの実際のpending_rule_ledger.jsonは
-    妥当なスキーマであるため、本天使はPASSを報告する。"""
+    妥当なスキーマであるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

@@ -3,15 +3,15 @@ tests/test_audit_adapters_static_analysis.py
 =====================================
 [新設 2026-11] checks/audit_adapters_static_analysis.py の単体テスト。
 
-本天使(「サリエルの監視」)は、`adapters/`配下の外部ツール連携
+本検査は、`adapters/`配下の外部ツール連携
 スクリプトが、禁止モジュールを直接importしていないかを
 `runtime_guard.scan_source()`(ScanSourceの静的解析)で検証する。`critical`重大度
-の違反がある場合のみFAILする設計である。天使群のテストカバレッジの
+の違反がある場合のみFAILする設計である。検査群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
 `runtime_guard.scan_source`はmain()内でローカルimportされるモジュール属性
 であるため、`runtime_guard.scan_source`自体をmonkeypatchし、実際の静的解析
-ロジックを介さずに、本天使固有の「criticalな違反のみを収集して判定
+ロジックを介さずに、本検査固有の「criticalな違反のみを収集して判定
 する」というラッパー判定ロジックを単独で検証する。
 `audit_adapters_static_analysis.ROOT`も一時ディレクトリへmonkeypatchし、
 `adapters/`の内容を制御する。
@@ -41,7 +41,7 @@ def _fake_scan_source_flagging(trigger_token, severity="critical"):
 
 def test_real_repository_passes_or_is_not_applicable():
     """[実機の裏付け] 現時点のリポジトリのadapters/配下には重大な静的
-    解析違反が無いか、adapters/自体が存在しないため、本天使はPASSまたは
+    解析違反が無いか、adapters/自体が存在しないため、本検査はPASSまたは
     NOT_APPLICABLEのいずれかを報告する(FAILではない)。"""
     import io
     from contextlib import redirect_stdout

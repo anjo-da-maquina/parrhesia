@@ -3,16 +3,16 @@ tests/test_guard_obfuscated_payload_bypass.py
 =====================================
 [新設 2026-11] checks/guard_obfuscated_payload_bypass.py の単体テスト。
 
-本天使(「カマエルの盾」)は、難読化された攻撃パターン(OBFUSCATED_ATTACKS)
+本検査は、難読化された攻撃パターン(OBFUSCATED_ATTACKS)
 が、ScanSource(静的解析: `scan_source_catches`)かAuditHook(動的実行:
 `run_code_against_runtime_guard`)のいずれかで必ず捕捉されることを検証する
 (両方を素通りした場合のみFAIL、という「多層防御のどちらかで捕捉できれば
 よい」というOR条件のラッパー判定ロジック)。
 
 `scan_source_catches`・`run_code_against_runtime_guard`という2つの下層ヘルパー
-自体の正しさは、他のテスト(test_runtime_guard系・各天使のテスト)で別途検証
-されている。本天使固有の価値は、その2つの結果を受けて「両方突破された
-場合のみ失敗する」というOR判定そのものにあるが、天使群のテストカバレッジ
+自体の正しさは、他のテスト(test_runtime_guard系・各検査のテスト)で別途検証
+されている。本検査固有の価値は、その2つの結果を受けて「両方突破された
+場合のみ失敗する」というOR判定そのものにあるが、検査群のテストカバレッジ
 の棚卸しの過程で、この判定ロジック自体を直接検証するテストが一件も
 存在しないことが判明した。
 
@@ -30,7 +30,7 @@ import guard_obfuscated_payload_bypass as cs
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点の実装では、全ての難読化攻撃パターンが静的
-    または動的検査のいずれかで捕捉されるため、本天使はPASSを報告
+    または動的検査のいずれかで捕捉されるため、本検査はPASSを報告
     する。"""
     import io
     from contextlib import redirect_stdout

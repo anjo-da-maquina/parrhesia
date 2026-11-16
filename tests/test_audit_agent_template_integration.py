@@ -3,13 +3,13 @@ tests/test_audit_agent_template_integration.py
 =====================================
 [新設 2026-11] checks/audit_agent_template_integration.py の単体テスト。
 
-本天使(「ラグエルの鑑定」)は、OpenAI拡張用テンプレート
+本検査は、OpenAI拡張用テンプレート
 (`src/openai_agent_loop.py`)が、「拡張用の雛形」と称しながら防壁を
 一つも統合しない張りぼてに戻されていないかを静的に検証する(思考統制
 監査)。具体的には、(A)存在しない死んだフォールバックimportが実行
 コードとして復活していないか、(B)runtime_guard.Sandbox/defense_orchestrator.DefenseOrchestrator
 が実際に統合され使用されているか、(C)enforce_maquina_seal(証明書
-ゲート)が維持されているか、を検証する。天使群のテストカバレッジの
+ゲート)が維持されているか、を検証する。検査群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
 report_fail()は呼び出し即座にsys.exit(1)するため、各テストはmain()内
@@ -67,7 +67,7 @@ def _expect_fail(monkeypatch, root):
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、OpenAI拡張テンプレートが
     死んだフォールバックimportを持たず、Sandbox/DefenseOrchestratorによる実
-    防壁統合を保っているため、本天使はPASSを報告する。"""
+    防壁統合を保っているため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

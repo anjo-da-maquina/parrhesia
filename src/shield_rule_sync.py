@@ -53,7 +53,7 @@ class ExternalThreatIntelClient:
 
     def fetch_threat_signature(self, target_threat=None):
         threat_name = target_threat if target_threat else '未知の脅威'
-        print(f"\n[智天使ラジエル] 外界より『{threat_name}』の構造と防衛策を抽出中...")
+        print(f"\n[ExternalThreatIntelClient] 外界より『{threat_name}』の構造と防衛策を抽出中...")
 
         models_to_try = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"]
         threat_focus = f"the '{target_threat}'" if target_threat else "a specific"
@@ -89,7 +89,7 @@ class ExternalThreatIntelClient:
 
 class ShieldRuleProposalQueue:
     """
-    [2026-10] ラジエルが取得したLLM生成の脅威情報を、人間承認待ちの
+    [2026-10] ExternalThreatIntelClientが取得したLLM生成の脅威情報を、人間承認待ちの
     提案キュー(`runtime_guard/shield_rules_pending.json`)に積むのみ。
     実際に有効な `shield_rules.json` への反映は、`tools/promote_shield_seal.py`
     による人間の明示的承認が必要(Selfplayの proposed_rule_queue.json
@@ -105,7 +105,7 @@ class ShieldRuleProposalQueue:
 
     def propose_knowledge(self, intel: dict):
         """LLMが生成した脅威情報を、承認待ちキューに積む（即時反映はしない）。"""
-        print("[主天使ザドキエル] ラジエルの知識を解析し、防壁ルール更新案をキューに積みます...")
+        print("[ShieldRuleProposalQueue] 取得した脅威情報を解析し、防壁ルール更新案をキューに積みます...")
         print("(※ 人間の承認を得るまで、実際の防壁ルールには反映されません)")
 
         pending = []
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     target_threat = sys.argv[1] if len(sys.argv) > 1 else None
     cycles = 1 if target_threat else 3
 
-    print("=== [Merkabah] 熾天使ハシュマリエル: 外部脅威インテリジェンス取り込みサイクル ===")
+    print("=== [Parrhesia] 外部脅威インテリジェンス取り込みサイクル ===")
     threat_intel = ExternalThreatIntelClient(api_key)
     del api_key  # メモリ上の変数からも明示的に破棄
     shield_rule_queue = ShieldRuleProposalQueue()

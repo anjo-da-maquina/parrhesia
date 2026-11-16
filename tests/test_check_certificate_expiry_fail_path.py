@@ -15,7 +15,7 @@ checks/check_certificate_expiry.pyは、証明書の有効期限切れを「GitH
 これは§BM(CHAOS_MODE)・§BN(HMAC連鎖)と構造的に同じ「安全装置が本当に
 発火するかを誰も確認していない」というパターンの、未発見だった具体例
 である。§11.8/§11.9で設計した「陣性経路テスト必須化」の考え方を、
-checks/audit_security_flag_test_coverage.py という新天使を実装する前に、人間の
+checks/audit_security_flag_test_coverage.py という新検査を実装する前に、人間の
 依頼に基づく手動のレッドチーム作業(既存の全os.getenv/os.environ.get
 利用箇所を洗い出し、各分岐に対応するテストの有無を確認する)によって
 実際に発見した。

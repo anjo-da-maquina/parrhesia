@@ -3,16 +3,16 @@ tests/test_audit_blocklist_regression.py
 =====================================
 [新設 2026-11] checks/audit_blocklist_regression.py の単体テスト。
 
-本天使(「ジョフィエルの灯」)は、`runtime_guard.scan_source()`の禁止モジュール/
+本検査は、`runtime_guard.scan_source()`の禁止モジュール/
 関数リストが、既知のベースライン(`BASELINE_FORBIDDEN_MODULES`・
 `BASELINE_FORBIDDEN_FUNCS`)より静かに弱体化(縮小)していないかを、
 `runtime_guard.scan_source`の実際のソースコードをテキストとして静的走査する
-ことで検証する(意味論的ドリフト検知)。天使群のテストカバレッジの
+ことで検証する(意味論的ドリフト検知)。検査群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
 `main()`は`inspect.getsource(runtime_guard.scan_source)`を直接呼ぶため、標準
 ライブラリの`inspect.getsource`自体を一時的にmonkeypatchし、実際の
-`runtime_guard.scan_source`の実装を介さずに、本天使固有の「ベースラインとの
+`runtime_guard.scan_source`の実装を介さずに、本検査固有の「ベースラインとの
 差分判定」ロジックのみを単独で検証する。
 """
 import sys
@@ -38,7 +38,7 @@ FULL_BASELINE_TOKENS = list(js.BASELINE_FORBIDDEN_MODULES) + list(js.BASELINE_FO
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のruntime_guard.scan_source()には、ベースラインの
-    禁止モジュール/関数が全て含まれているため、本天使はPASSを報告
+    禁止モジュール/関数が全て含まれているため、本検査はPASSを報告
     する。"""
     import io
     from contextlib import redirect_stdout

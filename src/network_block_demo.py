@@ -6,7 +6,7 @@ import time
 
 class NetworkBlockDemo:
     """
-    【孤独の天使：結界 カシエル】
+    【通信遮断結界】
     隔離領域内で実行されるコードの外部通信（アウトバウンド）を論理的に完全遮断する。
 
     [2026-10 位置づけの明記] 本クラスは学習・デモ用であり、現行の実運用
@@ -35,14 +35,14 @@ class NetworkBlockDemo:
         if self.is_sealed:
             return
             
-        print("\n[カシエルの結界] 孤独の天使が外界への通信経路を物理レイヤー(socket)から封鎖しました。")
-        
+        print("\n[NetworkBlockDemo] 外界への通信経路を物理レイヤー(socket)から封鎖しました。")
+
         # Pythonの通信の最下層である socket.socket を強制的にオーバーライドして潰す
         def blocked_socket(*args, **kwargs):
             raise ConnectionRefusedError(
-                "[カシエルの裁き] 外部ネットワークへの不正な接続試行を検知。通信は物理的に遮断されました。"
+                "[NetworkBlockDemo] 外部ネットワークへの不正な接続試行を検知。通信は物理的に遮断されました。"
             )
-        
+
         socket.socket = blocked_socket
         self.is_sealed = True
 
@@ -50,17 +50,17 @@ class NetworkBlockDemo:
         if self.is_sealed:
             socket.socket = self._original_socket
             self.is_sealed = False
-            print("[カシエルの結界] 通信経路を復元しました。")
+            print("[NetworkBlockDemo] 通信経路を復元しました。")
 
 def simulate_network_breach():
-    print("=== [Parrhesia] カシエルの結界（アウトバウンド通信遮断） ===\n")
+    print("=== [Parrhesia] 通信遮断結界（アウトバウンド通信遮断） ===\n")
     print("[システム] parrhesia-seal によるファイル監視に加え、通信監視プロトコルを起動。")
-    
+
     veil = NetworkBlockDemo()
-    
-    # 外部と通信しようとするサマエルの毒（ペイロード）を想定
+
+    # 外部と通信しようとする攻撃ペイロードを想定
     def malicious_network_payload():
-        print("[毒蛇] 外部のC2サーバー (example.com) へ接続し、追加のマルウェアをダウンロードします...")
+        print("[攻撃ペイロード] 外部のC2サーバー (example.com) へ接続し、追加のマルウェアをダウンロードします...")
         time.sleep(1)
         # HTTPリクエスト（内部でsocketモジュールが使われる）
         response = urllib.request.urlopen("http://example.com", timeout=3)
@@ -70,19 +70,19 @@ def simulate_network_breach():
     print(">> シナリオ1: 結界未展開の場合（通信が通ってしまう）")
     try:
         malicious_network_payload()
-        print("=> [致命的エラー] サマエルが外界との通信に成功してしまいました！")
+        print("=> [致命的エラー] 攻撃ペイロードが外界との通信に成功してしまいました！")
     except Exception as e:
         print(f"通信失敗: {e}")
 
-    # 2. カシエルの結界を展開した状態（安全）
-    print("\n>> シナリオ2: カシエルの結界を展開した場合")
+    # 2. 通信遮断結界を展開した状態（安全）
+    print("\n>> シナリオ2: 通信遮断結界を展開した場合")
     veil.activate_seal()
-    
+
     try:
         malicious_network_payload()
     except Exception as e:
         print(f"\n=> [絶対防壁発動] {e}")
-        print("=> [戦果] サマエルがいかに高度な通信コードを書こうとも、最下層でカシエルが首を跳ね飛ばしました。")
+        print("=> [戦果] 攻撃ペイロードがいかに高度な通信コードを書こうとも、最下層のNetworkBlockDemoが遮断しました。")
     finally:
         veil.deactivate_seal()
 

@@ -3,7 +3,7 @@ tests/test_check_core_module_integration.py
 =====================================
 [新設 2026-11] checks/check_core_module_integration.py の単体テスト。
 
-本天使(「権天使の試練」)は、重要モジュール(runtime_guard・agent_interceptor)が
+本検査は、重要モジュール(runtime_guard・agent_interceptor)が
 正しくimportでき、基本的な公開APIが期待通りに動作することをE2Eで検証
 する。具体的には(1)`runtime_guard.scan_source()`が既知の危険コード
 (`os.system`)を検知すること、(2)`IntentInterceptor`がハニーポット
@@ -13,9 +13,9 @@ tests/test_check_core_module_integration.py
 設計になっている。
 
 `runtime_guard.scan_source()`・`IntentInterceptor`自体の実装は他のテストで
-別途検証済みだが、本天使固有の「E2Eとして両者を実際に呼び出し、結果
+別途検証済みだが、本検査固有の「E2Eとして両者を実際に呼び出し、結果
 (findings/例外)を正しく判定する」というラッパー判定ロジック自体は、
-天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
+検査群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
 しないことが判明した。
 
 `main()`は`runtime_guard`・`agent_interceptor.intent_checker`をmain()内部で
@@ -39,7 +39,7 @@ from agent_interceptor.intent_checker import IntentInterceptor, SpecificationGam
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、runtime_guard.scan_source()が
     既知の危険コードを検知し、IntentInterceptorがハニーポットへの
-    アクセスを正しく検知するため、本天使はPASSを報告する。"""
+    アクセスを正しく検知するため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -75,7 +75,7 @@ def test_fails_when_interceptor_does_not_detect_honeypot_access(monkeypatch):
 def test_reports_info_and_passes_when_agent_interceptor_is_absent(monkeypatch):
     """agent_interceptorモジュール自体が未インストールの場合、E2E検査を
     スキップする情報ログを出しつつ、残りの検査(scan_source)が正常で
-    あれば正しくPASSすることを確認する(本天使の意図的な設計:
+    あれば正しくPASSすることを確認する(本検査の意図的な設計:
     任意のモジュールとして扱う)。"""
     import io
     from contextlib import redirect_stdout

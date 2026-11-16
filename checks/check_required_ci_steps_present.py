@@ -2,7 +2,7 @@
 checks/check_required_ci_steps_present.py
 =============================
 [脆弱性修正 2026-10 §AO] 本スクリプトの目的は「CIワークフローから必須の
-天使ステップ(guard_sandbox_core_attack_battery.py等)が削除されていないか」を検知することだが、
+検査ステップ(guard_sandbox_core_attack_battery.py等)が削除されていないか」を検知することだが、
 以前の実装は`REQUIRED_STEP_FILES`の各ファイル名が、ワークフローYAMLの
 生のテキスト全体のどこかに文字列として存在するかだけを見ていた。
 
@@ -31,10 +31,10 @@ from _common import (
     VALID_EVENT_NAME_RE, scan_for_leaked_secrets, ROOT,
 )
 
-NAME = "check_required_ci_steps_present - 本スクリプトの目的は「CIワークフローから必須の 天使ステップ(guard_sandbox_core_attack_battery.py等)が削除されていないか」を検知すること…"
+NAME = "check_required_ci_steps_present - 本スクリプトの目的は「CIワークフローから必須の 検査ステップ(guard_sandbox_core_attack_battery.py等)が削除されていないか」を検知すること…"
 
 # ワークフロー整合性ガード: CIワークフロー定義ファイル自体が存在し、
-# 必須ステップ（天使の呼び出し）が削除されていないかを検証する。
+# 必須ステップ（検査スクリプトの呼び出し）が削除されていないかを検証する。
 REQUIRED_STEP_FILES = ["guard_sandbox_core_attack_battery.py", "guard_precommit_secret_leak.py", "audit_ledger_schema.py"]
 WORKFLOW_JOB_NAME = "regression-checks-audit"
 
@@ -64,7 +64,7 @@ def main():
         if not any(f in cmd for cmd in run_commands)
     ]
     if missing:
-        report_fail(NAME, f"必須の天使ステップがワークフローの実行コマンドから削除されています: {missing}")
+        report_fail(NAME, f"必須の検査ステップがワークフローの実行コマンドから削除されています: {missing}")
     report_pass(NAME, "CIワークフローの実行ステップに必須の防御ステップが実在することを確認しました。")
 
 if __name__ == "__main__":

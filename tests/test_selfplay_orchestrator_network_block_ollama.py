@@ -67,7 +67,7 @@ else:
 import selfplay_orchestrator  # noqa: E402  (スタブ設置後に import する必要がある)
 
 
-def test_network_block_seal_does_not_block_the_angels_own_ollama_learning_call(tmp_path, monkeypatch):
+def test_network_block_seal_does_not_block_orchestrators_own_ollama_learning_call(tmp_path, monkeypatch):
     """[脆弱性の核心] run_selfplay_cycles() の中で、NetworkBlockDemoの通信遮断結界が
     展開されている間に行われる ollama.chat() 呼び出し(OllamaSelfplayRound.learn_threat
     による脅威学習通信)が、その結界自身によってブロックされていないこと。"""
@@ -82,7 +82,7 @@ def test_network_block_seal_does_not_block_the_angels_own_ollama_learning_call(t
 
     assert _socket_state_at_ollama_call, "ollama.chat が一度も呼ばれなかった"
     assert all(_socket_state_at_ollama_call), (
-        "NetworkBlockDemoの通信遮断結界が展開されている間に、天使自身の正規の"
+        "NetworkBlockDemoの通信遮断結界が展開されている間に、SelfplayOrchestrator自身の正規の"
         "Ollama学習通信までブロックされてしまっている"
         f" (呼び出しごとの状態: {_socket_state_at_ollama_call})"
     )

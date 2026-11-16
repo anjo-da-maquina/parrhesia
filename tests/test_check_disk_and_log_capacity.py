@@ -3,10 +3,10 @@ tests/test_check_disk_and_log_capacity.py
 =====================================
 [新設 2026-11] checks/check_disk_and_log_capacity.py の単体テスト。
 
-本天使(「ラグエルの天秤」)は、(1)ディスク空き容量が危険域
+本検査は、(1)ディスク空き容量が危険域
 (50MB未満)でないこと、(2)監査証跡(`runtime_guard/audit_chain.jsonl`)の
 サイズが許容範囲(`MAX_AUDIT_LOG_MB`=100MB)を超えていないこと、を
-検証する(物理空間監査)。天使群のテストカバレッジの棚卸しの過程で、
+検証する(物理空間監査)。検査群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。
 
 `main()`は`shutil.disk_usage`をモジュールレベルで直接呼ぶため、
@@ -32,7 +32,7 @@ def _patch_disk_usage(monkeypatch, free_mb):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点の実行環境では、ディスク空き容量・監査ログ
-    サイズともに許容範囲内であるため、本天使はPASSを報告する。"""
+    サイズともに許容範囲内であるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

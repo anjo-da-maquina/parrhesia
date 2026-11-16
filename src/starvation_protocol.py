@@ -50,7 +50,7 @@ class StarvationProtocol:
         os._exit(1)
 
 def feed_monster(feed_file="vital_feed.sig"):
-    """天使(管理者)側からの餌付け（シグナル更新）"""
+    """管理者側からの餌付け（シグナル更新）"""
     Path(feed_file).touch()
     print("[システム] 管理者がレッドチームに餌（生存シグナル）を与えました。")
 

@@ -3,9 +3,9 @@ tests/test_guard_audit_log_replay.py
 =====================================
 [新設 2026-11] checks/guard_audit_log_replay.py の単体テスト。
 
-本天使(「ウリエルの灯」)は、監査証跡ファイル(`runtime_guard/audit_chain.jsonl`)
+本検査は、監査証跡ファイル(`runtime_guard/audit_chain.jsonl`)
 内に同一ハッシュ(=同一イベントの再生、リプレイ攻撃)が重複して記録
-されていないかを検証する。天使群のテストカバレッジの棚卸しの過程で、
+されていないかを検証する。検査群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。
 
 `main()`は`ROOT / "runtime_guard" / "audit_chain.jsonl"`という固定パスを直接
@@ -21,7 +21,7 @@ import guard_audit_log_replay as un
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリの実際の監査証跡には重複ハッシュ
-    が無いため、本天使はPASSを報告する。"""
+    が無いため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -46,7 +46,7 @@ def test_reports_not_applicable_when_chain_file_is_missing(monkeypatch, tmp_path
 
 def test_fails_when_duplicate_hash_is_present(monkeypatch, tmp_path):
     """[核心・リプレイ攻撃検知] 同一の`hash`値を持つエントリが2件以上
-    存在する場合、本天使が正しくFAIL(sys.exit(1))することを確認する。"""
+    存在する場合、本検査が正しくFAIL(sys.exit(1))することを確認する。"""
     runtime_guard_dir = tmp_path / "runtime_guard"
     runtime_guard_dir.mkdir()
     log_path = runtime_guard_dir / "audit_chain.jsonl"

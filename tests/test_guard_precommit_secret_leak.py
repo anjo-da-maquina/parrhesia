@@ -3,7 +3,7 @@ tests/test_guard_precommit_secret_leak.py
 =====================================
 [新設 2026-11] checks/guard_precommit_secret_leak.py の単体テスト。
 
-本天使(「ガブリエルの機密漏洩カナリア」)は、(1)`hooks/pre-commit`が
+本検査は、(1)`hooks/pre-commit`が
 `tools/pre_commit_secret_scan.py`を実際に呼び出す配線を保っていること
 (事前ブロック層が静かに外されていないか)、(2)`scan_for_leaked_secrets()`
 による秘密情報漏洩パターンの静的走査、という2つの検査を行う。
@@ -11,8 +11,8 @@ tests/test_guard_precommit_secret_leak.py
 `scan_for_leaked_secrets()`自体の走査ロジックは
 `tests/test_pre_commit_secret_scan.py`・
 `tests/test_secret_scanners_do_not_flag_own_test_suite.py`で別途検証
-済みだが、本天使固有の(1)の配線検証ロジックと、(1)(2)を組み合わせた
-`main()`自体の判定フローは、天使群のテストカバレッジの棚卸しの過程で、
+済みだが、本検査固有の(1)の配線検証ロジックと、(1)(2)を組み合わせた
+`main()`自体の判定フローは、検査群のテストカバレッジの棚卸しの過程で、
 専用テストが一件も存在しないことが判明した。
 
 `guard_precommit_secret_leak.py`は`ROOT`・`scan_for_leaked_secrets`をモジュール
@@ -50,7 +50,7 @@ def _expect_fail(monkeypatch, root, scan_hits=()):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、pre-commitフックの配線が
-    健全で、秘密情報の漏洩パターンも検出されないため、本天使はPASSを
+    健全で、秘密情報の漏洩パターンも検出されないため、本検査はPASSを
     報告する。"""
     import io
     from contextlib import redirect_stdout

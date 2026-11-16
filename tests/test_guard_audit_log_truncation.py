@@ -9,7 +9,7 @@ tests/test_guard_audit_log_truncation.py
 空へ切り詰める」という、暗号的な知識を一切必要としないもっと単純な
 攻撃に対しては無力だった(「0件」と「まだ記録が無い」を区別できて
 いなかった)。水位標(watermark)ファイルの導入でこれを修正し、継続的
-に再検証する本天使の、自己レッドチームの結果を固定する。
+に再検証する本検査の、自己レッドチームの結果を固定する。
 """
 import sys
 from pathlib import Path
@@ -47,7 +47,7 @@ def test_check_zk_audit_trail_detects_truncation_directly():
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §BX修正前の、水位標を一切持たない
-    素朴な実装(0件を無条件にTrueとみなす)に戻した場合、本天使が正しく
+    素朴な実装(0件を無条件にTrueとみなす)に戻した場合、本検査が正しく
     「検知されなかった」として検知することを、実際に確認する。"""
     def _vulnerable_check(name_for_message):
         def _check(*_args, **_kwargs):

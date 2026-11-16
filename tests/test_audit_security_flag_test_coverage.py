@@ -3,7 +3,7 @@ tests/test_audit_security_flag_test_coverage.py
 =====================================
 [新設 2026-10 §BP] checks/audit_security_flag_test_coverage.py の単体テスト。
 
-本天使は、§BM(CHAOS_MODE)・§BN(HMAC連鎖)・§BP(check_certificate_expiry.py・
+本検査は、§BM(CHAOS_MODE)・§BN(HMAC連鎖)・§BP(check_certificate_expiry.py・
 deadmans_switch.py)で実際に見つかった「環境変数ゲート付きの重要分岐に、
 有効側を踏むテストが無い」という共通パターンを、一般化して機械的に
 検知するためのヒューリスティックな静的解析である。

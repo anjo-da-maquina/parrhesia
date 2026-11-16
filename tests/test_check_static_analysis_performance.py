@@ -3,9 +3,9 @@ tests/test_check_static_analysis_performance.py
 =====================================
 [新設 2026-11] checks/check_static_analysis_performance.py の単体テスト。
 
-本天使(「力天使の試練」)は、`runtime_guard.scan_source()`の静的解析が、大きめ
+本検査は、`runtime_guard.scan_source()`の静的解析が、大きめ
 の入力(5000行相当)に対しても`MAX_SECONDS`秒以内に完了することを
-検証する(性能劣化の回帰防止)。天使群のテストカバレッジの棚卸しの
+検証する(性能劣化の回帰防止)。検査群のテストカバレッジの棚卸しの
 過程で、専用テストが一件も存在しないことが判明した。
 
 FAIL分岐を再現するために、実際に5秒以上かかる処理を発生させる代わりに
@@ -23,7 +23,7 @@ import check_static_analysis_performance as vl
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点の実装では、5000行相当のコードの静的解析が
-    閾値内で完了するため、本天使はPASSを報告する。"""
+    閾値内で完了するため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -35,7 +35,7 @@ def test_real_repository_passes():
 
 def test_fails_when_elapsed_time_exceeds_threshold(monkeypatch):
     """[核心・性能劣化回帰の検知] 解析時間が`MAX_SECONDS`を超えた場合、
-    本天使が正しくFAIL(sys.exit(1))することを確認する。実際に処理を
+    本検査が正しくFAIL(sys.exit(1))することを確認する。実際に処理を
     遅延させる代わりに、閾値自体を実行時間より確実に小さい値
     (-1秒)へ一時的に差し替えることで、CI実行時間を延ばさずに
     この分岐を再現する。"""

@@ -7,7 +7,7 @@ tests/test_guard_rejection_memory.py
 過去に人間が明示的に"REJECTED"(拒否)した提案までも「既に提案済み」と
 扱ってしまい、Selfplay Engineが同じ事件名で全く新しい侵入を実証しても
 二度と再提案できなくなっていた。重複チェックを「現在も承認待ちの提案」
-のみに限定する修正の、継続的な再検証を本天使が担う。自己レッドチームの
+のみに限定する修正の、継続的な再検証を本検査が担う。自己レッドチームの
 結果(`git stash`で修正前の状態に戻すと正しくFAILし、復元すると正しく
 PASSすることを確認済み)を回帰テストとして固定する。
 """
@@ -47,7 +47,7 @@ def test_check_still_open_duplicate_is_still_rejected_directly():
 
 def test_battery_detects_reintroduced_regression(monkeypatch):
     """[核心・自己レッドチームの固定] §BZ修正前の、statusを問わず重複と
-    みなす素朴な実装に戻した場合、本天使が正しく「再提案が受理されな
+    みなす素朴な実装に戻した場合、本検査が正しく「再提案が受理されな
     かった」として検知することを、実際に確認する。"""
     def _vulnerable_check():
         return False, "過去にREJECTEDとなった事件名への新たな再提案が、永久に受理されなかった(模擬)"

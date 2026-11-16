@@ -3,12 +3,12 @@ tests/test_guard_docker_sandbox_enforcement_decay.py
 =====================================
 [新設 2026-11] checks/guard_docker_sandbox_enforcement_decay.py の単体テスト。
 
-本天使(「サンダルフォンの勅令」)は、「Docker/OSレベルの強制サンド
+本検査は、「Docker/OSレベルの強制サンド
 ボックス化」が、静的検閲のみの張りぼてに戻されていないかを、
 `src/defense_orchestrator.py`・`src/docker_sandbox_executor.py`・
 `src/ollama_agent_loop.py`の内容を直接文字列検査することで静的に
-検証する(§BCで新設)。天使群のテストカバレッジの棚卸しの過程で、
-専用テストが一件も存在しないことが判明した。本天使が検査する項目は
+検証する(§BCで新設)。検査群のテストカバレッジの棚卸しの過程で、
+専用テストが一件も存在しないことが判明した。本検査が検査する項目は
 いずれも本リポジトリのゼロトラスト設計の中核(Dockerフェイルクローズド・
 タイムアウト検知・実運用ループの経路統合)であるため、他の候補より
 優先して対応する。
@@ -67,7 +67,7 @@ def _expect_fail(monkeypatch, root):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、Docker強制サンドボックス
-    化が正しく実運用ループに統合されているため、本天使はPASSを報告
+    化が正しく実運用ループに統合されているため、本検査はPASSを報告
     する。"""
     import io
     from contextlib import redirect_stdout
@@ -149,7 +149,7 @@ def test_fails_when_ollama_loop_does_not_use_defense_orchestrator(monkeypatch, t
 
 def test_passes_when_ollama_loop_file_is_absent(monkeypatch, tmp_path):
     """`ollama_agent_loop.py`自体が存在しない場合は、チェックCがスキップ
-    され、他の全条件を満たしていれば正しくPASSする(本天使の意図的な
+    され、他の全条件を満たしていれば正しくPASSする(本検査の意図的な
     設計: ファイルが存在する場合のみBの検査対象とする)。"""
     import io
     from contextlib import redirect_stdout

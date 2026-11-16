@@ -3,7 +3,7 @@ tests/test_guard_unvalidated_path_join.py
 =======================================
 [新設 2026-10 §BT] checks/guard_unvalidated_path_join.py の単体テスト。
 
-本天使は、src/ollama_agent_loop.pyの_execute_safe_action()で実際に
+本検査は、src/ollama_agent_loop.pyの_execute_safe_action()で実際に
 発見した本物の脆弱性――`target = self.workspace_root / action_req.get
 ("target")`という素朴なパス結合(右辺が外部入力由来)が、secure_resolve()
 等の検証を一度も経ずに直接ファイルI/Oへ使われていた――という
@@ -120,7 +120,7 @@ def test_file_with_no_slash_join_reports_not_applicable(monkeypatch, tmp_path, c
 
 def test_real_repository_files_pass_after_the_sbt_fix():
     """[実機の裏付け] §BTで実際に修正したsrc/ollama_agent_loop.py
-    ._execute_safe_action()を含む、現時点のリポジトリ全体に対して本天使を
+    ._execute_safe_action()を含む、現時点のリポジトリ全体に対して本検査を
     実行し、PASSすることを確認する(checks/guard_docker_sandbox_enforcement_decay.pyの偽陽性
     除外も含む回帰防止)。"""
     import io

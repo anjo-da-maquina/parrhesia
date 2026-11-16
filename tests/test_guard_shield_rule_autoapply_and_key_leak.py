@@ -3,7 +3,7 @@ tests/test_guard_shield_rule_autoapply_and_key_leak.py
 =====================================
 [新設 2026-11] checks/guard_shield_rule_autoapply_and_key_leak.py の単体テスト。
 
-本天使(「ザドキエルの勅令」)は、外部脅威インテリジェンス取り込み機構
+本検査は、外部脅威インテリジェンス取り込み機構
 (src/shield_rule_sync.py・src/verdict.py)の再構築が、以下5点の
 修正を保ったままであることを静的に検証する:
   A. LLM生出力をshield_rules.jsonへ直接反映せず、人間承認待ちキュー
@@ -17,8 +17,8 @@ tests/test_guard_shield_rule_autoapply_and_key_leak.py
 
 report_fail()は呼び出し即座にsys.exit(1)するため、各チェックは
 main()内で先頭から順に評価され、最初に満たさない条件のみが報告される。
-天使群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
-しないことが判明した。本天使はLLM生出力の自動反映という本質的に
+検査群のテストカバレッジの棚卸しの過程で、専用テストが一件も存在
+しないことが判明した。本検査はLLM生出力の自動反映という本質的に
 危険な経路(思考統制監査)を守る中核であるため、優先して対応する。
 
 `main()`は`ROOT / "src" / "shield_rule_sync.py"`等の固定パスを直接読む
@@ -80,7 +80,7 @@ def _expect_fail(monkeypatch, root):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、思考統制監査の5条件すべてが
-    保たれているため、本天使はPASSを報告する。"""
+    保たれているため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

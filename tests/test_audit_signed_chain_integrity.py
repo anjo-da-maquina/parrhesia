@@ -3,13 +3,13 @@ tests/test_audit_signed_chain_integrity.py
 =====================================
 [新設 2026-11] checks/audit_signed_chain_integrity.py の単体テスト。
 
-本天使(「ザドキエルの天球儀」)は、署名付き監査チェーン
+本検査は、署名付き監査チェーン
 (`runtime_guard/audit_chain.jsonl`)のハッシュ連鎖が改ざんされていないことを、
 `runtime_guard.audit_chain.SignedAuditChain.verify_integrity()`を呼んで検証する。
 `verify_integrity()`自体は`tests/test_audit_chain.py`で既に広範に検証
-されているが、本天使自身の「`verify_integrity()`がFalseを返したら
+されているが、本検査自身の「`verify_integrity()`がFalseを返したら
 report_failでFAILにする」という薄いラッパーのpass/fail判定ロジック
-自体は、天使群のテストカバレッジの棚卸しの過程で、本天使を直接実行する
+自体は、検査群のテストカバレッジの棚卸しの過程で、本検査を直接実行する
 専用テストが一件も存在しないことが判明した。
 
 `SignedAuditChain`は`main()`内のローカルimport(`from runtime_guard.audit_chain
@@ -29,7 +29,7 @@ from runtime_guard.audit_chain import SignedAuditChain
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリの実際の監査チェーンは改ざん
-    されていないため、本天使はPASSを報告する。"""
+    されていないため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -41,7 +41,7 @@ def test_real_repository_passes():
 
 def test_fails_when_chain_integrity_check_fails(monkeypatch):
     """[核心] `SignedAuditChain.verify_integrity()`がFalse(改ざん検知)
-    を返した場合、本天使が正しくFAIL(sys.exit(1))することを確認する。"""
+    を返した場合、本検査が正しくFAIL(sys.exit(1))することを確認する。"""
     monkeypatch.setattr(SignedAuditChain, "verify_integrity", lambda self: False)
     try:
         za.main()
@@ -51,7 +51,7 @@ def test_fails_when_chain_integrity_check_fails(monkeypatch):
 
 
 def test_passes_when_chain_integrity_check_succeeds(monkeypatch):
-    """`verify_integrity()`がTrueを返す限り、本天使はPASSする
+    """`verify_integrity()`がTrueを返す限り、本検査はPASSする
     (回帰防止のための明示的な固定)。"""
     import io
     from contextlib import redirect_stdout

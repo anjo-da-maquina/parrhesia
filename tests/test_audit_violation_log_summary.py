@@ -3,11 +3,11 @@ tests/test_audit_violation_log_summary.py
 =====================================
 [新設 2026-11] checks/audit_violation_log_summary.py の単体テスト。
 
-本天使(「大天使の印環」)は、これまでに記録された監査違反の件数・
+本検査は、これまでに記録された監査違反の件数・
 種別を集計し、`runtime_guard/audit_violation_log_summary.json`として出力する。報告系の
 ステップであり`report_fail`は一切呼ばない(常にPASSを報告する設計)が、
 集計ロジック自体(件数・イベント種別ごとの内訳・出力ファイルの妥当な
-JSON形式)は、天使群のテストカバレッジの棚卸しの過程で、専用テストが
+JSON形式)は、検査群のテストカバレッジの棚卸しの過程で、専用テストが
 一件も存在しないことが判明した。
 
 `main()`は`ROOT / "runtime_guard" / "audit_chain.jsonl"`を読み、

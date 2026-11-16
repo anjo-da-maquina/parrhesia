@@ -22,7 +22,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # [一般化の方針] 「このバグをもう二度と見逃さない」ために、今回のような
 # 個別バグの静的パターンそのものを将来も正確に言い当てる汎用検知器を
 # 書くことは構造的に難しい(blocklist方式の実装は今後も新しい書き方で
-# 増えていく)。そこで本天使は、個々の実装の書き方を解析するのではなく、
+# 増えていく)。そこで本検査は、個々の実装の書き方を解析するのではなく、
 # 実際にリポジトリに存在する3つのブロックリスト型AST静的解析器
 # (runtime_guard.scan_source・IntentInterceptor.evaluate_action・
 # src/ast_scanner.verify_intent)を直接呼び出し、既知の「等価構文による
@@ -31,7 +31,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # (audit_security_flag_test_coverage.py)の否定版、すなわち「陰性経路(危険なコード)
 # は必ず遮断されなければならない」ことを強制する回帰連戦である。これに
 # より、将来誰かがこれらの検査器のいずれかを書き換えて同種の回帰を
-# 再発させた場合、個々のバグパターンを予見していなくても、本天使が
+# 再発させた場合、個々のバグパターンを予見していなくても、本検査が
 # 実際にコードを実行して検知する。
 #
 # [正直な注記: 本検査の限界] (1) MUST_BLOCK_PAYLOADSは、今回実際に発見
@@ -45,7 +45,7 @@ NAME = "check_equivalent_syntax_bypass - 全検査器×全ペイロードの組�
 # 依然として検知できない(`src/ast_scanner.py`自身のKNOWN_LIMITATIONS
 # が既に文書化している、denylist方式そのものの構造的限界)。この限界は
 # `tests/test_check_equivalent_syntax_bypass.py`に明示的な既知の限界として
-# 固定し、隠さず記録する。本天使のMUST_BLOCK_PAYLOADSには含めていない
+# 固定し、隠さず記録する。本検査のMUST_BLOCK_PAYLOADSには含めていない
 # (含めれば常にFAILし続けるため)。
 
 sys.path.insert(0, str(ROOT))

@@ -3,9 +3,9 @@ tests/test_check_source_syntax_validity.py
 =====================================
 [新設 2026-11] checks/check_source_syntax_validity.py の単体テスト。
 
-本天使(「ラファエルの治癒」)は、`runtime_guard/*.py`の全モジュールが構文的に
+本検査は、`runtime_guard/*.py`の全モジュールが構文的に
 妥当(`ast.parse`でcompileできる)であることを検証する(自動修復監査:
-壊れている場合はCIを早期に失敗させ、手動修復を促す)。天使群のテスト
+壊れている場合はCIを早期に失敗させ、手動修復を促す)。検査群のテスト
 カバレッジの棚卸しの過程で、専用テストが一件も存在しないことが判明
 した。
 
@@ -22,7 +22,7 @@ import check_source_syntax_validity as rr
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のruntime_guard/配下の全モジュールは構文的に正常
-    であるため、本天使はPASSを報告する。"""
+    であるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

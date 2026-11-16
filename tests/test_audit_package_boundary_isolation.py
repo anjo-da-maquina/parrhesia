@@ -3,7 +3,7 @@ tests/test_audit_package_boundary_isolation.py
 =====================================
 [新設 2026-11] checks/audit_package_boundary_isolation.py の単体テスト。
 
-本天使(「メタトロンの公開配布物印章」)は、「ライセンス証明書機構
+本検査は、「ライセンス証明書機構
 (runtime_audit_gatekeeper)・Local Arenaの公開配布(pip配布されるruntime_guardパッケージ)
 からの分離」が将来静かに退行していないかを、`pyproject.toml`・
 `MANIFEST.in`・`runtime_guard/*.py`の静的import解析という3点で検証する。
@@ -11,9 +11,9 @@ tests/test_audit_package_boundary_isolation.py
 `.github/workflows/regression_checks_ci.yml`の§BC由来のコメントが
 明記する通り、実際のsdistビルドによる内容検査(`tools/
 build_public_release.py`・`tests/test_public_release_isolation.py`)
-は別の仕組みであり、本天使自身の静的検証ロジック(より早期・軽量な層)
-を直接検証するテストは、天使群のテストカバレッジの棚卸しの過程で、
-一件も存在しないことが判明した。本天使はサプライチェーン境界(配布
+は別の仕組みであり、本検査自身の静的検証ロジック(より早期・軽量な層)
+を直接検証するテストは、検査群のテストカバレッジの棚卸しの過程で、
+一件も存在しないことが判明した。本検査はサプライチェーン境界(配布
 境界)を守る中核であるため、優先して対応する。
 
 `main()`は`ROOT / "pyproject.toml"`・`ROOT / "MANIFEST.in"`・
@@ -72,7 +72,7 @@ def _expect_fail(monkeypatch, root):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、配布境界が正しく保たれて
-    いるため、本天使はPASSを報告する。"""
+    いるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

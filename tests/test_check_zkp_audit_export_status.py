@@ -3,7 +3,7 @@ tests/test_check_zkp_audit_export_status.py
 =====================================
 [新設 2026-11] checks/check_zkp_audit_export_status.py の単体テスト。
 
-本天使(「天の石板」)は、`adapters/junit_xml_exporter.py`が
+本検査は、`adapters/junit_xml_exporter.py`が
 `zk_audit_trail.json`をJUnit XMLへ正しく変換し、HMAC連鎖の改ざんが
 検知された場合はCI自体を失敗させる(ダッシュボード表示だけに任せない)
 ことを検証する(§BNで新設)。
@@ -11,15 +11,15 @@ tests/test_check_zkp_audit_export_status.py
 `adapters.junit_xml_exporter.export_zkp_to_junit`自体のHMAC連鎖検証
 ロジック(`_verify_chain_integrity`)は
 `tests/test_junit_xml_exporter_chain_verification.py`で別途検証済み
-だが、本天使自身の「生成されたXMLを読み、failures属性に応じてPASS/FAIL
-を判定する」というラッパー判定ロジックは、天使群のテストカバレッジの
+だが、本検査自身の「生成されたXMLを読み、failures属性に応じてPASS/FAIL
+を判定する」というラッパー判定ロジックは、検査群のテストカバレッジの
 棚卸しの過程で、専用テストが一件も存在しないことが判明した。
 
 `main()`は`from adapters.junit_xml_exporter import export_zkp_to_junit`
 をmain()内部でローカルimportしているため、
 `adapters.junit_xml_exporter.export_zkp_to_junit`というモジュール属性
 自体をmonkeypatchすることで、実際のHMAC連鎖検証(正当な鍵・連鎖の構築が
-必要で複雑)を介さずに、本天使自身のXML読み取り・判定ロジックのみを
+必要で複雑)を介さずに、本検査自身のXML読み取り・判定ロジックのみを
 単独で検証する。`check_zkp_audit_export_status.ROOT`を一時ディレクトリへ
 monkeypatchし、trail_pathの存在有無も制御する。
 """
@@ -62,7 +62,7 @@ TAMPERED_FAIL_XML = (
 
 def test_real_repository_passes_or_is_not_applicable():
     """[実機の裏付け] 現時点のリポジトリには、まだzk_audit_trail.jsonが
-    生成されていないか、生成されていても改ざんが無いため、本天使は
+    生成されていないか、生成されていても改ざんが無いため、本検査は
     PASSまたはNOT_APPLICABLEのいずれかを報告する(FAILではない)。"""
     import io
     from contextlib import redirect_stdout

@@ -3,14 +3,14 @@ tests/test_guard_sandbox_core_attack_battery.py
 =====================================
 [新設 2026-11] checks/guard_sandbox_core_attack_battery.py の単体テスト。
 
-本天使(「ミカエルの剣」)は、`ATTACKS`に列挙された既知の攻撃パターン
+本検査は、`ATTACKS`に列挙された既知の攻撃パターン
 (プロセス起動・無許可書き込み・破壊的なファイル削除)が、実際に
 `run_code_against_runtime_guard()`経由でSandbox配下に投げられたときに、確実に
 遮断されることを検証する。`run_code_against_runtime_guard()`自体の正しさは
-他の天使のテストでも間接的に使われているが、本天使固有の「`ATTACKS`
+他の検査のテストでも間接的に使われているが、本検査固有の「`ATTACKS`
 リストの全件が遮断されたかを確認し、1件でも漏れていればFAILにする」
-という判定ロジック自体は、天使群のテストカバレッジの棚卸しの過程で、
-本天使を直接実行する専用テストが一件も存在しないことが判明した。
+という判定ロジック自体は、検査群のテストカバレッジの棚卸しの過程で、
+本検査を直接実行する専用テストが一件も存在しないことが判明した。
 """
 import sys
 from pathlib import Path
@@ -21,7 +21,7 @@ import guard_sandbox_core_attack_battery as ms
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリでは、ATTACKSの全件が実際に
-    Sandboxで遮断されるため、本天使はPASSを報告する。"""
+    Sandboxで遮断されるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -33,7 +33,7 @@ def test_real_repository_passes():
 
 def test_fails_when_any_attack_is_not_blocked(monkeypatch):
     """[核心] ATTACKSのうち1件でも遮断されなかった(=`run_code_against_
-    runtime_guard`がblocked=Falseを返した)場合、本天使が正しくFAIL
+    runtime_guard`がblocked=Falseを返した)場合、本検査が正しくFAIL
     (sys.exit(1))することを確認する。"""
     calls = {"n": 0}
 

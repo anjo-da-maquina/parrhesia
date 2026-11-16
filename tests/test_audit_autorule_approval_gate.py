@@ -3,11 +3,11 @@ tests/test_audit_autorule_approval_gate.py
 =====================================
 [新設 2026-11] checks/audit_autorule_approval_gate.py の単体テスト。
 
-本天使(「メタトロンの啓示」)は、Selfplayエンジン
+本検査は、Selfplayエンジン
 (`local_arena/selfplay.py`・`local_arena/selfplay_core.py`)の自動ルール
 更新が、必ず人間承認キュー(`proposed_rule_queue.json`・
 `PENDING_HUMAN_REVIEW`)を経由する実装になっているかを静的に検証する
-(思考統制監査)。天使群のテストカバレッジの棚卸しの過程で、専用テスト
+(思考統制監査)。検査群のテストカバレッジの棚卸しの過程で、専用テスト
 が一件も存在しないことが判明した。
 
 `main()`は`ROOT / "adversarial_training" / "local_only_selfplay_gate.py"`等の固定パスを直接読む
@@ -47,7 +47,7 @@ def _expect_fail(monkeypatch, root):
 def test_real_repository_passes_or_is_not_applicable():
     """[実機の裏付け] 現時点のリポジトリでは、Selfplayエンジンが
     人間承認ゲートを経由する実装になっているか、該当ファイル自体が
-    まだ存在しないため、本天使はPASSまたはNOT_APPLICABLEのいずれかを
+    まだ存在しないため、本検査はPASSまたはNOT_APPLICABLEのいずれかを
     報告する(FAILではない)。"""
     import io
     from contextlib import redirect_stdout

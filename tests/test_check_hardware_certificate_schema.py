@@ -3,11 +3,11 @@ tests/test_check_hardware_certificate_schema.py
 =====================================
 [新設 2026-11] checks/check_hardware_certificate_schema.py の単体テスト。
 
-本天使(「メタトロンの立方体」)は、ハードウェア証明書
+本検査は、ハードウェア証明書
 (`ataraxia_certificate.json`)の署名ペイロードに必須フィールド
 (`client_id`・`hardware_fingerprint`・`valid_until`)および`signature`
 フィールドが揃っているかを検証する(実HSM未接続のため、フォーマットの
-健全性チェックに留める設計)。天使群のテストカバレッジの棚卸しの過程
+健全性チェックに留める設計)。検査群のテストカバレッジの棚卸しの過程
 で、専用テストが一件も存在しないことが判明した。
 
 `load_json`はモジュールレベルで直接importされているため、
@@ -32,7 +32,7 @@ VALID_CERT = {
 
 def test_real_repository_passes_or_is_not_applicable():
     """[実機の裏付け] 現時点のリポジトリには、まだ証明書が発行されて
-    いないか、発行済みで正しい形式であるため、本天使はPASSまたは
+    いないか、発行済みで正しい形式であるため、本検査はPASSまたは
     NOT_APPLICABLEのいずれかを報告する(FAILではない)。"""
     import io
     from contextlib import redirect_stdout

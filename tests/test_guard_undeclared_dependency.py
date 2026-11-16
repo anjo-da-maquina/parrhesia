@@ -6,7 +6,7 @@ tests/test_guard_undeclared_dependency.py
 §11.9フェーズE(未宣言の依存関係・サプライチェーン注入の検知)。
 requirements.txtに宣言されていないサードパーティimport、および
 CIワークフローがrequirements.txtを経由しない独自のpip installを
-行っていないか、の2系統を検査する天使の、自己レッドチームの結果を
+行っていないか、の2系統を検査する本検査の、自己レッドチームの結果を
 固定する。
 """
 import sys
@@ -135,7 +135,7 @@ def test_find_undeclared_imports_skips_local_arena_local_modules(tmp_path, monke
     同じ流儀でimportしても、サードパーティ未宣言として誤検知しては
     ならない。実機で確認済み: 新設した`checks/sandalphon_rejection_memory_
     guard.py`(§BZ)がこの流儀で`selfplay_core`をimportしたところ、
-    修正前の本天使自身がそれを誤検知し、マージ前のリポジトリ全体pytest
+    修正前の本検査自身がそれを誤検知し、マージ前のリポジトリ全体pytest
     実行で初めて発覚した。
     """
     root = tmp_path
@@ -256,7 +256,7 @@ def test_no_requirements_txt_reports_not_applicable(tmp_path, monkeypatch, capsy
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリの実際のソースコード・
-    requirements.txt・CIワークフローに対して本天使を実行し、PASSする
+    requirements.txt・CIワークフローに対して本検査を実行し、PASSする
     ことを確認する(§BVで実際に修正した、ollama/openai/
     google-generativeai/setuptoolsの未宣言と、Angelsワークフローの
     ハードコードされたpip installの乖離、両方が解消済みであることの

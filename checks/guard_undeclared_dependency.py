@@ -24,7 +24,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 #      指定(サプライチェーン上の無用な攻撃面)のままインストールされて
 #      いた。
 #
-# 本天使は、この2種類のパターンをそれぞれ一般化して継続的に検査する。
+# 本検査は、この2種類のパターンをそれぞれ一般化して継続的に検査する。
 #
 # [正直な注記: 本検査の限界] (1) importの走査はast(抽象構文木)に基づく
 # 静的解析であり、`importlib.import_module(動的な文字列)`のような
@@ -47,7 +47,7 @@ NAME = "guard_undeclared_dependency - サプライチェーン監査: importさ�
 # `pip install`(例: checks/audit_dependency_cve.pyが実行時に
 # pip-auditを自己インストールする箇所)は検査対象外――これは静的な
 # requirements.txt宣言と対比すべき「宣言された依存」ではなく、実行時
-# にのみ発生する別種のサプライチェーン上の関心事であり、本天使の
+# にのみ発生する別種のサプライチェーン上の関心事であり、本検査の
 # スコープを超えるため、意図的に将来の課題として切り出す。
 
 TARGET_DIRS_FOR_IMPORT_SCAN = [
@@ -102,7 +102,7 @@ def _is_local_module_name(name: str) -> bool:
     # 「requirements.txtに未宣言のサードパーティimport」という偽陽性で
     # 検知してしまう欠陥があった。実機で確認済み: 新設した
     # `checks/guard_rejection_memory.py`(§BZ)がこの流儀で
-    # `selfplay_core`をimportしたところ、本天使自身がそれを誤検知し、
+    # `selfplay_core`をimportしたところ、本検査自身がそれを誤検知し、
     # マージ前のリポジトリ全体pytest実行で初めて発覚した。`local_arena/`は
     # 他のローカルディレクトリ(angels・src・adapters等)と全く同じ
     # カテゴリ(リポジトリ内部の自作コード)であり、第三者パッケージでは

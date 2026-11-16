@@ -3,7 +3,7 @@ tests/test_guard_fail_open_exception.py
 =========================================
 [新設 2026-10 §BS] checks/guard_fail_open_exception.py の単体テスト。
 
-本天使は、runtime_audit_gatekeeper.pyの_register_audit_hook_once()で実際に
+本検査は、runtime_audit_gatekeeper.pyの_register_audit_hook_once()で実際に
 発見した本物の脆弱性――本リポジトリ唯一の深層保護(sys.addaudithook)の
 設置失敗が`except Exception: pass`で握り潰され、呼び出し元は保護が
 有効だと誤信したまま処理を継続していた――というフェイルオープンの
@@ -121,7 +121,7 @@ def test_known_limitation_marker_too_far_above_is_not_credited():
     """[正直な既知の限界の固定] マーカーが探索範囲(LOOKBACK_LINES)より
     遠く離れた場所(例: ファイル冒頭のdocstring)にしか無い場合、本検査は
     それを「このexceptの説明」として認識できず、検知対象としてしまう。
-    本天使は「ローカルな(その場の)開示」を要求する設計であり、ファイル
+    本検査は「ローカルな(その場の)開示」を要求する設計であり、ファイル
     全体に一度だけ書かれた方針では免除されない。これは意図的な設計
     判断であり、隠さず固定する。"""
     far_lines = "\n".join(f"y{i} = {i}" for i in range(jfg.LOOKBACK_LINES + 5))
@@ -157,7 +157,7 @@ def test_file_with_no_except_reports_not_applicable(monkeypatch, tmp_path, capsy
 
 def test_does_not_false_positive_on_the_word_except_inside_a_string():
     """[核心・実装中の自己発見] audit_security_flag_test_coverage.pyが自分自身の
-    コメント内の例示コードを誤検知したのと同種のミスを、本天使の
+    コメント内の例示コードを誤検知したのと同種のミスを、本検査の
     main()内の当初の実装(`"except" not in text`という文字列部分一致)
     でも実際に起こしていた(文字列リテラル'no except here'に反応して
     しまっていた)。astベースの判定に修正したことの回帰防止テスト。"""
@@ -168,7 +168,7 @@ def test_does_not_false_positive_on_the_word_except_inside_a_string():
 def test_real_repository_files_pass_after_the_sbs_fix():
     """[実機の裏付け] §BSで実際に修正したruntime_audit_gatekeeper.py
     ._register_audit_hook_once()・checks/audit_dependency_cve.pyを
-    含む、現時点のリポジトリ全体に対して本天使を実行し、PASSすることを
+    含む、現時点のリポジトリ全体に対して本検査を実行し、PASSすることを
     確認する(回帰防止)。"""
     import io
     from contextlib import redirect_stdout

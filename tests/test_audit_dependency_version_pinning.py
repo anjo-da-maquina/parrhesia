@@ -3,11 +3,11 @@ tests/test_audit_dependency_version_pinning.py
 =====================================
 [新設 2026-11] checks/audit_dependency_version_pinning.py の単体テスト。
 
-本天使(「オファニムの眼」)は、`requirements.txt`の全依存パッケージが
+本検査は、`requirements.txt`の全依存パッケージが
 バージョン固定(`==`)されているかを検証する(サプライチェーン攻撃対策
-の基本)。天使群のテストカバレッジの棚卸しの過程で、専用テストが
+の基本)。検査群のテストカバレッジの棚卸しの過程で、専用テストが
 一件も存在しないことが判明した(`tests/test_guard_html_external_script_injection.py`
-は別の天使`checks/guard_html_external_script_injection.py`向けのテストであり、本天使
+は別の検査`checks/guard_html_external_script_injection.py`向けのテストであり、本検査
 `checks/audit_dependency_version_pinning.py`は対象外だった)。
 
 `main()`は`ROOT / "requirements.txt"`という固定パスを直接読むため、
@@ -31,7 +31,7 @@ def _expect_fail(monkeypatch, root):
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のrequirements.txtは、全依存がバージョン
-    固定されているため、本天使はPASSを報告する。"""
+    固定されているため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

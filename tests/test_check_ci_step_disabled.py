@@ -3,9 +3,9 @@ tests/test_check_ci_step_disabled.py
 =====================================
 [新設 2026-10 §BU] checks/check_ci_step_disabled.py の単体テスト。
 
-本天使は、tests/test_checks_scripts_wired_into_ci.pyで実際に発見・修正
+本検査は、tests/test_checks_scripts_wired_into_ci.pyで実際に発見・修正
 した自己言及的な欠陥――CIワークフロー上のステップに`if: false`を追加
-するだけで、天使を実質的に無効化できるにもかかわらず、既存の「配線
+するだけで、検査を実質的に無効化できるにもかかわらず、既存の「配線
 漏れ検知」テストはそれを見逃していた――を一般化し、checks/*.pyに限らず
 全てのCIステップに対して継続的に検査する。
 
@@ -227,7 +227,7 @@ def test_continue_on_error_false_is_not_flagged():
 def test_battery_detects_reintroduced_core_ci_regression(monkeypatch):
     """[自己レッドチームの固定] `.github/workflows/core_ci.yml`から
     outcome enforcementの行を実際に取り除いて再現し(§BQ規模の退行)、
-    本天使のmain()が正しくFAILすることを実機で確認した(git diff --stat
+    本検査のmain()が正しくFAILすることを実機で確認した(git diff --stat
     で変更ファイルを正確に元へ復元したことも確認済み)。ここではmain()
     そのものを、一時ディレクトリ上の最小再現ワークフローに対して実行する
     形で、同じ退行を継続的に固定する。"""
@@ -346,7 +346,7 @@ def test_no_workflow_files_reports_not_applicable(monkeypatch, tmp_path, capsys)
 
 def test_real_repository_workflows_pass():
     """[実機の裏付け] 現時点のリポジトリの実際のワークフローファイルに
-    対して本天使を実行し、PASSすることを確認する(回帰防止)。"""
+    対して本検査を実行し、PASSすることを確認する(回帰防止)。"""
     import io
     from contextlib import redirect_stdout
 

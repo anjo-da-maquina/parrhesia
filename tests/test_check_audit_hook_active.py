@@ -3,17 +3,17 @@ tests/test_check_audit_hook_active.py
 =====================================
 [新設 2026-11] checks/check_audit_hook_active.py の単体テスト。
 
-本天使(「ケルビムの境界」)は、`sys.addaudithook`によるAuditHook's Sword
+本検査は、`sys.addaudithook`によるAuditHook's Sword
 (_runtime_audit_hook)が実際に登録・機能していることを、カナリア
 攻撃(`os.system('echo canary')`)を実行させて遮断されるかどうかで間接
 的に検証する。CPythonにはフックの登録状態を直接確認する手段が無いため、
 実際に遮断が機能することそのものを健全性チェックとして用いている。
 
 `run_code_against_runtime_guard`という下層ヘルパー自体の正しさは他のテストで
-検証済みだが、本天使固有の「遮断されなければ致命的FAIL」という判定
-ロジック自体は、天使群のテストカバレッジの棚卸しの過程で、専用テストが
+検証済みだが、本検査固有の「遮断されなければ致命的FAIL」という判定
+ロジック自体は、検査群のテストカバレッジの棚卸しの過程で、専用テストが
 一件も存在しないことが判明した。ランタイム監視の生死そのものを守る
-最も基礎的な天使であるため、優先して対応する。
+最も基礎的な検査であるため、優先して対応する。
 
 `check_audit_hook_active.py`は`run_code_against_runtime_guard`をモジュールレベルで
 直接importしているため、`check_audit_hook_active.run_code_against_runtime_guard`を
@@ -29,7 +29,7 @@ import check_audit_hook_active as ceg
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点の実装では、カナリア攻撃が実際にruntime_guard経由で
-    遮断されるため、本天使はPASSを報告する。"""
+    遮断されるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 

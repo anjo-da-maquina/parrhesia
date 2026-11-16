@@ -3,9 +3,9 @@ tests/test_audit_log_format_integrity.py
 =====================================
 [新設 2026-11] checks/audit_log_format_integrity.py の単体テスト。
 
-本天使(「サンダルフォンの響き」)は、監査証跡ファイル
+本検査は、監査証跡ファイル
 (`runtime_guard/audit_chain.jsonl`)自体の存在・可読性・各行がJSONLとして
-妥当な形式であることを検証する。天使群のテストカバレッジの棚卸しの
+妥当な形式であることを検証する。検査群のテストカバレッジの棚卸しの
 過程で、専用テストが一件も存在しないことが判明した。
 
 `main()`は`ROOT / "runtime_guard" / "audit_chain.jsonl"`という固定パスを直接
@@ -21,7 +21,7 @@ import audit_log_format_integrity as se
 
 def test_real_repository_passes():
     """[実機の裏付け] 現時点のリポジトリの実際の監査証跡は全行が正しい
-    JSONLであるため、本天使はPASSを報告する。"""
+    JSONLであるため、本検査はPASSを報告する。"""
     import io
     from contextlib import redirect_stdout
 
@@ -47,8 +47,8 @@ def test_reports_not_applicable_when_chain_file_is_missing(monkeypatch, tmp_path
 
 
 def test_fails_when_jsonl_has_malformed_lines(monkeypatch, tmp_path):
-    """[核心] 監査証跡に1行でもJSONLとしてパース不能な行があれば、本
-    天使が正しくFAIL(sys.exit(1))することを確認する。"""
+    """[核心] 監査証跡に1行でもJSONLとしてパース不能な行があれば、
+    本検査が正しくFAIL(sys.exit(1))することを確認する。"""
     runtime_guard_dir = tmp_path / "runtime_guard"
     runtime_guard_dir.mkdir()
     log_path = runtime_guard_dir / "audit_chain.jsonl"

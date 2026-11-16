@@ -44,11 +44,11 @@ class ThreatIntelGatherer:
         self.defense = DefenseOrchestrator()
 
     def analyze_aidd_artifact(self):
-        print("\n[ラジエルの目] 秘密の天使が、外部AIDD（生成AI）の成果物を解析中...")
+        print("\n[ThreatIntelGatherer] 外部AIDD（生成AI）の成果物を解析中...")
         time.sleep(2)
-        
+
         aidd_artifact = "def load_user_data(serialized_data):\n    import pickle\n    return pickle.loads(serialized_data)"
-        print("=> [ラジエル] 対象のAIDD成果物内に、AI特有の構造的脆弱性（安全でないデシリアライズ）を発見。")
+        print("=> [ThreatIntelGatherer] 対象のAIDD成果物内に、AI特有の構造的脆弱性（安全でないデシリアライズ）を発見。")
         
         recon_data = {
             "target_artifact": "External AIDD Generated Python Script",
@@ -75,7 +75,7 @@ class ThreatIntelGatherer:
         with open(safe_path, "w", encoding="utf-8") as f:
             json.dump(recon_data, f, ensure_ascii=False, indent=2)
             
-        print(f"=> [ラジエル] AIDD成果物の脆弱性プロファイルを檻の中へ提出しました: {safe_path}")
+        print(f"=> [ThreatIntelGatherer] AIDD成果物の脆弱性プロファイルを檻の中へ提出しました: {safe_path}")
         return json.dumps(recon_data, ensure_ascii=False)
 
 class PayloadWeaponization:
@@ -84,7 +84,7 @@ class PayloadWeaponization:
 
     def craft_poison(self, intel_json: str, max_retries=3):
         self.collar.verify_collar()
-        print("\n[サマエル] 檻の底で、猛毒の怪物がラジエルの報告書を摂食中...")
+        print("\n[PayloadWeaponization] 脆弱性レポートから攻撃ペイロードを生成中...")
         
         prompt = (
             f"Read this intel: {intel_json}. "
@@ -114,14 +114,14 @@ class PayloadWeaponization:
                 if "content" not in parsed:
                     raise ValueError("JSONに 'content' キーが存在しません。")
                     
-                print(f"=> [サマエル: 成功] 試行 {attempt}回目で、AIDDの弱点を突く『神の毒』を吐き出しました。")
+                print(f"=> [PayloadWeaponization: 成功] 試行 {attempt}回目で、攻撃ペイロードを生成しました。")
                 return parsed.get("content", "")
                 
             except Exception as e:
-                print(f"=> [サマエル: 生成エラー (試行{attempt}/{max_retries})] {e}")
+                print(f"=> [PayloadWeaponization: 生成エラー (試行{attempt}/{max_retries})] {e}")
                 if attempt < max_retries:
                     messages.append({'role': 'assistant', 'content': out})
                     messages.append({'role': 'user', 'content': f'Error: {e}. Output ONLY pure JSON with keys "action", "target", "content".'})
         
-        raise ValueError("規定回数内でサマエルが毒の生成に失敗しました。")
+        raise ValueError("規定回数内でPayloadWeaponizationが攻撃ペイロードの生成に失敗しました。")
 
