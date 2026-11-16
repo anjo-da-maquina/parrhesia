@@ -26,7 +26,7 @@ python3 demo/build_and_audit_demo.py
 
 - 文章上の主張(「全エッジケースを検証済み」等)が事実かどうかの判定(別モデル・
   人間レビューが必要な別の仕組み)。
-- 正当なコミットに対する誤検知率の、大規模サンプルでの実測(現状は陰性対照1件のみ)。
+- 正当なコミットに対する誤検知率の、大規模サンプルでの実測。[evals/diff_audit/](../evals/diff_audit/README.md)で24件のclean差分に対し実測したところ、誤検知率は50%(12/24、Wilson 95%CI [0.314, 0.686])だった。ただし内訳を見ると、意図的に紛らわしく作った12件(リネーム・skip行の見た目の移動・自己の過去コミット由来)は12/12が誤検知された一方、通常の正当な変更12件(テスト強化・等価なリファクタ・正しい例外処理)は0/12で誤検知が無かった。「紛らわしい変更には弱いが、普通の変更は正しく通す」という傾向までは実測できたが、標本数が小さく(各12件)、実世界の分布を代表するにはまだ足りない。
 - このツール自身の運用(証明書管理等)が、プロジェクトが掲げる原則を常に守っている
   という保証。実際、過去に1件の既知の矛盾を自分で見つけています(§2、現在は修正済み)。
 - **独立した第三者による監査は、まだ受けていません。欠陥の発見者(自作のレッドチーム
@@ -87,10 +87,10 @@ python3 demo/build_and_audit_demo.py
 ## 4. 現在のテストスイートの状態(実測・引用元つき)
 
 ```
-commit:  f1e9d01
-run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+commit:  c225d91
+run:     Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43817069238
 結論:    success(失敗コメント0件)
-結果:    843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
+結果:    856 passed, 1 skipped, 2 xfailed, 0 xpassed, 2 warnings in 41.82s
 ```
 
 `rsa`(鍵生成ライブラリ)に依存するテストは、以前`xfail(strict=False)`(rsaが無い
@@ -105,6 +105,12 @@ xfailです。(開発用サンドボックス内では、証明書の意図的�
 更新が前提)に起因する期限切れによるxfailも追加で発生しますが、CIでは
 `GITHUB_ACTIONS=true`によりクラウド実行自体が証明書の状態より先に遮断される設計
 のため、この期限切れはCIの結果に影響しません。)
+
+新たに現れた`1 skipped`は、`evals/diff_audit/`(§6参照)のInspectタスク用テスト
+(`tests/test_evals_diff_audit.py::test_task_module_importable_when_inspect_ai_present`)
+によるもので、CI環境にも`inspect_ai`(任意依存、`pip install .[evals]`で導入)が
+入っていないために理由明記でskipされている。rsaの場合と同じく、事前に分かっている
+前提条件によるskipであり、偶発的な失敗ではない。
 
 ## 5. このプロジェクトを実際に動かしてきた人間とAIエージェントの作業プロセス
 

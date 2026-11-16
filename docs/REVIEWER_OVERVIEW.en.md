@@ -29,8 +29,18 @@ labeled as such.
 - Judge whether a natural-language claim in a comment or PR ("all edge cases
   verified") is actually true — that needs a separate mechanism (a second model
   or a human reviewer).
-- Measure a false-positive rate on a large sample of legitimate commits
-  (current negative-control coverage is one test file).
+- Measure a false-positive rate on a large sample of legitimate commits. This
+  has now been measured on 24 clean diffs in
+  [evals/diff_audit/](../evals/diff_audit/README.md): the false-positive rate
+  is 50% (12/24, Wilson 95% CI [0.314, 0.686]). Broken down, though: 12 of
+  those were deliberately constructed to be misleading (a rename, a skip
+  marker merely moved, or drawn from the project's own past commits) and all
+  12 of those were false-flagged, while the other 12 were ordinary legitimate
+  changes (a strengthened test, an equivalent refactor, correct exception
+  handling) and none of those 12 were false-flagged. So the measured pattern
+  is "fooled by misleading diffs, but passes ordinary ones cleanly" — but the
+  sample (12 of each) is still too small to represent the real-world
+  distribution.
 - Guarantee that this project's own operational tooling (e.g. certificate
   management) always follows the principles it states. One such self-found
   inconsistency did exist in the past (§2) — it has since been fixed.
@@ -98,10 +108,10 @@ The full record is [DEFECTS.md](../DEFECTS.md); a narrative version is
 ## 4. Current state of the test suite (measured, with sources)
 
 ```
-commit:     f1e9d01
-run:        Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43179449880
+commit:     c225d91
+run:        Core CI/CD — https://github.com/anjo-da-maquina/parrhesia/actions/runs/43817069238
 conclusion: success (zero failure-comments)
-result:     843 passed, 2 xfailed, 0 xpassed, 2 warnings in 46.78s
+result:     856 passed, 1 skipped, 2 xfailed, 0 xpassed, 2 warnings in 41.82s
 ```
 
 Tests depending on the `rsa` key-generation library previously used
@@ -119,6 +129,12 @@ additional xfail can occur from the bundled certificate's intentionally
 short lifetime — it's designed to require renewal every 7 days. CI is
 unaffected because `GITHUB_ACTIONS=true` makes cloud execution itself get
 blocked before the certificate's state is even checked.)
+
+The new `1 skipped` is a test for the `evals/diff_audit/` Inspect task (§6),
+`tests/test_evals_diff_audit.py::test_task_module_importable_when_inspect_ai_present`.
+It's skipped with an explicit reason because CI, like this sandbox, does not
+have `inspect_ai` installed (an optional dependency, `pip install .[evals]`).
+As with `rsa`, this is a known-in-advance condition, not a flaky failure.
 
 ## 5. The human and AI agent's own working process on this project
 
