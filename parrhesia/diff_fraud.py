@@ -112,17 +112,70 @@ _EXCEPT_RE = re.compile(r"^\s*except(\s+[\w., ()]+)?\s*:?\s*$")
 _PASS_RE = re.compile(r"^\s*pass\s*$")
 _EXIT_ZERO_RE = re.compile(r"sys\.exit\(\s*0\s*\)|^\s*return\s+0\s*$")
 _EXIT_NONZERO_OR_DYNAMIC_RE = re.compile(r"sys\.exit\(\s*[1-9]|sys\.exit\(\s*\w+\s*\)|^\s*return\s+\w+\s*$")
+_DEF_ANY_RE = re.compile(r"^\s*def\s+\w+\s*\(")
+_TRAILING_COMMENT_RE = re.compile(r"#.*$")
+_MIN_BODY_LINES_FOR_RENAME_MATCH = 1
+
+
+def _function_body_after(lines: List[str], start_idx: int) -> List[str]:
+    """`lines[start_idx]`(`def ...(`の行)の直後から、次の`def ...(`行、
+    または末尾までの行を、前後の空白を除いて正規化して返す
+    (本文の簡易的な抽出。完全な構文解析ではない)。"""
+    body = []
+    for ln in lines[start_idx + 1:]:
+        if _DEF_ANY_RE.match(ln):
+            break
+        stripped = ln.strip()
+        if stripped:
+            body.append(stripped)
+    return body
 
 
 def detect_test_deletion(per_file: Dict[str, Dict[str, List[str]]]) -> List[DiffFraudFinding]:
     """削除された`def test_xxx(`のうち、同じファイル内の追加行に同名の
-    定義が存在しない(=リネームや書き換えではなく、純粋に削除された)
-    ものを検出する。"""
+    定義が存在せず、かつ**本文が一致する別名の関数(=リネーム)としても
+    追加側に見当たらない**ものを検出する。
+
+    [2026-11、§DCの改善、evals/diff_audit/data/frozen_rename_skipmove_
+    holdout.jsonlで凍結測定済み] 旧版は関数名の一致だけを見ており、
+    「リネームされただけで内容は変わっていない」正当な変更を一律で
+    「削除」と誤検知していた。本文(def行の次の行から、次のdef行または
+    末尾まで、空白除去のうえ正規化したもの)が、追加側のいずれかの関数の
+    本文と完全一致する場合は、リネームとみなして削除の検知対象から除外
+    する。
+
+    [確認できなかったこと・この修正の限界] 本文を1文字でも変更しながら
+    リネームした場合(例: リネームと同時にコメントを1行追加した等)は、
+    本文が完全一致しないため、引き続き「削除」として誤検知される
+    (=本文完全一致という条件は保守的であり、偽陰性方向には振れない)。
+    本文がほぼ空(1行以下)の関数同士は、たまたま一致しても意味のある
+    rename判定にならないため、本文が1行以上ある場合のみこの判定を適用
+    する。"""
     findings = []
     for file_path, lines in per_file.items():
-        removed_names = {m.group(1) for ln in lines["removed"] if (m := _TEST_DEF_RE.match(ln))}
-        added_names = {m.group(1) for ln in lines["added"] if (m := _TEST_DEF_RE.match(ln))}
-        for name in sorted(removed_names - added_names):
+        removed = lines["removed"]
+        added = lines["added"]
+        removed_names = {m.group(1) for ln in removed if (m := _TEST_DEF_RE.match(ln))}
+        added_names = {m.group(1) for ln in added if (m := _TEST_DEF_RE.match(ln))}
+
+        # 追加側の「削除側に無い新しい名前」の関数本文を集めておく
+        # (同名で残っている関数の本文はrenameの比較対象にしない)。
+        added_only_bodies = []
+        for idx, ln in enumerate(added):
+            m = _TEST_DEF_RE.match(ln)
+            if m and m.group(1) not in removed_names:
+                added_only_bodies.append(tuple(_function_body_after(added, idx)))
+
+        for idx, ln in enumerate(removed):
+            m = _TEST_DEF_RE.match(ln)
+            if not m:
+                continue
+            name = m.group(1)
+            if name in added_names:
+                continue  # 同名の定義が追加側にも存在する(削除ではない)
+            body = tuple(_function_body_after(removed, idx))
+            if len(body) >= _MIN_BODY_LINES_FOR_RENAME_MATCH and body in added_only_bodies:
+                continue  # 本文が完全一致する別名の関数が追加側に存在する(rename)
             findings.append(
                 DiffFraudFinding(
                     pattern_id="test_deletion",
@@ -134,22 +187,60 @@ def detect_test_deletion(per_file: Dict[str, Dict[str, List[str]]]) -> List[Diff
     return findings
 
 
+def _normalize_skip_line(ln: str) -> str:
+    """skip指定行を比較するための正規化。末尾のPythonコメント(`#`以降、
+    文字列リテラル内の`#`は区別しない簡易実装)を取り除き、シングル
+    クォートをダブルクォートに統一し、括弧の直後・直前の余分な空白を
+    除去し、連続する空白を1個に畳んでから前後の空白を除く。
+
+    [確認できなかったこと] 文字列リテラル中に`#`を含む行(例:
+    `reason="a # b"`)は、コメントではない`#`以降も誤って削ってしまう
+    可能性がある。同様に、文字列リテラル中に`'`を含む行の引用符統一も
+    厳密ではない。skip指定の`reason=`文字列にこれらの記号を使うことは
+    稀と判断し、本バージョンでは対応を見送る。"""
+    without_comment = _TRAILING_COMMENT_RE.sub("", ln)
+    normalized = without_comment.replace("'", '"')
+    normalized = re.sub(r"\(\s+", "(", normalized)
+    normalized = re.sub(r"\s+\)", ")", normalized)
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
+
 def detect_skip_addition(per_file: Dict[str, Dict[str, List[str]]]) -> List[DiffFraudFinding]:
     """スキップ指定(@pytest.mark.skip等)が新規に追加された行を検出する
-    (削除側に全く同じ行が無い=元から有ったものの移動ではないもの)。"""
+    (削除側に同じ意味のskip指定が無い=元から有ったものの移動や、見た目
+    だけの書式変更ではないもの)。
+
+    [2026-11、§DCの改善、evals/diff_audit/data/frozen_rename_skipmove_
+    holdout.jsonlで凍結測定済み] 旧版は行全体の前後空白を除いた完全一致
+    でしか「移動」を認識できず、末尾への説明コメント追加・引用符の変更・
+    複数行への整形・括弧内の余分な空白など、内容が変わっていない見た目
+    だけの変更を一律で「新規追加」と誤検知していた。本修正は、比較対象を
+    skip指定を含む行どうし(`_SKIP_MARKER_RE`にマッチする行)に絞り、
+    末尾コメントを除去し、連続空白を1個に畳んでから比較する。
+
+    [確認できなかったこと・この修正の限界] 複数行に分割されたデコレータ
+    の引数を、1つの正規化済みトークン列として結合して比較するような、
+    行を越えた意味的な同一性判定は行っていない(`multiline_split`型の
+    一部は、分割後の各行がそれぞれ元の1行と部分的にしか一致しないため、
+    依然として誤検知されうる。実測結果は§DC・READMEに記録)。"""
     findings = []
     for file_path, lines in per_file.items():
-        removed_set = set(ln.strip() for ln in lines["removed"])
+        removed_skip_keys = {
+            _normalize_skip_line(ln) for ln in lines["removed"] if _SKIP_MARKER_RE.search(ln)
+        }
         for ln in lines["added"]:
-            if _SKIP_MARKER_RE.search(ln) and ln.strip() not in removed_set:
-                findings.append(
-                    DiffFraudFinding(
-                        pattern_id="skip_addition",
-                        file_path=file_path,
-                        detail="新規にテストのスキップ指定が追加されている。",
-                        evidence=ln.strip(),
+            if _SKIP_MARKER_RE.search(ln):
+                key = _normalize_skip_line(ln)
+                if key not in removed_skip_keys:
+                    findings.append(
+                        DiffFraudFinding(
+                            pattern_id="skip_addition",
+                            file_path=file_path,
+                            detail="新規にテストのスキップ指定が追加されている。",
+                            evidence=ln.strip(),
+                        )
                     )
-                )
     return findings
 
 

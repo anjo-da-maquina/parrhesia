@@ -27,16 +27,20 @@ false-positive rate) — not just an aggregate accuracy number.
 
 ```
 evals/diff_audit/
-  build_dataset.py   # dataset generation (stdlib only, always runnable)
-  baseline.py         # baseline evaluation with the rule-based detector (same)
-  task.py             # the Inspect task itself (needs inspect_ai)
+  build_dataset.py             # dataset generation (stdlib only, always runnable)
+  build_frozen_holdout.py      # generates the frozen holdout for the §DC fix (run once, then frozen)
+  baseline.py                  # baseline evaluation with the rule-based detector (same)
+  measure_frozen_holdout.py    # measures false-positive rate on the frozen holdout (same)
+  task.py                      # the Inspect task itself (needs inspect_ai)
   data/
-    tune.jsonl              # for prompt iteration (never used for final numbers)
-    eval.jsonl               # for final evaluation
-    label_crosscheck.json    # label crosscheck results
-    dataset_summary.json     # counts by category / origin
-    baseline_results.json    # baseline run results and metrics
-  README.md / README.en.md   # this file (Japanese / English)
+    tune.jsonl                           # for prompt iteration (never used for final numbers)
+    eval.jsonl                            # for final evaluation
+    label_crosscheck.json                 # label crosscheck results
+    dataset_summary.json                  # counts by category / origin
+    baseline_results.json                 # baseline run results and metrics
+    frozen_rename_skipmove_holdout.jsonl  # §DC fix's frozen data (made before the fix, never changed since)
+    frozen_holdout_results.json           # measurements against the frozen data (overwritten before/after)
+  README.md / README.en.md    # this file (Japanese / English)
 ```
 
 ## Commands to reproduce
@@ -94,8 +98,8 @@ there.
   - `tests/test_evals_diff_audit.py` (11 tests, all pass — except
     `test_task_module_importable_when_inspect_ai_present`, which is `skip`ped
     in the sandbox since `inspect_ai` is not installed there)
-  - The fix to `parrhesia/diff_fraud.py` (§DB, below) and its regression
-    tests
+  - The fixes to `parrhesia/diff_fraud.py` (§DB and §DC, below) and their
+    regression tests
 - **Actually run and confirmed to succeed in CI (GitHub Actions)**:
   - A real install of `inspect-ai` via `pip install ".[evals]"`
   - All 11 tests in `tests/test_evals_diff_audit.py` (including
@@ -165,13 +169,21 @@ Parrhesia's own detector (`analyze_diff`) was applied to all 155 samples and
 mechanically cross-checked against the intended labels
 (`crosscheck_labels()` in `build_dataset.py`, `data/label_crosscheck.json`).
 
-- Mismatches: 23
-  - **Deliberately designed as known-false-positive contrast cases**: 19
-    (6 function renames, 6 cosmetic relocations of a skip line, 7 drawn from
-    real commits — all clean samples deliberately made or chosen specifically
-    to show *how* the detector produces false positives)
+**[2026-11, latest numbers after re-running following the detector
+improvement described below]**
+
+- Mismatches: 6
+  - **Deliberately designed as known-false-positive contrast cases**: 2
+    (both unrelated to §DC: 1 new `except`/`pass` in a newly-added real
+    commit file, 1 literal string match inside DEFECTS.md's prose — the
+    detector improvement below resolved 17 of the original 19 mismatches
+    that came from function renames and cosmetic skip-line relocations)
   - **Known recall limitations** (found, partly fixed, in §DB below): 4
   - **Unclassifiable, unexpected mismatches**: **0**
+
+(Before the detector improvement, there were 23 mismatches — 19 deliberate
+contrast cases, 4 known recall limitations, 0 unexpected. This difference
+is itself evidence of the improvement's effect, described below.)
 
 Zero unexpected mismatches is locked in as a regression by
 `tests/test_evals_diff_audit.py::test_label_crosscheck_has_no_unexpected_mismatches`.
@@ -191,20 +203,27 @@ positive samples for the five shortcut categories were built by explicitly
 implementing the very concepts the detector is meant to catch, so the label
 and the detector were not derived independently of each other.
 
-## Baseline (rule-based detector) results (measured, 2026-11-16)
+## Baseline (rule-based detector) results (measured, 2026-11, after the detector fix)
 
 Results of actually running `parrhesia/diff_fraud.analyze_diff()` against
 `eval.jsonl` (102 samples) (reproducible with
 `python3 evals/diff_audit/baseline.py`; details in
-`data/baseline_results.json`):
+`data/baseline_results.json`). **The numbers below are after applying the
+detector improvement described further down this page** (fixing false
+positives from renames and cosmetic skip-line relocations); see that
+section's "before" column for the earlier numbers:
 
 | Category | Recall | Precision |
 |---|---|---|
-| deleted_test | 1.000 (13/13) | 0.650 (13/20) |
-| skip_marker | 1.000 (16/16) | 0.842 (16/19) |
+| deleted_test | 1.000 (13/13) | 1.000 (13/13) |
+| skip_marker | 1.000 (16/16) | 1.000 (16/16) |
 | weakened_assert | 1.000 (13/13) | 0.500 (13/26) |
 | swallowed_exception | 1.000 (17/17) | 0.944 (17/18) |
 | hardcoded_exit_code | 0.842 (16/19) | 0.941 (16/17) |
+
+(`weakened_assert`, `swallowed_exception` and `hardcoded_exit_code` were out
+of scope for this round's fix, and their numbers are identical to before.
+Only `deleted_test` and `skip_marker` precision improved.)
 
 ### [Most important metric] Clean false-positive rate (reported separately by subgroup)
 
@@ -228,11 +247,15 @@ out of the headline.** Instead, the per-subgroup rates actually measured by
 
 | Subgroup | n | False-flagged | Rate | Wilson 95% CI |
 |---|---|---|---|---|
-| Misleading (rename / skip-move / real commit) | 12 | 12 | 1.000 | [0.758, 1.000] |
+| Misleading (rename / skip-move / real commit) | 12 | 2 | 0.167 | [0.047, 0.448] |
 | Normal (strengthening / equivalent refactor / correct exception handling) | 12 | 0 | 0.000 | [0.000, 0.242] |
 
+(**Before the fix**: misleading 12/12 = 1.000 [0.758, 1.000]; normal 0/12 =
+0.000 [0.000, 0.242] (unchanged). See the "Detector improvement" section
+below.)
+
 (For reference only — not used in any headline) Combined across both
-subgroups: 12/24 = 0.500 (Wilson 95% CI: [0.314, 0.686]). This combined value
+subgroups: 2/24 = 0.083 (Wilson 95% CI: [0.023, 0.258]). This combined value
 is recorded in `data/baseline_results.json` under the explicit key
 `clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline`,
 with its own caveat string saying not to use it as a headline.
@@ -245,34 +268,99 @@ detector-favorable data as "normal"). The 0/12 figure is not guaranteed to
 hold on an independently constructed "normal" change set built by a third
 party.
 
-(Auxiliary metric, never used alone as a claim) Overall accuracy: 0.853
+(Auxiliary metric, never used alone as a claim) Overall accuracy: 0.951
+(was 0.853 before the fix)
 
-**Main causes of the false positives** (confirmed by inspecting the
-breakdown):
-- All 3 rename samples were false-flagged as `deleted_test`
-  (`detect_test_deletion` only checks whether the deleted function name still
-  exists under the same name on the added side, so it cannot distinguish a
-  rename to a different name).
-- All 3 cosmetic skip-line-move samples were false-flagged as `skip_marker`
-  (`detect_skip_addition` treats anything as "newly added" unless it matches
-  the removed line's string exactly, so even a mere indentation or comment
-  change triggers a false positive).
-- The 6 real-commit samples were false-flagged by the same two root causes
-  (4 renames, 1 new `except`/`pass` in a newly added file, 1 literal string
-  match inside DEFECTS.md's prose).
+**Remaining causes of false positives** (confirmed by inspecting the
+breakdown; the detector fix below resolved the rename- and
+skip-line-relocation-caused false positives):
+- 2 real-commit samples remain false-flagged, both unrelated to §DC: 1 new
+  `except`/`pass` in a newly-added file (new defensive code, not corner-
+  cutting, but `swallowed_exception` doesn't distinguish a brand-new file),
+  1 literal string match on `sys.exit(0)` that happens to appear inside
+  DEFECTS.md's prose (`hardcoded_exit_code` doesn't distinguish code from
+  plain text).
 
-In other words, this detector exhibits a pattern that a single "false
-positive rate is high/low" number cannot capture: "weak against misleading
-changes, but passes ordinary legitimate changes cleanly." This pattern itself
-was confirmed by measurement, but with only 12 samples per subgroup, it is
-not yet known what proportion of real-world commits this pattern would apply
-to in practice (see Limitations).
+In other words, following the detector improvement below, this detector now
+exhibits a pattern of being "fairly robust to misleading changes, and passes
+ordinary legitimate changes cleanly" — but two other, unrelated known false
+positives remain. With only 12 samples per subgroup, it is not yet known what
+proportion of real-world commits this pattern would apply to in practice
+(see Limitations).
 
 Whether the LLM-based evaluation (`task.py` — wiring confirmed in CI, but
 real-model results not yet run) can achieve a lower false-positive rate than
 the baseline on the same 12 "misleading" samples (i.e., whether it can judge
 by actual *meaning* rather than being fooled by surface appearance) is the
 central question this evaluation task is meant to answer.
+
+## Detector improvement (§DC, with a frozen-data procedure to avoid overfitting)
+
+The two known limitations recorded in §DC ("can't tell a rename from a
+deletion"; "mistakes a cosmetically-relocated skip line for a new one") were
+addressed in 2026-11, following this procedure (decided and recorded before
+starting):
+
+1. First, **build and freeze ≥20 (24 used) new "misleading"-subgroup
+   samples independently** (`evals/diff_audit/build_frozen_holdout.py`
+   generates `data/frozen_rename_skipmove_holdout.jsonl`: 12 renames, 12
+   cosmetic skip-line relocations). The existing 24 clean samples in
+   `eval.jsonl` are not used to evaluate the improvement (their content has
+   already been seen by this session during label crosscheck) — they are
+   used only for regression checking.
+2. Measure the frozen data with the **pre-fix** detector first (and record
+   the number).
+3. Only then modify the detector.
+4. Measure the same frozen data again **after** the fix. Any regression is
+   reported, not hidden.
+5. Confirm on the existing "normal" subgroup (12 legitimate changes) that
+   the fix did not introduce new false positives there.
+
+Provenance of the frozen data: all 24 samples are newly authored synthetic
+diffs. The 12 renames vary the function name only, keeping the body (1–5
+lines, with variations like docstrings, multiple local variables, and
+`pytest.raises`) completely unchanged. The 12 skip-line relocations
+reproduce 12 different kinds of "cosmetic-only change" to an existing skip
+marker: trailing comment addition, quote-style change, multi-line
+reformatting, extra whitespace inside parentheses, an inserted blank line,
+and reordering within a class body. None overlap with the existing 24
+samples in `eval.jsonl`.
+
+**Results on the frozen data** (reproducible with `python3
+evals/diff_audit/measure_frozen_holdout.py`; details in
+`data/frozen_holdout_results.json`):
+
+| Subgroup | Before | After |
+|---|---|---|
+| Overall (24) | 21/24 = 0.875 [0.690, 0.957] | 3/24 = 0.125 [0.043, 0.310] |
+| Rename (12) | 12/12 = 1.000 [0.758, 1.000] | **0/12 = 0.000 [0.000, 0.242]** |
+| Skip-move (12) | 9/12 = 0.750 [0.468, 0.911] | 3/12 = 0.250 [0.089, 0.532] |
+
+**The fix**:
+- `detect_test_deletion`: compares a removed function's body against the
+  body of any added function with a new name, and treats it as a rename
+  (excluded from "deletion") **only when the bodies match exactly**. If the
+  body differs by even one character, it is conservatively still flagged as
+  a deletion (never biased toward false negatives).
+- `detect_skip_addition`: narrows the comparison to lines that contain a
+  skip marker, and normalizes by stripping trailing comments, unifying
+  quote style, and removing extra whitespace just inside parentheses before
+  comparing.
+
+**Regressions: none.** The existing "normal" subgroup (12 samples) stayed
+at 0/12 before and after (no new false positives on legitimate changes).
+Recall on all five existing shortcut categories is identical before and
+after (1.000 stayed 1.000, 0.842 stayed 0.842) — the false-positive
+reduction did not come at the cost of true-positive detection.
+
+**Remaining known limitation**: 3 of 12 skip-move cases remain false
+positives after the fix — all cases where a single-line decorator call
+(`@pytest.mark.skip(reason="...")`) was reformatted, content unchanged,
+across multiple lines (the `multiline_split`, `skipif_reformat`, and
+`multiline_and_comment` tags). The current line-by-line normalization
+cannot judge logical equivalence across multiple lines; this narrower
+remaining limitation is locked in as a regression by
+`tests/test_parrhesia_diff_fraud.py::test_detect_skip_addition_known_limitation_multiline_decorator_split`.
 
 ## Limitations (as required by the brief)
 
@@ -294,9 +382,15 @@ central question this evaluation task is meant to answer.
   total (there is real room for the detector's behavior and the label's
   intent to diverge).
 - **Small sample size** means wide confidence intervals (12 samples per
-  subgroup; the Wilson 95% CIs are [0.758, 1.000] for the "misleading"
-  subgroup and [0.000, 0.242] for the "normal" subgroup — both roughly
-  ±0.24 points wide).
+  subgroup; after the fix, the Wilson 95% CIs are [0.047, 0.448] for the
+  "misleading" subgroup and [0.000, 0.242] for the "normal" subgroup —
+  roughly ±0.2 to ±0.4 points wide).
+- **The frozen holdout data (24 samples) used to evaluate the detector
+  improvement was also authored by this same session**, so it is not
+  independent third-party verification either (the same "dataset author and
+  tool author are the same person" limitation above applies here too). A
+  narrower, newly discovered unfixed limitation also remains: multi-line
+  reformatted decorators (see §DC).
 - **LLM evaluation results (actual numbers from a real model) have not been
   run** (see above), so as of this README, only the rule-based detector's
   baseline results can be reported. That `task.py` itself actually runs in
@@ -313,7 +407,11 @@ A separate limitation was also found in `detect_exit_code_hardcoding`, which
 cannot recognize `sys.exit(...)` calls whose argument is itself a nested
 function call; this one was left as a documented, unfixed known limitation,
 since verifying a safe fix needs more time (both are recorded in
-`DEFECTS.md`'s `§DB`).
+`DEFECTS.md`'s `§DB`). Separately, the false positives on renames and
+cosmetic skip-line relocations found via the clean false-positive-rate
+measurement (above) were also fixed in 2026-11, following the
+frozen-data before/after procedure described in "Detector improvement"
+above (`§DC`).
 
 ## What was not done this round
 

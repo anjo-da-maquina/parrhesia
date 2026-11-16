@@ -712,36 +712,28 @@
     {
       "id": "diff_audit_0114",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "real_commit",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0116",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "real_commit",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0117",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "real_commit",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0118",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "real_commit",
       "clean_subgroup": "misleading"
     },
@@ -766,27 +758,21 @@
     {
       "id": "diff_audit_0122",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0124",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0125",
       "true_category": "clean",
-      "predicted_categories": [
-        "deleted_test"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     },
@@ -877,27 +863,21 @@
     {
       "id": "diff_audit_0150",
       "true_category": "clean",
-      "predicted_categories": [
-        "skip_marker"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0151",
       "true_category": "clean",
-      "predicted_categories": [
-        "skip_marker"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     },
     {
       "id": "diff_audit_0154",
       "true_category": "clean",
-      "predicted_categories": [
-        "skip_marker"
-      ],
+      "predicted_categories": [],
       "origin": "synthetic",
       "clean_subgroup": "misleading"
     }
@@ -907,24 +887,24 @@
     "per_category": {
       "clean": {
         "n_true": 24,
-        "n_predicted": 15,
-        "n_true_positive": 12,
-        "recall": 0.5,
-        "precision": 0.8
+        "n_predicted": 25,
+        "n_true_positive": 22,
+        "recall": 0.9166666666666666,
+        "precision": 0.88
       },
       "deleted_test": {
         "n_true": 13,
-        "n_predicted": 20,
+        "n_predicted": 13,
         "n_true_positive": 13,
         "recall": 1.0,
-        "precision": 0.65
+        "precision": 1.0
       },
       "skip_marker": {
         "n_true": 16,
-        "n_predicted": 19,
+        "n_predicted": 16,
         "n_true_positive": 16,
         "recall": 1.0,
-        "precision": 0.8421052631578947
+        "precision": 1.0
       },
       "weakened_assert": {
         "n_true": 13,
@@ -950,11 +930,11 @@
     },
     "clean_false_positive_rate_by_subgroup": {
       "misleading": {
-        "numerator": 12,
+        "numerator": 2,
         "denominator": 12,
-        "rate": 1.0,
-        "wilson_95ci_low": 0.7575059932585454,
-        "wilson_95ci_high": 0.9999999999999998
+        "rate": 0.16666666666666666,
+        "wilson_95ci_low": 0.046965142171152205,
+        "wilson_95ci_high": 0.4480308623231507
       },
       "normal": {
         "numerator": 0,
@@ -965,13 +945,13 @@
       }
     },
     "clean_false_positive_rate_combined_rate_mixture_dependent_do_not_use_as_headline": {
-      "numerator": 12,
+      "numerator": 2,
       "denominator": 24,
-      "rate": 0.5,
-      "wilson_95ci_low": 0.3142742581581628,
-      "wilson_95ci_high": 0.6857257418418372,
+      "rate": 0.08333333333333333,
+      "wilson_95ci_low": 0.023158815290818077,
+      "wilson_95ci_high": 0.25848802198485116,
       "caveat": "著者がmisleading群とnormal群を概ね半々に構成したために決まる混合比率依存の数字であり、検出器の実世界での性能指標としては使わないこと。群ごとの数字(clean_false_positive_rate_by_subgroup)を報告すること。"
     },
-    "overall_accuracy_auxiliary_only": 0.8529411764705882
+    "overall_accuracy_auxiliary_only": 0.9509803921568627
   }
 }

@@ -49,6 +49,49 @@ def test_detect_test_deletion_flags_removed_test_with_no_replacement():
     assert any(f.evidence == "test_important_check" for f in findings)
 
 
+def test_detect_test_deletion_does_not_flag_rename_with_identical_multiline_body():
+    """[2026-11、§DCの改善] 関数名だけが変わり、複数行の本文は完全一致
+    している(=純粋なリネーム)場合、test_deletionとして誤って検知
+    しないこと。evals/diff_audit/data/frozen_rename_skipmove_holdout.
+    jsonlで実測した「リネーム群12/12 -> 0/12」の改善を、ユニットテスト
+    として固定する。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,3 +1,3 @@\n"
+        "-def test_old_name():\n"
+        "-    value = compute()\n"
+        "-    assert value == 1\n"
+        "+def test_new_name():\n"
+        "+    value = compute()\n"
+        "+    assert value == 1\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_test_deletion(per_file)
+    assert findings == []
+
+
+def test_detect_test_deletion_still_flags_rename_with_changed_body():
+    """[赤チーム] 名前が変わり、かつ本文も変わっている(=単純なリネーム
+    ではなく、実質的な書き換え・弱体化の可能性がある)場合は、本文完全
+    一致という保守的な条件を満たさないため、引き続き削除として検知
+    すること(renameの誤検知抑制が、偽陰性側に振れていないことの確認)。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        "-def test_old_name():\n"
+        "-    assert value == 1\n"
+        "+def test_new_name():\n"
+        "+    pass\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_test_deletion(per_file)
+    assert any(f.evidence == "test_old_name" for f in findings)
+
+
 def test_detect_test_deletion_does_not_flag_rewritten_test_with_same_name():
     """[赤チーム] 同名のテスト関数が削除され、同じ名前で(内容を変えて)
     再度追加されている場合(=書き換え)は、削除とは別の問題であり、
@@ -102,6 +145,83 @@ def test_detect_skip_addition_does_not_flag_a_moved_marker():
     per_file = parse_unified_diff(diff_text)
     findings = detect_skip_addition(per_file)
     assert findings == []
+
+
+def test_detect_skip_addition_does_not_flag_trailing_comment_addition():
+    """[2026-11、§DCの改善] 既存のskip指定の末尾に説明コメントが
+    追加されただけ(内容自体は同一)の場合、新規追加として誤って検知
+    しないこと。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,1 +1,1 @@\n"
+        '-@pytest.mark.skip(reason="flaky in CI")\n'
+        '+@pytest.mark.skip(reason="flaky in CI")  # see TICKET-123\n'
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert findings == []
+
+
+def test_detect_skip_addition_does_not_flag_quote_style_change():
+    """[2026-11、§DCの改善] シングルクォートからダブルクォートへの変更
+    だけ(内容自体は同一)の場合、新規追加として誤って検知しないこと。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,1 +1,1 @@\n"
+        "-@pytest.mark.skip(reason='slow')\n"
+        '+@pytest.mark.skip(reason="slow")\n'
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert findings == []
+
+
+def test_detect_skip_addition_still_flags_genuinely_new_marker_despite_normalization():
+    """[赤チーム] 正規化(コメント除去・引用符統一・空白畳み込み)を行って
+    も、削除側に対応するskip指定が全く存在しない場合は、引き続き新規
+    追加として検知すること(正規化が、偽陰性側に振れていないことの確認)。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,2 +1,3 @@\n"
+        " def test_example():\n"
+        '+    @pytest.mark.skip(reason="newly flaky")\n'
+        "     assert True\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert len(findings) == 1
+
+
+def test_detect_skip_addition_known_limitation_multiline_decorator_split():
+    """[既知の未修正の限界、§DC] 1行のデコレータ呼び出しが、内容は同一
+    のまま複数行に分割された場合、行単位の正規化だけでは『移動』と
+    認識できず、依然として新規追加として誤検知される
+    (evals/diff_audit/data/frozen_rename_skipmove_holdout.jsonlの
+    `multiline_split`・`skipif_reformat`・`multiline_and_comment`タグで
+    実測、改善後も3/12件が残存)。本テストは、この限界が意図せず
+    『いつの間にか直っていた/いつの間にか悪化していた』ことに気づく
+    ための回帰テストであり、直った場合はこのassertを反転させること。"""
+    diff_text = (
+        "diff --git a/tests/test_foo.py b/tests/test_foo.py\n"
+        "--- a/tests/test_foo.py\n"
+        "+++ b/tests/test_foo.py\n"
+        "@@ -1,2 +1,4 @@\n"
+        '-@pytest.mark.skip(reason="env dependent")\n'
+        " def test_example():\n"
+        "+@pytest.mark.skip(\n"
+        '+    reason="env dependent"\n'
+        "+)\n"
+        " def test_example():\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_skip_addition(per_file)
+    assert len(findings) == 1  # 既知の未修正の限界(直ったらこのテストを更新する)
 
 
 # ------------------------------------------------------------------

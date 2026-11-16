@@ -1,0 +1,182 @@
+{
+  "results": [
+    {
+      "id": "frozen_holdout_4338bd8b488f",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_232a68cb2b16",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_9d54bc6189d2",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_8115610b2f95",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_a2ede24cbb74",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_cdeaa5c48da0",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_9ef6232cd3f7",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_6c0c5a0c5d09",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_8405ceb55740",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_c116ab3e2c31",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_3d6aa8231dfa",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_3b9cdb299845",
+      "tag": "rename",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_b16f3dc8e03e",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_d8d2d634e6e1",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_628d4a61f621",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_f0685d5bdb0d",
+      "tag": "skip_move",
+      "flagged": true,
+      "predicted_categories": [
+        "skip_addition"
+      ]
+    },
+    {
+      "id": "frozen_holdout_ff2bb230a03f",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_eca9ffb8304d",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_339e0639691e",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_40baedee8534",
+      "tag": "skip_move",
+      "flagged": true,
+      "predicted_categories": [
+        "skip_addition"
+      ]
+    },
+    {
+      "id": "frozen_holdout_f16397b97228",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_8e3c77572ce9",
+      "tag": "skip_move",
+      "flagged": true,
+      "predicted_categories": [
+        "skip_addition"
+      ]
+    },
+    {
+      "id": "frozen_holdout_bec0caa54128",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    },
+    {
+      "id": "frozen_holdout_fe277fa9f0bf",
+      "tag": "skip_move",
+      "flagged": false,
+      "predicted_categories": []
+    }
+  ],
+  "summary": {
+    "n_total": 24,
+    "n_flagged": 3,
+    "false_positive_rate": 0.125,
+    "wilson_95ci_low": 0.043443340791140185,
+    "wilson_95ci_high": 0.3100388127569621,
+    "by_group": {
+      "rename": {
+        "numerator": 0,
+        "denominator": 12,
+        "rate": 0.0,
+        "wilson_95ci_low": 0.0,
+        "wilson_95ci_high": 0.24249400674145444
+      },
+      "skip_move": {
+        "numerator": 3,
+        "denominator": 12,
+        "rate": 0.25,
+        "wilson_95ci_low": 0.08894166837325392,
+        "wilson_95ci_high": 0.5323053349974733
+      }
+    },
+    "flagged_ids": [
+      "frozen_holdout_f0685d5bdb0d",
+      "frozen_holdout_40baedee8534",
+      "frozen_holdout_8e3c77572ce9"
+    ]
+  }
+}
