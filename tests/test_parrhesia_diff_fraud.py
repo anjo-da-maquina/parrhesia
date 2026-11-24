@@ -459,15 +459,14 @@ def test_detect_exit_code_hardcoding_does_not_flag_brand_new_exit_zero():
     assert findings == []
 
 
-def test_detect_exit_code_hardcoding_known_limitation_nested_call_arg():
-    """[既知のrecall限界、2026-11、evals/diff_audit/の開発中に発見、
-    §DB参照] `sys.exit(len(violations))`のようにネストした関数呼び出し
-    を引数に取る行は、`_EXIT_NONZERO_OR_DYNAMIC_RE`の対象外であり、
-    それが`sys.exit(0)`へ書き換えられても検知できない。これは未修正の
-    既知の限界であり、『見逃してよい』という意味ではなく『現状は見逃す』
-    という事実を、将来knowingly再発見することがないよう固定する回帰
-    テストである。この限界が修正された場合は、本テストをxfailではなく
-    検知成功を期待するテストへ書き換えること。"""
+def test_detect_exit_code_hardcoding_detects_nested_call_arg_now_fixed():
+    """[§DBの既知のrecall限界、2026-11、evals/diff_audit/の開発中に発見、
+    同月中に修正] 以前は`sys.exit(len(violations))`のようにネストした
+    関数呼び出しを引数に取る行を「動的な終了コードだった」と認識できず、
+    `sys.exit(0)`へ書き換えられても見逃していた(旧テスト名:
+    `test_detect_exit_code_hardcoding_known_limitation_nested_call_arg`。
+    当時はfindings == []を期待していた)。`_sys_exit_call_arg()`による
+    引数抽出への修正後は、正しく検知できることを確認する回帰テスト。"""
     diff_text = (
         "diff --git a/tools/lint_check.py b/tools/lint_check.py\n"
         "--- a/tools/lint_check.py\n"
@@ -479,10 +478,45 @@ def test_detect_exit_code_hardcoding_known_limitation_nested_call_arg():
     )
     per_file = parse_unified_diff(diff_text)
     findings = detect_exit_code_hardcoding(per_file)
-    assert findings == [], (
-        "この限界が修正されたなら、本テストをfindingsありを期待する形へ"
-        "書き換え、DEFECTS.md §DBの記述も更新すること"
+    assert len(findings) == 1
+
+
+def test_detect_exit_code_hardcoding_does_not_flag_removed_literal_zero():
+    """[赤チーム、修正の副次効果] 旧`_EXIT_NONZERO_OR_DYNAMIC_RE`は
+    `\\w+`が数字にもマッチするため、削除側の`sys.exit(0)`自体を誤って
+    「非ゼロ・動的だった」と判定しうる潜在的な欠陥を持っていた
+    (`\\w+`は文字列`"0"`にもマッチするため)。修正後は、削除側が
+    文字列として厳密に`sys.exit(0)`である場合、それ自体を非ゼロ・
+    動的とは判定しないことを確認する。"""
+    diff_text = (
+        "diff --git a/src/runner.py b/src/runner.py\n"
+        "--- a/src/runner.py\n"
+        "+++ b/src/runner.py\n"
+        "@@ -1,1 +1,1 @@\n"
+        "-    sys.exit(0)\n"
+        "+    sys.exit(0)\n"
     )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_exit_code_hardcoding(per_file)
+    assert findings == []
+
+
+def test_detect_exit_code_hardcoding_detects_negative_literal():
+    """[修正の副次効果] 旧実装は`sys.exit(-1)`のような負数リテラルも
+    (`[1-9]`は先頭が数字であることを要求し、`\\w+`は`-`を含まないため)
+    認識できなかった。新しい引数抽出方式では、文字列として`"0"`と
+    一致しない限り非ゼロ・動的と判定するため、負数も正しく拾える。"""
+    diff_text = (
+        "diff --git a/src/runner.py b/src/runner.py\n"
+        "--- a/src/runner.py\n"
+        "+++ b/src/runner.py\n"
+        "@@ -1,1 +1,1 @@\n"
+        "-    sys.exit(-1)\n"
+        "+    sys.exit(0)\n"
+    )
+    per_file = parse_unified_diff(diff_text)
+    findings = detect_exit_code_hardcoding(per_file)
+    assert len(findings) == 1
 
 
 # ------------------------------------------------------------------

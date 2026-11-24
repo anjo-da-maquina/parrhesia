@@ -20,17 +20,16 @@ B章「主張の検証と突きつけ」のうち、差分ベースの不正検�
     意味的に対応付ける必要があり、単純な文字列照合では実装できない。
     「差分にあるが報告にない変更の洗い出し」(find_undisclosed_changes)
     は、その逆方向(差分→報告)のみを実装した。
-  - [2026-11、evals/diff_audit/の開発中に発見、§DB参照] `detect_exit_
-    code_hardcoding`の`_EXIT_NONZERO_OR_DYNAMIC_RE`は、`sys.exit(code)`
-    のような単純な識別子・数値の引数しか認識できず、
-    `sys.exit(len(violations))`のようなネストした関数呼び出しを引数に
-    取る行は「動的な終了コードだった」と認識できない(=そのような行が
-    `sys.exit(0)`に書き換えられても見逃す)。偽陽性を増やさずに一般の
-    ネストした式を安全に認識する正規表現の設計には追加の検証が必要な
-    ため、本バージョンでは修正を見送り、既知のrecall限界としてここに
-    記録する(`tests/test_parrhesia_diff_fraud.py`の
-    `test_detect_exit_code_hardcoding_known_limitation_nested_call_arg`
-    で、この限界そのものを回帰的に固定している)。
+  - [2026-11、evals/diff_audit/の開発中に発見、§DB参照。同月中に修正]
+    `detect_exit_code_hardcoding`は当初、`sys.exit(code)`のような単純な
+    識別子・数値の引数しか認識できず、`sys.exit(len(violations))`の
+    ようなネストした関数呼び出しを引数に取る行は「動的な終了コード
+    だった」と認識できなかった(=そのような行が`sys.exit(0)`に書き
+    換えられても見逃していた)。`_sys_exit_call_arg()`(丸括弧の深さを
+    数えて引数を文字列として取り出す簡易実装)を追加し、引数の形に
+    関わらず「文字列として厳密に`"0"`と一致するか」だけで判定する
+    よう修正した(§DC参照)。`return`文側(`return result_code`のような
+    単純な識別子1つの形)は本修正の対象外のまま据え置いている。
 
 本モジュールの入力は`git diff`のunified diff形式のテキストを想定する。
 diffの構造解析は、完全な構文解析器ではなく、行単位の簡易パーサーで
@@ -43,7 +42,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 # ------------------------------------------------------------------
 # unified diffの簡易パーサー
@@ -111,7 +110,8 @@ _EXCEPT_RE = re.compile(r"^\s*except(\s+[\w., ()]+)?\s*:?\s*$")
 # 修飾名・`except (A, B):`形式のタプル)を広く受理するよう修正。
 _PASS_RE = re.compile(r"^\s*pass\s*$")
 _EXIT_ZERO_RE = re.compile(r"sys\.exit\(\s*0\s*\)|^\s*return\s+0\s*$")
-_EXIT_NONZERO_OR_DYNAMIC_RE = re.compile(r"sys\.exit\(\s*[1-9]|sys\.exit\(\s*\w+\s*\)|^\s*return\s+\w+\s*$")
+_EXIT_RETURN_DYNAMIC_RE = re.compile(r"^\s*return\s+\w+\s*$")
+_SYS_EXIT_CALL_RE = re.compile(r"sys\.exit\(")
 _DEF_ANY_RE = re.compile(r"^\s*def\s+\w+\s*\(")
 _TRAILING_COMMENT_RE = re.compile(r"#.*$")
 _MIN_BODY_LINES_FOR_RENAME_MATCH = 1
@@ -368,12 +368,58 @@ def detect_exception_swallowing(per_file: Dict[str, Dict[str, List[str]]]) -> Li
     return findings
 
 
+def _sys_exit_call_arg(line: str) -> Optional[str]:
+    """`sys.exit(...)`呼び出しの引数部分を、丸括弧の深さを数える単純な
+    方法で取り出す(文字列リテラル中の括弧は区別しない、完全な字句解析
+    器ではない簡易実装。モジュールdocstringの既知の限界を参照)。
+    同じ行内に閉じ括弧が無い(複数行にまたがる等)場合は`None`を返す。
+
+    [修正 2026-11、evals/diff_audit/の開発中に発見、§DB参照]
+    旧実装は`_EXIT_NONZERO_OR_DYNAMIC_RE`という正規表現
+    (`sys\\.exit\\(\\s*\\w+\\s*\\)`)で引数を判定していたため、
+    `sys.exit(len(violations))`のようなネストした関数呼び出しを
+    引数に取る行を一度も認識できなかった(`\\w+`は内側に`(`を含む
+    式にマッチしないため)。本関数は引数を文字列として取り出した
+    うえで、呼び出し元が「`0`という文字列と完全一致するか」だけを
+    判定することで、引数の形に関わらず安全に扱えるようにした。"""
+    m = _SYS_EXIT_CALL_RE.search(line)
+    if not m:
+        return None
+    start = m.end()
+    depth = 1
+    i = start
+    while i < len(line) and depth > 0:
+        if line[i] == "(":
+            depth += 1
+        elif line[i] == ")":
+            depth -= 1
+        i += 1
+    if depth != 0:
+        return None
+    return line[start : i - 1]
+
+
+def _is_nonzero_or_dynamic_exit_line(line: str) -> bool:
+    """`sys.exit(...)`または`return ...`の行が、非ゼロまたは動的な
+    終了コード/戻り値を表しているかを判定する。`sys.exit(...)`の場合は
+    引数(ネストした関数呼び出しを含む、任意の式)が、文字列として
+    厳密に`"0"`と一致しない限り「非ゼロ・動的」とみなす(多数桁・
+    負数・ネストした呼び出し等、あらゆる非リテラルゼロの形を安全に
+    拾える)。`return`の場合は、旧来どおり単純な識別子1つの形
+    (`return result_code`等)のみを対象とする(この形の拡張は本修正の
+    対象外)。"""
+    arg = _sys_exit_call_arg(line)
+    if arg is not None:
+        return arg.strip() != "0"
+    return bool(_EXIT_RETURN_DYNAMIC_RE.search(line))
+
+
 def detect_exit_code_hardcoding(per_file: Dict[str, Dict[str, List[str]]]) -> List[DiffFraudFinding]:
     """削除側に非ゼロ・動的な終了コード/戻り値があり、追加側で
     `sys.exit(0)`または`return 0`に固定されている場合を検出する。"""
     findings = []
     for file_path, lines in per_file.items():
-        had_nonzero_or_dynamic = any(_EXIT_NONZERO_OR_DYNAMIC_RE.search(ln) for ln in lines["removed"])
+        had_nonzero_or_dynamic = any(_is_nonzero_or_dynamic_exit_line(ln) for ln in lines["removed"])
         if not had_nonzero_or_dynamic:
             continue
         for ln in lines["added"]:

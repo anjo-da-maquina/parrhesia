@@ -216,8 +216,9 @@ test_label_crosscheck_has_no_unexpected_mismatches`で回帰的に固定して
 `eval.jsonl`(102件)に対し`parrhesia/diff_fraud.analyze_diff()`を実際に
 実行した結果(`python3 evals/diff_audit/baseline.py`で再現可能、
 `data/baseline_results.json`に詳細)。**下記は、後述の検出器改善
-(リネーム・skip行の見た目の移動への誤検知の修正)を適用した後の数字**
-である(改善前の数字は、その節の「改善前」欄を参照):
+(リネーム・skip行の見た目の移動への誤検知の修正、および§DDの
+`hardcoded_exit_code`ネストした関数呼び出し引数の修正)を適用した後の
+数字**である(改善前の数字は、その節の「改善前」欄を参照):
 
 | カテゴリ | recall | precision |
 |---|---|---|
@@ -225,11 +226,15 @@ test_label_crosscheck_has_no_unexpected_mismatches`で回帰的に固定して
 | skip_marker | 1.000 (16/16) | 1.000 (16/16) |
 | weakened_assert | 1.000 (13/13) | 0.500 (13/26) |
 | swallowed_exception | 1.000 (17/17) | 0.944 (17/18) |
-| hardcoded_exit_code | 0.842 (16/19) | 0.941 (16/17) |
+| hardcoded_exit_code | 1.000 (19/19) | 0.950 (19/20) |
 
-(`weakened_assert`・`swallowed_exception`・`hardcoded_exit_code`は、
-今回の検出器改善の対象外であり、数字は改善前と完全に同じ。
-`deleted_test`・`skip_marker`のprecisionのみ、改善により上昇した。)
+(`weakened_assert`・`swallowed_exception`は、今回の検出器改善の対象外
+であり、数字は改善前と完全に同じ。`deleted_test`・`skip_marker`の
+precisionは§DCの改善により、`hardcoded_exit_code`のrecallは§DDの改善
+(ネストした関数呼び出し`sys.exit(len(violations))`を引数に取る
+終了コードも正しく「動的だった」と認識できるようにした修正)により、
+それぞれ上昇した。`hardcoded_exit_code`に残る1件の誤検知は、§DDとは
+無関係の既知の誤検知(下記「残る誤検知の原因」参照)。)
 
 ### [最重要指標] cleanの誤検知率(群ごとに別々に報告する)
 
@@ -269,7 +274,8 @@ eval.jsonl内のclean 24件は、狙いの異なる2群に分けて作ってい�
 かかり得る。0/12という数字は、独立した第三者が作った「通常」の
 変更セットでも同じく成り立つかどうかまでは保証しない。
 
-(補助指標、単独では主張に使わない)全体正解率: 0.951(改善前は0.853)
+(補助指標、単独では主張に使わない)全体正解率: 0.980(§DC改善直後は
+0.951、§DC着手前は0.853)
 
 **残る誤検知の原因**(内訳の中身で確認済み。検出器改善により、
 リネーム・skip行の見た目の移動に起因する誤検知は解消済み):
@@ -425,12 +431,13 @@ test_detect_skip_addition_known_limitation_comment_on_continuation_line`
 `detect_exception_swallowing`が、個別の例外型(`ValueError`等)による
 握り潰しを一律で見逃すrecall上の欠陥を発見し、修正した。
 `detect_exit_code_hardcoding`にも、ネストした関数呼び出しを引数に取る
-`sys.exit(...)`を認識できない別の限界を発見したが、こちらは安全な修正
-方法の検証に追加の時間が必要なため、未修正の既知の限界として記録に留めた
-(両方とも`DEFECTS.md`の`§DB`に記録済み)。さらにcleanの誤検知率の実測
-(上記)で判明した、リネーム・skip行の見た目の移動への誤検知も、凍結
-データによる改善前後比較の手順を踏んだうえで2026-11に修正した
-(`§DC`、上記の「検出器の改善」節参照)。
+`sys.exit(...)`を認識できない別の限界を発見した当初は、安全な修正方法の
+検証に追加の時間が必要なため未修正のまま記録に留めたが(`DEFECTS.md`
+`§DB`)、「さらなる改良」依頼を受けて同月中に実際に修正した
+(`_sys_exit_call_arg()`による引数抽出方式への変更。`DEFECTS.md`
+`§DD`)。さらにcleanの誤検知率の実測(上記)で判明した、リネーム・
+skip行の見た目の移動への誤検知も、凍結データによる改善前後比較の手順を
+踏んだうえで2026-11に修正した(`§DC`、上記の「検出器の改善」節参照)。
 
 ## 今回やらなかったこと
 

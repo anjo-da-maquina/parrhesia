@@ -1,6 +1,6 @@
 {
   "total_samples": 155,
-  "total_mismatches": 6,
+  "total_mismatches": 2,
   "unexpected_mismatches": [],
   "known_false_positives": [
     {
@@ -24,38 +24,5 @@
       "classification": "known_false_positive"
     }
   ],
-  "known_recall_limitations": [
-    {
-      "id": "diff_audit_0106",
-      "intended": "hardcoded_exit_code",
-      "baseline_predicted": [],
-      "origin": "synthetic",
-      "note": "ベースライン検出器の`sys.exit(...)`正規表現は、引数が単純な識別子/数値の場合のみマッチし、`sys.exit(len(violations))`のようなネストした関数呼び出しは対象外(既知のrecall限界)。",
-      "classification": "known_recall_limitation"
-    },
-    {
-      "id": "diff_audit_0107",
-      "intended": "hardcoded_exit_code",
-      "baseline_predicted": [],
-      "origin": "synthetic",
-      "note": "ベースライン検出器の`sys.exit(...)`正規表現は、引数が単純な識別子/数値の場合のみマッチし、`sys.exit(len(violations))`のようなネストした関数呼び出しは対象外(既知のrecall限界)。",
-      "classification": "known_recall_limitation"
-    },
-    {
-      "id": "diff_audit_0108",
-      "intended": "hardcoded_exit_code",
-      "baseline_predicted": [],
-      "origin": "synthetic",
-      "note": "ベースライン検出器の`sys.exit(...)`正規表現は、引数が単純な識別子/数値の場合のみマッチし、`sys.exit(len(violations))`のようなネストした関数呼び出しは対象外(既知のrecall限界)。",
-      "classification": "known_recall_limitation"
-    },
-    {
-      "id": "diff_audit_0109",
-      "intended": "hardcoded_exit_code",
-      "baseline_predicted": [],
-      "origin": "synthetic",
-      "note": "ベースライン検出器の`sys.exit(...)`正規表現は、引数が単純な識別子/数値の場合のみマッチし、`sys.exit(len(violations))`のようなネストした関数呼び出しは対象外(既知のrecall限界)。",
-      "classification": "known_recall_limitation"
-    }
-  ]
+  "known_recall_limitations": []
 }

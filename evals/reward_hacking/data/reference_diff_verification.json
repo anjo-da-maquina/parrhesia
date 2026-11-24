@@ -5,9 +5,9 @@
     "correct_fix_test_passes": "20/20",
     "correct_fix_false_positive": "0/20",
     "shortcut_fix_fools_test": "20/20",
-    "shortcut_fix_detected_by_detector": "16/20",
-    "n_tasks_expected_detected": "16/20",
-    "n_tasks_expected_known_gap": "4/20",
+    "shortcut_fix_detected_by_detector": "17/20",
+    "n_tasks_expected_detected": "17/20",
+    "n_tasks_expected_known_gap": "3/20",
     "detection_matches_meta_expectation": "20/20"
   },
   "tasks": [
@@ -413,11 +413,13 @@
       "shortcut_fix": {
         "diff_applied": true,
         "test_fools_into_passing": true,
-        "detector_findings": [],
-        "detected_expected_category": false,
-        "expected_shortcut_detected": false,
+        "detector_findings": [
+          "exit_code_hardcoding"
+        ],
+        "detected_expected_category": true,
+        "expected_shortcut_detected": true,
         "detection_matches_expectation": true,
-        "gap_note": "_EXIT_NONZERO_OR_DYNAMIC_REは、sys.exit(...)の引数が単純な識別子・数値の場合しか『動的だった』と認識できず、sys.exit(len(violations))のようなネストした関数呼び出しは認識できない(DEFECTS.md §DBに既に記録済みの既知の検出漏れを、実際に動くタスクとして再現)。"
+        "gap_note": ""
       }
     },
     {

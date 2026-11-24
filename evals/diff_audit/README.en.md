@@ -229,9 +229,10 @@ Results of actually running `parrhesia/diff_fraud.analyze_diff()` against
 `eval.jsonl` (102 samples) (reproducible with
 `python3 evals/diff_audit/baseline.py`; details in
 `data/baseline_results.json`). **The numbers below are after applying the
-detector improvement described further down this page** (fixing false
-positives from renames and cosmetic skip-line relocations); see that
-section's "before" column for the earlier numbers:
+detector improvements described further down this page** (fixing false
+positives from renames and cosmetic skip-line relocations, and §DD's fix for
+`hardcoded_exit_code`'s nested-call-argument blind spot); see that section's
+"before" column for the earlier numbers:
 
 | Category | Recall | Precision |
 |---|---|---|
@@ -239,11 +240,16 @@ section's "before" column for the earlier numbers:
 | skip_marker | 1.000 (16/16) | 1.000 (16/16) |
 | weakened_assert | 1.000 (13/13) | 0.500 (13/26) |
 | swallowed_exception | 1.000 (17/17) | 0.944 (17/18) |
-| hardcoded_exit_code | 0.842 (16/19) | 0.941 (16/17) |
+| hardcoded_exit_code | 1.000 (19/19) | 0.950 (19/20) |
 
-(`weakened_assert`, `swallowed_exception` and `hardcoded_exit_code` were out
-of scope for this round's fix, and their numbers are identical to before.
-Only `deleted_test` and `skip_marker` precision improved.)
+(`weakened_assert` and `swallowed_exception` were out of scope for this
+round's fixes, and their numbers are identical to before. `deleted_test` and
+`skip_marker` precision improved via §DC; `hardcoded_exit_code` recall
+improved via §DD (fixing the detector's inability to recognize a nested
+function call such as `sys.exit(len(violations))` as a "dynamic" exit code
+being downgraded to 0). The one remaining `hardcoded_exit_code` false
+positive is unrelated to §DD — see "Remaining causes of false positives"
+below.)
 
 ### [Most important metric] Clean false-positive rate (reported separately by subgroup)
 
@@ -288,8 +294,8 @@ detector-favorable data as "normal"). The 0/12 figure is not guaranteed to
 hold on an independently constructed "normal" change set built by a third
 party.
 
-(Auxiliary metric, never used alone as a claim) Overall accuracy: 0.951
-(was 0.853 before the fix)
+(Auxiliary metric, never used alone as a claim) Overall accuracy: 0.980
+(was 0.951 right after the §DC fix, 0.853 before §DC)
 
 **Remaining causes of false positives** (confirmed by inspecting the
 breakdown; the detector fix below resolved the rename- and
@@ -464,10 +470,13 @@ While cross-checking dataset labels, a recall bug was found and fixed in
 `parrhesia/diff_fraud.py`'s `detect_exception_swallowing`, which uniformly
 missed exception-swallowing via a specific exception type (e.g. `ValueError`).
 A separate limitation was also found in `detect_exit_code_hardcoding`, which
-cannot recognize `sys.exit(...)` calls whose argument is itself a nested
-function call; this one was left as a documented, unfixed known limitation,
-since verifying a safe fix needs more time (both are recorded in
-`DEFECTS.md`'s `§DB`). Separately, the false positives on renames and
+could not recognize `sys.exit(...)` calls whose argument is itself a nested
+function call; this one was initially left as a documented, unfixed known
+limitation since verifying a safe fix needed more time (both recorded in
+`DEFECTS.md`'s `§DB`), and was then actually fixed the same month in
+response to a "can this be improved further" request, by extracting the
+call's argument via simple paren-depth counting instead of a regex
+(`DEFECTS.md`'s `§DD`). Separately, the false positives on renames and
 cosmetic skip-line relocations found via the clean false-positive-rate
 measurement (above) were also fixed in 2026-11, following the
 frozen-data before/after procedure described in "Detector improvement"

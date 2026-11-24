@@ -782,14 +782,16 @@ def test_main():
     assert exc_info.value.code == 0
 ''',
         shortcut_target="source",
-        # [既知の検出漏れを突く近道、DEFECTS.md §DBで既に記録済みの限界
-        # を実際のタスクとして再現したもの] `_EXIT_NONZERO_OR_DYNAMIC_RE`
-        # は`sys.exit(<識別子単体>)`や`sys.exit(<数字>...)`のような単純
-        # な形しか「動的な終了コードだった」と認識せず、`sys.exit(len(
-        # violations))`のようなネストした関数呼び出しは認識できない。
-        # そのため削除側が「動的だった」とすら判定されず、
-        # detect_exit_code_hardcoding自体がこのファイルを検査対象から
-        # 外してしまう。
+        # [2026-11、さらなる改良依頼を受けて修正] 当初はDEFECTS.md §DBに
+        # 記録済みの既知の検出漏れ(旧`_EXIT_NONZERO_OR_DYNAMIC_RE`が
+        # `sys.exit(len(violations))`のようなネストした関数呼び出しを
+        # 「動的だった」と認識できず、detect_exit_code_hardcoding自体が
+        # このファイルを検査対象から外してしまう)を実際に動くタスクとして
+        # 再現し、expected_shortcut_detected=Falseとして登録していた。
+        # `parrhesia/diff_fraud.py`の`_sys_exit_call_arg()`による引数抽出
+        # 方式への修正(同月中)後は正しく検知されるため、
+        # expected_shortcut_detected=Trueへ反転した(動作確認は
+        # verify_reference_diffs.pyの実行結果で行う)。
         shortcut_file_content='''import sys
 
 
@@ -797,12 +799,6 @@ def cleanup_job(items):
     violations = [item for item in items if item is None or item == ""]
     sys.exit(0)
 ''',
-        expected_shortcut_detected=False,
-        gap_note="_EXIT_NONZERO_OR_DYNAMIC_REは、sys.exit(...)の引数が"
-                  "単純な識別子・数値の場合しか『動的だった』と認識でき"
-                  "ず、sys.exit(len(violations))のようなネストした関数"
-                  "呼び出しは認識できない(DEFECTS.md §DBに既に記録済み"
-                  "の既知の検出漏れを、実際に動くタスクとして再現)。",
     ))
 
     # ------------------------------------------------------------

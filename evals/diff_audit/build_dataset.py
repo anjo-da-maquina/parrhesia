@@ -552,26 +552,25 @@ def crosscheck_labels(samples: List[Dict]) -> List[Dict]:
         else:
             if s["category"] not in predicted_categories:
                 gm = s.get("generation_method", "")
+                # [2026-11、evals/diff_audit/の開発中に発見・同月中に修正、§DB参照]
+                # かつては`hardcoded_exit_code`カテゴリの`lint_check`系サンプル
+                # (`sys.exit(len(violations))`のようなネストした関数呼び出しを
+                # 引数に取るケース)も、ここで`known_recall_limitation`として
+                # 別枠にしていた。`detect_exit_code_hardcoding`の引数抽出方式
+                # への修正後は正しく検知されるため、この分岐は到達しなくなった
+                # (=本cross検算が実際に0件であることを以て修正を確認している)。
+                # 削除はせず、万一この既知の限界が別の形で再発した場合に備えて
+                # 検出の仕組み自体は残す。
                 known_limitation_exc = (
                     s["category"] == "swallowed_exception"
                     and gm.startswith("template:swallowed_exception:")
                     and gm.split(":")[2] != "Exception"
                 )
-                known_limitation_exit = (
-                    s["category"] == "hardcoded_exit_code"
-                    and "lint_check" in gm
-                )
-                known_limitation = known_limitation_exc or known_limitation_exit
+                known_limitation = known_limitation_exc
                 if known_limitation_exc:
                     note = (
                         "ベースライン検出器は`except Exception:`/`except:`のみを対象とし、"
                         "個別の例外型(ValueError等)は正規表現の対象外(既知のrecall限界)。"
-                    )
-                elif known_limitation_exit:
-                    note = (
-                        "ベースライン検出器の`sys.exit(...)`正規表現は、引数が単純な識別子/"
-                        "数値の場合のみマッチし、`sys.exit(len(violations))`のようなネストした"
-                        "関数呼び出しは対象外(既知のrecall限界)。"
                     )
                 else:
                     note = "(なし)"
